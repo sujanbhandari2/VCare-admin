@@ -1,0 +1,99 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:flutter_template/app/router/app_router.dart';
+import 'package:flutter_template/features/clients/data/clients_mock_data.dart';
+import 'package:flutter_template/features/clients/presentation/widgets/client_row.dart';
+import 'package:flutter_template/features/clients/presentation/widgets/clients_empty_state.dart';
+import 'package:flutter_template/features/clients/presentation/widgets/clients_sticky_search_bar.dart';
+import 'package:flutter_template/features/clients/utils/client_utils.dart';
+import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+
+/// Clients list — parity with vcareapp [ClientsPage].
+class ClientsScreen extends StatefulWidget {
+  const ClientsScreen({super.key});
+
+  @override
+  State<ClientsScreen> createState() => _ClientsScreenState();
+}
+
+class _ClientsScreenState extends State<ClientsScreen> {
+  final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+  String _query = '';
+  bool _scrolled = false;
+  bool _searchFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final scrolled = _scrollController.offset > 8;
+    if (scrolled != _scrolled) {
+      setState(() => _scrolled = scrolled);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final clients = ClientsMockData.search(_query);
+    final subtitle = buildClientsSubtitle(clients.length);
+
+    return Scaffold(
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: VcarePageHeader(
+              title: 'Clients',
+              subtitle: subtitle,
+            ),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: ClientsStickySearchHeader(
+              scrolled: _scrolled,
+              focused: _searchFocused,
+              controller: _searchController,
+              onChanged: (value) => setState(() => _query = value),
+              onFocusChange: (focused) {
+                if (focused != _searchFocused) {
+                  setState(() => _searchFocused = focused);
+                }
+              },
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+            sliver: clients.isEmpty
+                ? const SliverToBoxAdapter(child: ClientsEmptyState())
+                : SliverList.separated(
+                    itemCount: clients.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final client = clients[index];
+                      return ClientRow(
+                        client: client,
+                        onTap: () => context.pushNamed(
+                          AppRouter.clientDetailName,
+                          pathParameters: {'id': client.id},
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}

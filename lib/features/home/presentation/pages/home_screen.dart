@@ -12,8 +12,8 @@ import 'package:flutter_template/features/home/data/home_models.dart';
 import 'package:flutter_template/features/home/data/home_profile_mapper.dart';
 import 'package:flutter_template/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:flutter_template/features/home/data/home_saved_providers_builder.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_care_team_carousel.dart';
 import 'package:flutter_template/features/home/presentation/widgets/home_membership_section.dart';
+import 'package:flutter_template/features/home/presentation/widgets/home_metrics_section.dart';
 import 'package:flutter_template/features/home/presentation/widgets/home_page_header.dart';
 import 'package:flutter_template/features/home/presentation/widgets/home_recent_activity_section.dart';
 import 'package:flutter_template/features/home/presentation/widgets/home_saved_providers_section.dart';
@@ -35,7 +35,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   late HomeViewData _data;
   bool _previewEmptySaved = false;
   bool _previewNoMembership = false;
-  bool _previewEmptyCareTeam = false;
 
   @override
   void initState() {
@@ -58,11 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       mockFavoriteIds: ref.watch(providerFavoritesProvider),
       cmsFavorites: ref.watch(cmsProviderFavoritesProvider),
     );
-  }
-
-  List<CareTeamMember> get _careTeam {
-    if (_previewEmptyCareTeam) return [];
-    return _data.careTeam;
   }
 
   void _removeFavorite(SavedProviderItem item) {
@@ -183,20 +177,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         : null,
                   ),
                   const SizedBox(height: _sectionGap),
-                  HomeCareTeamCarousel(
-                    careTeam: _careTeam,
-                    onSeeAll: () => context.pushNamed(AppRouter.careTeamName),
-                    onMemberTap: (member) => context.pushNamed(
-                      AppRouter.careTeamDetailName,
-                      pathParameters: {'id': member.id},
-                    ),
-                    previewEmpty: _previewEmptyCareTeam,
-                    onPreviewToggle: kDebugMode
-                        ? () => setState(
-                            () =>
-                                _previewEmptyCareTeam = !_previewEmptyCareTeam,
-                          )
-                        : null,
+                  HomeMetricsSection(
+                    onTotalClientsTap: () =>
+                        context.goNamed(AppRouter.clientsName),
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeRecentActivitySection(

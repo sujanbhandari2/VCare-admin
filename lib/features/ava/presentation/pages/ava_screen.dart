@@ -11,7 +11,6 @@ import 'package:flutter_template/features/ava/domain/entities/ava_message.dart';
 import 'package:flutter_template/features/ava/presentation/providers/ava_state_provider.dart';
 import 'package:flutter_template/features/ava/utils/ava_chat_date.dart';
 import 'package:flutter_template/features/main_wrapper/presentation/widgets/vcare_bottom_navigation.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
 import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
 
 /// Layout tokens from vcareapp AVA feature (`px-5`, `gap-3`, `AvaChatMessage`, etc.).
@@ -101,6 +100,12 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
         ? List<AvaMessage>.from(AvaMockData.seedMessages)
         : state.messages;
     final showSuggestions = messages.length <= 1;
+    final composerBottom =
+        vcareAvaComposerBottomInset(context) +
+        MediaQuery.viewInsetsOf(context).bottom;
+    final editingExtra = state.editingId != null ? 36.0 : 0.0;
+    final overlayHeight =
+        kAvaComposerHeight + editingExtra + composerBottom;
 
     ref.listen(
       avaStateProvider.select((s) => s.messages.length),
@@ -108,56 +113,62 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
     );
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: vcareAvaComposerBottomInset(context),
-          ),
-          child: Column(
-            children: [
-              const VcarePageHeader(
-                title: 'AVA',
-                subtitle: 'Advocate Virtual Assistant',
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(
-                        AvaLayout.horizontalPadding,
-                        AvaLayout.listTopPadding,
-                        AvaLayout.horizontalPadding,
-                        AvaLayout.listBottomPadding,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const VcarePageHeader(
+                  title: 'AVA',
+                  subtitle: 'Advocate Virtual Assistant',
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: EdgeInsets.fromLTRB(
+                          AvaLayout.horizontalPadding,
+                          AvaLayout.listTopPadding,
+                          AvaLayout.horizontalPadding,
+                          overlayHeight + AvaLayout.listBottomPadding,
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: _buildChatChildren(
-                            vcare,
-                            messages,
-                            showSuggestions,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - overlayHeight,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: _buildChatChildren(
+                              vcare,
+                              messages,
+                              showSuggestions,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              _AvaComposer(
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: composerBottom,
+              child: _AvaComposer(
                 controller: _composer,
                 editingId: state.editingId,
                 canSend: _composer.text.trim().isNotEmpty,
                 onSend: () => _send(),
                 onCancelEdit: _cancelEdit,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -511,7 +522,7 @@ class _HumanRequestLink extends StatelessWidget {
   }
 }
 
-/// Matches vcareapp [AvaComposer].
+/// Matches vcareapp [AvaComposer] — `px-5 pt-1 pb-0`, pill input + send.
 class _AvaComposer extends StatelessWidget {
   const _AvaComposer({
     required this.controller,
@@ -523,7 +534,6 @@ class _AvaComposer extends StatelessWidget {
 
   static const double _fieldPaddingLeft = 16;
   static const double _fieldPaddingRight = 6;
-  static const double _fieldPaddingVertical = 6;
   static const double _sendButtonSize = 36;
   static const double _textSize = 14;
 
@@ -537,113 +547,124 @@ class _AvaComposer extends StatelessWidget {
   Widget build(BuildContext context) {
     final vcare = context.vcare;
 
-    // Web: `px-5 pt-1 pb-0` — no padding below the input bar.
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AvaLayout.horizontalPadding,
-        4,
-        AvaLayout.horizontalPadding,
-        0,
-      ),
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (editingId != null) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: vcare.muted.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Editing message',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: vcare.mutedForeground,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: onCancelEdit,
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: VCareColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Material(
-            color: vcare.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
-              side: BorderSide(color: vcare.border),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                _fieldPaddingLeft,
-                _fieldPaddingVertical,
-                _fieldPaddingRight,
-                _fieldPaddingVertical,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      style: const TextStyle(fontSize: _textSize, height: 1.25),
-                      minLines: 1,
-                      maxLines: 4,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: canSend ? (_) => onSend() : null,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        hintText: 'Ask AVA anything…',
-                        hintStyle: TextStyle(
-                          fontSize: _textSize,
-                          color: vcare.mutedForeground.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Material(
-                    color: canSend
-                        ? VCareColors.primary
-                        : VCareColors.primary.withValues(alpha: 0.35),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      onTap: canSend ? onSend : null,
-                      customBorder: const CircleBorder(),
-                      child: SizedBox(
-                        width: _sendButtonSize,
-                        height: _sendButtonSize,
-                        child: Icon(
-                          LucideIcons.send,
-                          size: 16,
-                          color: VCareColors.primaryForeground,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AvaLayout.horizontalPadding,
+          4,
+          AvaLayout.horizontalPadding,
+          0,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (editingId != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: vcare.muted.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Editing message',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: vcare.mutedForeground,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: onCancelEdit,
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: VCareColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            Material(
+              color: vcare.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+                side: BorderSide(color: vcare.border),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  _fieldPaddingLeft,
+                  6,
+                  _fieldPaddingRight,
+                  6,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        style: const TextStyle(fontSize: _textSize, height: 1.25),
+                        minLines: 1,
+                        maxLines: 4,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: canSend ? (_) => onSend() : null,
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          hintText: 'Ask AVA anything…',
+                          hintStyle: TextStyle(
+                            fontSize: _textSize,
+                            color: vcare.mutedForeground.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Material(
+                      color: canSend
+                          ? VCareColors.primary
+                          : VCareColors.primary.withValues(alpha: 0.35),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        onTap: canSend ? onSend : null,
+                        customBorder: const CircleBorder(),
+                        child: SizedBox(
+                          width: _sendButtonSize,
+                          height: _sendButtonSize,
+                          child: Icon(
+                            LucideIcons.send,
+                            size: 16,
+                            color: VCareColors.primaryForeground,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

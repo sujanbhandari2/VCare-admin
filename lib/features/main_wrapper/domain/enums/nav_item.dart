@@ -5,10 +5,10 @@ import 'package:flutter_template/app/router/app_router.dart';
 
 /// Primary bottom navigation items (vcare [MobileShell] mobile tab order).
 enum NavItem {
-  cases(
-    path: AppRouter.requests,
-    label: 'Cases',
-    icon: LucideIcons.inbox,
+  clients(
+    path: AppRouter.clients,
+    label: 'Clients',
+    icon: LucideIcons.users,
   ),
   provider(
     path: AppRouter.findCare,
@@ -44,9 +44,9 @@ enum NavItem {
   final IconData icon;
   final bool isCenter;
 
-  /// Mobile bottom bar order: Cases, Provider, Home, Messages, AVA.
+  /// Mobile bottom bar order: Clients, Provider, Home, Messages, AVA.
   static const List<NavItem> mobileTabs = [
-    NavItem.cases,
+    NavItem.clients,
     NavItem.provider,
     NavItem.home,
     NavItem.messages,

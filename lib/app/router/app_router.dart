@@ -7,6 +7,8 @@ import 'package:flutter_template/features/auth/presentation/pages/vcare_login_sc
 import 'package:flutter_template/features/auth/presentation/pages/register_screen.dart';
 import 'package:flutter_template/features/ava/presentation/pages/ava_screen.dart';
 import 'package:flutter_template/features/cases/presentation/pages/cases_screen.dart';
+import 'package:flutter_template/features/clients/presentation/pages/client_detail_screen.dart';
+import 'package:flutter_template/features/clients/presentation/pages/clients_screen.dart';
 import 'package:flutter_template/features/find_care/presentation/pages/find_care_category_screen.dart';
 import 'package:flutter_template/features/find_care/presentation/pages/find_care_screen.dart';
 import 'package:flutter_template/features/find_care/presentation/pages/provider_detail_screen.dart';
@@ -41,6 +43,8 @@ class AppRouter {
   static const register = "/register";
   static const forgotPassword = "/forgot_password";
   static const home = "/home";
+  static const clients = "/clients";
+  static const clientDetail = "/clients/:id";
   static const requests = "/requests";
   static const requestDetail = "/requests/:id";
   static const requestNew = "/requests/new";
@@ -87,6 +91,8 @@ class AppRouter {
   static const careTeamDetailName = "care-team-detail";
   static const activityName = "activity";
   static const savedProvidersName = "saved-providers";
+  static const clientsName = "clients";
+  static const clientDetailName = "client-detail";
   static const requestNewName = "request-new";
   static const requestDetailName = "request-detail";
   static const findCareCategoryName = "find-care-category";
@@ -172,30 +178,19 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: requests,
-                name: toName(requests),
+                path: clients,
+                name: clientsName,
                 pageBuilder: (_, state) =>
-                    _pageBuilder(state: state, child: const CasesScreen()),
+                    _pageBuilder(state: state, child: const ClientsScreen()),
                 routes: [
                   GoRoute(
-                    path: 'new',
-                    name: requestNewName,
-                    pageBuilder: (_, state) => _pageBuilder(
-                      state: state,
-                      transitionType: TransitionType.slide,
-                      child: RequestNewScreen(
-                        initialPrompt: state.uri.queryParameters['prompt'],
-                      ),
-                    ),
-                  ),
-                  GoRoute(
                     path: ':id',
-                    name: requestDetailName,
+                    name: clientDetailName,
                     pageBuilder: (_, state) => _pageBuilder(
                       state: state,
                       transitionType: TransitionType.slide,
-                      child: RequestDetailScreen(
-                        requestId: state.pathParameters['id'] ?? '',
+                      child: ClientDetailScreen(
+                        clientId: state.pathParameters['id'] ?? '',
                       ),
                     ),
                   ),
@@ -557,6 +552,39 @@ class AppRouter {
                     _pageBuilder(state: state, child: const AvaScreen()),
               ),
             ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: requests,
+        name: toName(requests),
+        pageBuilder: (_, state) => _pageBuilder(
+          state: state,
+          transitionType: TransitionType.slide,
+          child: const CasesScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'new',
+            name: requestNewName,
+            pageBuilder: (_, state) => _pageBuilder(
+              state: state,
+              transitionType: TransitionType.slide,
+              child: RequestNewScreen(
+                initialPrompt: state.uri.queryParameters['prompt'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: ':id',
+            name: requestDetailName,
+            pageBuilder: (_, state) => _pageBuilder(
+              state: state,
+              transitionType: TransitionType.slide,
+              child: RequestDetailScreen(
+                requestId: state.pathParameters['id'] ?? '',
+              ),
+            ),
           ),
         ],
       ),

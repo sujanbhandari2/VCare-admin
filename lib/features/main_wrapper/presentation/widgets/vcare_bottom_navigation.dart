@@ -28,7 +28,7 @@ double vcareMobileBottomNavBarTop(BuildContext context) {
   if (MediaQuery.sizeOf(context).width >= 768) return 0;
   return MediaQuery.paddingOf(context).bottom +
       _bottomNavOuterPadding +
-      (_barBodyHeight - _pillHeight);
+      _pillHeight;
 }
 
 /// Bottom padding to pin content [gap] px above the nav pill.
@@ -36,18 +36,20 @@ double vcareMobileBottomNavContentPadding(
   BuildContext context, {
   double gap = 10,
 }) {
-  final barTop = vcareMobileBottomNavBarTop(context);
-  if (barTop == 0) return 12;
-  return barTop + gap;
+  final pillTop = vcareMobileBottomNavBarTop(context);
+  if (pillTop == 0) return 12;
+  return pillTop + gap;
 }
 
-/// Inset for AVA composer — matches web `AvaComposer` (`pb-0`) + small gap above pill.
-/// Apply to the page column, not below the text field (avoids a visible empty strip).
-double vcareAvaComposerBottomInset(BuildContext context, {double gap = 8}) {
-  final barTop = vcareMobileBottomNavBarTop(context);
-  if (barTop == 0) return 12;
-  return barTop + gap;
+/// Gap from AVA composer bottom edge to nav pill top — web `AvaComposer` uses `pb-0`.
+double vcareAvaComposerBottomInset(BuildContext context, {double gap = 6}) {
+  final pillTop = vcareMobileBottomNavBarTop(context);
+  if (pillTop == 0) return 12;
+  return pillTop + gap;
 }
+
+/// Approximate height of the AVA composer row (edit banner excluded).
+const double kAvaComposerHeight = 52;
 
 /// Mobile bottom nav matching vcareapp [MobileShell] (Home centered, floating pill).
 class VcareBottomNavigation extends StatelessWidget {
