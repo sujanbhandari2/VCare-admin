@@ -29,9 +29,9 @@ class AvaState {
 
   AvaState loading() => copyWith(operation: const OperationState.loading());
   AvaState success({List<AvaMessage>? messages}) => copyWith(
-        messages: messages ?? this.messages,
-        operation: const OperationState.success(null),
-      );
+    messages: messages ?? this.messages,
+    operation: const OperationState.success(null),
+  );
   AvaState failure(String? message) =>
       copyWith(operation: OperationState.failure(message));
 }

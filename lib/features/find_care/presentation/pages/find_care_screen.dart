@@ -6,7 +6,7 @@ import 'package:flutter_template/app/router/app_router.dart';
 import 'package:flutter_template/core/styles/vcare_colors.dart';
 import 'package:flutter_template/core/styles/vcare_theme.dart';
 import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:flutter_template/shared/widgets/vcare_sticky_tab_header.dart';
 
 class FindCareScreen extends StatefulWidget {
   const FindCareScreen({super.key});
@@ -29,14 +29,20 @@ class _FindCareScreenState extends State<FindCareScreen> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final safeTop = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Find Care',
-              subtitle: 'Browse by category.',
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              hasSubtitle: true,
+              title: vcareTabPageTitle(
+                title: 'Find Care',
+                subtitle: 'Browse by category.',
+              ),
             ),
           ),
           SliverPadding(

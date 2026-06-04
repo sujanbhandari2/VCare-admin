@@ -4,14 +4,14 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_template/core/styles/vcare_theme.dart';
 
 /// Sticky search — parity with vcareapp [StickySearchBar].
-class ClientsStickySearchBar extends StatelessWidget {
-  const ClientsStickySearchBar({
+class VcareStickySearchBar extends StatelessWidget {
+  const VcareStickySearchBar({
     super.key,
     required this.controller,
     required this.extent,
     required this.onChanged,
     required this.onFocusChange,
-    this.placeholder = 'Search clients by name, email or city',
+    this.placeholder = 'Search',
   });
 
   final TextEditingController controller;
@@ -60,10 +60,7 @@ class ClientsStickySearchBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: vcare.muted.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: vcare.border,
-                    width: 1,
-                  ),
+                  border: Border.all(color: vcare.border),
                 ),
                 child: Focus(
                   onFocusChange: onFocusChange,
@@ -137,13 +134,14 @@ class ClientsStickySearchBar extends StatelessWidget {
 }
 
 /// Pinned header wrapper so the search bar stays above the scrolling list.
-class ClientsStickySearchHeader extends SliverPersistentHeaderDelegate {
-  ClientsStickySearchHeader({
+class VcareStickySearchHeaderDelegate extends SliverPersistentHeaderDelegate {
+  VcareStickySearchHeaderDelegate({
     required this.scrolled,
     required this.focused,
     required this.controller,
     required this.onChanged,
     required this.onFocusChange,
+    this.placeholder = 'Search',
   });
 
   final bool scrolled;
@@ -151,14 +149,15 @@ class ClientsStickySearchHeader extends SliverPersistentHeaderDelegate {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final ValueChanged<bool> onFocusChange;
+  final String placeholder;
 
   @override
   double get minExtent => focused
-      ? ClientsStickySearchBar.expandedHeight
-      : ClientsStickySearchBar.collapsedHeight;
+      ? VcareStickySearchBar.expandedHeight
+      : VcareStickySearchBar.collapsedHeight;
 
   @override
-  double get maxExtent => ClientsStickySearchBar.expandedHeight;
+  double get maxExtent => VcareStickySearchBar.expandedHeight;
 
   @override
   Widget build(
@@ -168,23 +167,24 @@ class ClientsStickySearchHeader extends SliverPersistentHeaderDelegate {
   ) {
     var extent = (maxExtent - shrinkOffset).clamp(minExtent, maxExtent);
 
-    // When scrolled but focused, keep the expanded height like web.
     if (focused && scrolled) {
       extent = maxExtent;
     }
 
-    return ClientsStickySearchBar(
+    return VcareStickySearchBar(
       controller: controller,
       extent: extent,
       onChanged: onChanged,
       onFocusChange: onFocusChange,
+      placeholder: placeholder,
     );
   }
 
   @override
-  bool shouldRebuild(covariant ClientsStickySearchHeader oldDelegate) {
+  bool shouldRebuild(covariant VcareStickySearchHeaderDelegate oldDelegate) {
     return scrolled != oldDelegate.scrolled ||
         focused != oldDelegate.focused ||
-        controller != oldDelegate.controller;
+        controller != oldDelegate.controller ||
+        placeholder != oldDelegate.placeholder;
   }
 }

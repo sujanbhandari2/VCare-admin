@@ -39,10 +39,10 @@ class LoginResponseModel {
   }
 
   Map<String, dynamic> toJson() => {
-        "refresh": refresh,
-        "access": access,
-        "user_id": userId,
-        "email": email,
-        "username": username,
-      };
+    "refresh": refresh,
+    "access": access,
+    "user_id": userId,
+    "email": email,
+    "username": username,
+  };
 }

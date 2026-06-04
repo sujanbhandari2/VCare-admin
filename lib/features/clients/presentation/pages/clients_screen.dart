@@ -5,9 +5,9 @@ import 'package:flutter_template/app/router/app_router.dart';
 import 'package:flutter_template/features/clients/data/clients_mock_data.dart';
 import 'package:flutter_template/features/clients/presentation/widgets/client_row.dart';
 import 'package:flutter_template/features/clients/presentation/widgets/clients_empty_state.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/clients_sticky_search_bar.dart';
 import 'package:flutter_template/features/clients/utils/client_utils.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:flutter_template/shared/widgets/vcare_sticky_search_bar.dart';
+import 'package:flutter_template/shared/widgets/vcare_sticky_tab_header.dart';
 
 /// Clients list — parity with vcareapp [ClientsPage].
 class ClientsScreen extends StatefulWidget {
@@ -48,20 +48,24 @@ class _ClientsScreenState extends State<ClientsScreen> {
   Widget build(BuildContext context) {
     final clients = ClientsMockData.search(_query);
     final subtitle = buildClientsSubtitle(clients.length);
+    final safeTop = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Clients',
-              subtitle: subtitle,
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              hasSubtitle: true,
+              showBottomBorder: _scrolled,
+              title: vcareTabPageTitle(title: 'Clients', subtitle: subtitle),
             ),
           ),
           SliverPersistentHeader(
             pinned: true,
-            delegate: ClientsStickySearchHeader(
+            delegate: VcareStickySearchHeaderDelegate(
               scrolled: _scrolled,
               focused: _searchFocused,
               controller: _searchController,
@@ -71,6 +75,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                   setState(() => _searchFocused = focused);
                 }
               },
+              placeholder: 'Search clients by name, email or city',
             ),
           ),
           SliverPadding(

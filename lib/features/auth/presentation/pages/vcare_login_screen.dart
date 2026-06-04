@@ -11,15 +11,23 @@ import 'package:flutter_template/app/router/app_router.dart';
 import 'package:flutter_template/core/styles/vcare_colors.dart';
 import 'package:flutter_template/core/styles/vcare_theme.dart';
 import 'package:flutter_template/features/auth/data/vcare_mock_auth.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
+import 'package:flutter_template/features/auth/data/vcare_mock_lookup.dart';
+import 'package:flutter_template/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:flutter_template/shared/utils/extension_functions.dart';
 
 enum _LoginMethod { phone, email }
 
-enum _LoginStep { identify, verify, password }
+enum _LoginStep {
+  identify,
+  verify,
+  disambiguate,
+  password,
+  activate,
+  onboard,
+  biometric,
+}
 
-const _demoOtp = '123456';
-
+/// Login flow — parity with vcareapp [/login] + auth feature.
 class VcareLoginScreen extends ConsumerStatefulWidget {
   const VcareLoginScreen({super.key});
 
@@ -28,18 +36,27 @@ class VcareLoginScreen extends ConsumerStatefulWidget {
 }
 
 class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
-  _LoginMethod _method = _LoginMethod.email;
+  _LoginMethod _method = _LoginMethod.phone;
   _LoginStep _step = _LoginStep.identify;
 
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController(text: 'alex.rivera@example.com');
+  final _emailController = TextEditingController(
+    text: 'alex.rivera@example.com',
+  );
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _otpController = TextEditingController();
+  final _dobController = TextEditingController();
+  final _zipController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
 
   String? _loadingKey;
   String? _error;
   int _resendIn = 0;
   Timer? _resendTimer;
+  LoginLookupBranch? _branch;
+  LoginClientRecord? _selectedClient;
 
   @override
   void dispose() {
@@ -47,15 +64,28 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _otpController.dispose();
+    _dobController.dispose();
+    _zipController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
-  String get _destination => _method == _LoginMethod.phone
-      ? (_phoneController.text.isEmpty ? '+1 (555) 000-0000' : _phoneController.text)
-      : (_emailController.text.isEmpty ? 'you@example.com' : _emailController.text);
+  String get _identifier => _method == _LoginMethod.phone
+      ? _phoneController.text.trim()
+      : _emailController.text.trim();
 
-  Future<void> _finishSignIn() async {
+  String get _destination => _method == _LoginMethod.phone
+      ? (_phoneController.text.isEmpty
+            ? '+1 (555) 000-0000'
+            : _phoneController.text)
+      : (_emailController.text.isEmpty
+            ? 'you@example.com'
+            : _emailController.text);
+
+  Future<void> _finishSignIn({String? name, String? email}) async {
     setState(() => _loadingKey = 'finish');
     await VcareMockAuth.signIn(ref);
     if (!mounted) return;
@@ -102,7 +132,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     });
     await Future<void>.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
-    if (value != _demoOtp && value != '000000') {
+    if (value != VcareMockLookup.demoOtp && value != '000000') {
       setState(() {
         _error = 'Invalid code. Try 123456 for the demo.';
         _loadingKey = null;
@@ -110,10 +140,64 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       });
       return;
     }
+
+    final result = await VcareMockLookup.lookup(
+      _identifier.isEmpty ? 'alex.rivera@example.com' : _identifier,
+    );
+    if (!mounted) return;
+
     setState(() {
+      _branch = result;
       _loadingKey = null;
-      _step = _LoginStep.password;
     });
+
+    switch (result) {
+      case LoginLookupNew():
+        setState(() => _step = _LoginStep.onboard);
+      case LoginLookupActivate(:final client):
+        setState(() {
+          _selectedClient = client;
+          _step = _LoginStep.activate;
+        });
+      case LoginLookupPassword(:final client):
+        setState(() {
+          _selectedClient = client;
+          _step = _LoginStep.password;
+        });
+      case LoginLookupDisambiguate():
+        setState(() => _step = _LoginStep.disambiguate);
+    }
+  }
+
+  Future<void> _demoBranch(String email) async {
+    setState(() {
+      _error = null;
+      _method = _LoginMethod.email;
+      _emailController.text = email;
+      _loadingKey = 'demo';
+    });
+    final result = await VcareMockLookup.lookup(email);
+    if (!mounted) return;
+    setState(() {
+      _branch = result;
+      _loadingKey = null;
+    });
+    switch (result) {
+      case LoginLookupNew():
+        setState(() => _step = _LoginStep.onboard);
+      case LoginLookupActivate(:final client):
+        setState(() {
+          _selectedClient = client;
+          _step = _LoginStep.activate;
+        });
+      case LoginLookupPassword(:final client):
+        setState(() {
+          _selectedClient = client;
+          _step = _LoginStep.password;
+        });
+      case LoginLookupDisambiguate():
+        setState(() => _step = _LoginStep.disambiguate);
+    }
   }
 
   Future<void> _finishSocial(String provider) async {
@@ -125,18 +209,99 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   void _goBack() {
     setState(() {
       _error = null;
-      if (_step == _LoginStep.verify) {
-        _step = _LoginStep.identify;
-      } else if (_step == _LoginStep.password) {
-        _step = _LoginStep.verify;
+      switch (_step) {
+        case _LoginStep.verify:
+          _step = _LoginStep.identify;
+        case _LoginStep.disambiguate:
+        case _LoginStep.password:
+        case _LoginStep.activate:
+        case _LoginStep.onboard:
+          _step = _LoginStep.verify;
+        case _LoginStep.biometric:
+          _step = _branch is LoginLookupNew
+              ? _LoginStep.onboard
+              : _LoginStep.activate;
+        case _LoginStep.identify:
+          break;
       }
     });
   }
 
+  void _submitDisambiguation() {
+    final branch = _branch;
+    if (branch is! LoginLookupDisambiguate) return;
+    setState(() => _error = null);
+    if (_dobController.text.length < 4 || _zipController.text.length < 3) {
+      setState(
+        () => _error = 'Please enter your birth year and ZIP to continue.',
+      );
+      return;
+    }
+    final zipPrefix = _zipController.text.length >= 3
+        ? _zipController.text.substring(0, 3)
+        : _zipController.text;
+    final match = branch.clients.firstWhere(
+      (c) => c.zipMasked.startsWith(zipPrefix),
+      orElse: () => branch.clients.first,
+    );
+    setState(() {
+      _selectedClient = match;
+      _step = match.hasLogin ? _LoginStep.password : _LoginStep.activate;
+    });
+  }
+
+  void _submitPassword() {
+    setState(() => _error = null);
+    if (_passwordController.text.length < 6) {
+      setState(() => _error = 'Enter your password to continue.');
+      return;
+    }
+    _finishSignIn(name: _selectedClient?.fullName, email: _identifier);
+  }
+
+  void _submitActivation() {
+    setState(() => _error = null);
+    if (_passwordController.text.length < 8) {
+      setState(() => _error = 'Password must be at least 8 characters.');
+      return;
+    }
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _error = "Passwords don't match.");
+      return;
+    }
+    setState(() => _step = _LoginStep.biometric);
+  }
+
+  void _submitOnboard() {
+    setState(() => _error = null);
+    if (_firstNameController.text.trim().isEmpty ||
+        _lastNameController.text.trim().isEmpty) {
+      setState(() => _error = 'Please enter your name.');
+      return;
+    }
+    if (_passwordController.text.length < 8) {
+      setState(() => _error = 'Password must be at least 8 characters.');
+      return;
+    }
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _error = "Passwords don't match.");
+      return;
+    }
+    setState(() => _step = _LoginStep.biometric);
+  }
+
+  Future<void> _finishBiometric(bool enroll) async {
+    setState(() => _loadingKey = enroll ? 'biometric-yes' : 'biometric-no');
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    final name =
+        _selectedClient?.fullName ??
+        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+            .trim();
+    await _finishSignIn(name: name.isEmpty ? null : name, email: _identifier);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -145,149 +310,34 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             : Brightness.dark,
       ),
       child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Theme.of(context).scaffoldBackgroundColor,
-                Theme.of(context).scaffoldBackgroundColor,
-                VCareColors.primary.withValues(alpha: 0.05),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: Material(
-                    color: vcare.card,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                      side: BorderSide(color: vcare.border),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
-                          child: switch (_step) {
-                            _LoginStep.identify => _IdentifyStep(
-                                method: _method,
-                                loadingKey: _loadingKey,
-                                phoneController: _phoneController,
-                                emailController: _emailController,
-                                onMethodChanged: (m) =>
-                                    setState(() => _method = m),
-                                onSendCode: _sendCode,
-                                onGoogle: () => _finishSocial('google'),
-                                onApple: () => _finishSocial('apple'),
-                                onSkip: _finishSignIn,
-                              ),
-                            _LoginStep.verify => _VerifyStep(
-                                destination: _destination,
-                                otpController: _otpController,
-                                loadingKey: _loadingKey,
-                                error: _error,
-                                resendIn: _resendIn,
-                                onBack: _goBack,
-                                onVerify: _verifyCode,
-                                onResend: _sendCode,
-                              ),
-                            _LoginStep.password => _PasswordStep(
-                                loadingKey: _loadingKey,
-                                error: _error,
-                                passwordController: _passwordController,
-                                onBack: _goBack,
-                                onSubmit: () {
-                                  if (_passwordController.text.length < 6) {
-                                    setState(() => _error =
-                                        'Enter your password to continue.');
-                                    return;
-                                  }
-                                  _finishSignIn();
-                                },
-                              ),
-                          },
-                        ),
-                        _LoginFooter(vcare: vcare),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        body: LoginShell(
+          body: switch (_step) {
+            _LoginStep.identify => _buildIdentifyStep(context),
+            _LoginStep.verify => _buildVerifyStep(context),
+            _LoginStep.disambiguate => _buildDisambiguateStep(context),
+            _LoginStep.password => _buildPasswordStep(context),
+            _LoginStep.activate => _buildActivateStep(context),
+            _LoginStep.onboard => _buildOnboardStep(context),
+            _LoginStep.biometric => _buildBiometricStep(context),
+          },
         ),
       ),
     );
   }
-}
 
-class _IdentifyStep extends StatelessWidget {
-  const _IdentifyStep({
-    required this.method,
-    required this.loadingKey,
-    required this.phoneController,
-    required this.emailController,
-    required this.onMethodChanged,
-    required this.onSendCode,
-    required this.onGoogle,
-    required this.onApple,
-    required this.onSkip,
-  });
-
-  final _LoginMethod method;
-  final String? loadingKey;
-  final TextEditingController phoneController;
-  final TextEditingController emailController;
-  final ValueChanged<_LoginMethod> onMethodChanged;
-  final VoidCallback onSendCode;
-  final VoidCallback onGoogle;
-  final VoidCallback onApple;
-  final Future<void> Function() onSkip;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildIdentifyStep(BuildContext context) {
     final vcare = context.vcare;
 
     return Column(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: vcare.gradientCard,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(
-            LucideIcons.sparkles,
-            color: VCareColors.primaryForeground,
-            size: 28,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Welcome to VCare',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 22),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Sign in or get started in one step',
-          style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
-        ),
-        const SizedBox(height: 28),
+        const LoginBrandHeader(),
         Row(
           children: [
             Expanded(
-              child: _SocialButton(
+              child: LoginSocialButton(
                 label: 'Google',
-                loading: loadingKey == 'google',
-                onTap: onGoogle,
+                loading: _loadingKey == 'google',
+                onTap: () => _finishSocial('google'),
                 child: SvgPicture.asset(
                   'assets/svg/google.svg',
                   width: 20,
@@ -297,35 +347,20 @@ class _IdentifyStep extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _SocialButton(
+              child: LoginSocialButton(
                 label: 'Apple',
-                loading: loadingKey == 'apple',
-                onTap: onApple,
-                child: const Icon(LucideIcons.apple, size: 20),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(child: Divider(color: vcare.border)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                'OR CONTINUE WITH',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.2,
-                  color: vcare.mutedForeground,
+                loading: _loadingKey == 'apple',
+                onTap: () => _finishSocial('apple'),
+                child: SvgPicture.asset(
+                  'assets/svg/apple.svg',
+                  width: 20,
+                  height: 20,
                 ),
               ),
             ),
-            Expanded(child: Divider(color: vcare.border)),
           ],
         ),
-        const SizedBox(height: 20),
+        const LoginOrDivider(),
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -336,22 +371,23 @@ class _IdentifyStep extends StatelessWidget {
             children: [
               _MethodTab(
                 label: 'Phone',
-                selected: method == _LoginMethod.phone,
-                onTap: () => onMethodChanged(_LoginMethod.phone),
+                selected: _method == _LoginMethod.phone,
+                onTap: () => setState(() => _method = _LoginMethod.phone),
               ),
               _MethodTab(
                 label: 'Email',
-                selected: method == _LoginMethod.email,
-                onTap: () => onMethodChanged(_LoginMethod.email),
+                selected: _method == _LoginMethod.email,
+                onTap: () => setState(() => _method = _LoginMethod.email),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        if (method == _LoginMethod.phone)
-          _VcareTextField(
-            controller: phoneController,
+        if (_method == _LoginMethod.phone)
+          LoginTextField(
+            controller: _phoneController,
             keyboardType: TextInputType.phone,
+            hint: '(555) 000-0000',
             prefix: Padding(
               padding: const EdgeInsets.only(left: 16, right: 12),
               child: Row(
@@ -367,28 +403,65 @@ class _IdentifyStep extends StatelessWidget {
                 ],
               ),
             ),
-            hint: '(555) 000-0000',
           )
         else
-          _VcareTextField(
-            controller: emailController,
+          LoginTextField(
+            controller: _emailController,
             keyboardType: TextInputType.emailAddress,
+            hint: 'you@example.com',
             prefix: Padding(
               padding: const EdgeInsets.only(left: 16),
-              child: Icon(LucideIcons.mail, size: 16, color: vcare.mutedForeground),
+              child: Icon(
+                LucideIcons.mail,
+                size: 16,
+                color: vcare.mutedForeground,
+              ),
             ),
-            hint: 'you@example.com',
           ),
         const SizedBox(height: 12),
-        _PrimaryButton(
+        LoginPrimaryButton(
           label: 'Continue',
-          icon: method == _LoginMethod.phone ? LucideIcons.phone : LucideIcons.mail,
-          loading: loadingKey == 'send',
-          onPressed: loadingKey != null ? null : onSendCode,
+          icon: _method == _LoginMethod.phone
+              ? LucideIcons.phone
+              : LucideIcons.mail,
+          loading: _loadingKey == 'send',
+          onPressed: _loadingKey != null ? null : _sendCode,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
+        Text(
+          'DEMO BRANCHES',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: vcare.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (final branch in const [
+              ('New user', 'new@example.com'),
+              ('Activate', 'activate@example.com'),
+              ('Multi-match', 'duplicate@example.com'),
+            ])
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: branch.$2 == 'duplicate@example.com' ? 0 : 8,
+                  ),
+                  child: _DemoBranchButton(
+                    label: branch.$1,
+                    loading: _loadingKey == 'demo',
+                    onTap: () => _demoBranch(branch.$2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
         TextButton(
-          onPressed: loadingKey != null ? null : onSkip,
+          onPressed: _loadingKey != null ? null : () => _finishSignIn(),
           child: Text(
             'Skip — explore as demo user',
             style: TextStyle(
@@ -401,260 +474,384 @@ class _IdentifyStep extends StatelessWidget {
       ],
     );
   }
-}
 
-class _VerifyStep extends StatelessWidget {
-  const _VerifyStep({
-    required this.destination,
-    required this.otpController,
-    required this.loadingKey,
-    required this.error,
-    required this.resendIn,
-    required this.onBack,
-    required this.onVerify,
-    required this.onResend,
-  });
-
-  final String destination;
-  final TextEditingController otpController;
-  final String? loadingKey;
-  final String? error;
-  final int resendIn;
-  final VoidCallback onBack;
-  final Future<void> Function(String) onVerify;
-  final VoidCallback onResend;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildVerifyStep(BuildContext context) {
     final vcare = context.vcare;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BackLink(onTap: onBack),
-        _StepHeader(
+        LoginBackButton(onBack: _goBack),
+        LoginStepHeader(
           icon: LucideIcons.lock,
           title: 'Enter verification code',
-          subtitle: 'We sent a 6-digit code to $destination',
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: otpController,
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          maxLength: 6,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600, letterSpacing: 8),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            counterText: '',
-            filled: true,
-            fillColor: vcare.muted.withValues(alpha: 0.5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: vcare.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: vcare.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: VCareColors.primary, width: 2),
+          subtitle: Text.rich(
+            TextSpan(
+              text: 'We sent a 6-digit code to ',
+              children: [
+                TextSpan(
+                  text: _destination,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
           ),
-          onChanged: (v) {
-            if (v.length == 6) onVerify(v);
-          },
+        ),
+        LoginOtpInput(
+          controller: _otpController,
+          onCompleted: _verifyCode,
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
-        if (error != null)
-          Text(error!, style: TextStyle(fontSize: 12, color: VCareColors.destructive), textAlign: TextAlign.center)
-        else
+        if (_error != null)
           Text(
-            'Demo code: $_demoOtp',
-            style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
+            _error!,
+            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            textAlign: TextAlign.center,
+          )
+        else
+          Text.rich(
+            TextSpan(
+              text: 'Demo code: ',
+              style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
+              children: [
+                TextSpan(
+                  text: VcareMockLookup.demoOtp,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
             textAlign: TextAlign.center,
           ),
         const SizedBox(height: 16),
-        _PrimaryButton(
+        LoginPrimaryButton(
           label: 'Verify',
-          icon: LucideIcons.arrowRight,
-          loading: loadingKey == 'verify',
-          onPressed: otpController.text.length >= 6 && loadingKey == null
-              ? () => onVerify(otpController.text)
+          loading: _loadingKey == 'verify',
+          onPressed: _otpController.text.length >= 6 && _loadingKey == null
+              ? () => _verifyCode(_otpController.text)
               : null,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         Center(
-          child: TextButton(
-            onPressed: resendIn > 0 ? null : onResend,
-            child: Text(
-              resendIn > 0 ? 'Resend in ${resendIn}s' : 'Resend code',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: resendIn > 0 ? vcare.mutedForeground : VCareColors.primary,
+          child: Text.rich(
+            TextSpan(
+              text: "Didn't get a code? ",
+              style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
+              children: [
+                WidgetSpan(
+                  child: TextButton(
+                    onPressed: _resendIn > 0 ? null : _sendCode,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      _resendIn > 0 ? 'Resend in ${_resendIn}s' : 'Resend code',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _resendIn > 0
+                            ? vcare.mutedForeground
+                            : VCareColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDisambiguateStep(BuildContext context) {
+    final branch = _branch;
+    if (branch is! LoginLookupDisambiguate) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LoginBackButton(onBack: _goBack),
+        const LoginStepHeader(
+          icon: LucideIcons.users,
+          title: 'We found a few matches',
+          subtitle: Text("Help us pick the right record. We'll only ask once."),
+        ),
+        for (final client in branch.clients) ...[
+          LoginClientCard(
+            fullName: client.fullName,
+            detail: 'DOB ${client.dobMasked} · ZIP ${client.zipMasked}',
+          ),
+          const SizedBox(height: 8),
+        ],
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: _dobController,
+          keyboardType: TextInputType.number,
+          hint: 'Year of birth (e.g. 1985)',
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: _zipController,
+          keyboardType: TextInputType.number,
+          hint: 'ZIP code',
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+          ),
+        ],
+        const SizedBox(height: 12),
+        LoginPrimaryButton(label: 'Continue', onPressed: _submitDisambiguation),
+      ],
+    );
+  }
+
+  Widget _buildPasswordStep(BuildContext context) {
+    final client = _selectedClient;
+    if (client == null) return const SizedBox.shrink();
+    final branch = _branch;
+    final firstName = client.fullName.split(' ').first;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LoginBackButton(onBack: _goBack),
+        LoginStepHeader(
+          icon: LucideIcons.keyRound,
+          title: 'Welcome back, $firstName',
+          subtitle: const Text('Enter your password to continue.'),
+        ),
+        LoginTextField(
+          controller: _passwordController,
+          obscureText: true,
+          hint: 'Password',
+          autofocus: true,
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+          ),
+        ],
+        if (branch is LoginLookupPassword && branch.biometricEnrolled) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () =>
+                _finishSignIn(name: client.fullName, email: _identifier),
+            icon: const Icon(LucideIcons.fingerprint, size: 16),
+            label: const Text('Use passkey instead'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
+        ],
+        const SizedBox(height: 12),
+        LoginPrimaryButton(
+          label: 'Sign in',
+          loading: _loadingKey == 'finish',
+          onPressed: _loadingKey != null ? null : _submitPassword,
+        ),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: () {},
+          child: Text(
+            'Forgot password?',
+            style: TextStyle(
+              fontSize: 12,
+              color: context.vcare.mutedForeground,
+              decoration: TextDecoration.underline,
+            ),
+          ),
         ),
       ],
     );
   }
-}
 
-class _PasswordStep extends StatelessWidget {
-  const _PasswordStep({
-    required this.loadingKey,
-    required this.error,
-    required this.passwordController,
-    required this.onBack,
-    required this.onSubmit,
-  });
+  Widget _buildActivateStep(BuildContext context) {
+    final client = _selectedClient;
+    if (client == null) return const SizedBox.shrink();
 
-  final String? loadingKey;
-  final String? error;
-  final TextEditingController passwordController;
-  final VoidCallback onBack;
-  final VoidCallback onSubmit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LoginBackButton(onBack: _goBack),
+        LoginStepHeader(
+          icon: LucideIcons.shieldCheck,
+          title: 'Activate your account',
+          subtitle: Text(
+            'We found your VCare record (${client.memberId}). Set up your login to continue.',
+          ),
+        ),
+        LoginClientCard(
+          fullName: client.fullName,
+          detail: 'DOB ${client.dobMasked} · ZIP ${client.zipMasked}',
+        ),
+        const SizedBox(height: 16),
+        LoginTextField(
+          controller: _passwordController,
+          obscureText: true,
+          hint: 'Create a password (min 8 chars)',
+        ),
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: _confirmPasswordController,
+          obscureText: true,
+          hint: 'Confirm password',
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+          ),
+        ],
+        const SizedBox(height: 12),
+        LoginPrimaryButton(label: 'Continue', onPressed: _submitActivation),
+      ],
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildOnboardStep(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LoginBackButton(onBack: _goBack),
+        const LoginStepHeader(
+          icon: LucideIcons.userPlus,
+          title: "Let's set up your account",
+          subtitle: Text("A few details and you're in."),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: LoginTextField(
+                controller: _firstNameController,
+                hint: 'First name',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: LoginTextField(
+                controller: _lastNameController,
+                hint: 'Last name',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: _passwordController,
+          obscureText: true,
+          hint: 'Create a password (min 8 chars)',
+        ),
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: _confirmPasswordController,
+          obscureText: true,
+          hint: 'Confirm password',
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+          ),
+        ],
+        const SizedBox(height: 12),
+        LoginPrimaryButton(label: 'Continue', onPressed: _submitOnboard),
+      ],
+    );
+  }
+
+  Widget _buildBiometricStep(BuildContext context) {
     final vcare = context.vcare;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BackLink(onTap: onBack),
-        _StepHeader(
-          icon: LucideIcons.keyRound,
-          title: 'Welcome back',
-          subtitle: 'Enter your password for ${HomeMockData.member.fullName}',
-        ),
-        const SizedBox(height: 16),
-        _VcareTextField(
-          controller: passwordController,
-          obscureText: true,
-          hint: 'Password',
-          prefix: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Icon(LucideIcons.lock, size: 16, color: vcare.mutedForeground),
+        const LoginStepHeader(
+          icon: LucideIcons.fingerprint,
+          title: 'Enable quick sign-in?',
+          subtitle: Text(
+            'Use your device biometrics or a passkey to skip passwords next time.',
           ),
         ),
-        if (error != null) ...[
-          const SizedBox(height: 8),
-          Text(error!, style: TextStyle(fontSize: 12, color: VCareColors.destructive)),
-        ],
-        const SizedBox(height: 16),
-        _PrimaryButton(
-          label: 'Sign in',
-          icon: LucideIcons.arrowRight,
-          loading: loadingKey == 'finish',
-          onPressed: loadingKey != null ? null : onSubmit,
-        ),
-      ],
-    );
-  }
-}
-
-class _LoginFooter extends StatelessWidget {
-  const _LoginFooter({required this.vcare});
-
-  final VCareThemeExtension vcare;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(28, 20, 28, 20),
-      decoration: BoxDecoration(
-        color: vcare.muted.withValues(alpha: 0.4),
-        border: Border(top: BorderSide(color: vcare.border)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            "By continuing you agree to VCare's Terms of Service and Privacy Policy.",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: vcare.mutedForeground, height: 1.4),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VCareColors.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: VCareColors.primary.withValues(alpha: 0.15),
+            ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(LucideIcons.shieldCheck, size: 14, color: vcare.mutedForeground),
-              const SizedBox(width: 6),
-              Text(
-                'HIPAA COMPLIANT · SECURE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: vcare.mutedForeground,
+              Icon(
+                LucideIcons.checkCircle2,
+                size: 20,
+                color: VCareColors.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Your credential is stored on this device only. You can remove it any time from Settings → Security.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: vcare.mutedForeground,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StepHeader extends StatelessWidget {
-  const _StepHeader({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Column(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: VCareColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(icon, color: VCareColors.primary, size: 24),
         ),
         const SizedBox(height: 16),
-        Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: vcare.mutedForeground, height: 1.35),
+        LoginPrimaryButton(
+          label: 'Enable & finish',
+          icon: LucideIcons.fingerprint,
+          loading: _loadingKey == 'biometric-yes',
+          onPressed: _loadingKey != null ? null : () => _finishBiometric(true),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: _loadingKey != null ? null : () => _finishBiometric(false),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: _loadingKey == 'biometric-no'
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text(
+                  'Maybe later',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
         ),
       ],
-    );
-  }
-}
-
-class _BackLink extends StatelessWidget {
-  const _BackLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        onPressed: onTap,
-        icon: Icon(LucideIcons.arrowLeft, size: 14, color: vcare.mutedForeground),
-        label: Text('Back', style: TextStyle(fontSize: 12, color: vcare.mutedForeground)),
-        style: TextButton.styleFrom(padding: EdgeInsets.zero),
-      ),
     );
   }
 }
@@ -677,6 +874,8 @@ class _MethodTab extends StatelessWidget {
       child: Material(
         color: selected ? vcare.card : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
+        elevation: selected ? 1 : 0,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
@@ -698,114 +897,14 @@ class _MethodTab extends StatelessWidget {
   }
 }
 
-class _VcareTextField extends StatelessWidget {
-  const _VcareTextField({
-    required this.controller,
-    this.hint,
-    this.prefix,
-    this.keyboardType,
-    this.obscureText = false,
-  });
-
-  final TextEditingController controller;
-  final String? hint;
-  final Widget? prefix;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      style: const TextStyle(fontWeight: FontWeight.w500),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: vcare.mutedForeground.withValues(alpha: 0.6)),
-        prefixIcon: prefix,
-        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-        filled: true,
-        fillColor: vcare.muted.withValues(alpha: 0.5),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: vcare.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: vcare.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: VCareColors.primary, width: 2),
-        ),
-      ),
-    );
-  }
-}
-
-class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({
+class _DemoBranchButton extends StatelessWidget {
+  const _DemoBranchButton({
     required this.label,
-    required this.icon,
-    this.loading = false,
-    this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool loading;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: VCareColors.primary,
-          foregroundColor: VCareColors.primaryForeground,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 0,
-        ),
-        child: loading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: VCareColors.primaryForeground,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 16),
-                  const SizedBox(width: 8),
-                  Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(width: 4),
-                  const Icon(LucideIcons.arrowRight, size: 16),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.child,
     required this.onTap,
     this.loading = false,
   });
 
   final String label;
-  final Widget child;
   final VoidCallback onTap;
   final bool loading;
 
@@ -813,7 +912,7 @@ class _SocialButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     return Material(
-      color: vcare.card,
+      color: vcare.muted.withValues(alpha: 0.4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: vcare.border),
@@ -822,23 +921,22 @@ class _SocialButton extends StatelessWidget {
         onTap: loading ? null : onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          child: loading
-              ? const Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          child: Center(
+            child: loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    child,
-                    const SizedBox(width: 8),
-                    Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  ],
-                ),
+          ),
         ),
       ),
     );

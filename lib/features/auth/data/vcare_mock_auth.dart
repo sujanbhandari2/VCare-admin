@@ -11,10 +11,7 @@ class VcareMockAuth {
     final storage = ref.read(storageServiceProvider);
     await storage.set(StorageKeys.loggedInUserToken, 'vcare-mock-token');
     await storage.set(StorageKeys.loggedInUserId, 1);
-    await storage.set(
-      StorageKeys.loggedInUserEmail,
-      'alex.rivera@example.com',
-    );
+    await storage.set(StorageKeys.loggedInUserEmail, 'alex.rivera@example.com');
     await storage.set(
       StorageKeys.loggedInUserUsername,
       HomeMockData.member.fullName,

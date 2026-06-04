@@ -26,7 +26,7 @@ enum Gender implements BaseEnum {
     return this == male
         ? context.appLocalization.gender_male
         : this == female
-            ? context.appLocalization.gender_female
-            : context.appLocalization.gender_other;
+        ? context.appLocalization.gender_female
+        : context.appLocalization.gender_other;
   }
 }

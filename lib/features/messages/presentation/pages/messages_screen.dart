@@ -14,7 +14,8 @@ import 'package:flutter_template/features/messages/presentation/widgets/messages
 import 'package:flutter_template/features/messages/presentation/widgets/messages_new_group_sheet.dart';
 import 'package:flutter_template/features/messages/presentation/widgets/messages_empty_state.dart';
 import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:flutter_template/shared/widgets/vcare_sticky_search_bar.dart';
+import 'package:flutter_template/shared/widgets/vcare_sticky_tab_header.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
@@ -28,6 +29,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   final _searchController = TextEditingController();
   bool _scrolled = false;
   bool _previewEmpty = false;
+  bool _searchFocused = false;
 
   @override
   void initState() {
@@ -78,100 +80,48 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                       );
                 }).toList());
 
+    final safeTop = MediaQuery.paddingOf(context).top;
+
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          SliverAppBar(
+          SliverPersistentHeader(
             pinned: true,
-            floating: false,
-            toolbarHeight: 64,
-            collapsedHeight: 110,
-            expandedHeight: 130,
-            backgroundColor: Theme.of(
-              context,
-            ).scaffoldBackgroundColor.withValues(alpha: 0.95),
-            surfaceTintColor: Colors.transparent,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: vcare.border.withValues(alpha: 0.6),
-                    width: _scrolled ? 1 : 0,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              hasSubtitle: true,
+              showBottomBorder: _scrolled,
+              title: vcareTabPageTitle(
+                title: 'Messages',
+                subtitle: 'Chat with your care team',
+                action: _HeaderNewMenu(
+                  vcare: vcare,
+                  onNewChat: () => MessagesNewChatSheet.show(context),
+                  onNewGroup: () => MessagesNewGroupSheet.show(
+                    context,
+                    onCreated: (group) => context.pushNamed(
+                      AppRouter.groupChatName,
+                      pathParameters: {'id': group.id},
+                    ),
                   ),
                 ),
               ),
-              child: Column(
-                children: [
-                  VcarePageHeader(
-                    title: 'Messages',
-                    subtitle: 'Chat with your care team',
-                    action: _HeaderNewMenu(
-                      vcare: vcare,
-                      onNewChat: () => MessagesNewChatSheet.show(context),
-                      onNewGroup: () => MessagesNewGroupSheet.show(
-                        context,
-                        onCreated: (group) => context.pushNamed(
-                          AppRouter.groupChatName,
-                          pathParameters: {'id': group.id},
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      height: _scrolled ? 36 : 44,
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          hintText: 'Search messages, people or groups',
-                          hintStyle: TextStyle(
-                            fontSize: _scrolled ? 12 : 14,
-                            color: vcare.mutedForeground.withValues(alpha: 0.7),
-                          ),
-                          prefixIcon: Padding(
-                            padding: EdgeInsets.only(
-                              left: 12,
-                              right: 8,
-                              bottom: _scrolled ? 4 : 0,
-                            ),
-                            child: Icon(
-                              LucideIcons.search,
-                              size: _scrolled ? 16 : 18,
-                              color: vcare.mutedForeground.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                          ),
-                          prefixIconConstraints: BoxConstraints(
-                            minWidth: _scrolled ? 32 : 40,
-                            minHeight: _scrolled ? 32 : 40,
-                          ),
-                          filled: true,
-                          fillColor: vcare.muted.withValues(alpha: 0.5),
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(22),
-                            borderSide: BorderSide(
-                              color: vcare.border.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(22),
-                            borderSide: BorderSide(
-                              color: vcare.border.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            ),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcareStickySearchHeaderDelegate(
+              scrolled: _scrolled,
+              focused: _searchFocused,
+              controller: _searchController,
+              onChanged: (_) => setState(() {}),
+              onFocusChange: (focused) {
+                if (focused != _searchFocused) {
+                  setState(() => _searchFocused = focused);
+                }
+              },
+              placeholder: 'Search messages, people or groups',
             ),
           ),
           SliverToBoxAdapter(

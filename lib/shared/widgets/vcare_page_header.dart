@@ -4,6 +4,25 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_template/core/styles/vcare_colors.dart';
 import 'package:flutter_template/core/styles/vcare_theme.dart';
 
+/// Shared layout metrics for [VcarePageHeader] and pinned tab headers.
+abstract final class VcarePageHeaderLayout {
+  static const double horizontalPadding = 20;
+  static const double topPadding = 16;
+  static const double bottomPadding = 12;
+  static const double titleFontSize = 24;
+  static const double titleLineHeight = 1.2;
+  static const double subtitleGap = 4;
+  static const double subtitleFontSize = 14;
+  static const double subtitleLineHeight = 1.25;
+
+  static double contentHeight({required bool hasSubtitle}) {
+    final titleBlock =
+        topPadding + bottomPadding + titleFontSize * titleLineHeight;
+    if (!hasSubtitle) return titleBlock;
+    return titleBlock + subtitleGap + subtitleFontSize * subtitleLineHeight;
+  }
+}
+
 /// Standard page header matching vcareapp [PageHeader] (non-welcome variant).
 class VcarePageHeader extends StatelessWidget {
   const VcarePageHeader({
@@ -32,7 +51,12 @@ class VcarePageHeader extends StatelessWidget {
     final vcare = context.vcare;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: const EdgeInsets.fromLTRB(
+        VcarePageHeaderLayout.horizontalPadding,
+        VcarePageHeaderLayout.topPadding,
+        VcarePageHeaderLayout.horizontalPadding,
+        VcarePageHeaderLayout.bottomPadding,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -52,18 +76,20 @@ class VcarePageHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
+                    fontSize: VcarePageHeaderLayout.titleFontSize,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    height: VcarePageHeaderLayout.titleLineHeight,
+                  ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: VcarePageHeaderLayout.subtitleGap),
                   Text(
                     subtitle!,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: VcarePageHeaderLayout.subtitleFontSize,
                       fontWeight: FontWeight.w500,
+                      height: VcarePageHeaderLayout.subtitleLineHeight,
                       color: vcare.mutedForeground.withValues(alpha: 0.8),
                     ),
                   ),
@@ -71,10 +97,7 @@ class VcarePageHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (action != null) ...[
-            const SizedBox(width: 8),
-            action!,
-          ],
+          if (action != null) ...[const SizedBox(width: 8), action!],
           if (showBell)
             IconButton(
               onPressed: onBellTap,

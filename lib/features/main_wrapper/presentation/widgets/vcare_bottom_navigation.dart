@@ -41,16 +41,6 @@ double vcareMobileBottomNavContentPadding(
   return pillTop + gap;
 }
 
-/// Gap from AVA composer bottom edge to nav pill top — web `AvaComposer` uses `pb-0`.
-double vcareAvaComposerBottomInset(BuildContext context, {double gap = 6}) {
-  final pillTop = vcareMobileBottomNavBarTop(context);
-  if (pillTop == 0) return 12;
-  return pillTop + gap;
-}
-
-/// Approximate height of the AVA composer row (edit banner excluded).
-const double kAvaComposerHeight = 52;
-
 /// Mobile bottom nav matching vcareapp [MobileShell] (Home centered, floating pill).
 class VcareBottomNavigation extends StatelessWidget {
   const VcareBottomNavigation({

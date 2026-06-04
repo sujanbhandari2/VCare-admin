@@ -31,9 +31,7 @@ class AvaStateNotifier extends _$AvaStateNotifier {
       createdAt: DateTime.now(),
     );
 
-    state = state.copyWith(
-      messages: [...state.messages, mine],
-    );
+    state = state.copyWith(messages: [...state.messages, mine]);
 
     // Mock Ava reply
     _handleAvaReply();
@@ -45,7 +43,9 @@ class AvaStateNotifier extends _$AvaStateNotifier {
 
     result.when(
       success: (updated) {
-        final messages = state.messages.map((m) => m.id == id ? updated : m).toList();
+        final messages = state.messages
+            .map((m) => m.id == id ? updated : m)
+            .toList();
         state = state.success(messages: messages).copyWith(editingId: null);
       },
       failure: (error) {
@@ -81,17 +81,15 @@ class AvaStateNotifier extends _$AvaStateNotifier {
   void _handleAvaReply() {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!ref.mounted) return;
-      
+
       final reply = AvaMessage(
         id: 'a-${DateTime.now().millisecondsSinceEpoch}',
         sender: AvaSender.ava,
         body: AvaMockData.mockReply,
         createdAt: DateTime.now(),
       );
-      
-      state = state.copyWith(
-        messages: [...state.messages, reply],
-      );
+
+      state = state.copyWith(messages: [...state.messages, reply]);
     });
   }
 }
