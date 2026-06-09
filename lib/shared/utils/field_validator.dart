@@ -23,8 +23,11 @@ class FieldValidator {
 
   /// Method to validate username
   ///
-  static String? validateUsername(String? value,
-      {required BuildContext context, String? invalidMessage}) {
+  static String? validateUsername(
+    String? value, {
+    required BuildContext context,
+    String? invalidMessage,
+  }) {
     String pattern = r'(^[a-z][a-z0-9_.-]*\s*$)';
     RegExp regExp = RegExp(pattern);
     if (value == null || value.isEmpty) {
@@ -39,7 +42,10 @@ class FieldValidator {
   /// Method to validate name
   ///
   static String? validateName(
-      String? value, BuildContext context, String? invalidMessage) {
+    String? value,
+    BuildContext context,
+    String? invalidMessage,
+  ) {
     String pattern = r'(^[a-zA-Z ]*$)';
     RegExp regExp = RegExp(pattern);
     if (value == null || value.isEmpty) {
@@ -57,8 +63,11 @@ class FieldValidator {
 
   /// Method to validate first name
   ///
-  static String? validateFirstName(String? value,
-      {required BuildContext context, String? invalidMessage}) {
+  static String? validateFirstName(
+    String? value, {
+    required BuildContext context,
+    String? invalidMessage,
+  }) {
     String pattern = r'(^[a-zA-Z ]*$)';
     RegExp regExp = RegExp(pattern);
     if (value == null || value.isEmpty) {
@@ -72,8 +81,10 @@ class FieldValidator {
 
   /// Method to validate mobile
   ///
-  static String? validateMobile(String? value,
-      {required BuildContext context}) {
+  static String? validateMobile(
+    String? value, {
+    required BuildContext context,
+  }) {
     String pattern = r'(^[0-9]*$)';
     RegExp regExp = RegExp(pattern);
     if (value == null || value.isEmpty) {
@@ -125,8 +136,10 @@ class FieldValidator {
 
   /// Method to validate username or email
   ///
-  static String? validateUsernameOrEmail(String? value,
-      {required BuildContext context}) {
+  static String? validateUsernameOrEmail(
+    String? value, {
+    required BuildContext context,
+  }) {
     final usernameValidationMessage = validateUsername(value, context: context);
 
     if (usernameValidationMessage == null) return null;
@@ -136,8 +149,10 @@ class FieldValidator {
 
   /// Method to validate username or phone
   ///
-  static String? validateUsernameOrPhone(String? value,
-      {required BuildContext context}) {
+  static String? validateUsernameOrPhone(
+    String? value, {
+    required BuildContext context,
+  }) {
     final usernameValidationMessage = validateUsername(value, context: context);
 
     if (usernameValidationMessage == null) return null;
@@ -147,8 +162,10 @@ class FieldValidator {
 
   /// Method to validate email or phone
   ///
-  static String? validateEmailOrPhone(String? value,
-      {required BuildContext context}) {
+  static String? validateEmailOrPhone(
+    String? value, {
+    required BuildContext context,
+  }) {
     if (value == null || value.trim().isEmpty) {
       return context.appLocalization.validate_email_or_phone_required;
     }
@@ -213,8 +230,11 @@ class FieldValidator {
 
   /// Method to validate field
   ///
-  static String? validateField(String? value,
-      {String? message, required BuildContext context}) {
+  static String? validateField(
+    String? value, {
+    String? message,
+    required BuildContext context,
+  }) {
     if (value == null || value.trim().isEmpty) {
       return message ?? context.appLocalization.validate_field_required;
     }

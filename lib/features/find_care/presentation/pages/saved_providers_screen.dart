@@ -5,12 +5,12 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
 import 'package:flutter_template/core/styles/vcare_theme.dart';
 import 'package:flutter_template/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
 import 'package:flutter_template/features/find_care/presentation/providers/provider_favorites_provider.dart';
 import 'package:flutter_template/features/home/data/home_models.dart';
 import 'package:flutter_template/features/home/data/home_saved_providers_builder.dart';
+import 'package:flutter_template/features/home/presentation/widgets/home_saved_provider_card.dart';
 import 'package:flutter_template/shared/utils/extension_functions.dart';
 import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
 
@@ -43,7 +43,7 @@ class SavedProvidersScreen extends ConsumerWidget {
                   ...providers.map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _SavedProviderCard(
+                      child: SavedProviderListCard(
                         item: item,
                         onTap: () => _openProvider(context, item),
                         onRemove: () => _removeProvider(context, ref, item),
@@ -73,10 +73,7 @@ class SavedProvidersScreen extends ConsumerWidget {
     }
 
     final id = item.providerId ?? item.key.replaceFirst('m-', '');
-    context.pushNamed(
-      AppRouter.providerDetailName,
-      pathParameters: {'id': id},
-    );
+    context.pushNamed(AppRouter.providerDetailName, pathParameters: {'id': id});
   }
 
   void _removeProvider(
@@ -96,9 +93,7 @@ class SavedProvidersScreen extends ConsumerWidget {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('Provider removed: ${item.name}')),
-      );
+      ..showSnackBar(SnackBar(content: Text('Provider removed: ${item.name}')));
   }
 
   Future<void> _launchTel(BuildContext context, String phone) async {
@@ -165,202 +160,6 @@ class _SavedProvidersEmptyState extends StatelessWidget {
             child: const Text('Go to providers'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SavedProviderCard extends StatelessWidget {
-  const _SavedProviderCard({
-    required this.item,
-    required this.onTap,
-    required this.onRemove,
-    this.onCall,
-  });
-
-  final SavedProviderItem item;
-  final VoidCallback onTap;
-  final VoidCallback onRemove;
-  final VoidCallback? onCall;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Material(
-          color: vcare.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: vcare.border),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 52, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.tag.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                      color: VCareColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      if (item.rating != null) ...[
-                        Icon(LucideIcons.star, size: 14, color: vcare.accent),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${item.rating}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.mapPin,
-                              size: 14,
-                              color: vcare.mutedForeground,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                item.location,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: vcare.mutedForeground,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (onCall != null) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _CallChip(onTap: onCall!),
-                        const SizedBox(width: 8),
-                        _NetworkChip(inNetwork: item.inNetwork),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 12,
-          right: 12,
-          child: IconButton(
-            onPressed: onRemove,
-            tooltip: 'Remove from favorites',
-            style: IconButton.styleFrom(
-              backgroundColor: vcare.card.withValues(alpha: 0.9),
-              side: BorderSide(color: vcare.border),
-              minimumSize: const Size(36, 36),
-            ),
-            icon: Icon(
-              LucideIcons.heart,
-              size: 18,
-              color: VCareColors.destructive,
-              fill: 1.0,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CallChip extends StatelessWidget {
-  const _CallChip({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: VCareColors.primary.withValues(alpha: 0.1),
-      shape: const StadiumBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const StadiumBorder(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(LucideIcons.phone, size: 12, color: VCareColors.primary),
-              const SizedBox(width: 4),
-              Text(
-                'Call',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: VCareColors.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NetworkChip extends StatelessWidget {
-  const _NetworkChip({required this.inNetwork});
-
-  final bool inNetwork;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: inNetwork
-            ? VCareColors.primary.withValues(alpha: 0.1)
-            : vcare.muted,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        inNetwork ? 'In-network' : 'Out-of-network',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: inNetwork ? VCareColors.primary : vcare.mutedForeground,
-        ),
       ),
     );
   }

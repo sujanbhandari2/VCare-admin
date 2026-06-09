@@ -212,7 +212,9 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                       letterSpacing: 1.2,
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -253,10 +255,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
               children: [
                 const Text(
                   'Referral link',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -310,9 +309,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                _copied
-                                    ? LucideIcons.check
-                                    : LucideIcons.copy,
+                                _copied ? LucideIcons.check : LucideIcons.copy,
                                 size: 16,
                                 color: Colors.white,
                               ),

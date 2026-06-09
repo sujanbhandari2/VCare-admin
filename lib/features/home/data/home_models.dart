@@ -200,6 +200,7 @@ class SavedProviderItem {
     this.medicareNpi,
     this.phone,
     this.inNetwork = true,
+    this.providerSubtitle,
   });
 
   final String key;
@@ -212,6 +213,7 @@ class SavedProviderItem {
   final String? medicareNpi;
   final String? phone;
   final bool inNetwork;
+  final String? providerSubtitle;
 }
 
 class ActivityItem {

@@ -46,7 +46,9 @@ class ReferralQrCode extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(innerRadius.clamp(0, borderRadius)),
+            borderRadius: BorderRadius.circular(
+              innerRadius.clamp(0, borderRadius),
+            ),
             child: CachedNetworkImage(
               imageUrl: imageUrl,
               fit: BoxFit.contain,
@@ -60,9 +62,9 @@ class ReferralQrCode extends StatelessWidget {
               errorWidget: (_, _, _) => Icon(
                 LucideIcons.qrCode,
                 size: size * 0.45,
-                color: Theme.of(context).colorScheme.onSurface.withValues(
-                  alpha: 0.4,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
           ),

@@ -11,16 +11,8 @@ class Shimmer extends StatefulWidget {
     this.child,
     this.loading = true,
     this.linearGradient = const LinearGradient(
-      colors: [
-        Color(0xFFADACAD),
-        Color(0xFFD7D5D6),
-        Color(0xFFECECEE),
-      ],
-      stops: [
-        0.1,
-        0.3,
-        0.4,
-      ],
+      colors: [Color(0xFFADACAD), Color(0xFFD7D5D6), Color(0xFFECECEE)],
+      stops: [0.1, 0.3, 0.4],
       begin: Alignment(-1.0, -0.3),
       end: Alignment(1.0, 0.3),
       tileMode: .clamp,
@@ -75,15 +67,16 @@ class ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
   }
 
   LinearGradient get gradient => LinearGradient(
-        colors: widget.linearGradient.colors
-            .map((e) => e.withValues(alpha: widget.opacity))
-            .toList(),
-        stops: widget.linearGradient.stops,
-        begin: widget.linearGradient.begin,
-        end: widget.linearGradient.end,
-        transform:
-            _SlidingGradientTransform(slidePercent: _shimmerController.value),
-      );
+    colors: widget.linearGradient.colors
+        .map((e) => e.withValues(alpha: widget.opacity))
+        .toList(),
+    stops: widget.linearGradient.stops,
+    begin: widget.linearGradient.begin,
+    end: widget.linearGradient.end,
+    transform: _SlidingGradientTransform(
+      slidePercent: _shimmerController.value,
+    ),
+  );
 
   bool get isSized =>
       (context.findRenderObject() as RenderBox?)?.hasSize ?? false;
@@ -111,9 +104,7 @@ class ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
 /// Custom Sliding gradient transform handler class
 class _SlidingGradientTransform extends GradientTransform {
-  const _SlidingGradientTransform({
-    required this.slidePercent,
-  });
+  const _SlidingGradientTransform({required this.slidePercent});
 
   final double slidePercent;
 
@@ -125,10 +116,7 @@ class _SlidingGradientTransform extends GradientTransform {
 
 /// _ShimmerLoading Widget
 class _ShimmerLoading extends StatefulWidget {
-  const _ShimmerLoading({
-    required this.isLoading,
-    required this.child,
-  });
+  const _ShimmerLoading({required this.isLoading, required this.child});
 
   final bool isLoading;
   final Widget child;

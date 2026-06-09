@@ -105,7 +105,7 @@ class _LoadableListDemoScreenState
               },
               headerBuilder: (_) => Container(
                 padding: const EdgeInsets.all(16),
-                child: const Text("This is header")
+                child: const Text("This is header"),
               ),
               headerBehavior: LoadableListHeaderBehavior.pinned,
               headerExtent: 60,

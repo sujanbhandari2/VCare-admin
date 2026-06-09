@@ -5,7 +5,7 @@ Production-ready Flutter starter with **flavors**, **Riverpod state management**
 ## What you get
 
 - ✅ Structured feature-first codebase
-- ✅ Multi-flavor app setup (`dev`, `staging`, `prod`)
+- ✅ Multi-flavor app setup (`dev`, `qa`, `uat`, `prod`)
 - ✅ Firebase config switching script support
 - ✅ Localization scaffold (`en`, `bn`, `ne`)
 - ✅ Built-in networking, storage, connectivity, and location services
@@ -55,7 +55,8 @@ flutter doctor
 
 ```bash
 cp .env.example .env.dev
-cp .env.example .env.staging
+cp .env.example .env.qa
+cp .env.example .env.uat
 cp .env.example .env.prod
 ```
 
@@ -69,7 +70,8 @@ flutter pub get
 
 ```bash
 make run-dev
-make run-staging
+make run-qa
+make run-uat
 make run-prod
 ```
 
@@ -90,10 +92,12 @@ HIVE_BOX_NAME=FlutterTemplateApp
 
 ```bash
 make run-dev
-make run-staging
+make run-qa
+make run-uat
 make run-prod
 make run-dev-ios
-make run-staging-ios
+make run-qa-ios
+make run-uat-ios
 make run-prod-ios
 ```
 
@@ -101,15 +105,18 @@ make run-prod-ios
 
 ```bash
 make build-apk-dev
-make build-apk-staging
+make build-apk-qa
+make build-apk-uat
 make build-apk-prod
 
 make build-appbundle-dev
-make build-appbundle-staging
+make build-appbundle-qa
+make build-appbundle-uat
 make build-appbundle-prod
 
 make build-ipa-dev
-make build-ipa-staging
+make build-ipa-qa
+make build-ipa-uat
 make build-ipa-prod
 ```
 
@@ -118,7 +125,7 @@ make build-ipa-prod
 Before opening a PR:
 
 ```bash
-dart format --output=none --set-exit-if-changed .
+make format-check
 flutter analyze
 flutter test
 ```
@@ -128,6 +135,8 @@ flutter test
 This template includes:
 
 - `.github/workflows/flutter_ci.yml` for format/analyze/test checks
+  - Pull requests: runs `dart format`, auto-commits fixes, then analyze/test
+  - Pushes to `main`: enforces formatting with `dart format --set-exit-if-changed`
 - `.github/dependabot.yml` for weekly dependency update PRs
 
 ## Package Name Change

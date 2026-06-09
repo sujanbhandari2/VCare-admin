@@ -91,10 +91,7 @@ abstract class BaseTable<T extends BaseSchema> {
   ///
   /// [schemas] is the list of instance of [T] to be inserted.
   /// Returns inserted `true` if the insert was successful, otherwise `false`.
-  Future<bool> inserts(
-    List<T> schemas, {
-    bool batch = false,
-  }) async {
+  Future<bool> inserts(List<T> schemas, {bool batch = false}) async {
     try {
       final database = await provider.database;
 
@@ -173,9 +170,7 @@ abstract class BaseTable<T extends BaseSchema> {
         tableName,
         schema.toJson(),
         where: "id = ?",
-        whereArgs: [
-          schema.id ?? id,
-        ],
+        whereArgs: [schema.id ?? id],
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
@@ -203,9 +198,7 @@ abstract class BaseTable<T extends BaseSchema> {
       final count = await database?.delete(
         tableName,
         where: "id = ?",
-        whereArgs: [
-          id,
-        ],
+        whereArgs: [id],
       );
 
       return count != null && count > 0;
@@ -259,28 +252,20 @@ abstract class BaseTable<T extends BaseSchema> {
   /// [offset] specifies the starting point for the query.
   /// [query] is an optional search query to filter records.
   /// Returns a list of [T] instances.
-  Future<List<T>> fetch({
-    int page = 1,
-    int limit = 50,
-    String? query,
-  }) async {
+  Future<List<T>> fetch({int page = 1, int limit = 50, String? query}) async {
     try {
       final database = await provider.database;
 
       final whereClause = query != null
           ? query.isNotEmpty
-              ? columns4Query
-                  .map((column) => 'LOWER($column) LIKE ?')
-                  .join(' OR ')
-              : null
+                ? columns4Query
+                      .map((column) => 'LOWER($column) LIKE ?')
+                      .join(' OR ')
+                : null
           : null;
 
       final whereArgs = query != null && query.isNotEmpty
-          ? [
-              '%$query%',
-              '%$query%',
-              '%$query%',
-            ]
+          ? ['%$query%', '%$query%', '%$query%']
           : null;
 
       final res = await database?.query(
@@ -362,9 +347,7 @@ abstract class BaseTable<T extends BaseSchema> {
   /// A [Future] that resolves to a list of [T] instances representing the query results.
   /// If an error occurs during the query execution, an empty list is returned.
   ///
-  Future<List<T>> rawQuery({
-    required SqlQueryBuilder builder,
-  }) async {
+  Future<List<T>> rawQuery({required SqlQueryBuilder builder}) async {
     try {
       final database = await provider.database;
 

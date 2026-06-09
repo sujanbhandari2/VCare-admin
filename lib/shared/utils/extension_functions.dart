@@ -56,24 +56,22 @@ extension BuildContextExt on BuildContext {
     bool isDismissible = true,
     bool enableDrag = true,
     bool useSafeArea = false,
-  }) =>
-      showModalBottomSheet<T>(
-        context: this,
-        builder: builder,
-        backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
-        shape: shape ??
-            const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(24.0),
-              ),
-            ),
-        barrierColor: theme.dividerColor.withValues(alpha: 0.2),
-        isScrollControlled: isScrollControlled,
-        useRootNavigator: useRootNavigator,
-        isDismissible: isDismissible,
-        enableDrag: enableDrag,
-        useSafeArea: useSafeArea,
-      );
+  }) => showModalBottomSheet<T>(
+    context: this,
+    builder: builder,
+    backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
+    shape:
+        shape ??
+        const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+        ),
+    barrierColor: theme.dividerColor.withValues(alpha: 0.2),
+    isScrollControlled: isScrollControlled,
+    useRootNavigator: useRootNavigator,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
+    useSafeArea: useSafeArea,
+  );
 }
 
 /// Extension functions on String
@@ -123,8 +121,11 @@ extension StringExt on String {
   /// To convert num char in devanagari
   String fromLocale(Locale locale) {
     return characters
-        .map((e) =>
-            locale.languageCode == L10n.ne.languageCode ? _toDevanagari(e) : e)
+        .map(
+          (e) => locale.languageCode == L10n.ne.languageCode
+              ? _toDevanagari(e)
+              : e,
+        )
         .join();
   }
 
@@ -187,7 +188,8 @@ extension StringExt on String {
     // A basic regex to check for common file path patterns.
     // This is a simplified version and might need adjustments based on your specific needs.
     final filePathRegex = RegExp(
-        r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*([A-Za-z0-9_\-\.]+\.[A-Za-z0-9]+)?$');
+      r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*([A-Za-z0-9_\-\.]+\.[A-Za-z0-9]+)?$',
+    );
 
     return filePathRegex.hasMatch(this);
   }
@@ -202,8 +204,9 @@ extension StringExt on String {
     }
 
     // A regex to check for common directory path patterns.
-    final directoryPathRegex =
-        RegExp(r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*$');
+    final directoryPathRegex = RegExp(
+      r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*$',
+    );
 
     return directoryPathRegex.hasMatch(this);
   }
@@ -359,22 +362,16 @@ extension StringExt on String {
         spans.add(
           TextSpan(
             text: text,
-            style: textStyle4Matched ??
-                const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+            style:
+                textStyle4Matched ??
+                const TextStyle(fontWeight: FontWeight.bold),
           ),
         );
         return text;
       },
       onNonMatch: (s) {
         // Add normal text for non-matches
-        spans.add(
-          TextSpan(
-            text: s,
-            style: textStyle4NonMatched,
-          ),
-        );
+        spans.add(TextSpan(text: s, style: textStyle4NonMatched));
         return s;
       },
     );
@@ -402,10 +399,12 @@ extension StringExt on String {
 extension IntExt on int? {
   /// To convert num char in devanagari
   String fromLocale(Locale locale) {
-    return toString()
-        .characters
-        .map((e) =>
-            locale.languageCode == L10n.ne.languageCode ? _toDevanagari(e) : e)
+    return toString().characters
+        .map(
+          (e) => locale.languageCode == L10n.ne.languageCode
+              ? _toDevanagari(e)
+              : e,
+        )
         .join();
   }
 

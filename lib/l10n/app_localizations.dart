@@ -112,11 +112,17 @@ abstract class AppLocalizations {
   /// **'VCare client - Dev'**
   String get app_name_dev;
 
-  /// No description provided for @app_name_staging.
+  /// No description provided for @app_name_qa.
   ///
   /// In en, this message translates to:
-  /// **'VCare client - Staging'**
-  String get app_name_staging;
+  /// **'VCare client - QA'**
+  String get app_name_qa;
+
+  /// No description provided for @app_name_uat.
+  ///
+  /// In en, this message translates to:
+  /// **'VCare client - UAT'**
+  String get app_name_uat;
 
   /// No description provided for @tab_home.
   ///

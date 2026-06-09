@@ -57,10 +57,10 @@ class UserSchema extends BaseSchema<UserProfile> {
 
   @override
   UserProfile get toModel => UserProfile(
-        id: id,
-        firstName: firstName,
-        lastName: lastName,
-        username: username,
-        email: email,
-      );
+    id: id,
+    firstName: firstName,
+    lastName: lastName,
+    username: username,
+    email: email,
+  );
 }

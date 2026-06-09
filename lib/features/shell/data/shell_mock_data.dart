@@ -102,18 +102,21 @@ class ShellMockData {
   }
 
   static List<MessageThreadItem> messageThreads() {
-    return HomeMockData.careTeam.map((c) {
-      final msgs = HomeMockData.messagesByContact[c.id] ?? [];
-      final last = msgs.isNotEmpty ? msgs.last : null;
-      final h = _hashId(c.id);
-      return MessageThreadItem(
-        contact: c,
-        lastBody: last?.body,
-        lastAt: last?.createdAt,
-        isOnline: h % 2 == 0,
-        unreadCount: h % 7 == 0 ? (h % 25) + 1 : 0,
-      );
-    }).where((t) => t.lastBody != null).toList();
+    return HomeMockData.careTeam
+        .map((c) {
+          final msgs = HomeMockData.messagesByContact[c.id] ?? [];
+          final last = msgs.isNotEmpty ? msgs.last : null;
+          final h = _hashId(c.id);
+          return MessageThreadItem(
+            contact: c,
+            lastBody: last?.body,
+            lastAt: last?.createdAt,
+            isOnline: h % 2 == 0,
+            unreadCount: h % 7 == 0 ? (h % 25) + 1 : 0,
+          );
+        })
+        .where((t) => t.lastBody != null)
+        .toList();
   }
 
   static List<MessageGroupItem> messageGroups() {

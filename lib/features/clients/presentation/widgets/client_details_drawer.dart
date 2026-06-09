@@ -32,10 +32,7 @@ class ClientDetailsDrawer extends StatelessWidget {
           begin: const Offset(1, 0),
           end: Offset.zero,
         ).chain(CurveTween(curve: Curves.easeOutCubic));
-        return SlideTransition(
-          position: animation.drive(slide),
-          child: child,
-        );
+        return SlideTransition(position: animation.drive(slide), child: child);
       },
     );
   }
@@ -177,10 +174,7 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: vcare.mutedForeground,
-                  ),
+                  style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
                 ),
                 Text(value, style: const TextStyle(fontSize: 14)),
               ],

@@ -31,10 +31,8 @@ class IdCardScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    onPressed: () => showReferralShareSheet(
-                      context,
-                      profile: profile,
-                    ),
+                    onPressed: () =>
+                        showReferralShareSheet(context, profile: profile),
                     icon: const Icon(LucideIcons.share2, size: 20),
                     tooltip: 'Share referral',
                     style: IconButton.styleFrom(

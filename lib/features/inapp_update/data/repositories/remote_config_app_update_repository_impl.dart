@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/services/firebase/firebase_remote_config_service.dart';

@@ -1,9 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_template/core/services/firebase/firebase_service.dart';
-
 
 import '../core/config/env/env.dart';
 import '../core/config/flavor/configuration.dart';

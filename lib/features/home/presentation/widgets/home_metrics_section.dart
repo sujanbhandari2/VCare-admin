@@ -45,10 +45,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
             ),
             Text(
               _showSales ? 'Sales stats' : 'Commission stats',
-              style: TextStyle(
-                fontSize: 11,
-                color: vcare.mutedForeground,
-              ),
+              style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
             ),
             const SizedBox(width: 8),
             Material(
@@ -80,10 +77,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0x26F59E0B),
-                    Color(0x0DF59E0B),
-                  ],
+                  colors: [Color(0x26F59E0B), Color(0x0DF59E0B)],
                 ),
                 onTap: widget.onTotalClientsTap,
               ),
@@ -92,9 +86,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
             Expanded(
               child: _MetricCard(
                 label: _showSales ? 'Total Sales' : 'Total Commission',
-                value: _showSales
-                    ? widget.totalSales
-                    : widget.totalCommission,
+                value: _showSales ? widget.totalSales : widget.totalCommission,
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -147,10 +139,7 @@ class _MetricCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: vcare.mutedForeground,
-                ),
+                style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
               ),
               const SizedBox(height: 2),
               Text(

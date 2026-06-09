@@ -35,6 +35,9 @@ List<SavedProviderItem> buildHomeSavedProviders({
       medicareNpi: favorite.npi,
       name: formatMedicareProviderName(favorite.row),
       tag: 'CMS · Medicare',
+      providerSubtitle: favorite.row.providerType.isNotEmpty
+          ? favorite.row.providerType
+          : 'Provider',
       location: [
         favorite.row.city,
         favorite.row.state,

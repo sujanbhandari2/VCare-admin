@@ -65,7 +65,12 @@ class VcareBottomNavigation extends StatelessWidget {
     return SizedBox(
       height: vcareMobileBottomNavHeight(context),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(10, 0, 10, bottom + _bottomNavOuterPadding),
+        padding: EdgeInsets.fromLTRB(
+          10,
+          0,
+          10,
+          bottom + _bottomNavOuterPadding,
+        ),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(

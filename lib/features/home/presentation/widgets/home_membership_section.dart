@@ -108,96 +108,94 @@ class _ReferralCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'MY REFERRAL',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1.2,
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                  ),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'MY REFERRAL',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.2,
+                                  color: Colors.white.withValues(alpha: 0.8),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  member.fullName,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                member.fullName,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.3,
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  member.email,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                member.email,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  member.phone,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                member.phone,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
-                                const Spacer(),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'View full card details',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      LucideIcons.chevronRight,
-                                      size: 12,
+                              ),
+                              const Spacer(),
+                              Row(
+                                children: [
+                                  Text(
+                                    'View full card details',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
                                       color: Colors.white.withValues(
                                         alpha: 0.8,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Image.asset(
-                                VCareAssets.vIcon,
-                                width: 44,
-                                height: 44,
-                                fit: BoxFit.contain,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    LucideIcons.chevronRight,
+                                    size: 12,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                ],
                               ),
-                              const Spacer(),
-                              ReferralQrCode(imageUrl: qrUrl),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Image.asset(
+                              VCareAssets.vIcon,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.contain,
+                            ),
+                            const Spacer(),
+                            ReferralQrCode(imageUrl: qrUrl),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),

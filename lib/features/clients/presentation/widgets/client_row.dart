@@ -7,11 +7,7 @@ import 'package:flutter_template/features/clients/domain/entities/client.dart';
 import 'package:flutter_template/features/clients/utils/client_utils.dart';
 
 class ClientRow extends StatelessWidget {
-  const ClientRow({
-    super.key,
-    required this.client,
-    this.onTap,
-  });
+  const ClientRow({super.key, required this.client, this.onTap});
 
   final ClientListItem client;
   final VoidCallback? onTap;

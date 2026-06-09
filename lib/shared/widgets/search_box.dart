@@ -94,15 +94,11 @@ class _SearchBoxState extends State<SearchBox> {
           ),
           border: OutlineInputBorder(
             borderRadius: .circular(8.0),
-            borderSide: BorderSide(
-              color: widget.borderColor ?? AppColors.grey,
-            ),
+            borderSide: BorderSide(color: widget.borderColor ?? AppColors.grey),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: .circular(8.0),
-            borderSide: BorderSide(
-              color: widget.borderColor ?? AppColors.grey,
-            ),
+            borderSide: BorderSide(color: widget.borderColor ?? AppColors.grey),
           ),
           filled: widget.filled,
           fillColor: widget.fillColor,

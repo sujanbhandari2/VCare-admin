@@ -68,16 +68,12 @@ class PopupMenuListViewState<T, W extends PopupMenuListView<T>>
       height: widget.height,
       alignment: AlignmentDirectional.centerStart,
       constraints: BoxConstraints(minHeight: widget.height),
-      padding: widget.padding ??
+      padding:
+          widget.padding ??
           .symmetric(horizontal: theme.useMaterial3 ? 12.0 : 16.0),
       child: buildChild(),
     );
 
-    return MergeSemantics(
-      child: Semantics(
-        container: true,
-        child: item,
-      ),
-    );
+    return MergeSemantics(child: Semantics(container: true, child: item));
   }
 }

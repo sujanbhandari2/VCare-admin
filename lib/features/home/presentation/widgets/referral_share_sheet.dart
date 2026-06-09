@@ -65,10 +65,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                 const Expanded(
                   child: Text(
                     'Share your referral',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                 ),
                 IconButton(
@@ -139,10 +136,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _CopyButton(
-                              copied: _copied,
-                              onPressed: _copyLink,
-                            ),
+                            _CopyButton(copied: _copied, onPressed: _copyLink),
                           ],
                         ),
                       ],
@@ -160,10 +154,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _ShareChannelGrid(
-                  actions: _actions,
-                  shareText: shareText,
-                ),
+                _ShareChannelGrid(actions: _actions, shareText: shareText),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -248,10 +239,7 @@ class _CopyButton extends StatelessWidget {
 }
 
 class _ShareChannelGrid extends StatelessWidget {
-  const _ShareChannelGrid({
-    required this.actions,
-    required this.shareText,
-  });
+  const _ShareChannelGrid({required this.actions, required this.shareText});
 
   final ReferralActions actions;
   final String shareText;

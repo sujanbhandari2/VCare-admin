@@ -44,7 +44,9 @@ class VCareTheme {
       ),
       bodyMedium: nunito.bodyMedium?.copyWith(color: VCareColors.foreground),
       bodySmall: nunito.bodySmall?.copyWith(color: VCareColors.mutedForeground),
-      labelSmall: nunito.labelSmall?.copyWith(color: VCareColors.mutedForeground),
+      labelSmall: nunito.labelSmall?.copyWith(
+        color: VCareColors.mutedForeground,
+      ),
     );
 
     return ThemeData(
@@ -176,7 +178,10 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
   }
 
   @override
-  VCareThemeExtension lerp(ThemeExtension<VCareThemeExtension>? other, double t) {
+  VCareThemeExtension lerp(
+    ThemeExtension<VCareThemeExtension>? other,
+    double t,
+  ) {
     if (other is! VCareThemeExtension) return this;
     return other;
   }

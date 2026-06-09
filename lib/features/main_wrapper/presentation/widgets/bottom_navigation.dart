@@ -38,22 +38,17 @@ class BottomNavigation extends StatelessWidget {
       showSelectedLabels: true,
       showUnselectedLabels: false,
       type: .fixed,
-      items: items
-          .map(
-            (item) => _buildItem(item, context: context),
-          )
-          .toList(),
-      onTap: (index) => onSelect(
-        index,
-        NavItem.values[index],
-      ),
+      items: items.map((item) => _buildItem(item, context: context)).toList(),
+      onTap: (index) => onSelect(index, NavItem.values[index]),
       currentIndex: currentNavItem.index,
     );
   }
 
   /// Helper function to convert nav item to bottom navigation bar item
-  BottomNavigationBarItem _buildItem(NavItem item,
-      {required BuildContext context}) {
+  BottomNavigationBarItem _buildItem(
+    NavItem item, {
+    required BuildContext context,
+  }) {
     return item.toBottomNavigationBarItem(context);
   }
 }

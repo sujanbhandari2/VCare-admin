@@ -15,7 +15,8 @@ Thanks for contributing to this Flutter starter template.
 3. Create environment files from the example:
    ```bash
    cp .env.example .env.dev
-   cp .env.example .env.staging
+   cp .env.example .env.qa
+   cp .env.example .env.uat
    cp .env.example .env.prod
    ```
 4. Run the app with a flavor:
@@ -28,10 +29,13 @@ Thanks for contributing to this Flutter starter template.
 Before opening a PR, run:
 
 ```bash
-flutter format --set-exit-if-changed .
+make format-check
 flutter analyze
 flutter test
 ```
+
+On pull requests, CI also runs `dart format` and commits any fixes automatically.
+Run `make format` locally if you want to apply formatting before pushing.
 
 ## Commit and PR Standards
 

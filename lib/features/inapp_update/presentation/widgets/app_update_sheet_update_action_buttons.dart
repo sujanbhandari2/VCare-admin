@@ -37,7 +37,9 @@ class AppUpdateSheetUpdateActionButtons extends StatelessWidget {
                 onPressed: context.pop,
                 text: context.appLocalization.update_later,
                 color: context.isDarkTheme ? Colors.white70 : Colors.black54,
-                onButtonColor: context.isDarkTheme ? Colors.white70 : Colors.black54,
+                onButtonColor: context.isDarkTheme
+                    ? Colors.white70
+                    : Colors.black54,
               ),
             ),
             const SizedBox(width: 16),

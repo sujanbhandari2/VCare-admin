@@ -38,10 +38,11 @@ class ReferralActions {
     await copyReferralLink();
   }
 
-  Future<void> openShareChannel({
-    required String url,
-  }) async {
-    final launched = await launchUrlString(url, mode: LaunchMode.externalApplication);
+  Future<void> openShareChannel({required String url}) async {
+    final launched = await launchUrlString(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
     if (!launched) {
       Fluttertoast.showToast(msg: "Couldn't open share link");
     }

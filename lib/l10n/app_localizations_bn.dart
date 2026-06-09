@@ -15,7 +15,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get app_name_dev => 'VCare client - Dev';
 
   @override
-  String get app_name_staging => 'VCare client - Staging';
+  String get app_name_qa => 'VCare client - QA';
+
+  @override
+  String get app_name_uat => 'VCare client - UAT';
 
   @override
   String get tab_home => 'বাড়ি';

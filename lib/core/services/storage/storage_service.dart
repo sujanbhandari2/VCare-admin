@@ -10,10 +10,7 @@ abstract class StorageService {
 
   /// Retrieves item from storage by a key
   ///
-  dynamic get(
-    String key, {
-    dynamic defaultValue,
-  });
+  dynamic get(String key, {dynamic defaultValue});
 
   /// Clears storage
   ///

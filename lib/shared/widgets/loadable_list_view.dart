@@ -4,7 +4,6 @@ import '../models/loadable_list_item.dart';
 import '../state/loadable_list_state.dart';
 import '../utils/extension_functions.dart';
 
-
 enum LoadableListHeaderBehavior { normal, pinned, floating }
 
 class LoadableListView<T extends LoadableListItem> extends StatefulWidget {
@@ -29,11 +28,11 @@ class LoadableListView<T extends LoadableListItem> extends StatefulWidget {
     this.headerBehavior = LoadableListHeaderBehavior.normal,
     this.headerExtent,
   }) : assert(
-  headerBuilder == null ||
-      headerBehavior == LoadableListHeaderBehavior.normal ||
-      headerExtent != null,
-  'headerExtent is required when headerBehavior is pinned or floating.',
-  );
+         headerBuilder == null ||
+             headerBehavior == LoadableListHeaderBehavior.normal ||
+             headerExtent != null,
+         'headerExtent is required when headerBehavior is pinned or floating.',
+       );
 
   final LoadableListState<T> state;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
@@ -48,17 +47,17 @@ class LoadableListView<T extends LoadableListItem> extends StatefulWidget {
   final WidgetBuilder? loadingBuilder;
   final WidgetBuilder? emptyBuilder;
   final Widget Function(
-      BuildContext context,
-      String? message,
-      Future<void> Function()? onRetry,
-      )?
+    BuildContext context,
+    String? message,
+    Future<void> Function()? onRetry,
+  )?
   errorBuilder;
   final WidgetBuilder? loadMoreLoadingBuilder;
   final Widget Function(
-      BuildContext context,
-      String? message,
-      Future<void> Function()? onRetry,
-      )?
+    BuildContext context,
+    String? message,
+    Future<void> Function()? onRetry,
+  )?
   loadMoreErrorBuilder;
 
   final WidgetBuilder? headerBuilder;
@@ -128,15 +127,15 @@ class _LoadableListViewState<T extends LoadableListItem>
 
     final shouldLoadMore =
         widget.onLoadMore != null &&
-            widget.state.hasMore &&
-            widget.state.items.isNotEmpty &&
-            !widget.state.isLoadingMore &&
-            widget.state.loadMoreErrorMessage == null &&
-            !widget.state.isInitialLoading &&
-            !widget.state.isInitialError &&
-            !_isLoadMoreRequested &&
-            _scrollController.position.extentAfter <=
-                widget.loadMoreTriggerThreshold;
+        widget.state.hasMore &&
+        widget.state.items.isNotEmpty &&
+        !widget.state.isLoadingMore &&
+        widget.state.loadMoreErrorMessage == null &&
+        !widget.state.isInitialLoading &&
+        !widget.state.isInitialError &&
+        !_isLoadMoreRequested &&
+        _scrollController.position.extentAfter <=
+            widget.loadMoreTriggerThreshold;
 
     if (shouldLoadMore) {
       _isLoadMoreRequested = true;
@@ -178,7 +177,7 @@ class _LoadableListViewState<T extends LoadableListItem>
       return SliverFillRemaining(
         hasScrollBody: false,
         child:
-        widget.loadingBuilder?.call(context) ??
+            widget.loadingBuilder?.call(context) ??
             const Center(child: CircularProgressIndicator()),
       );
     }
@@ -187,11 +186,11 @@ class _LoadableListViewState<T extends LoadableListItem>
       return SliverFillRemaining(
         hasScrollBody: false,
         child:
-        widget.errorBuilder?.call(
-          context,
-          widget.state.operation.errorMessage,
-          widget.onRefresh,
-        ) ??
+            widget.errorBuilder?.call(
+              context,
+              widget.state.operation.errorMessage,
+              widget.onRefresh,
+            ) ??
             _DefaultErrorView(
               message: widget.state.operation.errorMessage,
               onRetry: widget.onRefresh,
@@ -203,7 +202,7 @@ class _LoadableListViewState<T extends LoadableListItem>
       return SliverFillRemaining(
         hasScrollBody: false,
         child:
-        widget.emptyBuilder?.call(context) ??
+            widget.emptyBuilder?.call(context) ??
             Center(child: Text(context.appLocalization.no_items_found)),
       );
     }
@@ -273,10 +272,10 @@ class _LoadableListViewState<T extends LoadableListItem>
 
     if (widget.state.loadMoreErrorMessage != null) {
       return widget.loadMoreErrorBuilder?.call(
-        context,
-        widget.state.loadMoreErrorMessage,
-        widget.onLoadMore,
-      ) ??
+            context,
+            widget.state.loadMoreErrorMessage,
+            widget.onLoadMore,
+          ) ??
           _DefaultLoadMoreErrorView(
             message: widget.state.loadMoreErrorMessage,
             onRetry: widget.onLoadMore,
@@ -301,10 +300,10 @@ class _FixedExtentHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return SizedBox(height: extent, child: child);
   }
 

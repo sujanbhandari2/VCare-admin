@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-
 import '../../../../shared/utils/logger.dart';
 import '../../domain/entities/remote_config_app_update_info.dart';
 import '../states/remote_config_app_update_state.dart';

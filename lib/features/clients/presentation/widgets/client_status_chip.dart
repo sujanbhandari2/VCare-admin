@@ -21,10 +21,7 @@ class ClientStatusChip extends StatelessWidget {
   }
 
   factory ClientStatusChip.caseStatus(ClientCaseStatus status) {
-    return ClientStatusChip(
-      label: _caseLabel(status),
-      tone: _caseTone(status),
-    );
+    return ClientStatusChip(label: _caseLabel(status), tone: _caseTone(status));
   }
 
   factory ClientStatusChip.billing(ClientBillingStatus status) {

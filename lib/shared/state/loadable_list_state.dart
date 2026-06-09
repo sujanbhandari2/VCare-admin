@@ -1,4 +1,3 @@
-
 import '../models/loadable_list_item.dart';
 import 'operation_state.dart';
 
@@ -33,9 +32,9 @@ class LoadableListState<T extends LoadableListItem> {
 
   bool get isEmpty =>
       !isInitialLoading &&
-          !isInitialError &&
-          !operation.hasError &&
-          items.isEmpty;
+      !isInitialError &&
+      !operation.hasError &&
+      items.isEmpty;
 
   LoadableListState<T> loading({Map<String, dynamic>? extras}) =>
       LoadableListState<T>(
@@ -49,8 +48,8 @@ class LoadableListState<T extends LoadableListItem> {
 
   LoadableListState<T> failure(String? message) =>
       LoadableListState<T>(
-        operation: OperationState<List<T>>.failure(message, data: items),
-      )
+          operation: OperationState<List<T>>.failure(message, data: items),
+        )
         .._extras = extras
         .._total = totalItems;
 
@@ -59,15 +58,13 @@ class LoadableListState<T extends LoadableListItem> {
         .._extras = extras
         .._total = totalItems;
 
-  LoadableListState<T> appendSuccess({
-    required List<T> appendedItems,
-  }) =>
+  LoadableListState<T> appendSuccess({required List<T> appendedItems}) =>
       LoadableListState<T>(
-        operation: OperationState<List<T>>.success(<T>[
-          ...items,
-          ...appendedItems,
-        ]),
-      )
+          operation: OperationState<List<T>>.success(<T>[
+            ...items,
+            ...appendedItems,
+          ]),
+        )
         .._extras = extras
         .._total = totalItems;
 

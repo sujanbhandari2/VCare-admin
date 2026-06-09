@@ -28,62 +28,62 @@ class CommonImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return assetsOrUrlOrPath.isFilePath
         ? assetsOrUrlOrPath.contains(".svg")
-            ? SvgPicture.file(
-                File(assetsOrUrlOrPath),
-                width: width,
-                height: height,
-                fit: fit,
-              )
-            : Image.file(
-                File(assetsOrUrlOrPath),
-                width: width,
-                height: height,
-                errorBuilder: (_, err, trace) => const SizedBox(),
-                fit: fit,
-              )
+              ? SvgPicture.file(
+                  File(assetsOrUrlOrPath),
+                  width: width,
+                  height: height,
+                  fit: fit,
+                )
+              : Image.file(
+                  File(assetsOrUrlOrPath),
+                  width: width,
+                  height: height,
+                  errorBuilder: (_, err, trace) => const SizedBox(),
+                  fit: fit,
+                )
         : assetsOrUrlOrPath.isUrl
-            ? assetsOrUrlOrPath.contains(".svg")
-                ? SvgPicture.network(
-                    assetsOrUrlOrPath,
-                    width: width,
-                    height: height,
-                    fit: fit,
-                  )
-                : CachedNetworkImage(
-                    imageUrl: assetsOrUrlOrPath,
-                    width: width,
-                    height: height,
-                    errorWidget: (_, err, trace) => const SizedBox(),
-                    fit: fit,
-                  )
-            : assetsOrUrlOrPath.contains("assets")
-                ? assetsOrUrlOrPath.endsWith(".svg")
-                    ? SvgPicture.asset(
-                        assetsOrUrlOrPath,
-                        width: width,
-                        height: height,
-                        fit: fit,
-                      )
-                    : Image.asset(
-                        assetsOrUrlOrPath,
-                        width: width,
-                        height: height,
-                        errorBuilder: (_, err, trace) => const SizedBox(),
-                        fit: fit,
-                      )
-                : assetsOrUrlOrPath.endsWith(".svg")
-                    ? SvgPicture.asset(
-                        "assets/svg/$assetsOrUrlOrPath",
-                        width: width,
-                        height: height,
-                        fit: fit,
-                      )
-                    : Image.asset(
-                        "assets/images/$assetsOrUrlOrPath",
-                        width: width,
-                        height: height,
-                        errorBuilder: (_, err, trace) => const SizedBox(),
-                        fit: fit,
-                      );
+        ? assetsOrUrlOrPath.contains(".svg")
+              ? SvgPicture.network(
+                  assetsOrUrlOrPath,
+                  width: width,
+                  height: height,
+                  fit: fit,
+                )
+              : CachedNetworkImage(
+                  imageUrl: assetsOrUrlOrPath,
+                  width: width,
+                  height: height,
+                  errorWidget: (_, err, trace) => const SizedBox(),
+                  fit: fit,
+                )
+        : assetsOrUrlOrPath.contains("assets")
+        ? assetsOrUrlOrPath.endsWith(".svg")
+              ? SvgPicture.asset(
+                  assetsOrUrlOrPath,
+                  width: width,
+                  height: height,
+                  fit: fit,
+                )
+              : Image.asset(
+                  assetsOrUrlOrPath,
+                  width: width,
+                  height: height,
+                  errorBuilder: (_, err, trace) => const SizedBox(),
+                  fit: fit,
+                )
+        : assetsOrUrlOrPath.endsWith(".svg")
+        ? SvgPicture.asset(
+            "assets/svg/$assetsOrUrlOrPath",
+            width: width,
+            height: height,
+            fit: fit,
+          )
+        : Image.asset(
+            "assets/images/$assetsOrUrlOrPath",
+            width: width,
+            height: height,
+            errorBuilder: (_, err, trace) => const SizedBox(),
+            fit: fit,
+          );
   }
 }

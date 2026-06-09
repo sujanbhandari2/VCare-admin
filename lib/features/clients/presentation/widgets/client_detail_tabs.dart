@@ -233,9 +233,7 @@ class ClientUpcomingBillingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: VCareColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: VCareColors.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: VCareColors.primary.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -296,17 +294,23 @@ class ClientUpcomingBillingCard extends StatelessWidget {
                             const TextSpan(text: 'Next billing on '),
                             TextSpan(
                               text: formatClientDateNumeric(m.nextBillingDate!),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const TextSpan(text: ' — '),
                             TextSpan(
                               text: '\$${m.cost.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const TextSpan(text: ' for '),
                             TextSpan(
                               text: m.plan,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -335,7 +339,8 @@ class ClientMembershipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final showInfo = membership.status == ClientMembershipStatus.completed ||
+    final showInfo =
+        membership.status == ClientMembershipStatus.completed ||
         membership.status == ClientMembershipStatus.cancelled;
 
     return DecoratedBox(
@@ -456,11 +461,7 @@ class _MembershipInfoButton extends StatelessWidget {
         child: SizedBox(
           width: 24,
           height: 24,
-          child: Icon(
-            LucideIcons.info,
-            size: 14,
-            color: vcare.mutedForeground,
-          ),
+          child: Icon(LucideIcons.info, size: 14, color: vcare.mutedForeground),
         ),
       ),
     );
@@ -509,10 +510,7 @@ class ClientDependentCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               dependent.name,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -570,11 +568,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
                 color: VCareColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                _iconForType(),
-                size: 16,
-                color: VCareColors.primary,
-              ),
+              child: Icon(_iconForType(), size: 16, color: VCareColors.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -804,10 +798,9 @@ class ClientCaseCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.7),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       Padding(

@@ -12,7 +12,10 @@ part 'loadable_list_demo_state_provider.g.dart';
 class LoadableListDemoState extends _$LoadableListDemoState {
   static const int _pageSize = 20;
 
-  final List<DemoListItem> _allItems = List<DemoListItem>.generate(87, (index) => DemoListItem.value(index + 1));
+  final List<DemoListItem> _allItems = List<DemoListItem>.generate(
+    87,
+    (index) => DemoListItem.value(index + 1),
+  );
 
   int _currentPage = 0;
   bool _simulateEmpty = false;
@@ -87,8 +90,6 @@ class LoadableListDemoState extends _$LoadableListDemoState {
     final nextItems = _allItems.sublist(start, end);
     _currentPage += 1;
 
-    state = state.appendSuccess(
-      appendedItems: nextItems,
-    );
+    state = state.appendSuccess(appendedItems: nextItems);
   }
 }

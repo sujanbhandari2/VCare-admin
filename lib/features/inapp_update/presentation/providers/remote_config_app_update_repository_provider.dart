@@ -6,8 +6,6 @@ import '../../domain/repositories/remote_config_app_update_repository.dart';
 part 'remote_config_app_update_repository_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-RemoteConfigAppUpdateRepository remoteConfigAppUpdateInfoRepository(
-  Ref ref,
-) {
+RemoteConfigAppUpdateRepository remoteConfigAppUpdateInfoRepository(Ref ref) {
   return const RemoteConfigAppUpdateRepositoryImpl();
 }

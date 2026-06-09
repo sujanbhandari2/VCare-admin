@@ -199,9 +199,7 @@ class LocationService {
 
   /// Method to enable/disable background mode
   ///
-  Future<bool> enableBackgroundMode({
-    bool enable = true,
-  }) async {
+  Future<bool> enableBackgroundMode({bool enable = true}) async {
     try {
       return await _location.enableBackgroundMode(enable: enable);
     } catch (e) {
@@ -254,7 +252,8 @@ class LocationService {
     return _location.requestService();
   }
 
-  Future<LocationPermissionRequestResult> _resolveLocationPermissionRequest() async {
+  Future<LocationPermissionRequestResult>
+  _resolveLocationPermissionRequest() async {
     try {
       if (!await _isLocationEnabledOrThrow()) {
         final serviceEnabled = await _requestLocationServiceOrThrow();

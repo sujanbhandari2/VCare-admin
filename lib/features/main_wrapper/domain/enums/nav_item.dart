@@ -5,11 +5,7 @@ import 'package:flutter_template/app/router/app_router.dart';
 
 /// Primary bottom navigation items (vcare [MobileShell] mobile tab order).
 enum NavItem {
-  clients(
-    path: AppRouter.clients,
-    label: 'Clients',
-    icon: LucideIcons.users,
-  ),
+  clients(path: AppRouter.clients, label: 'Clients', icon: LucideIcons.users),
   provider(
     path: AppRouter.findCare,
     label: 'Provider',
@@ -26,11 +22,7 @@ enum NavItem {
     label: 'Messages',
     icon: LucideIcons.messageCircle,
   ),
-  ava(
-    path: AppRouter.ava,
-    label: 'AVA',
-    icon: LucideIcons.sparkles,
-  );
+  ava(path: AppRouter.ava, label: 'AVA', icon: LucideIcons.sparkles);
 
   const NavItem({
     required this.path,

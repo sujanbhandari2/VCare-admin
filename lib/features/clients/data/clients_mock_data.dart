@@ -6,18 +6,130 @@ class ClientsMockData {
 
   static String _avatar(int n) => 'https://i.pravatar.cc/200?img=$n';
 
-  static final List<({String id, String fullName, String email, String phone, String dob, String location, ClientGender gender, String ssn, int img})>
-      _base = [
-    (id: 'c1', fullName: 'Emily Carter', email: 'emily.carter@example.com', phone: '+1 (415) 555-0142', dob: '1988-04-12', location: 'San Francisco, CA', gender: ClientGender.female, ssn: '***-**-4821', img: 47),
-    (id: 'c2', fullName: 'Marcus Johnson', email: 'marcus.j@example.com', phone: '+1 (212) 555-0193', dob: '1975-09-03', location: 'New York, NY', gender: ClientGender.male, ssn: '***-**-7610', img: 13),
-    (id: 'c3', fullName: 'Priya Patel', email: 'priya.patel@example.com', phone: '+1 (312) 555-0178', dob: '1992-11-21', location: 'Chicago, IL', gender: ClientGender.female, ssn: '***-**-3344', img: 44),
-    (id: 'c4', fullName: 'David Nguyen', email: 'd.nguyen@example.com', phone: '+1 (713) 555-0119', dob: '1980-02-17', location: 'Houston, TX', gender: ClientGender.male, ssn: '***-**-9087', img: 33),
-    (id: 'c5', fullName: 'Sofia Ramirez', email: 'sofia.r@example.com', phone: '+1 (305) 555-0166', dob: '1995-06-29', location: 'Miami, FL', gender: ClientGender.female, ssn: '***-**-2210', img: 49),
-    (id: 'c6', fullName: "James O'Connor", email: 'james.oc@example.com', phone: '+1 (617) 555-0188', dob: '1969-12-05', location: 'Boston, MA', gender: ClientGender.male, ssn: '***-**-5567', img: 15),
-    (id: 'c7', fullName: 'Ayesha Khan', email: 'ayesha.k@example.com', phone: '+1 (206) 555-0144', dob: '1990-08-14', location: 'Seattle, WA', gender: ClientGender.female, ssn: '***-**-1199', img: 48),
-    (id: 'c8', fullName: 'Liam Anderson', email: 'liam.a@example.com', phone: '+1 (303) 555-0157', dob: '1983-03-23', location: 'Denver, CO', gender: ClientGender.male, ssn: '***-**-8821', img: 60),
-    (id: 'c9', fullName: 'Chloe Williams', email: 'chloe.w@example.com', phone: '+1 (404) 555-0102', dob: '1998-10-09', location: 'Atlanta, GA', gender: ClientGender.female, ssn: '***-**-4477', img: 45),
-    (id: 'c10', fullName: 'Noah Bennett', email: 'noah.b@example.com', phone: '+1 (602) 555-0131', dob: '1972-07-01', location: 'Phoenix, AZ', gender: ClientGender.nonBinary, ssn: '***-**-6630', img: 11),
+  static final List<
+    ({
+      String id,
+      String fullName,
+      String email,
+      String phone,
+      String dob,
+      String location,
+      ClientGender gender,
+      String ssn,
+      int img,
+    })
+  >
+  _base = [
+    (
+      id: 'c1',
+      fullName: 'Emily Carter',
+      email: 'emily.carter@example.com',
+      phone: '+1 (415) 555-0142',
+      dob: '1988-04-12',
+      location: 'San Francisco, CA',
+      gender: ClientGender.female,
+      ssn: '***-**-4821',
+      img: 47,
+    ),
+    (
+      id: 'c2',
+      fullName: 'Marcus Johnson',
+      email: 'marcus.j@example.com',
+      phone: '+1 (212) 555-0193',
+      dob: '1975-09-03',
+      location: 'New York, NY',
+      gender: ClientGender.male,
+      ssn: '***-**-7610',
+      img: 13,
+    ),
+    (
+      id: 'c3',
+      fullName: 'Priya Patel',
+      email: 'priya.patel@example.com',
+      phone: '+1 (312) 555-0178',
+      dob: '1992-11-21',
+      location: 'Chicago, IL',
+      gender: ClientGender.female,
+      ssn: '***-**-3344',
+      img: 44,
+    ),
+    (
+      id: 'c4',
+      fullName: 'David Nguyen',
+      email: 'd.nguyen@example.com',
+      phone: '+1 (713) 555-0119',
+      dob: '1980-02-17',
+      location: 'Houston, TX',
+      gender: ClientGender.male,
+      ssn: '***-**-9087',
+      img: 33,
+    ),
+    (
+      id: 'c5',
+      fullName: 'Sofia Ramirez',
+      email: 'sofia.r@example.com',
+      phone: '+1 (305) 555-0166',
+      dob: '1995-06-29',
+      location: 'Miami, FL',
+      gender: ClientGender.female,
+      ssn: '***-**-2210',
+      img: 49,
+    ),
+    (
+      id: 'c6',
+      fullName: "James O'Connor",
+      email: 'james.oc@example.com',
+      phone: '+1 (617) 555-0188',
+      dob: '1969-12-05',
+      location: 'Boston, MA',
+      gender: ClientGender.male,
+      ssn: '***-**-5567',
+      img: 15,
+    ),
+    (
+      id: 'c7',
+      fullName: 'Ayesha Khan',
+      email: 'ayesha.k@example.com',
+      phone: '+1 (206) 555-0144',
+      dob: '1990-08-14',
+      location: 'Seattle, WA',
+      gender: ClientGender.female,
+      ssn: '***-**-1199',
+      img: 48,
+    ),
+    (
+      id: 'c8',
+      fullName: 'Liam Anderson',
+      email: 'liam.a@example.com',
+      phone: '+1 (303) 555-0157',
+      dob: '1983-03-23',
+      location: 'Denver, CO',
+      gender: ClientGender.male,
+      ssn: '***-**-8821',
+      img: 60,
+    ),
+    (
+      id: 'c9',
+      fullName: 'Chloe Williams',
+      email: 'chloe.w@example.com',
+      phone: '+1 (404) 555-0102',
+      dob: '1998-10-09',
+      location: 'Atlanta, GA',
+      gender: ClientGender.female,
+      ssn: '***-**-4477',
+      img: 45,
+    ),
+    (
+      id: 'c10',
+      fullName: 'Noah Bennett',
+      email: 'noah.b@example.com',
+      phone: '+1 (602) 555-0131',
+      dob: '1972-07-01',
+      location: 'Phoenix, AZ',
+      gender: ClientGender.nonBinary,
+      ssn: '***-**-6630',
+      img: 11,
+    ),
   ];
 
   static const _dependentPool = [
@@ -105,34 +217,34 @@ class ClientsMockData {
             ),
           ]
         : i % 3 == 0
-            ? [
-                ClientDependent(
-                  id: '${c.id}-d1',
-                  name: _dependentPool[2].name,
-                  relation: _dependentPool[2].relation,
-                  avatarUrl: _avatar(_dependentPool[2].img),
-                ),
-              ]
-            : [
-                ClientDependent(
-                  id: '${c.id}-d1',
-                  name: _dependentPool[1].name,
-                  relation: _dependentPool[1].relation,
-                  avatarUrl: _avatar(_dependentPool[1].img),
-                ),
-                ClientDependent(
-                  id: '${c.id}-d2',
-                  name: _dependentPool[2].name,
-                  relation: _dependentPool[2].relation,
-                  avatarUrl: _avatar(_dependentPool[2].img),
-                ),
-                ClientDependent(
-                  id: '${c.id}-d3',
-                  name: _dependentPool[3].name,
-                  relation: _dependentPool[3].relation,
-                  avatarUrl: _avatar(_dependentPool[3].img),
-                ),
-              ];
+        ? [
+            ClientDependent(
+              id: '${c.id}-d1',
+              name: _dependentPool[2].name,
+              relation: _dependentPool[2].relation,
+              avatarUrl: _avatar(_dependentPool[2].img),
+            ),
+          ]
+        : [
+            ClientDependent(
+              id: '${c.id}-d1',
+              name: _dependentPool[1].name,
+              relation: _dependentPool[1].relation,
+              avatarUrl: _avatar(_dependentPool[1].img),
+            ),
+            ClientDependent(
+              id: '${c.id}-d2',
+              name: _dependentPool[2].name,
+              relation: _dependentPool[2].relation,
+              avatarUrl: _avatar(_dependentPool[2].img),
+            ),
+            ClientDependent(
+              id: '${c.id}-d3',
+              name: _dependentPool[3].name,
+              relation: _dependentPool[3].relation,
+              avatarUrl: _avatar(_dependentPool[3].img),
+            ),
+          ];
 
     return Client(
       id: c.id,

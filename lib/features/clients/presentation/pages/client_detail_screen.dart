@@ -140,7 +140,6 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
       ),
     );
   }
-
 }
 
 class _IdentityCard extends StatelessWidget {
@@ -271,7 +270,6 @@ class _CircleAction extends StatelessWidget {
   }
 }
 
-
 class _TransactionSheet extends StatelessWidget {
   const _TransactionSheet({
     required this.transaction,
@@ -358,10 +356,7 @@ class _TransactionSheet extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   transaction.note!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: vcare.mutedForeground,
-                  ),
+                  style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
                 ),
               ],
             ],
@@ -373,10 +368,7 @@ class _TransactionSheet extends StatelessWidget {
 }
 
 class _MembershipNoteSheet extends StatelessWidget {
-  const _MembershipNoteSheet({
-    required this.membership,
-    required this.onClose,
-  });
+  const _MembershipNoteSheet({required this.membership, required this.onClose});
 
   final ClientMembership membership;
   final VoidCallback onClose;

@@ -60,10 +60,7 @@ class RefreshTokenInterceptor extends Interceptor {
           return handler.resolve(retryResponse);
         } catch (e) {
           return handler.reject(
-            DioException(
-              requestOptions: requestOptions,
-              error: e,
-            ),
+            DioException(requestOptions: requestOptions, error: e),
           );
         }
       }
@@ -74,8 +71,9 @@ class RefreshTokenInterceptor extends Interceptor {
   /// Attempts to refresh the JWT token.
   /// Returns the new access token if successful, null otherwise.
   Future<String?> _refreshToken() async {
-    final refreshToken =
-        storageService.get(StorageKeys.loggedInUserRefreshToken)?.toString();
+    final refreshToken = storageService
+        .get(StorageKeys.loggedInUserRefreshToken)
+        ?.toString();
 
     if (refreshToken == null || refreshToken.isEmpty) {
       await _clearSession();
@@ -101,18 +99,17 @@ class RefreshTokenInterceptor extends Interceptor {
         final data = response.data;
 
         final tokenData = data['data'];
-        final newAccessToken = tokenData['accessToken'] ?? tokenData['access_token'];
-        final newRefreshToken = tokenData['refreshToken'] ?? tokenData['refresh_token'];
+        final newAccessToken =
+            tokenData['accessToken'] ?? tokenData['access_token'];
+        final newRefreshToken =
+            tokenData['refreshToken'] ?? tokenData['refresh_token'];
 
         if (newAccessToken == null || newRefreshToken == null) {
           await _clearSession();
           return null;
         }
 
-        await storageService.set(
-          StorageKeys.loggedInUserToken,
-          newAccessToken,
-        );
+        await storageService.set(StorageKeys.loggedInUserToken, newAccessToken);
         await storageService.set(
           StorageKeys.loggedInUserRefreshToken,
           newRefreshToken,

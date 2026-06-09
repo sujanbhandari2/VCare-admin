@@ -1,5 +1,7 @@
-import 'package:flutter_template/features/notifications/data/models/fcm_device_added_or_updated_response_model.dart' as model;
-import 'package:flutter_template/features/notifications/data/models/fcm_device_check_response_model.dart' as model;
+import 'package:flutter_template/features/notifications/data/models/fcm_device_added_or_updated_response_model.dart'
+    as model;
+import 'package:flutter_template/features/notifications/data/models/fcm_device_check_response_model.dart'
+    as model;
 import 'package:flutter_template/features/notifications/domain/entities/fcm_device_added_or_updated_response.dart';
 import 'package:flutter_template/features/notifications/domain/entities/fcm_device_check_response.dart';
 

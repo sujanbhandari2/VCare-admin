@@ -8,10 +8,7 @@ import 'package:flutter_template/shared/utils/extension_functions.dart';
 class CarousalIndicator extends ConsumerWidget {
   final void Function(OnboardingItem item)? onClick;
 
-  const CarousalIndicator({
-    super.key,
-    this.onClick,
-  });
+  const CarousalIndicator({super.key, this.onClick});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,26 +22,24 @@ class CarousalIndicator extends ConsumerWidget {
       runSpacing: 8.0,
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.center,
-      children: OnboardingItem.values.map(
-        (item) {
-          return GestureDetector(
-            onTap: () {
-              onClick?.call(item);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 275),
-              width: item == active ? width : height,
-              height: height,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(height),
-                color: item == active
-                    ? context.theme.primaryColor
-                    : context.theme.primaryColorLight,
-              ),
+      children: OnboardingItem.values.map((item) {
+        return GestureDetector(
+          onTap: () {
+            onClick?.call(item);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 275),
+            width: item == active ? width : height,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(height),
+              color: item == active
+                  ? context.theme.primaryColor
+                  : context.theme.primaryColorLight,
             ),
-          );
-        },
-      ).toList(),
+          ),
+        );
+      }).toList(),
     );
   }
 }

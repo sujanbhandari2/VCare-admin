@@ -36,10 +36,7 @@ class RequestDetailsSheet extends StatelessWidget {
           begin: const Offset(1, 0),
           end: Offset.zero,
         ).chain(CurveTween(curve: Curves.easeOutCubic));
-        return SlideTransition(
-          position: animation.drive(slide),
-          child: child,
-        );
+        return SlideTransition(position: animation.drive(slide), child: child);
       },
     );
   }
@@ -93,11 +90,12 @@ class RequestDetailsSheet extends StatelessWidget {
                       child: Text(
                         'Request details',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          color: VCareColors.foreground,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              color: VCareColors.foreground,
+                            ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -352,10 +350,7 @@ List<_TimelineEvent> _buildTimeline(CareRequest request) {
 
 /// Web `ol.border-l` — newest event first (matches product screenshot).
 class _ActivityTimeline extends StatelessWidget {
-  const _ActivityTimeline({
-    required this.events,
-    required this.resolved,
-  });
+  const _ActivityTimeline({required this.events, required this.resolved});
 
   final List<_TimelineEvent> events;
   final bool resolved;
@@ -551,10 +546,7 @@ class _TimelineEventRow extends StatelessWidget {
                   event.detail!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: vcare.mutedForeground,
-                  ),
+                  style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
                 ),
               ],
             ],

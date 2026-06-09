@@ -75,11 +75,8 @@ class _VcareSplashScreenState extends ConsumerState<VcareSplashScreen> {
                   VCareAssets.logo,
                   height: 48,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Image.asset(
-                    VCareAssets.member,
-                    width: 56,
-                    height: 56,
-                  ),
+                  errorBuilder: (_, __, ___) =>
+                      Image.asset(VCareAssets.member, width: 56, height: 56),
                 ),
                 const SizedBox(height: 24),
                 const SizedBox(

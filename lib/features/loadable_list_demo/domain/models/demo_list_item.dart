@@ -12,7 +12,7 @@ class DemoListItem extends LoadableListItem {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is DemoListItem && runtimeType == other.runtimeType && v == other.v;
+      other is DemoListItem && runtimeType == other.runtimeType && v == other.v;
 
   @override
   int get hashCode => v.hashCode;

@@ -35,18 +35,12 @@ class VCareColors {
   static const gradientCard = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF009E9E),
-      Color(0xFF0B6B6B),
-    ],
+    colors: [Color(0xFF009E9E), Color(0xFF0B6B6B)],
   );
 
   static const gradientCardDark = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF00B3B3),
-      Color(0xFF0D7A7A),
-    ],
+    colors: [Color(0xFF00B3B3), Color(0xFF0D7A7A)],
   );
 }
