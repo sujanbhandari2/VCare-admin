@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter_template/features/loadable_list_demo/domain/models/demo_list_item.dart';
+import 'package:vcare_admin/features/loadable_list_demo/domain/models/demo_list_item.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../shared/state/loadable_list_state.dart';

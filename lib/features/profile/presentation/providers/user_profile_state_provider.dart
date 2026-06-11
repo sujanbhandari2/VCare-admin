@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/auth/presentation/providers/logged_in_user_profile_id_provider.dart';
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
-import 'package:flutter_template/features/profile/presentation/providers/user_profile_repository_provider.dart';
-import 'package:flutter_template/features/profile/presentation/state/user_profile_state.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/logged_in_user_profile_id_provider.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/user_profile_repository_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/state/user_profile_state.dart';
 
 part 'user_profile_state_provider.g.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 
 class ClientStatusChip extends StatelessWidget {
   const ClientStatusChip({super.key, required this.label, this.tone});

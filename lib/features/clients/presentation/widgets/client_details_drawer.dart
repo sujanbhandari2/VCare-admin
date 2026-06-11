@@ -3,9 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 
 /// Right-side panel — parity with vcareapp client info `Sheet side="right"`.
 class ClientDetailsDrawer extends StatelessWidget {

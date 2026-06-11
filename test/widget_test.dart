@@ -1,8 +1,8 @@
-import 'package:flutter_template/app/app.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration_provider.dart';
-import 'package:flutter_template/core/config/flavor/flavor.dart';
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/app/app.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration_provider.dart';
+import 'package:vcare_admin/core/config/flavor/flavor.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

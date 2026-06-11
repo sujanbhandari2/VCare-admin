@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_template/shared/widgets/app_button.dart';
+import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/core/styles/app_theme.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/core/styles/app_theme.dart';
 
 class LocationPermissionRequestBottomSheet extends StatefulWidget {
   final VoidCallback? onAllowClick;

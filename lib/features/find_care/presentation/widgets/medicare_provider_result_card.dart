@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
 
 class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
   const MedicareProviderResultCardWithFavorite({super.key, required this.item});

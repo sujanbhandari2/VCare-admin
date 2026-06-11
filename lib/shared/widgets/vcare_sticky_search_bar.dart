@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Sticky search — parity with vcareapp [StickySearchBar].
 class VcareStickySearchBar extends StatelessWidget {

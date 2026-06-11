@@ -1,4 +1,4 @@
-import 'package:flutter_template/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
 
 class InMemoryStorageService implements StorageService {
   final Map<String, dynamic> _store = <String, dynamic>{};

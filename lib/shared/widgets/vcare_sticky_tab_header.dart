@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 /// Pinned page title that stays below the status bar — parity with web
 /// [PageHeader] `safe-top sticky top-0`.

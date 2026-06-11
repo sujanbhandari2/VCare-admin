@@ -4,15 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/provider_favorites_provider.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/data/home_saved_providers_builder.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_saved_provider_card.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_saved_provider_card.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class SavedProvidersScreen extends ConsumerWidget {
   const SavedProvidersScreen({super.key});

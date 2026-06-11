@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:flutter_template/shared/utils/dash_painter.dart';
-import 'package:flutter_template/shared/utils/image_picker_utils.dart';
-import 'package:flutter_template/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
-import 'package:flutter_template/core/styles/app_colors.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/dash_painter.dart';
+import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
+import 'package:vcare_admin/core/styles/app_colors.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class ImageUploadField extends StatefulWidget {
   const ImageUploadField({

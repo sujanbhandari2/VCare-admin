@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_template/core/services/location/location_service.dart';
+import 'package:vcare_admin/core/services/location/location_service.dart';
 import 'package:location_platform_interface/location_platform_interface.dart';
 
 void main() {

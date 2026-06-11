@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
-import 'package:flutter_template/core/styles/theme_mode_provider.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/core/styles/theme_mode_provider.dart';
 
 import '../../helpers/in_memory_storage_service.dart';
 

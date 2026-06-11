@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/ava/data/ava_mock_data.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_layout.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/ava/data/ava_mock_data.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_layout.dart';
 
 /// Matches vcareapp [AvaSuggestionList].
 class AvaSuggestionList extends StatelessWidget {

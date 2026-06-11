@@ -7,13 +7,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/auth/data/vcare_mock_auth.dart';
-import 'package:flutter_template/features/auth/data/vcare_mock_lookup.dart';
-import 'package:flutter_template/features/auth/presentation/widgets/login_shared_widgets.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
+import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 enum _LoginMethod { phone, email }
 

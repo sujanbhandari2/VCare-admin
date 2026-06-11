@@ -4,10 +4,10 @@ import 'package:clock/clock.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import 'package:flutter_template/shared/utils/logger.dart';
-import 'package:flutter_template/core/services/storage/storage_service.dart';
-import 'package:flutter_template/core/services/network/models/cache_response.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/core/services/network/models/cache_response.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
 
 /// Dio Interceptor used to cache HTTP responses in local storage
 class CacheInterceptor extends Interceptor {

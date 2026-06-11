@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/cases/data/requests_mock_data.dart';
-import 'package:flutter_template/features/find_care/data/find_care_mock_data.dart';
+import 'package:vcare_admin/features/cases/data/requests_mock_data.dart';
+import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
 
 import 'home_models.dart';
 import 'vcare_assets.dart';

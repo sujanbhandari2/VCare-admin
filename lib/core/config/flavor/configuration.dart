@@ -1,9 +1,9 @@
-import 'package:flutter_template/core/config/flavor/configuration/development_configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration/production_configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration/qa_configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration/uat_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/development_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/production_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/qa_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/uat_configuration.dart';
 
-import 'package:flutter_template/core/config/flavor/flavor.dart';
+import 'package:vcare_admin/core/config/flavor/flavor.dart';
 
 abstract class Configuration {
   /// The max allowed age duration for the http cache

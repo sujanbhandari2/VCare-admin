@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
+import 'package:vcare_admin/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/features/main_wrapper/domain/enums/nav_item.dart';
-import 'package:flutter_template/features/main_wrapper/presentation/widgets/vcare_bottom_navigation.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/features/main_wrapper/presentation/widgets/vcare_bottom_navigation.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 import '../../../inapp_update/domain/entities/remote_config_app_update_info.dart';
 import '../../../inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';

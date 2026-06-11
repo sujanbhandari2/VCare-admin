@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/data/pending_attachment.dart';
-import 'package:flutter_template/features/cases/utils/request_attachments.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/data/pending_attachment.dart';
+import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
 
 class RequestDetailComposer extends StatelessWidget {
   const RequestDetailComposer({

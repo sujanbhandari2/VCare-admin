@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration_provider.dart';
-import 'package:flutter_template/l10n/l10n.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration_provider.dart';
+import 'package:vcare_admin/l10n/l10n.dart';
 
-import 'package:flutter_template/l10n/app_localizations.dart';
-import 'package:flutter_template/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/l10n/app_localizations.dart';
+import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 
 /// BuildContext Extension functions
 extension BuildContextExt on BuildContext {

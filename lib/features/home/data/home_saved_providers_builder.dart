@@ -1,7 +1,7 @@
-import 'package:flutter_template/features/find_care/data/find_care_mock_data.dart';
-import 'package:flutter_template/features/find_care/domain/entities/cms_provider_favorite.dart';
-import 'package:flutter_template/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/cms_provider_favorite.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 const homeSavedProvidersCarouselLimit = 6;
 const homeCareTeamCarouselLimit = 4;

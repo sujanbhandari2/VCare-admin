@@ -1,8 +1,8 @@
-import 'package:flutter_template/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
-import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
-import 'package:flutter_template/features/vcare_sync/data/vcare_catalog.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
 
-export 'package:flutter_template/features/shell/data/shell_mock_data.dart'
+export 'package:vcare_admin/features/shell/data/shell_mock_data.dart'
     show ProviderCategoryItem;
 
 const findCareCategoryPageSize = 15;

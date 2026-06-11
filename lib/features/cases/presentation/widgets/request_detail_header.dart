@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/data/request_file_item.dart';
-import 'package:flutter_template/features/cases/utils/cases_utils.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_activity_status_chip.dart';
-import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/data/request_file_item.dart';
+import 'package:vcare_admin/features/cases/utils/cases_utils.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_activity_status_chip.dart';
+import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 
 class RequestDetailHeader extends StatelessWidget {
   const RequestDetailHeader({

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_template/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_template/shared/widgets/loadable_list_view.dart';
+import 'package:vcare_admin/shared/widgets/loadable_list_view.dart';
 
 import '../../core/state/loadable_list_state_test.dart';
 

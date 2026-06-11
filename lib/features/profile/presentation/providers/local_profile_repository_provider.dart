@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
-import 'package:flutter_template/features/profile/data/repositories/local_profile_repository_impl.dart';
-import 'package:flutter_template/features/profile/domain/repositories/local_profile_repository.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/profile/data/repositories/local_profile_repository_impl.dart';
+import 'package:vcare_admin/features/profile/domain/repositories/local_profile_repository.dart';
 
 part 'local_profile_repository_provider.g.dart';
 

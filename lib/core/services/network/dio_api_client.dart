@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/services/network/api_client.dart';
-import 'package:flutter_template/core/services/network/http_cache_interceptor.dart';
-import 'package:flutter_template/core/services/network/http_exception.dart';
-import 'package:flutter_template/core/services/network/models/request_body.dart';
-import 'package:flutter_template/core/services/network/refresh_token_interceptor.dart';
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/services/network/api_client.dart';
+import 'package:vcare_admin/core/services/network/http_cache_interceptor.dart';
+import 'package:vcare_admin/core/services/network/http_exception.dart';
+import 'package:vcare_admin/core/services/network/models/request_body.dart';
+import 'package:vcare_admin/core/services/network/refresh_token_interceptor.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
 
 /// API client implementation using Dio with centralized request/error handling.
 class DioApiClient implements ApiClient {

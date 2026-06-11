@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/features/ava/domain/entities/ava_message.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_date_chip.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_human_request_link.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_layout.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_message_bubble.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_suggestion_list.dart';
-import 'package:flutter_template/features/ava/utils/ava_chat_date.dart';
+import 'package:vcare_admin/features/ava/domain/entities/ava_message.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_date_chip.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_human_request_link.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_layout.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_message_bubble.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_suggestion_list.dart';
+import 'package:vcare_admin/features/ava/utils/ava_chat_date.dart';
 
 /// Matches vcareapp [AvaMessageList] — scrollable thread anchored to bottom.
 class AvaMessageList extends StatelessWidget {

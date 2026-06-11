@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
-import 'package:flutter_template/features/auth/domain/entities/auth_session.dart';
-import 'package:flutter_template/features/auth/domain/entities/forgot_password_response.dart';
-import 'package:flutter_template/features/auth/domain/entities/register_response.dart';
-import 'package:flutter_template/features/auth/domain/repositories/auth_repository.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
+import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
 
 import '../repository_fixtures.dart';
 

@@ -1,9 +1,12 @@
-import 'package:flutter_template/features/notifications/data/models/fcm_device_added_or_updated_response_model.dart'
+import 'package:vcare_admin/features/notifications/data/models/fcm_device_added_or_updated_response_model.dart'
     as model;
-import 'package:flutter_template/features/notifications/data/models/fcm_device_check_response_model.dart'
+import 'package:vcare_admin/features/notifications/data/models/fcm_device_check_response_model.dart'
     as model;
-import 'package:flutter_template/features/notifications/domain/entities/fcm_device_added_or_updated_response.dart';
-import 'package:flutter_template/features/notifications/domain/entities/fcm_device_check_response.dart';
+import 'package:vcare_admin/features/notifications/data/models/notification_item_model.dart'
+    as model;
+import 'package:vcare_admin/features/notifications/domain/entities/fcm_device_added_or_updated_response.dart';
+import 'package:vcare_admin/features/notifications/domain/entities/fcm_device_check_response.dart';
+import 'package:vcare_admin/features/notifications/domain/entities/notification_item.dart';
 
 extension FcmDeviceCheckResponseMapper on model.FcmDeviceCheckResponseModel {
   FcmDeviceCheckResponse toEntity() {
@@ -51,6 +54,19 @@ extension FcmDeviceAddedOrUpdatedResponseEntityMapper
       active: active,
       dateCreated: dateCreated,
       type: type,
+    );
+  }
+}
+
+extension NotificationItemModelMapper on model.NotificationItemModel {
+  NotificationItem toEntity() {
+    return NotificationItem(
+      id: id,
+      title: title,
+      body: body,
+      type: type,
+      read: read,
+      createdAt: createdAt,
     );
   }
 }

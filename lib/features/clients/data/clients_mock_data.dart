@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 
 /// Mock clients — parity with vcareapp `clients-data.ts`.
 class ClientsMockData {

@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 
 /// Parity profile model matching vcareapp [Profile] in profile-store.
 class LocalProfile {

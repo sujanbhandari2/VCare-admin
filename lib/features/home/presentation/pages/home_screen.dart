@@ -3,22 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/provider_favorites_provider.dart';
-import 'package:flutter_template/features/home/data/home_activity_builder.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/data/home_profile_mapper.dart';
-import 'package:flutter_template/features/profile/presentation/providers/local_profile_state_provider.dart';
-import 'package:flutter_template/features/home/data/home_saved_providers_builder.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_membership_section.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_metrics_section.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_page_header.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_recent_activity_section.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_saved_providers_section.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
+import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/data/home_profile_mapper.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
+import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_membership_section.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_metrics_section.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_recent_activity_section.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_saved_providers_section.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
+import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:go_router/go_router.dart';
 
 /// Section spacing from vcareapp `HomeDashboardBody` (`space-y-6`).
@@ -40,6 +41,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _data = _buildViewData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(notificationInboxStateProvider.notifier).fetchInbox();
+    });
   }
 
   HomeViewData _buildViewData() {
@@ -131,6 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(localProfileStateProvider);
+    final inboxState = ref.watch(notificationInboxStateProvider);
     final headerProfile = homeProfileFromLocal(profile);
     final membershipMember = homeMemberFromProfile(profile);
     final carouselSaved = _savedProviders
@@ -154,11 +159,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               pinned: true,
               delegate: _HomeHeaderDelegate(
                 profile: headerProfile,
-                unreadCount: _data.unreadNotifications,
+                unreadCount: inboxState.unreadCount,
                 onProfileTap: () =>
                     context.pushNamed(AppRouter.profile.toPathName),
-                onNotificationsTap: () =>
-                    context.pushNamed(AppRouter.notificationsName),
+                onNotificationsTap: () async {
+                  await context.pushNamed(AppRouter.notificationsName);
+                  if (mounted) {
+                    ref
+                        .read(notificationInboxStateProvider.notifier)
+                        .refresh();
+                  }
+                },
               ),
             ),
             SliverPadding(

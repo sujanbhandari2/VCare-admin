@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:flutter_template/core/styles/text_scale_provider.dart';
-import 'package:flutter_template/core/styles/theme_appearance_provider.dart';
-import 'package:flutter_template/core/styles/theme_mode_provider.dart';
-import 'package:flutter_template/shared/utils/image_color_extractor.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/utils/image_picker_utils.dart';
-import 'package:flutter_template/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
+import 'package:vcare_admin/core/styles/text_scale_provider.dart';
+import 'package:vcare_admin/core/styles/theme_appearance_provider.dart';
+import 'package:vcare_admin/core/styles/theme_mode_provider.dart';
+import 'package:vcare_admin/shared/utils/image_color_extractor.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
 
 class DynamicThemeSettingsScreen extends ConsumerWidget {
   const DynamicThemeSettingsScreen({super.key});

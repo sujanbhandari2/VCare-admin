@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/features/clients/data/clients_mock_data.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_row.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/clients_empty_state.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
-import 'package:flutter_template/shared/widgets/vcare_sticky_search_bar.dart';
-import 'package:flutter_template/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/clients/data/clients_mock_data.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_row.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/clients_empty_state.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_search_bar.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
 /// Clients list — parity with vcareapp [ClientsPage].
 class ClientsScreen extends StatefulWidget {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_layout.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_layout.dart';
 
 /// Matches vcareapp [AvaComposer] — `px-5 pt-1 pb-0`, pill input + send.
 class AvaComposer extends StatelessWidget {

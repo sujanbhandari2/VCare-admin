@@ -1,4 +1,4 @@
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import '../entities/ava_message.dart';
 
 abstract class AvaRepository {

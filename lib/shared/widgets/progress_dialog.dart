@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/shared/widgets/shimmer.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/shimmer.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class ProgressDialog extends StatelessWidget {
   final String? label;

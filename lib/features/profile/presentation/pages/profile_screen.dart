@@ -3,18 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/auth/data/vcare_mock_auth.dart';
-import 'package:flutter_template/features/profile/presentation/providers/local_profile_state_provider.dart';
-import 'package:flutter_template/features/profile/presentation/providers/user_profile_state_provider.dart';
-import 'package:flutter_template/features/profile/presentation/widgets/profile_family_section.dart';
-import 'package:flutter_template/features/profile/presentation/widgets/profile_settings_nav.dart';
-import 'package:flutter_template/features/profile/presentation/widgets/profile_sign_out_footer.dart';
-import 'package:flutter_template/features/profile/presentation/widgets/profile_summary_card.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/profile_family_section.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/profile_settings_nav.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/profile_sign_out_footer.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/profile_summary_card.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

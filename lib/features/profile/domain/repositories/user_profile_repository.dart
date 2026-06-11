@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 
 abstract class UserProfileRepository {
   /// Method to fetch user profile

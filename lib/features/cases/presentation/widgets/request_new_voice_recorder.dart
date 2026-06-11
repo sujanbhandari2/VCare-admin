@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_dashed_border.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_dashed_border.dart';
 
 /// Parity with vcareapp `VoiceRecorder` (non-compact) on request new step 3.
 class RequestNewVoiceRecorder extends StatefulWidget {

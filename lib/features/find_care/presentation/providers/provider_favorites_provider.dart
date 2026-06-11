@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/find_care/data/find_care_mock_data.dart';
+import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
 
 part 'provider_favorites_provider.g.dart';
 

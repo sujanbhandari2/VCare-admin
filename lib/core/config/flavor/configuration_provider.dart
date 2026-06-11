@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
 
 class ConfigurationProvider extends InheritedWidget {
   final Configuration configuration;

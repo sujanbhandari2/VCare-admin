@@ -1,7 +1,7 @@
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
-import 'package:flutter_template/features/auth/presentation/providers/user_logged_in_state_provider.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 
 /// Persists a demo session compatible with [userLoggedInStateProvider].
 class VcareMockAuth {

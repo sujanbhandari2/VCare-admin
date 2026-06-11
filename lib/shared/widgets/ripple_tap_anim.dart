@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/app_colors.dart';
+import 'package:vcare_admin/core/styles/app_colors.dart';
 
 class TapHereAnimation extends StatefulWidget {
   const TapHereAnimation({

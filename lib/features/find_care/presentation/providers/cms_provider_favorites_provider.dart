@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/find_care/domain/entities/cms_provider_favorite.dart';
-import 'package:flutter_template/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/cms_provider_favorite.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 
 part 'cms_provider_favorites_provider.g.dart';
 

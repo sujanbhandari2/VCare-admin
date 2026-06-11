@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

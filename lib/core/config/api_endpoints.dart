@@ -13,4 +13,8 @@ class ApiEndpoints {
   static const String fcmDeviceRegister = "fcm-device-register/";
   static const String fcmDeviceUpdate = "fcm-device-update/";
   static const String checkFcmDeviceStatus = "fcm-device-status-check/";
+
+  static const String notifications = "notifications/";
+  static const String notificationsUnreadCount = "notifications/unread-count/";
+  static String notificationMarkRead(String id) => "notifications/$id/read/";
 }

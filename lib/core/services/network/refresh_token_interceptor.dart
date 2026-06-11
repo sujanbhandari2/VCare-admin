@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/config/api_endpoints.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/config/api_endpoints.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Interceptor that handles 401 Unauthorized errors by attempting to refresh the JWT token.
 /// Also auto-refreshes the token if the last refresh was more than or equal to 2 hours ago.
@@ -132,7 +132,28 @@ class RefreshTokenInterceptor extends Interceptor {
     }
   }
 
+  Future<void> _deregisterFcmDeviceBestEffort() async {
+    final accessToken =
+        storageService.get(StorageKeys.loggedInUserToken)?.toString() ?? '';
+    if (accessToken.trim().isEmpty) return;
+
+    try {
+      final logoutDio = Dio(
+        BaseOptions(
+          baseUrl: config.apiBaseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
+      );
+
+      await logoutDio.delete(ApiEndpoints.fcmDevice);
+    } catch (_) {}
+  }
+
   Future<void> _clearSession() async {
+    await _deregisterFcmDeviceBestEffort();
+
     final sessionKeys = [
       StorageKeys.loggedInUserToken,
       StorageKeys.loggedInUserRefreshToken,
@@ -142,6 +163,7 @@ class RefreshTokenInterceptor extends Interceptor {
       StorageKeys.loggedInUserUsername,
       StorageKeys.tokenRefreshedDate,
       StorageKeys.lastSyncedFcmToken,
+      StorageKeys.lastSyncedFcmUserId,
     ];
 
     for (final key in sessionKeys) {

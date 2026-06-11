@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_template/core/services/network/models/request_body.dart';
+import 'package:vcare_admin/core/services/network/models/request_body.dart';
 
 /// Abstraction for HTTP requests with unified payload handling.
 abstract class ApiClient {

@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_empty_state_card.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_horizontal_carousel.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_saved_provider_card.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_section_header.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_empty_state_card.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_horizontal_carousel.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_saved_provider_card.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_section_header.dart';
 
 class HomeSavedProvidersSection extends StatelessWidget {
   const HomeSavedProvidersSection({

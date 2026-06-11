@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/shared/widgets/app_button.dart';
+import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:flutter_template/shared/widgets/image_upload_field.dart';
-import 'package:flutter_template/features/auth/presentation/widgets/auth_dropdown_field.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/utils/field_validator.dart';
-import 'package:flutter_template/features/auth/domain/enums/gender.dart';
-import 'package:flutter_template/features/auth/presentation/providers/register_request_state_provider.dart';
-import 'package:flutter_template/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:vcare_admin/shared/widgets/image_upload_field.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/auth_dropdown_field.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/field_validator.dart';
+import 'package:vcare_admin/features/auth/domain/enums/gender.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/register_request_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});

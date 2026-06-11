@@ -1,5 +1,5 @@
-import 'package:flutter_template/shared/models/loadable_list_item.dart';
-import 'package:flutter_template/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/models/loadable_list_item.dart';
+import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class ListItem extends LoadableListItem {

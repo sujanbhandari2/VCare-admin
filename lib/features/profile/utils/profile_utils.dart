@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 
 /// US date format MM/DD/YYYY — parity with vcareapp formatUsDate.
 String formatProfileDob(String? input) {

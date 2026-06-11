@@ -4,8 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/auth/presentation/providers/auth_repository_provider.dart';
-import 'package:flutter_template/features/auth/presentation/state/forgot_password_request_state.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/state/forgot_password_request_state.dart';
 
 part 'forgot_password_request_state_provider.g.dart';
 

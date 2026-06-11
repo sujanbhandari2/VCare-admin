@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/find_care/data/find_care_mock_data.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/provider_favorites_provider.dart';
-import 'package:flutter_template/features/find_care/presentation/widgets/provider_detail_info_row.dart';
-import 'package:flutter_template/features/home/data/home_models.dart'
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/provider_detail_info_row.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart'
     as home_models;
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 /// Layout tokens from vcareapp `ProviderDetailBody` (`px-5`, `space-y-5`, etc.).
 abstract final class ProviderDetailLayout {

@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/onboarding/domain/enums/onboarding_item.dart';
+import 'package:vcare_admin/features/onboarding/domain/enums/onboarding_item.dart';
 
 part 'active_onboarding_item_provider.g.dart';
 

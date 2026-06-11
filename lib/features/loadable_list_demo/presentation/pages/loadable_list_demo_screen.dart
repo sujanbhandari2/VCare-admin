@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/features/loadable_list_demo/domain/models/demo_list_item.dart';
+import 'package:vcare_admin/features/loadable_list_demo/domain/models/demo_list_item.dart';
 
-import 'package:flutter_template/features/loadable_list_demo/presentation/providers/loadable_list_demo_state_provider.dart';
-import 'package:flutter_template/shared/widgets/loadable_list_view.dart';
+import 'package:vcare_admin/features/loadable_list_demo/presentation/providers/loadable_list_demo_state_provider.dart';
+import 'package:vcare_admin/shared/widgets/loadable_list_view.dart';
 
 class LoadableListDemoScreen extends ConsumerStatefulWidget {
   const LoadableListDemoScreen({super.key});

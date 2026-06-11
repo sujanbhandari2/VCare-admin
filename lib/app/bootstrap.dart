@@ -1,7 +1,10 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/core/services/firebase/firebase_service.dart';
+import 'package:vcare_admin/core/services/firebase/firebase_messaging_background.dart';
+import 'package:vcare_admin/core/services/firebase/firebase_service.dart';
 
 import '../core/config/env/env.dart';
 import '../core/config/flavor/configuration.dart';
@@ -27,6 +30,10 @@ Future<void> bootstrap() async {
   // Hive-specific initialization
   final storageService = HiveStorageService.instance;
   await storageService.init(configuration.hiveBoxName);
+
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   // Initialize Firebase
   await FirebaseService.initializeFirebase();

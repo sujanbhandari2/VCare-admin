@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_activity_builder.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_section_header.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_activity_status_chip.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_section_header.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_activity_status_chip.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class HomeRecentActivitySection extends StatelessWidget {

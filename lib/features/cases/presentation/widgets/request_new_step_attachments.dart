@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_dashed_border.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_voice_recorder.dart';
-import 'package:flutter_template/features/cases/utils/request_attachments.dart';
-import 'package:flutter_template/features/cases/utils/request_new_utils.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_dashed_border.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_voice_recorder.dart';
+import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
+import 'package:vcare_admin/features/cases/utils/request_new_utils.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 class RequestNewStepAttachments extends StatelessWidget {
   const RequestNewStepAttachments({

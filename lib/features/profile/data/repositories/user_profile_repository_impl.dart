@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/config/api_endpoints.dart';
-import 'package:flutter_template/core/services/network/http_response_validator.dart';
-import 'package:flutter_template/core/services/network/api_client.dart';
-import 'package:flutter_template/core/services/network/models/form_file.dart';
-import 'package:flutter_template/core/services/network/models/request_body.dart';
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
-import 'package:flutter_template/features/profile/data/mappers/user_profile_mapper.dart';
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
-import 'package:flutter_template/features/profile/domain/repositories/user_profile_repository.dart';
+import 'package:vcare_admin/core/config/api_endpoints.dart';
+import 'package:vcare_admin/core/services/network/http_response_validator.dart';
+import 'package:vcare_admin/core/services/network/api_client.dart';
+import 'package:vcare_admin/core/services/network/models/form_file.dart';
+import 'package:vcare_admin/core/services/network/models/request_body.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/profile/data/mappers/user_profile_mapper.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/features/profile/domain/repositories/user_profile_repository.dart';
 
 import '../models/user_profile_model.dart';
 

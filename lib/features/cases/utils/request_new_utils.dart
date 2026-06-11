@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/vcare_sync/data/vcare_catalog.dart';
+import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
 
 const requestNewTotalSteps = 3;
 const requestNewMaxDescriptionLength = 2000;

@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/cases/utils/request_attachments.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 /// Flattened file from message attachments — parity with web RequestFileItem.
 class RequestFileItem {

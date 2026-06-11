@@ -2,19 +2,19 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/shared/widgets/app_button.dart';
+import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/shared/widgets/common_circular_icon_button.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/shared/utils/field_validator.dart';
-import 'package:flutter_template/features/profile/presentation/providers/user_profile_state_provider.dart';
-import 'package:flutter_template/features/auth/domain/enums/login_request_type.dart';
-import 'package:flutter_template/features/auth/presentation/providers/login_request_state_provider.dart';
-import 'package:flutter_template/features/auth/presentation/providers/user_logged_in_state_provider.dart';
-import 'package:flutter_template/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:vcare_admin/shared/widgets/common_circular_icon_button.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/shared/utils/field_validator.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
+import 'package:vcare_admin/features/auth/domain/enums/login_request_type.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/login_request_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

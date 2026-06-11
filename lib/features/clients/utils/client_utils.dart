@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 
 String clientInitials(String fullName) => profileInitials(fullName);
 

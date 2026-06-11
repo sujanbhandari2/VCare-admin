@@ -1,9 +1,9 @@
-import 'package:flutter_template/features/auth/domain/entities/auth_session.dart';
-import 'package:flutter_template/features/auth/domain/entities/forgot_password_response.dart';
-import 'package:flutter_template/features/auth/domain/entities/register_response.dart';
-import 'package:flutter_template/features/notifications/domain/entities/fcm_device_added_or_updated_response.dart';
-import 'package:flutter_template/features/notifications/domain/entities/fcm_device_check_response.dart';
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
+import 'package:vcare_admin/features/notifications/domain/entities/fcm_device_added_or_updated_response.dart';
+import 'package:vcare_admin/features/notifications/domain/entities/fcm_device_check_response.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 
 class RepositoryFixtures {
   const RepositoryFixtures._();

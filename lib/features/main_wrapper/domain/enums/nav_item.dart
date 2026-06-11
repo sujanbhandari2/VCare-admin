@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
 
 /// Primary bottom navigation items (vcare [MobileShell] mobile tab order).
 enum NavItem {

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/features/home/presentation/widgets/referral_share_sheet.dart';
-import 'package:flutter_template/features/home/presentation/widgets/vcare_referral_card.dart';
-import 'package:flutter_template/features/home/utils/referral_actions.dart';
-import 'package:flutter_template/features/profile/presentation/providers/local_profile_state_provider.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/referral_share_sheet.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/vcare_referral_card.dart';
+import 'package:vcare_admin/features/home/utils/referral_actions.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 /// My Referral detail — parity with vcareapp [/id-card].
 class IdCardScreen extends ConsumerWidget {

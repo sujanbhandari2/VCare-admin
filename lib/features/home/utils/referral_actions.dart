@@ -2,8 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/features/home/utils/referral_utils.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/home/utils/referral_utils.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 
 /// Share/copy helpers — parity with vcareapp [useReferralActions].
 class ReferralActions {

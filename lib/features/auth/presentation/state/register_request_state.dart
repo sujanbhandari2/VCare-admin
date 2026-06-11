@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/auth/domain/entities/register_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 
 import '../../../../shared/state/operation_state.dart';
 

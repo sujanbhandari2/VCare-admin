@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_template/features/auth/domain/enums/base_enum.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/auth/domain/enums/base_enum.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 enum Gender implements BaseEnum {
   male('Male'),

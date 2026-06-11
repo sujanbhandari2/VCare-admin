@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 
 class ProfileAddressModel {
   const ProfileAddressModel({

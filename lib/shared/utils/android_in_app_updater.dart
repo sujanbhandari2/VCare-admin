@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:in_app_update/in_app_update.dart';
-import 'package:flutter_template/shared/utils/logger.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 
 class AndroidInAppUpdater {
   /// Method to check for updates and start flexible or force update

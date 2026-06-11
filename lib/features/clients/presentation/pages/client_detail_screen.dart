@@ -4,17 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/clients/data/clients_mock_data.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_tab_bar.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_tabs.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_details_drawer.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_status_chip.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/data/clients_mock_data.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tab_bar.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tabs.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_details_drawer.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 /// Client detail — parity with vcareapp [ClientDetailPage].
 class ClientDetailScreen extends StatefulWidget {

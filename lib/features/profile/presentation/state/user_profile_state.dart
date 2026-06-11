@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 
 import '../../../../shared/state/operation_state.dart';
 

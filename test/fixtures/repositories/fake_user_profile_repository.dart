@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
-import 'package:flutter_template/features/profile/domain/repositories/user_profile_repository.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/features/profile/domain/repositories/user_profile_repository.dart';
 
 import '../repository_fixtures.dart';
 

@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
-import 'package:flutter_template/features/profile/utils/profile_utils.dart';
-import 'package:flutter_template/shared/widgets/common_image.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/shared/widgets/common_image.dart';
 
 /// Parity with vcareapp ProfileSummaryCard.
 class ProfileSummaryCard extends StatelessWidget {

@@ -8,17 +8,17 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
-import 'package:flutter_template/features/profile/presentation/providers/local_profile_state_provider.dart';
-import 'package:flutter_template/features/profile/utils/profile_edit_validation.dart';
-import 'package:flutter_template/features/profile/utils/profile_utils.dart';
-import 'package:flutter_template/shared/utils/image_picker_utils.dart';
-import 'package:flutter_template/shared/widgets/common_image.dart';
-import 'package:flutter_template/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
+import 'package:vcare_admin/features/profile/utils/profile_edit_validation.dart';
+import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/widgets/common_image.dart';
+import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key, this.addressOnly = false});

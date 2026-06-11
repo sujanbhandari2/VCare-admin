@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/vcare_sync/data/vcare_catalog.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
 
 /// Mock providers aligned with vcareapp `src/lib/mock-data.ts`.
 class FindCareMockData {

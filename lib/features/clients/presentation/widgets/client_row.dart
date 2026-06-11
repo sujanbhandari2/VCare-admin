@@ -2,9 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 
 class ClientRow extends StatelessWidget {
   const ClientRow({super.key, required this.client, this.onTap});

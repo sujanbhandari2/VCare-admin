@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
-import 'package:flutter_template/features/find_care/presentation/widgets/find_care_location_bar.dart';
-import 'package:flutter_template/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
-import 'package:flutter_template/features/find_care/utils/find_care_category_utils.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
+import 'package:vcare_admin/features/find_care/utils/find_care_category_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class FindCareCategoryScreen extends ConsumerStatefulWidget {
   const FindCareCategoryScreen({super.key, required this.slug});

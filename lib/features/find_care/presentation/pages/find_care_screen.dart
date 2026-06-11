@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
-import 'package:flutter_template/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
 class FindCareScreen extends StatefulWidget {
   const FindCareScreen({super.key});

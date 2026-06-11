@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/utils/cases_utils.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_activity_status_chip.dart';
-import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/utils/cases_utils.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_activity_status_chip.dart';
+import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 
 /// Case row card — parity with vcareapp RequestsOpen/ResolvedSection.
 class CasesRequestCard extends StatelessWidget {

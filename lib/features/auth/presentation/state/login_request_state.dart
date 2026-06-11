@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/auth/domain/enums/login_request_type.dart';
-import 'package:flutter_template/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/enums/login_request_type.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 
 import '../../../../shared/state/operation_state.dart';
 

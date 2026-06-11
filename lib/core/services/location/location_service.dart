@@ -1,6 +1,6 @@
 import 'package:location/location.dart';
 
-import 'package:flutter_template/shared/utils/logger.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 
 enum LocationPermissionRequestStatus {
   granted,

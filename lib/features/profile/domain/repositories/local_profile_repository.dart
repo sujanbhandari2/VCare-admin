@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 
 abstract class LocalProfileRepository {
   LocalProfile load();

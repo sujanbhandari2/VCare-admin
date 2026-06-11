@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_carousel.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_section_heading.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_status_chip.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_carousel.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
   const ClientMembershipsTab({

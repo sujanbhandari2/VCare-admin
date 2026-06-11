@@ -5,7 +5,7 @@
 .PHONY: help setup setup-env setup-firebase gen-code gen-l10n format format-check change-pkg change-package-name sync-home sync-all run-dev run-qa run-uat run-prod run-dev-ios run-qa-ios run-uat-ios run-prod-ios build-apk-dev build-apk-qa build-apk-uat build-apk-prod build-appbundle-dev build-appbundle-qa build-appbundle-uat build-appbundle-prod build-ios-dev build-ios-qa build-ios-uat build-ios-prod build-ipa-dev build-ipa-qa build-ipa-uat build-ipa-prod configure-dev configure-qa configure-uat configure-prod
 
 # Configuration
-APP_NAME = flutter_template
+APP_NAME = vcare_admin
 # Support multiple possible script locations
 FIREBASE_SCRIPT_PATHS = ./scripts/update_firebase_config.sh ./scripts/setup_firebase_config.sh ./update_firebase_config.sh ./setup_firebase_config.sh
 FIREBASE_SCRIPT = $(firstword $(wildcard $(FIREBASE_SCRIPT_PATHS)))

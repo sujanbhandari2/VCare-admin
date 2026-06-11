@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 
 part 'message_groups_provider.g.dart';
 
