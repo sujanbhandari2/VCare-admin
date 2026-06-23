@@ -1,12 +1,36 @@
+import 'package:vcare_admin/features/auth/data/models/auth_identify_result_model.dart'
+    as model;
+import 'package:vcare_admin/features/auth/data/models/auth_verify_otp_result_model.dart'
+    as model;
 import 'package:vcare_admin/features/auth/data/models/forgot_password_response_model.dart'
     as model;
 import 'package:vcare_admin/features/auth/data/models/login_response_model.dart'
     as model;
 import 'package:vcare_admin/features/auth/data/models/register_response_model.dart'
     as model;
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
+
+extension AuthIdentifyResultMapper on model.AuthIdentifyResultModel {
+  AuthIdentifyResult toEntity() {
+    return AuthIdentifyResult(
+      userExists: userExists,
+      multipleAccounts: multipleAccounts,
+      atLeastOneAccountLoggedIn: atLeastOneAccountLoggedIn,
+      otherPendingAccount: otherPendingAccount,
+      otpSend: otpSend,
+    );
+  }
+}
+
+extension AuthVerifyOtpResultMapper on model.AuthVerifyOtpResultModel {
+  AuthVerifyOtpResult toEntity() {
+    return AuthVerifyOtpResult(session: session?.toEntity());
+  }
+}
 
 extension LoginResponseMapper on model.LoginResponseModel {
   AuthSession toEntity() {

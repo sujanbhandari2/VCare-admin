@@ -12,12 +12,17 @@ import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/http_response_validator.dart';
 import 'package:vcare_admin/core/services/network/api_client.dart';
 import 'package:vcare_admin/core/config/api_endpoints.dart';
+import 'package:vcare_admin/features/auth/data/auth_api_headers.dart';
 import 'package:vcare_admin/features/auth/data/mappers/auth_mappers.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
 
+import '../models/auth_identify_result_model.dart';
+import '../models/auth_verify_otp_result_model.dart';
 import '../models/forgot_password_response_model.dart';
 import '../models/login_response_model.dart';
 import '../models/register_response_model.dart';
@@ -28,6 +33,76 @@ class AuthRepositoryImpl extends AuthRepository {
 
   /// Constructor
   AuthRepositoryImpl(this.apiClient);
+
+  @override
+  Future<EitherResponseOrException<AuthIdentifyResult>> identify({
+    required String identifier,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authIdentify,
+        JsonRequestBody({'identifier': identifier}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AuthIdentifyResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> requestOtp({
+    required String identifier,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authRequestOtp,
+        JsonRequestBody({'identifier': identifier}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      ResponseValidator.ensureValid(response);
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthVerifyOtpResult>> verifyOtp({
+    required String identifier,
+    required String otp,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authVerifyOtp,
+        JsonRequestBody({'identifier': identifier, 'otp': otp}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) {
+          if (data is Map<String, dynamic>) {
+            return AuthVerifyOtpResultModel.fromJson(data);
+          }
+          return AuthVerifyOtpResultModel();
+        },
+        dataValidator: (data) => data == null || data is Map,
+      );
+      return model.toEntity();
+    });
+  }
 
   /// Method to login
   ///

@@ -165,9 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onNotificationsTap: () async {
                   await context.pushNamed(AppRouter.notificationsName);
                   if (mounted) {
-                    ref
-                        .read(notificationInboxStateProvider.notifier)
-                        .refresh();
+                    ref.read(notificationInboxStateProvider.notifier).refresh();
                   }
                 },
               ),

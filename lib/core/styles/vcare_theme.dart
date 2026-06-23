@@ -130,7 +130,15 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
     required this.mutedForeground,
     required this.accent,
     required this.border,
+    required this.success,
+    required this.tealLight,
+    required this.terracottaLight,
     required this.gradientCard,
+    required this.gradientHero,
+    required this.gradientTeal,
+    required this.gradientWarm,
+    required this.gradientSunset,
+    required this.gradientAction,
   });
 
   final Color card;
@@ -138,7 +146,15 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
   final Color mutedForeground;
   final Color accent;
   final Color border;
+  final Color success;
+  final Color tealLight;
+  final Color terracottaLight;
   final LinearGradient gradientCard;
+  final LinearGradient gradientHero;
+  final LinearGradient gradientTeal;
+  final LinearGradient gradientWarm;
+  final LinearGradient gradientSunset;
+  final LinearGradient gradientAction;
 
   static const light = VCareThemeExtension(
     card: Color(0xFFFAFBFC),
@@ -146,7 +162,15 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
     mutedForeground: Color(0xFF3D5C5C),
     accent: Color(0xFFE86F33),
     border: Color(0xFFEEF0F2),
+    success: Color(0xFF29A36F),
+    tealLight: Color(0xFFE8F4F4),
+    terracottaLight: Color(0xFFFDF4EE),
     gradientCard: VCareColors.gradientCard,
+    gradientHero: VCareColors.gradientHero,
+    gradientTeal: VCareColors.gradientTeal,
+    gradientWarm: VCareColors.gradientWarm,
+    gradientSunset: VCareColors.gradientSunset,
+    gradientAction: VCareColors.gradientAction,
   );
 
   static const dark = VCareThemeExtension(
@@ -155,7 +179,15 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
     mutedForeground: Color(0xFF9BB5B5),
     accent: Color(0xFFE86F33),
     border: Color(0xFF2A3838),
+    success: Color(0xFF29A36F),
+    tealLight: Color(0xFF1A2626),
+    terracottaLight: Color(0xFF2A2420),
     gradientCard: VCareColors.gradientCardDark,
+    gradientHero: VCareColors.gradientHero,
+    gradientTeal: VCareColors.gradientTeal,
+    gradientWarm: VCareColors.gradientWarm,
+    gradientSunset: VCareColors.gradientSunset,
+    gradientAction: VCareColors.gradientAction,
   );
 
   @override
@@ -165,7 +197,15 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
     Color? mutedForeground,
     Color? accent,
     Color? border,
+    Color? success,
+    Color? tealLight,
+    Color? terracottaLight,
     LinearGradient? gradientCard,
+    LinearGradient? gradientHero,
+    LinearGradient? gradientTeal,
+    LinearGradient? gradientWarm,
+    LinearGradient? gradientSunset,
+    LinearGradient? gradientAction,
   }) {
     return VCareThemeExtension(
       card: card ?? this.card,
@@ -173,7 +213,15 @@ class VCareThemeExtension extends ThemeExtension<VCareThemeExtension> {
       mutedForeground: mutedForeground ?? this.mutedForeground,
       accent: accent ?? this.accent,
       border: border ?? this.border,
+      success: success ?? this.success,
+      tealLight: tealLight ?? this.tealLight,
+      terracottaLight: terracottaLight ?? this.terracottaLight,
       gradientCard: gradientCard ?? this.gradientCard,
+      gradientHero: gradientHero ?? this.gradientHero,
+      gradientTeal: gradientTeal ?? this.gradientTeal,
+      gradientWarm: gradientWarm ?? this.gradientWarm,
+      gradientSunset: gradientSunset ?? this.gradientSunset,
+      gradientAction: gradientAction ?? this.gradientAction,
     );
   }
 

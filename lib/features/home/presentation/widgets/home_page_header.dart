@@ -70,13 +70,16 @@ class HomePageHeader extends StatelessWidget {
                         ),
                 ),
                 AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 250),
+                  duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut,
                   style:
                       (compact
                               ? Theme.of(context).textTheme.titleMedium
                               : Theme.of(context).textTheme.headlineMedium)
-                          ?.copyWith(height: 1.1) ??
+                          ?.copyWith(
+                            fontSize: compact ? 16 : 20,
+                            height: 1.1,
+                          ) ??
                       const TextStyle(),
                   child: Text(
                     profile.fullName,

@@ -26,4 +26,5 @@ class StorageKeys {
   static const String lastSyncedFcmToken = 'last_synced_fcm_token';
   static const String lastSyncedFcmUserId = 'last_synced_fcm_user_id';
   static const String localProfile = 'vcare.profile.v2';
+  static const String referralSlug = 'vcare.referralSlug';
 }

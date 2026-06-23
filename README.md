@@ -80,7 +80,8 @@ make run-prod
 Set values in each environment file:
 
 ```env
-BASE_URL=https://api.example.com/
+# Host root only — the app appends api/v1/ for all flavors.
+BASE_URL=https://dev-api-v4.vitafyhealth.com/
 HIVE_BOX_NAME=FlutterTemplateApp
 ```
 

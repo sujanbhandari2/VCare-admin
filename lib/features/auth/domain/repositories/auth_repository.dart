@@ -1,11 +1,32 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 
 abstract class AuthRepository {
+  /// Identifies a user by phone or email before OTP login.
+  Future<EitherResponseOrException<AuthIdentifyResult>> identify({
+    required String identifier,
+    CancelToken? cancelToken,
+  });
+
+  /// Sends an OTP to the given identifier.
+  Future<EitherResponseOrException<void>> requestOtp({
+    required String identifier,
+    CancelToken? cancelToken,
+  });
+
+  /// Verifies an OTP for the given identifier.
+  Future<EitherResponseOrException<AuthVerifyOtpResult>> verifyOtp({
+    required String identifier,
+    required String otp,
+    CancelToken? cancelToken,
+  });
+
   /// Method to login
   ///
   Future<EitherResponseOrException<AuthSession>> login({

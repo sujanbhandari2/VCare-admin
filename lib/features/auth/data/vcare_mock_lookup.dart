@@ -113,4 +113,29 @@ class VcareMockLookup {
       ),
     );
   }
+
+  /// Mock accounts for forgot-password — parity with mock-lookup.ts
+  static Future<List<LoginClientRecord>> accountsByEmail(String email) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    final key = email.trim().toLowerCase();
+    if (key.isEmpty) return [];
+    return const [
+      LoginClientRecord(
+        clientId: 'c-3001',
+        fullName: 'Alex Rivera',
+        dobMasked: '•• /•• / 199•',
+        zipMasked: '941••',
+        memberId: 'VC-8472-1903',
+        hasLogin: true,
+      ),
+      LoginClientRecord(
+        clientId: 'c-3002',
+        fullName: 'Jamie Rivera',
+        dobMasked: '•• /•• / 201•',
+        zipMasked: '941••',
+        memberId: 'VC-8472-2210',
+        hasLogin: true,
+      ),
+    ];
+  }
 }

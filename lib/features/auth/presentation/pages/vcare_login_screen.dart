@@ -12,6 +12,14 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
+import 'package:vcare_admin/features/auth/domain/auth_identifier_normalizer.dart';
+import 'package:vcare_admin/features/auth/domain/auth_login_navigation_policy.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/auth_identify_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/auth_verify_otp_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/state/login_flow_state.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_forgot_steps.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
@@ -25,6 +33,10 @@ enum _LoginStep {
   activate,
   onboard,
   biometric,
+  forgotIdentify,
+  forgotSelect,
+  forgotVerify,
+  forgotReset,
 }
 
 /// Login flow — parity with vcareapp [/login] + auth feature.
@@ -40,9 +52,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   _LoginStep _step = _LoginStep.identify;
 
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController(
-    text: 'alex.rivera@example.com',
-  );
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _otpController = TextEditingController();
@@ -50,6 +60,12 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   final _zipController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _forgotEmailController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmNewPasswordController = TextEditingController();
+
+  List<LoginClientRecord> _forgotAccounts = [];
+  LoginClientRecord? _forgotSelected;
 
   String? _loadingKey;
   String? _error;
@@ -70,6 +86,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _zipController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _forgotEmailController.dispose();
+    _newPasswordController.dispose();
+    _confirmNewPasswordController.dispose();
     super.dispose();
   }
 
@@ -109,95 +128,144 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     });
   }
 
-  Future<void> _sendCode() async {
+  String get _normalizedIdentifier => AuthIdentifierNormalizer.normalize(
+        method: _method == _LoginMethod.phone
+            ? LoginFlowMethod.phone
+            : LoginFlowMethod.email,
+        raw: _identifier,
+      );
+
+  _LoginStep _mapFlowStep(LoginFlowStep step) {
+    return switch (step) {
+      LoginFlowStep.identify => _LoginStep.identify,
+      LoginFlowStep.verify => _LoginStep.verify,
+      LoginFlowStep.disambiguate => _LoginStep.disambiguate,
+      LoginFlowStep.password => _LoginStep.password,
+      LoginFlowStep.activate => _LoginStep.activate,
+      LoginFlowStep.onboard => _LoginStep.onboard,
+      LoginFlowStep.biometric => _LoginStep.biometric,
+      LoginFlowStep.forgotIdentify => _LoginStep.forgotIdentify,
+      LoginFlowStep.forgotSelect => _LoginStep.forgotSelect,
+      LoginFlowStep.forgotVerify => _LoginStep.forgotVerify,
+      LoginFlowStep.forgotReset => _LoginStep.forgotReset,
+    };
+  }
+
+  void _routeAfterIdentify(AuthIdentifyResult result) {
+    final skipStep = AuthLoginNavigationPolicy.resolveSkipOtpStep(result);
+    if (skipStep != null) {
+      setState(() => _step = _mapFlowStep(skipStep));
+      return;
+    }
     setState(() {
-      _error = null;
-      _loadingKey = 'send';
-    });
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-    setState(() {
-      _loadingKey = null;
       _step = _LoginStep.verify;
       _otpController.clear();
     });
     _startResendTimer();
   }
 
-  Future<void> _verifyCode(String value) async {
-    if (value.length < 6) return;
+  void _routeAfterVerify(AuthIdentifyResult result) {
     setState(() {
-      _loadingKey = 'verify';
-      _error = null;
+      _step = _mapFlowStep(
+        AuthLoginNavigationPolicy.resolvePostOtpStep(result),
+      );
     });
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    if (!mounted) return;
-    if (value != VcareMockLookup.demoOtp && value != '000000') {
+  }
+
+  Future<void> _sendCode() async {
+    final identifier = _normalizedIdentifier;
+    if (identifier.isEmpty) {
       setState(() {
-        _error = 'Invalid code. Try 123456 for the demo.';
-        _loadingKey = null;
-        _otpController.clear();
+        _error = _method == _LoginMethod.phone
+            ? 'Enter your phone number to continue.'
+            : 'Enter your email to continue.';
       });
       return;
     }
 
-    final result = await VcareMockLookup.lookup(
-      _identifier.isEmpty ? 'alex.rivera@example.com' : _identifier,
-    );
-    if (!mounted) return;
-
-    setState(() {
-      _branch = result;
-      _loadingKey = null;
-    });
-
-    switch (result) {
-      case LoginLookupNew():
-        setState(() => _step = _LoginStep.onboard);
-      case LoginLookupActivate(:final client):
-        setState(() {
-          _selectedClient = client;
-          _step = _LoginStep.activate;
-        });
-      case LoginLookupPassword(:final client):
-        setState(() {
-          _selectedClient = client;
-          _step = _LoginStep.password;
-        });
-      case LoginLookupDisambiguate():
-        setState(() => _step = _LoginStep.disambiguate);
-    }
-  }
-
-  Future<void> _demoBranch(String email) async {
     setState(() {
       _error = null;
-      _method = _LoginMethod.email;
-      _emailController.text = email;
-      _loadingKey = 'demo';
+      _loadingKey = 'send';
     });
-    final result = await VcareMockLookup.lookup(email);
-    if (!mounted) return;
+
+    await ref.read(authIdentifyStateProvider.notifier).identify(
+          identifier: identifier,
+          onCompleted: (result) {
+            if (!mounted) return;
+            setState(() => _loadingKey = null);
+            _routeAfterIdentify(result);
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Unable to identify account.';
+            });
+          },
+        );
+  }
+
+  Future<void> _resendCode() async {
+    final identifier = _normalizedIdentifier;
+    if (identifier.isEmpty) return;
+
     setState(() {
-      _branch = result;
-      _loadingKey = null;
+      _error = null;
+      _loadingKey = 'send';
     });
-    switch (result) {
-      case LoginLookupNew():
-        setState(() => _step = _LoginStep.onboard);
-      case LoginLookupActivate(:final client):
-        setState(() {
-          _selectedClient = client;
-          _step = _LoginStep.activate;
-        });
-      case LoginLookupPassword(:final client):
-        setState(() {
-          _selectedClient = client;
-          _step = _LoginStep.password;
-        });
-      case LoginLookupDisambiguate():
-        setState(() => _step = _LoginStep.disambiguate);
-    }
+
+    await ref.read(authRequestOtpStateProvider.notifier).requestOtp(
+          identifier: identifier,
+          onCompleted: () {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _otpController.clear();
+            });
+            _startResendTimer();
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Unable to resend code.';
+            });
+          },
+        );
+  }
+
+  Future<void> _verifyCode(String value) async {
+    if (value.length < 6) return;
+
+    final identifier = _normalizedIdentifier;
+    if (identifier.isEmpty) return;
+
+    setState(() {
+      _loadingKey = 'verify';
+      _error = null;
+    });
+
+    await ref.read(authVerifyOtpStateProvider.notifier).verifyOtp(
+          identifier: identifier,
+          otp: value,
+          onCompleted: (_) {
+            if (!mounted) return;
+            final identifyResult =
+                ref.read(authIdentifyStateProvider).lastResult;
+            setState(() => _loadingKey = null);
+            if (identifyResult != null) {
+              _routeAfterVerify(identifyResult);
+            }
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _error = message ?? 'Invalid verification code.';
+              _loadingKey = null;
+              _otpController.clear();
+            });
+          },
+        );
   }
 
   Future<void> _finishSocial(String provider) async {
@@ -211,6 +279,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _error = null;
       switch (_step) {
         case _LoginStep.verify:
+          ref.read(authIdentifyStateProvider.notifier).clear();
           _step = _LoginStep.identify;
         case _LoginStep.disambiguate:
         case _LoginStep.password:
@@ -221,6 +290,14 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           _step = _branch is LoginLookupNew
               ? _LoginStep.onboard
               : _LoginStep.activate;
+        case _LoginStep.forgotIdentify:
+          _step = _LoginStep.password;
+        case _LoginStep.forgotSelect:
+          _step = _LoginStep.forgotIdentify;
+        case _LoginStep.forgotVerify:
+          _step = _LoginStep.forgotSelect;
+        case _LoginStep.forgotReset:
+          _step = _LoginStep.forgotVerify;
         case _LoginStep.identify:
           break;
       }
@@ -300,6 +377,115 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     await _finishSignIn(name: name.isEmpty ? null : name, email: _identifier);
   }
 
+  void _startForgotPassword() {
+    setState(() {
+      _error = null;
+      _forgotEmailController.text = _method == _LoginMethod.email
+          ? _emailController.text
+          : '';
+      _forgotAccounts = [];
+      _forgotSelected = null;
+      _newPasswordController.clear();
+      _confirmNewPasswordController.clear();
+      _step = _LoginStep.forgotIdentify;
+    });
+  }
+
+  Future<void> _submitForgotIdentify() async {
+    setState(() => _error = null);
+    final email = _forgotEmailController.text.trim();
+    if (!RegExp(r'^\S+@\S+\.\S+$').hasMatch(email)) {
+      setState(() => _error = 'Enter a valid email address.');
+      return;
+    }
+    setState(() => _loadingKey = 'forgot-lookup');
+    final accounts = await VcareMockLookup.accountsByEmail(email);
+    if (!mounted) return;
+    if (accounts.isEmpty) {
+      setState(() {
+        _loadingKey = null;
+        _error = "We couldn't find any accounts for that email.";
+      });
+      return;
+    }
+    setState(() {
+      _loadingKey = null;
+      _forgotAccounts = accounts;
+      _step = _LoginStep.forgotSelect;
+    });
+  }
+
+  Future<void> _selectForgotAccount(LoginClientRecord account) async {
+    setState(() {
+      _error = null;
+      _forgotSelected = account;
+      _loadingKey = 'forgot-send';
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    setState(() {
+      _otpController.clear();
+      _loadingKey = null;
+      _step = _LoginStep.forgotVerify;
+    });
+    _startResendTimer();
+  }
+
+  Future<void> _verifyForgotCode(String value) async {
+    if (value.length < 6) return;
+    setState(() {
+      _error = null;
+      _loadingKey = 'forgot-verify';
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return;
+    if (value != VcareMockLookup.demoOtp && value != '000000') {
+      setState(() {
+        _error = 'Invalid code. Try 123456 for the demo.';
+        _loadingKey = null;
+        _otpController.clear();
+      });
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (!mounted) return;
+    setState(() {
+      _loadingKey = null;
+      _step = _LoginStep.forgotReset;
+    });
+  }
+
+  Future<void> _resendForgotCode() async {
+    if (_forgotSelected == null) return;
+    setState(() => _loadingKey = 'forgot-send');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    setState(() {
+      _otpController.clear();
+      _loadingKey = null;
+    });
+    _startResendTimer();
+  }
+
+  Future<void> _submitForgotReset() async {
+    setState(() => _error = null);
+    if (_newPasswordController.text.length < 8) {
+      setState(() => _error = 'Password must be at least 8 characters.');
+      return;
+    }
+    if (_newPasswordController.text != _confirmNewPasswordController.text) {
+      setState(() => _error = "Passwords don't match.");
+      return;
+    }
+    setState(() => _loadingKey = 'forgot-reset');
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    if (!mounted) return;
+    await _finishSignIn(
+      name: _forgotSelected?.fullName,
+      email: _forgotEmailController.text.trim(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -311,6 +497,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       ),
       child: Scaffold(
         body: LoginShell(
+          onBack: _step == _LoginStep.identify ? null : _goBack,
           body: switch (_step) {
             _LoginStep.identify => _buildIdentifyStep(context),
             _LoginStep.verify => _buildVerifyStep(context),
@@ -319,6 +506,40 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             _LoginStep.activate => _buildActivateStep(context),
             _LoginStep.onboard => _buildOnboardStep(context),
             _LoginStep.biometric => _buildBiometricStep(context),
+            _LoginStep.forgotIdentify => LoginForgotIdentifyStep(
+              controller: _forgotEmailController,
+              error: _error,
+              loading: _loadingKey == 'forgot-lookup',
+              onSubmit: _submitForgotIdentify,
+            ),
+            _LoginStep.forgotSelect => LoginForgotSelectStep(
+              forgotEmail: _forgotEmailController.text.trim(),
+              accounts: _forgotAccounts,
+              loadingKey: _loadingKey,
+              pendingClientId: _forgotSelected?.clientId,
+              onSelect: _selectForgotAccount,
+            ),
+            _LoginStep.forgotVerify => LoginForgotVerifyStep(
+              forgotEmail: _forgotEmailController.text.trim(),
+              forgotSelected: _forgotSelected,
+              otpController: _otpController,
+              error: _error,
+              loading: _loadingKey == 'forgot-verify',
+              resendIn: _resendIn,
+              resendLoading: _loadingKey == 'forgot-send',
+              onCompleted: _verifyForgotCode,
+              onVerify: () => _verifyForgotCode(_otpController.text),
+              onResend: _resendForgotCode,
+              onChanged: (_) => setState(() => _error = null),
+            ),
+            _LoginStep.forgotReset => LoginForgotResetStep(
+              forgotSelected: _forgotSelected,
+              newPasswordController: _newPasswordController,
+              confirmPasswordController: _confirmNewPasswordController,
+              error: _error,
+              loading: _loadingKey == 'forgot-reset',
+              onSubmit: _submitForgotReset,
+            ),
           },
         ),
       ),
@@ -360,6 +581,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 28),
         const LoginOrDivider(),
         Container(
           padding: const EdgeInsets.all(4),
@@ -382,7 +604,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         if (_method == _LoginMethod.phone)
           LoginTextField(
             controller: _phoneController,
@@ -421,154 +643,25 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         const SizedBox(height: 12),
         LoginPrimaryButton(
           label: 'Continue',
-          icon: _method == _LoginMethod.phone
-              ? LucideIcons.phone
-              : LucideIcons.mail,
           loading: _loadingKey == 'send',
           onPressed: _loadingKey != null ? null : _sendCode,
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'DEMO BRANCHES',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: vcare.mutedForeground,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            for (final branch in const [
-              ('New user', 'new@example.com'),
-              ('Activate', 'activate@example.com'),
-              ('Multi-match', 'duplicate@example.com'),
-            ])
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: branch.$2 == 'duplicate@example.com' ? 0 : 8,
-                  ),
-                  child: _DemoBranchButton(
-                    label: branch.$1,
-                    loading: _loadingKey == 'demo',
-                    onTap: () => _demoBranch(branch.$2),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        TextButton(
-          onPressed: _loadingKey != null ? null : () => _finishSignIn(),
-          child: Text(
-            'Skip — explore as demo user',
-            style: TextStyle(
-              fontSize: 12,
-              color: vcare.mutedForeground,
-              decoration: TextDecoration.underline,
-            ),
-          ),
         ),
       ],
     );
   }
 
   Widget _buildVerifyStep(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LoginBackButton(onBack: _goBack),
-        LoginStepHeader(
-          icon: LucideIcons.lock,
-          title: 'Enter verification code',
-          subtitle: Text.rich(
-            TextSpan(
-              text: 'We sent a 6-digit code to ',
-              children: [
-                TextSpan(
-                  text: _destination,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        LoginOtpInput(
-          controller: _otpController,
-          onCompleted: _verifyCode,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 8),
-        if (_error != null)
-          Text(
-            _error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
-            textAlign: TextAlign.center,
-          )
-        else
-          Text.rich(
-            TextSpan(
-              text: 'Demo code: ',
-              style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
-              children: [
-                TextSpan(
-                  text: VcareMockLookup.demoOtp,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
-          ),
-        const SizedBox(height: 16),
-        LoginPrimaryButton(
-          label: 'Verify',
-          loading: _loadingKey == 'verify',
-          onPressed: _otpController.text.length >= 6 && _loadingKey == null
-              ? () => _verifyCode(_otpController.text)
-              : null,
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: Text.rich(
-            TextSpan(
-              text: "Didn't get a code? ",
-              style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-              children: [
-                WidgetSpan(
-                  child: TextButton(
-                    onPressed: _resendIn > 0 ? null : _sendCode,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      _resendIn > 0 ? 'Resend in ${_resendIn}s' : 'Resend code',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _resendIn > 0
-                            ? vcare.mutedForeground
-                            : VCareColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return LoginVerifyStep(
+      destination: _destination,
+      otpController: _otpController,
+      error: _error,
+      loading: _loadingKey == 'verify',
+      resendIn: _resendIn,
+      resendLoading: _loadingKey == 'send',
+      onCompleted: _verifyCode,
+      onVerify: () => _verifyCode(_otpController.text),
+      onResend: _resendCode,
+      onChanged: (_) => setState(() => _error = null),
     );
   }
 
@@ -579,7 +672,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LoginBackButton(onBack: _goBack),
         const LoginStepHeader(
           icon: LucideIcons.users,
           title: 'We found a few matches',
@@ -628,7 +720,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LoginBackButton(onBack: _goBack),
         LoginStepHeader(
           icon: LucideIcons.keyRound,
           title: 'Welcome back, $firstName',
@@ -670,7 +761,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () {},
+          onPressed: _startForgotPassword,
           child: Text(
             'Forgot password?',
             style: TextStyle(
@@ -691,7 +782,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LoginBackButton(onBack: _goBack),
         LoginStepHeader(
           icon: LucideIcons.shieldCheck,
           title: 'Activate your account',
@@ -732,7 +822,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LoginBackButton(onBack: _goBack),
         const LoginStepHeader(
           icon: LucideIcons.userPlus,
           title: "Let's set up your account",
@@ -874,8 +963,8 @@ class _MethodTab extends StatelessWidget {
       child: Material(
         color: selected ? vcare.card : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        elevation: selected ? 1 : 0,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        elevation: 0,
+
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
@@ -890,52 +979,6 @@ class _MethodTab extends StatelessWidget {
                 color: selected ? VCareColors.primary : vcare.mutedForeground,
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DemoBranchButton extends StatelessWidget {
-  const _DemoBranchButton({
-    required this.label,
-    required this.onTap,
-    this.loading = false,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final bool loading;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Material(
-      color: vcare.muted.withValues(alpha: 0.4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: vcare.border),
-      ),
-      child: InkWell(
-        onTap: loading ? null : onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-          child: Center(
-            child: loading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
           ),
         ),
       ),

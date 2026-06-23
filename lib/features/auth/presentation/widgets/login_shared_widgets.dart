@@ -1,69 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/vcare_assets.dart';
 
-/// Card shell — parity with vcareapp [LoginShell].
+/// Full wordmark above login card — parity: LoginShell.tsx `h-12 w-auto`.
+class LoginWordmark extends StatelessWidget {
+  const LoginWordmark({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      VCareAssets.logo,
+      height: 48,
+      fit: BoxFit.contain,
+      semanticLabel: 'VCare Advocacy',
+    );
+  }
+}
+
+/// Card shell — parity: vcare-agent-app-2.0/src/features/auth/components/LoginShell.tsx
 class LoginShell extends StatelessWidget {
-  const LoginShell({super.key, required this.body});
+  const LoginShell({super.key, required this.body, this.onBack});
 
   final Widget body;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Theme.of(context).scaffoldBackgroundColor,
-            Theme.of(context).scaffoldBackgroundColor,
-            VCareColors.primary.withValues(alpha: 0.05),
-          ],
-        ),
-      ),
+    return ColoredBox(
+      color: VCareColors.background,
       child: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 32, 16, 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
-              child: Material(
-                color: vcare.card,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(40),
-                  side: BorderSide(color: vcare.border),
-                ),
-                clipBehavior: Clip.antiAlias,
-                elevation: 0,
-                shadowColor: VCareColors.primary.withValues(alpha: 0.18),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: VCareColors.primary.withValues(alpha: 0.18),
-                        blurRadius: 60,
-                        offset: const Offset(0, 24),
-                      ),
-                    ],
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 56,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (onBack != null)
+                          Positioned(
+                            left: 0,
+                            child: Material(
+                              color: vcare.muted,
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                onTap: onBack,
+                                customBorder: const CircleBorder(),
+                                child: const SizedBox(
+                                  width: 40,
+                                  height: 40,
+                                  child: Icon(LucideIcons.arrowLeft, size: 16),
+                                ),
+                              ),
+                            ),
+                          ),
+                        const LoginWordmark(),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
-                        child: body,
+                  const SizedBox(height: 24),
+                  Material(
+                    color: VCareColors.loginCardSurface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        VCareLayout.loginCardRadius,
                       ),
-                      const LoginFooter(),
-                    ],
+                      side: BorderSide(
+                        color: vcare.border.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    elevation: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                          child: body,
+                        ),
+                        const LoginFooter(),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -82,10 +112,11 @@ class LoginFooter extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(28, 20, 28, 20),
+      padding: const EdgeInsets.fromLTRB(28, 16, 28, 16),
       decoration: BoxDecoration(
-        color: vcare.muted.withValues(alpha: 0.4),
-        border: Border(top: BorderSide(color: vcare.border)),
+        border: Border(
+          top: BorderSide(color: vcare.border.withValues(alpha: 0.6)),
+        ),
       ),
       child: Column(
         children: [
@@ -94,14 +125,14 @@ class LoginFooter extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 color: vcare.mutedForeground,
-                height: 1.4,
+                height: 1.45,
               ),
               children: [
                 const TextSpan(text: "By continuing you agree to VCare's "),
                 TextSpan(
                   text: 'Terms of Service',
                   style: TextStyle(
-                    color: VCareColors.primary,
+                    color: VCareColors.foreground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -109,7 +140,7 @@ class LoginFooter extends StatelessWidget {
                 TextSpan(
                   text: 'Privacy Policy',
                   style: TextStyle(
-                    color: VCareColors.primary,
+                    color: VCareColors.foreground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -125,16 +156,16 @@ class LoginFooter extends StatelessWidget {
               Icon(
                 LucideIcons.shieldCheck,
                 size: 14,
-                color: vcare.mutedForeground.withValues(alpha: 0.6),
+                color: VCareColors.primary,
               ),
               const SizedBox(width: 6),
               Text(
-                'HIPAA COMPLIANT · SECURE',
+                'HIPAA Compliant · Secure',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: vcare.mutedForeground.withValues(alpha: 0.6),
+
+                  color: vcare.mutedForeground,
                 ),
               ),
             ],
@@ -219,14 +250,17 @@ class LoginStepHeader extends StatelessWidget {
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 6),
-            DefaultTextStyle(
-              style: TextStyle(
-                fontSize: 14,
-                color: vcare.mutedForeground,
-                height: 1.35,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: DefaultTextStyle(
+                style: TextStyle(
+                  fontSize: 14,
+                  color: vcare.mutedForeground,
+                  height: 1.35,
+                ),
+                textAlign: TextAlign.center,
+                child: subtitle!,
               ),
-              textAlign: TextAlign.center,
-              child: subtitle!,
             ),
           ],
         ],
@@ -246,39 +280,19 @@ class LoginBrandHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 32),
       child: Column(
         children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: vcare.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: vcare.border),
-              boxShadow: [
-                BoxShadow(
-                  color: VCareColors.primary.withValues(alpha: 0.35),
-                  blurRadius: 30,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: SvgPicture.asset(
-                'assets/svg/vcare-icon.svg',
-                width: 36,
-                height: 36,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
           Text(
             'Welcome to VCare',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontSize: 24,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Sign in or get started in one step',
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
           ),
         ],
@@ -377,9 +391,7 @@ class LoginPrimaryButton extends StatelessWidget {
           backgroundColor: VCareColors.primary,
           foregroundColor: VCareColors.primaryForeground,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: const StadiumBorder(),
           elevation: 0,
           shadowColor: VCareColors.primary.withValues(alpha: 0.5),
         ),
@@ -468,7 +480,7 @@ class LoginSocialButton extends StatelessWidget {
   }
 }
 
-class LoginOtpInput extends StatelessWidget {
+class LoginOtpInput extends StatefulWidget {
   const LoginOtpInput({
     super.key,
     required this.controller,
@@ -481,63 +493,132 @@ class LoginOtpInput extends StatelessWidget {
   final ValueChanged<String>? onChanged;
 
   @override
+  State<LoginOtpInput> createState() => _LoginOtpInputState();
+}
+
+class _LoginOtpInputState extends State<LoginOtpInput>
+    with SingleTickerProviderStateMixin {
+  late final FocusNode _focusNode;
+  late final AnimationController _caretController;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode()..addListener(_handleFocusChange);
+    widget.controller.addListener(_handleTextChange);
+    _caretController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleTextChange);
+    _focusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
+    _caretController.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() => setState(() {});
+
+  void _handleTextChange() => setState(() {});
+
+  int get _activeIndex {
+    final length = widget.controller.text.length;
+    return length >= 6 ? 5 : length;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final code = widget.controller.text;
 
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(6, (index) {
-                final char = index < controller.text.length
-                    ? controller.text[index]
-                    : '';
-                return Padding(
-                  padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
-                  child: Container(
-                    width: 40,
-                    height: 48,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: vcare.muted.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: vcare.border),
+    return GestureDetector(
+      onTap: () => _focusNode.requestFocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(6, (index) {
+              final char = index < code.length ? code[index] : '';
+              final isActive = _focusNode.hasFocus && index == _activeIndex;
+
+              return Padding(
+                padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 40,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: vcare.muted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isActive
+                          ? VCareColors.primary.withValues(alpha: 0.4)
+                          : vcare.border,
+                      width: isActive ? 2 : 1,
                     ),
-                    child: Text(
-                      char,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: VCareColors.primary.withValues(alpha: 0.12),
+                              blurRadius: 0,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : null,
                   ),
-                );
-              }),
-            ),
-            Opacity(
-              opacity: 0.01,
-              child: TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: InputBorder.none,
+                  child: char.isNotEmpty
+                      ? Text(
+                          char,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      : isActive
+                      ? FadeTransition(
+                          opacity: _caretController,
+                          child: Container(
+                            width: 1,
+                            height: 16,
+                            color: VCareColors.foreground,
+                          ),
+                        )
+                      : null,
                 ),
-                onChanged: (value) {
-                  onChanged?.call(value);
-                  if (value.length == 6) onCompleted(value);
-                },
+              );
+            }),
+          ),
+          Opacity(
+            opacity: 0.01,
+            child: TextField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                counterText: '',
+                border: InputBorder.none,
               ),
+              onChanged: (value) {
+                widget.onChanged?.call(value);
+                if (value.length == 6) {
+                  widget.onCompleted(value);
+                }
+              },
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -595,7 +676,7 @@ class LoginOrDivider extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              'OR CONTINUE WITH',
+              'Or continue with'.toUpperCase(),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,

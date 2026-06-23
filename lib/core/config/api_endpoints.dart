@@ -1,6 +1,10 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
+  static const String authIdentify = "auth/identify/";
+  static const String authRequestOtp = "auth/request-otp/";
+  static const String authVerifyOtp = "auth/verify-otp/";
+
   static const String login = "login/";
   static const String googleLogin = "google-login/";
   static const String appleLogin = "apple-login/";

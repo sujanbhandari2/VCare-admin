@@ -7,7 +7,7 @@ import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 
 const double _barBodyHeight = 104;
 const double _pillHeight = 78;
-const double _homeFabSize = 62;
+const double _homeFabSize = VCareLayout.bottomNavHomeFabSize;
 
 /// How far the center Home FAB sits above the pill top (¼ of button height).
 const double _homeFabProtrusion = _homeFabSize / 4;
@@ -17,7 +17,9 @@ const double _bottomNavOuterPadding = 8;
 
 /// Total height of the floating mobile bottom nav, including safe-area inset.
 double vcareMobileBottomNavHeight(BuildContext context) {
-  if (MediaQuery.sizeOf(context).width >= 768) return 0;
+  if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
+    return 0;
+  }
   return _barBodyHeight +
       _bottomNavOuterPadding +
       MediaQuery.paddingOf(context).bottom;
@@ -25,7 +27,9 @@ double vcareMobileBottomNavHeight(BuildContext context) {
 
 /// Distance from the screen bottom to the top edge of the nav pill.
 double vcareMobileBottomNavBarTop(BuildContext context) {
-  if (MediaQuery.sizeOf(context).width >= 768) return 0;
+  if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
+    return 0;
+  }
   return MediaQuery.paddingOf(context).bottom +
       _bottomNavOuterPadding +
       _pillHeight;
@@ -58,7 +62,7 @@ class VcareBottomNavigation extends StatelessWidget {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final width = MediaQuery.sizeOf(context).width;
 
-    if (width >= 768) {
+    if (width >= VCareLayout.mobileBreakpoint) {
       return const SizedBox.shrink();
     }
 
@@ -74,67 +78,59 @@ class VcareBottomNavigation extends StatelessWidget {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.14),
-                    blurRadius: 28,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                height: _barBodyHeight,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: _pillHeight,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: vcare.card.withValues(alpha: 0.96),
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(color: vcare.border),
+            constraints: const BoxConstraints(
+              maxWidth: VCareLayout.bottomNavMaxWidth,
+            ),
+            child: SizedBox(
+              height: _barBodyHeight,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: _pillHeight,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        VCareLayout.bottomNavPillRadius,
+                      ),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: vcare.card.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(
+                              VCareLayout.bottomNavPillRadius,
                             ),
+                            border: Border.all(color: vcare.border),
                           ),
                         ),
                       ),
                     ),
-                    Positioned(
-                      left: 6,
-                      right: 6,
-                      bottom: 8,
-                      height: 96,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: NavItem.mobileTabs.map((item) {
-                          final isActive = item == currentItem;
-                          return Expanded(
-                            child: _NavTab(
-                              item: item,
-                              isActive: isActive,
-                              vcare: vcare,
-                              onTap: () => onSelect(item),
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                  ),
+                  Positioned(
+                    left: 6,
+                    right: 6,
+                    bottom: 8,
+                    height: 96,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: NavItem.mobileTabs.map((item) {
+                        final isActive = item == currentItem;
+                        return Expanded(
+                          child: _NavTab(
+                            item: item,
+                            isActive: isActive,
+                            vcare: vcare,
+                            onTap: () => onSelect(item),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -186,7 +182,7 @@ class _NavTab extends StatelessWidget {
                     child: Icon(
                       item.icon,
                       color: VCareColors.primaryForeground,
-                      size: 25,
+                      size: 22,
                     ),
                   ),
                 ),

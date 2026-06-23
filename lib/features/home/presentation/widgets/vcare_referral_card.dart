@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/vcare_assets.dart';
+import 'package:vcare_admin/features/home/presentation/providers/referral_repository_provider.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/referral_qr_code.dart';
-import 'package:vcare_admin/features/home/utils/referral_actions.dart';
 import 'package:vcare_admin/features/home/utils/referral_utils.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 
 /// Agency label on referral card — parity with vcareapp [VCareReferralCard].
 const kReferralAgencyName = 'BlueShield National';
 
-/// Full referral card + link copy block — parity with [VCareReferralCard].
-class VcareReferralCard extends StatefulWidget {
+/// Full referral card + editable slug block.
+/// parity: vcare-agent-app-2.0/src/features/id-card/components/VCareReferralCard.tsx
+class VcareReferralCard extends ConsumerStatefulWidget {
   const VcareReferralCard({
     super.key,
     required this.profile,
@@ -24,18 +28,117 @@ class VcareReferralCard extends StatefulWidget {
   final bool hideInternalLabel;
 
   @override
-  State<VcareReferralCard> createState() => _VcareReferralCardState();
+  ConsumerState<VcareReferralCard> createState() => _VcareReferralCardState();
 }
 
-class _VcareReferralCardState extends State<VcareReferralCard> {
+class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
+  late String _slug;
+  late final TextEditingController _draftController;
+  bool _isEditing = false;
   bool _copied = false;
+  bool _saving = false;
+  String? _error;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _slug = referralUsernameFromEmail(widget.profile.email);
+    _draftController = TextEditingController(text: _slug);
+    _loadSlug();
+  }
+
+  Future<void> _loadSlug() async {
+    final stored = await ref.read(referralRepositoryProvider).readSlug();
+    if (!mounted) return;
+    if (stored != null && stored.isNotEmpty) {
+      setState(() {
+        _slug = stored;
+        _draftController.text = stored;
+      });
+    }
+    setState(() => _loaded = true);
+  }
+
+  @override
+  void dispose() {
+    _draftController.dispose();
+    super.dispose();
+  }
+
+  String get _referralUrl => referralUrlFromSlug(_slug);
+
+  void _startEdit() {
+    setState(() {
+      _draftController.text = _slug;
+      _error = null;
+      _isEditing = true;
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _draftController.text = _slug;
+      _error = null;
+      _isEditing = false;
+    });
+  }
+
+  void _onDraftChanged(String value) {
+    final cleaned = sanitizeReferralSlug(value);
+    _draftController.value = TextEditingValue(
+      text: cleaned,
+      selection: TextSelection.collapsed(offset: cleaned.length),
+    );
+    setState(() => _error = validateReferralSlug(cleaned));
+  }
+
+  Future<void> _saveSlug() async {
+    final draft = _draftController.text;
+    final validationError = validateReferralSlug(draft);
+    if (validationError != null) {
+      setState(() => _error = validationError);
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await ref.read(referralRepositoryProvider).saveSlug(draft);
+      if (!mounted) return;
+      setState(() {
+        _slug = draft;
+        _isEditing = false;
+        _saving = false;
+      });
+      Fluttertoast.showToast(msg: 'Referral username updated');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      Fluttertoast.showToast(msg: "Couldn't save username");
+    }
+  }
+
+  Future<void> _copyReferral() async {
+    if (_isEditing) return;
+    await Clipboard.setData(ClipboardData(text: _referralUrl));
+    if (!mounted) return;
+    setState(() => _copied = true);
+    Fluttertoast.showToast(msg: 'Referral link copied');
+    Future<void>.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
     final vcare = context.vcare;
-    final actions = ReferralActions(widget.profile);
-    final username = referralUsernameFromEmail(widget.profile.email);
-    final qrUrl = referralQrImageUrl(actions.referralUrl, size: 320);
+    final qrUrl = referralQrImageUrl(_referralUrl, size: 320);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -43,17 +146,10 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: vcare.gradientCard,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
             child: Stack(
               clipBehavior: Clip.hardEdge,
               children: [
@@ -134,7 +230,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '@$username',
+                                  '@$_slug',
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 16,
@@ -245,7 +341,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
         DecoratedBox(
           decoration: BoxDecoration(
             color: vcare.card,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(VCareLayout.cardRadius2xl),
             border: Border.all(color: vcare.border),
           ),
           child: Padding(
@@ -253,82 +349,194 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Referral link',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Referral link',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (!_isEditing)
+                      TextButton.icon(
+                        onPressed: _startEdit,
+                        icon: const Icon(LucideIcons.pencil, size: 12),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: VCareColors.primary,
+                        ),
+                      )
+                    else
+                      TextButton.icon(
+                        onPressed: _cancelEdit,
+                        icon: const Icon(LucideIcons.x, size: 12),
+                        label: const Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: vcare.mutedForeground,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: vcare.muted,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
+                if (_isEditing) ...[
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: vcare.muted,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _error != null
+                            ? VCareColors.destructive
+                            : vcare.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            actions.referralUrl,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            referralUrlPrefix,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'monospace',
+                              color: vcare.mutedForeground,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _draftController,
+                            autofocus: true,
+                            onChanged: _onDraftChanged,
                             style: const TextStyle(
                               fontSize: 12,
                               fontFamily: 'monospace',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: VCareColors.destructive,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _saving || _error != null ? null : _saveSlug,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: VCareColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Save username'),
+                    ),
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: vcare.muted,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Text(
+                              _referralUrl,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'monospace',
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Material(
-                      color: VCareColors.primary,
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        onTap: () async {
-                          await actions.copyReferralLink();
-                          if (!mounted) return;
-                          setState(() => _copied = true);
-                          Future<void>.delayed(
-                            const Duration(milliseconds: 1500),
-                            () {
-                              if (mounted) setState(() => _copied = false);
-                            },
-                          );
-                        },
+                      const SizedBox(width: 8),
+                      Material(
+                        color: VCareColors.primary,
                         borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _copied ? LucideIcons.check : LucideIcons.copy,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _copied ? 'Copied' : 'Copy',
-                                style: const TextStyle(
+                        child: InkWell(
+                          onTap: _copyReferral,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _copied
+                                      ? LucideIcons.check
+                                      : LucideIcons.copy,
+                                  size: 16,
                                   color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  _copied ? 'Copied' : 'Copy',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Text(
                   'Share this link or scan the QR on your card to refer a friend.',

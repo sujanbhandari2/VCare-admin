@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
@@ -23,10 +25,27 @@ class FakeAuthRepository implements AuthRepository {
   );
   EitherResponseOrException<ForgotPasswordResponse> forgotPasswordResult =
       Success(RepositoryFixtures.forgotPasswordResponse());
+  EitherResponseOrException<AuthIdentifyResult> identifyResult = Success(
+    const AuthIdentifyResult(
+      userExists: true,
+      multipleAccounts: false,
+      atLeastOneAccountLoggedIn: false,
+      otherPendingAccount: false,
+      otpSend: true,
+    ),
+  );
+  EitherResponseOrException<void> requestOtpResult = const Success(null);
+  EitherResponseOrException<AuthVerifyOtpResult> verifyOtpResult = Success(
+    AuthVerifyOtpResult(session: RepositoryFixtures.authSession()),
+  );
 
   Map<String, dynamic>? lastLoginPayloads;
   Map<String, dynamic>? lastRegisterPayloads;
   Map<String, dynamic>? lastForgotPasswordPayloads;
+  String? lastIdentifyIdentifier;
+  String? lastRequestOtpIdentifier;
+  String? lastVerifyOtpIdentifier;
+  String? lastVerifyOtpCode;
 
   String get path4AppleLogin => '/auth/apple/';
 
@@ -37,6 +56,35 @@ class FakeAuthRepository implements AuthRepository {
   String get path4Login => '/auth/login/';
 
   String get path4Register => '/auth/register/';
+
+  @override
+  Future<EitherResponseOrException<AuthIdentifyResult>> identify({
+    required String identifier,
+    CancelToken? cancelToken,
+  }) async {
+    lastIdentifyIdentifier = identifier;
+    return identifyResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> requestOtp({
+    required String identifier,
+    CancelToken? cancelToken,
+  }) async {
+    lastRequestOtpIdentifier = identifier;
+    return requestOtpResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthVerifyOtpResult>> verifyOtp({
+    required String identifier,
+    required String otp,
+    CancelToken? cancelToken,
+  }) async {
+    lastVerifyOtpIdentifier = identifier;
+    lastVerifyOtpCode = otp;
+    return verifyOtpResult;
+  }
 
   @override
   Future<EitherResponseOrException<AuthSession>> appleLogin({
