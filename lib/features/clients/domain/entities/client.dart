@@ -1,3 +1,5 @@
+import 'package:vcare_admin/shared/models/loadable_list_item.dart';
+
 enum ClientGender { male, female, nonBinary }
 
 enum ClientMembershipStatus { approved, submitted, completed, cancelled }
@@ -12,11 +14,11 @@ enum ClientPaymentMethodType {
 
 enum ClientBillingStatus { paid, pending, overdue }
 
-enum ClientTransactionStatus { succeeded, failed, onHold }
+enum ClientTransactionStatus { succeeded, failed, onHold, pending }
 
 enum ClientCaseStatus { requested, inProgress, resolved }
 
-class ClientListItem {
+class ClientListItem implements LoadableListItem {
   const ClientListItem({
     required this.id,
     required this.fullName,
@@ -32,6 +34,16 @@ class ClientListItem {
   final String phone;
   final String location;
   final String avatarUrl;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ClientListItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class ClientMembership {
@@ -110,7 +122,7 @@ class ClientBilling {
   final String? paymentMethodId;
 }
 
-class ClientTransaction {
+class ClientTransaction implements LoadableListItem {
   const ClientTransaction({
     required this.id,
     required this.membershipTitle,
@@ -140,9 +152,19 @@ class ClientTransaction {
   final String? note;
   final String? dependentName;
   final String? dependentRelation;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ClientTransaction &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
-class ClientCase {
+class ClientCase implements LoadableListItem {
   const ClientCase({
     required this.id,
     required this.caseId,
@@ -158,9 +180,17 @@ class ClientCase {
   final ClientCaseStatus status;
   final String updatedAt;
   final String createdAt;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ClientCase && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
-class ClientFile {
+class ClientFile implements LoadableListItem {
   const ClientFile({
     required this.id,
     required this.name,
@@ -176,6 +206,14 @@ class ClientFile {
   final String uploadedAt;
   final String url;
   final String mime;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ClientFile && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class Client {

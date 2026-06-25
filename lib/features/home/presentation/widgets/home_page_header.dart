@@ -11,6 +11,7 @@ class HomePageHeader extends StatelessWidget {
     super.key,
     required this.profile,
     required this.unreadCount,
+    this.greetingLabel = 'Welcome back',
     this.onProfileTap,
     this.onNotificationsTap,
     this.onSettingsTap,
@@ -19,6 +20,7 @@ class HomePageHeader extends StatelessWidget {
 
   final HomeProfile profile;
   final int unreadCount;
+  final String greetingLabel;
   final VoidCallback? onProfileTap;
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onSettingsTap;
@@ -29,8 +31,7 @@ class HomePageHeader extends StatelessWidget {
     final vcare = context.vcare;
     final avatarSize = compact ? 40.0 : 56.0;
 
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
+    return Padding(
       padding: EdgeInsets.fromLTRB(20, compact ? 8 : 16, 20, compact ? 8 : 16),
       child: Row(
         children: [
@@ -61,7 +62,9 @@ class HomePageHeader extends StatelessWidget {
                   child: compact
                       ? const SizedBox.shrink()
                       : Text(
-                          'Welcome back',
+                          greetingLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 14,
                             color: vcare.mutedForeground,

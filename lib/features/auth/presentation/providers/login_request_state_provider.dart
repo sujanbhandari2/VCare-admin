@@ -126,6 +126,13 @@ class LoginRequestStateNotifier extends _$LoginRequestStateNotifier {
         DateTime.now().toIso8601String(),
       );
     }
+
+    if (response.profileId != null && response.profileId!.isNotEmpty) {
+      await storageService.set(
+        StorageKeys.loggedInUserProfileId,
+        response.profileId,
+      );
+    }
   }
 
   void _completeRequest() {

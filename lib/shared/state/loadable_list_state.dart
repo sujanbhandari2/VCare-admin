@@ -58,7 +58,10 @@ class LoadableListState<T extends LoadableListItem> {
         .._extras = extras
         .._total = totalItems;
 
-  LoadableListState<T> appendSuccess({required List<T> appendedItems}) =>
+  LoadableListState<T> appendSuccess({
+    required List<T> appendedItems,
+    int? total,
+  }) =>
       LoadableListState<T>(
           operation: OperationState<List<T>>.success(<T>[
             ...items,
@@ -66,7 +69,7 @@ class LoadableListState<T extends LoadableListItem> {
           ]),
         )
         .._extras = extras
-        .._total = totalItems;
+        .._total = total ?? totalItems;
 
   LoadableListState<T> appendFailure(String? message) =>
       LoadableListState<T>(operation: operation, loadMoreErrorMessage: message)

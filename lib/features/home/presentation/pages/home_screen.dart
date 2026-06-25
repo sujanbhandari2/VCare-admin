@@ -10,6 +10,8 @@ import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
 import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/data/home_profile_mapper.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_membership_section.dart';
@@ -20,6 +22,7 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_saved_provid
 import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:go_router/go_router.dart';
 
 /// Section spacing from vcareapp `HomeDashboardBody` (`space-y-6`).
@@ -43,6 +46,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _data = _buildViewData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(notificationInboxStateProvider.notifier).fetchInbox();
+      if (ref.read(userLoggedInStateProvider)) {
+        ref.read(authMeStateProvider.notifier).fetchMe();
+      }
     });
   }
 
@@ -132,15 +138,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     context.pushNamed(AppRouter.messages.toPathName);
   }
 
+  Future<void> _onRefresh() async {
+    final futures = <Future<void>>[
+      ref.read(notificationInboxStateProvider.notifier).refresh(),
+    ];
+
+    if (ref.read(userLoggedInStateProvider)) {
+      futures.add(
+        ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
+      );
+    }
+
+    await Future.wait(futures);
+
+    if (mounted) {
+      setState(() => _data = _buildViewData());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(localProfileStateProvider);
+    final authMeState = ref.watch(authMeStateProvider);
     final inboxState = ref.watch(notificationInboxStateProvider);
     final headerProfile = homeProfileFromLocal(profile);
+    final greetingLabel = authMeState.firstName?.trim().isNotEmpty == true
+        ? 'Welcome back, ${authMeState.firstName!.trim()}'
+        : 'Welcome back';
     final membershipMember = homeMemberFromProfile(profile);
     final carouselSaved = _savedProviders
         .take(homeSavedProvidersCarouselLimit)
         .toList();
+
+    final safeTop = MediaQuery.paddingOf(context).top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -150,15 +180,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : Brightness.dark,
       ),
       child: Scaffold(
-        body: CustomScrollView(
+        body: VcareRefreshScrollView(
+          onRefresh: _onRefresh,
           slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: MediaQuery.of(context).padding.top),
-            ),
             SliverPersistentHeader(
               pinned: true,
               delegate: _HomeHeaderDelegate(
+                safeTop: safeTop,
                 profile: headerProfile,
+                greetingLabel: greetingLabel,
                 unreadCount: inboxState.unreadCount,
                 onProfileTap: () =>
                     context.pushNamed(AppRouter.profile.toPathName),
@@ -225,22 +255,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _HomeHeaderDelegate({
+    required this.safeTop,
     required this.profile,
+    required this.greetingLabel,
     required this.unreadCount,
     this.onProfileTap,
     this.onNotificationsTap,
   });
 
+  static const double _compactHeight = 56;
+  static const double _expandedHeight = 88;
+
+  final double safeTop;
   final HomeProfile profile;
+  final String greetingLabel;
   final int unreadCount;
   final VoidCallback? onProfileTap;
   final VoidCallback? onNotificationsTap;
 
   @override
-  double get minExtent => 56;
+  double get minExtent => safeTop + _compactHeight;
 
   @override
-  double get maxExtent => 88;
+  double get maxExtent => safeTop + _expandedHeight;
 
   @override
   Widget build(
@@ -248,18 +285,36 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return HomePageHeader(
-      profile: profile,
-      unreadCount: unreadCount,
-      compact: shrinkOffset > 12,
-      onProfileTap: onProfileTap,
-      onNotificationsTap: onNotificationsTap,
+    final compact = shrinkOffset > 12;
+    final headerHeight = compact ? _compactHeight : _expandedHeight;
+
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: safeTop),
+          SizedBox(
+            height: headerHeight,
+            child: HomePageHeader(
+              profile: profile,
+              greetingLabel: greetingLabel,
+              unreadCount: unreadCount,
+              compact: compact,
+              onProfileTap: onProfileTap,
+              onNotificationsTap: onNotificationsTap,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   bool shouldRebuild(covariant _HomeHeaderDelegate oldDelegate) {
-    return profile != oldDelegate.profile ||
+    return safeTop != oldDelegate.safeTop ||
+        profile != oldDelegate.profile ||
+        greetingLabel != oldDelegate.greetingLabel ||
         unreadCount != oldDelegate.unreadCount ||
         onProfileTap != oldDelegate.onProfileTap ||
         onNotificationsTap != oldDelegate.onNotificationsTap;

@@ -1,3 +1,5 @@
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_account.dart';
+
 class AuthIdentifyResult {
   const AuthIdentifyResult({
     required this.userExists,
@@ -5,6 +7,7 @@ class AuthIdentifyResult {
     required this.atLeastOneAccountLoggedIn,
     required this.otherPendingAccount,
     required this.otpSend,
+    this.accounts = const [],
   });
 
   final bool userExists;
@@ -12,4 +15,5 @@ class AuthIdentifyResult {
   final bool atLeastOneAccountLoggedIn;
   final bool otherPendingAccount;
   final bool otpSend;
+  final List<AuthIdentifyAccount> accounts;
 }

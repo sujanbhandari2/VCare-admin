@@ -19,7 +19,7 @@ class AuthLoginNavigationPolicy {
       return LoginFlowStep.onboard;
     }
     if (result.otherPendingAccount) {
-      return LoginFlowStep.activate;
+      return LoginFlowStep.onboard;
     }
     if (result.multipleAccounts) {
       return LoginFlowStep.disambiguate;

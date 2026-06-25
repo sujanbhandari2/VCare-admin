@@ -31,6 +31,30 @@ void main() {
       expect(model.atLeastOneAccountLoggedIn, isFalse);
       expect(model.otherPendingAccount, isFalse);
       expect(model.otpSend, isFalse);
+      expect(model.accounts, isEmpty);
+    });
+
+    test('fromJson parses accounts array', () {
+      final model = AuthIdentifyResultModel.fromJson({
+        'userExists': true,
+        'multipleAccounts': false,
+        'atLeastOneAccountLoggedIn': true,
+        'otherPendingAccount': false,
+        'otpSend': false,
+        'accounts': [
+          {
+            'accountId': '350215cc-d085-4f5c-869f-7abbc9cf80b3',
+            'displayName': 'Jane Doe',
+          },
+        ],
+      });
+
+      final entity = model.toEntity();
+
+      expect(entity.accounts, hasLength(1));
+      expect(entity.accounts.first.accountId,
+          '350215cc-d085-4f5c-869f-7abbc9cf80b3');
+      expect(entity.accounts.first.displayName, 'Jane Doe');
     });
   });
 }

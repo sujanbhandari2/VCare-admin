@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 import 'package:vcare_admin/features/profile/domain/repositories/user_profile_repository.dart';
 
@@ -13,6 +14,9 @@ class FakeUserProfileRepository implements UserProfileRepository {
   EitherResponseOrException<UserProfile> updateResult = Success(
     RepositoryFixtures.userProfile(firstName: 'Updated'),
   );
+  EitherResponseOrException<AuthMe> fetchMeResult = Success(
+    RepositoryFixtures.authMe(),
+  );
 
   int? lastFetchedProfileId;
   int? lastUpdatedProfileId;
@@ -22,6 +26,14 @@ class FakeUserProfileRepository implements UserProfileRepository {
 
   @override
   String get path4ProfileUpdate => '/profiles/';
+
+  @override
+  Future<EitherResponseOrException<AuthMe>> fetchMe({
+    bool forceRefresh = true,
+    CancelToken? cancelToken,
+  }) async {
+    return fetchMeResult;
+  }
 
   @override
   Future<EitherResponseOrException<UserProfile>> fetchProfile({

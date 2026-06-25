@@ -35,6 +35,9 @@ class AvaMessageList extends StatelessWidget {
       builder: (context, constraints) {
         return SingleChildScrollView(
           controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           padding: const EdgeInsets.fromLTRB(
             AvaLayout.horizontalPadding,
             AvaLayout.listTopPadding,

@@ -1,3 +1,5 @@
+import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
@@ -8,18 +10,36 @@ import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 class RepositoryFixtures {
   const RepositoryFixtures._();
 
+  static AuthPreAuthUser authPreAuthUser({
+    String firstName = 'Fixture',
+    String lastName = 'User',
+    String dob = '1990-01-01',
+    String zipCode = '12345',
+    String email = 'fixture@example.com',
+    String phone = '5551234567',
+  }) => AuthPreAuthUser(
+    firstName: firstName,
+    lastName: lastName,
+    dob: dob,
+    zipCode: zipCode,
+    email: email,
+    phone: phone,
+  );
+
   static AuthSession authSession({
     int userId = 11,
     String access = 'access_token',
     String refresh = 'refresh_token',
     String username = 'fixture.user',
     String email = 'fixture@example.com',
+    String? profileId,
   }) => AuthSession(
     userId: userId,
     access: access,
     refresh: refresh,
     username: username,
     email: email,
+    profileId: profileId,
   );
 
   static RegisterResponse registerResponse({
@@ -66,5 +86,21 @@ class RepositoryFixtures {
     firstName: firstName,
     lastName: lastName,
     username: username,
+  );
+
+  static AuthMe authMe({
+    String id = 'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+    String firstName = 'Jane',
+    String lastName = 'Doe',
+    String email = 'sujan@vitafyhealth.com',
+    List<String> menu = const ['files', 'activities'],
+  }) => AuthMe(
+    user: AuthMeUser(
+      id: id,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+    ),
+    menu: menu,
   );
 }

@@ -67,6 +67,8 @@ class ClientStatusChip extends StatelessWidget {
         return 'Failed';
       case ClientTransactionStatus.onHold:
         return 'On Hold';
+      case ClientTransactionStatus.pending:
+        return 'Pending';
     }
   }
 
@@ -77,6 +79,8 @@ class ClientStatusChip extends StatelessWidget {
       case ClientTransactionStatus.failed:
         return ClientChipTone.destructive;
       case ClientTransactionStatus.onHold:
+        return ClientChipTone.warning;
+      case ClientTransactionStatus.pending:
         return ClientChipTone.warning;
     }
   }

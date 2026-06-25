@@ -1,33 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/features/clients/data/clients_mock_data.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_row.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/clients_empty_state.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_search_bar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
 /// Clients list — parity with vcareapp [ClientsPage].
-class ClientsScreen extends StatefulWidget {
+class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
 
   @override
-  State<ClientsScreen> createState() => _ClientsScreenState();
+  ConsumerState<ClientsScreen> createState() => _ClientsScreenState();
 }
 
-class _ClientsScreenState extends State<ClientsScreen> {
+class _ClientsScreenState extends ConsumerState<ClientsScreen> {
+  static const double _loadMoreTriggerThreshold = 240;
+
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
-  String _query = '';
+  Timer? _searchDebounce;
   bool _scrolled = false;
   bool _searchFocused = false;
+  bool _isLoadMoreRequested = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(clientsListStateProvider.notifier).loadInitial();
+    });
   }
 
   void _onScroll() {
@@ -35,10 +45,43 @@ class _ClientsScreenState extends State<ClientsScreen> {
     if (scrolled != _scrolled) {
       setState(() => _scrolled = scrolled);
     }
+
+    final listState = ref.read(clientsListStateProvider);
+    final shouldLoadMore =
+        listState.hasMore &&
+        listState.items.isNotEmpty &&
+        !listState.isLoadingMore &&
+        listState.loadMoreErrorMessage == null &&
+        !listState.isInitialLoading &&
+        !listState.isInitialError &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= _loadMoreTriggerThreshold;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      ref.read(clientsListStateProvider.notifier).loadMore().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      ref.read(clientsListStateProvider.notifier).search(value);
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    await ref.read(clientsListStateProvider.notifier).refresh();
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -46,18 +89,25 @@ class _ClientsScreenState extends State<ClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final clients = ClientsMockData.search(_query);
-    final subtitle = buildClientsSubtitle(clients.length);
+    final listState = ref.watch(clientsListStateProvider);
+    final clients = listState.items;
+    final subtitle = buildClientsSubtitle(
+      listState.totalItems,
+      isLoading: listState.isInitialLoading,
+    );
     final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
 
     return Scaffold(
-      body: CustomScrollView(
+      body: VcareRefreshScrollView(
         controller: _scrollController,
+        onRefresh: _onRefresh,
         slivers: [
           SliverPersistentHeader(
             pinned: true,
             delegate: VcarePinnedPageTitleDelegate(
               safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
               hasSubtitle: true,
               showBottomBorder: _scrolled,
               title: vcareTabPageTitle(title: 'Clients', subtitle: subtitle),
@@ -69,7 +119,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
               scrolled: _scrolled,
               focused: _searchFocused,
               controller: _searchController,
-              onChanged: (value) => setState(() => _query = value),
+              onChanged: _onSearchChanged,
               onFocusChange: (focused) {
                 if (focused != _searchFocused) {
                   setState(() => _searchFocused = focused);
@@ -78,25 +128,72 @@ class _ClientsScreenState extends State<ClientsScreen> {
               placeholder: 'Search clients by name, email or city',
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-            sliver: clients.isEmpty
-                ? const SliverToBoxAdapter(child: ClientsEmptyState())
-                : SliverList.separated(
-                    itemCount: clients.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final client = clients[index];
-                      return ClientRow(
-                        client: client,
-                        onTap: () => context.pushNamed(
-                          AppRouter.clientDetailName,
-                          pathParameters: {'id': client.id},
-                        ),
-                      );
-                    },
-                  ),
+          if (listState.isInitialLoading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (listState.isInitialError)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _ClientsErrorState(
+                message: listState.operation.errorMessage,
+                onRetry: () =>
+                    ref.read(clientsListStateProvider.notifier).loadInitial(),
+              ),
+            )
+          else if (listState.isEmpty)
+            const SliverToBoxAdapter(child: ClientsEmptyState())
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              sliver: SliverList.separated(
+                itemCount: clients.length + (listState.isLoadingMore ? 1 : 0),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  if (index >= clients.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final client = clients[index];
+                  return ClientRow(
+                    client: client,
+                    onTap: () => context.pushNamed(
+                      AppRouter.clientDetailName,
+                      pathParameters: {'id': client.id},
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClientsErrorState extends StatelessWidget {
+  const _ClientsErrorState({required this.message, required this.onRetry});
+
+  final String? message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            message ?? 'Unable to load clients.',
+            textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 12),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

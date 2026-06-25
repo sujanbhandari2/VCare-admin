@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/config/flavor/configuration.dart';
 import 'package:vcare_admin/core/services/network/api_client.dart';
+import 'package:vcare_admin/core/services/network/api_response_interceptor.dart';
 import 'package:vcare_admin/core/services/network/http_cache_interceptor.dart';
 import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/models/request_body.dart';
@@ -20,7 +21,7 @@ class DioApiClient implements ApiClient {
     dio = dioOverride ?? Dio(baseOptions);
 
     // Add interceptor to handle base response structure (success/message/data)
-    dio.interceptors.add(_ApiInterceptor());
+    dio.interceptors.add(ApiResponseInterceptor());
 
     if (enableCaching) {
       // CacheInterceptor is added after _ApiInterceptor so it receives the full response
@@ -300,49 +301,6 @@ class DioApiClient implements ApiClient {
         : endpoint;
 
     return '$sanitizedBaseUrl/$sanitizedEndpoint';
-  }
-}
-
-/// Internal interceptor that handles the standard API response structure.
-/// If success is false, it rejects the response with a [DioException].
-/// If success is true, it unwraps the 'data' field into response.data.
-class _ApiInterceptor extends Interceptor {
-  @override
-  void onResponse(Response response, ResponseInterceptorHandler handler) {
-    final dynamic data = response.data;
-
-    if (data is Map<String, dynamic>) {
-      // Check if the response follows the base response structure
-      if (data.containsKey('success') && data['success'] is bool) {
-        final bool success = data['success'] as bool;
-
-        if (!success) {
-          // Treat as error even if status code is 2xx
-          handler.reject(
-            DioException(
-              requestOptions: response.requestOptions,
-              response: response,
-              type: DioExceptionType.badResponse,
-              error: data['message'] ?? 'API Error',
-            ),
-            true,
-          );
-          return;
-        }
-
-        // Unwrap 'data' field if present
-        if (data.containsKey('data')) {
-          final d = data['data'];
-
-          if (d != null) {
-            response.data = d;
-          } else {
-            response.data = {'success': true, 'message': data['message']};
-          }
-        }
-      }
-    }
-    handler.next(response);
   }
 }
 

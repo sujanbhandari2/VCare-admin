@@ -47,5 +47,15 @@ void main() {
 
       expect(container.read(userLoggedInStateProvider), isTrue);
     });
+
+    test('returns true when token is non-empty and profileId is set', () async {
+      await storageService.set(StorageKeys.loggedInUserToken, 'token');
+      await storageService.set(
+        StorageKeys.loggedInUserProfileId,
+        'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+      );
+
+      expect(container.read(userLoggedInStateProvider), isTrue);
+    });
   });
 }

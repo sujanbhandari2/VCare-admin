@@ -72,6 +72,9 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
     ref.read(avaStateProvider.notifier).deleteMessage(id);
   }
 
+  Future<void> _onRefresh() =>
+      ref.read(avaStateProvider.notifier).refreshMessages();
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(avaStateProvider);
@@ -87,13 +90,13 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const AvaPageHeader(),
-            Expanded(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AvaPageHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
               child: AvaMessageList(
                 scrollController: _scrollController,
                 messages: messages,
@@ -105,15 +108,15 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
                     context.pushNamed(AppRouter.requestNewName),
               ),
             ),
-            AvaComposer(
-              controller: _composer,
-              editingId: state.editingId,
-              canSend: _composer.text.trim().isNotEmpty,
-              onSend: () => _send(),
-              onCancelEdit: _cancelEdit,
-            ),
-          ],
-        ),
+          ),
+          AvaComposer(
+            controller: _composer,
+            editingId: state.editingId,
+            canSend: _composer.text.trim().isNotEmpty,
+            onSend: () => _send(),
+            onCancelEdit: _cancelEdit,
+          ),
+        ],
       ),
     );
   }

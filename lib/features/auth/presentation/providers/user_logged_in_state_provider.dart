@@ -15,9 +15,13 @@ bool userLoggedInState(Ref ref) {
   );
 
   final userId = storageService.get(StorageKeys.loggedInUserId);
+  final profileId = storageService.get(StorageKeys.loggedInUserProfileId);
+
+  final hasValidUserId = userId is int && userId > 0;
+  final hasValidProfileId =
+      profileId is String && profileId.trim().isNotEmpty;
 
   return token is String &&
       token.trim().isNotEmpty &&
-      userId is int &&
-      userId > 0;
+      (hasValidUserId || hasValidProfileId);
 }

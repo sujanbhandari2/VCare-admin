@@ -13,19 +13,38 @@ import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
   const ClientMembershipsTab({
     super.key,
-    required this.client,
+    required this.memberships,
+    required this.dependents,
     required this.onMembershipInfo,
+    this.isLoading = false,
+    this.error,
+    this.onRetry,
   });
 
-  final Client client;
+  final List<ClientMembership> memberships;
+  final List<ClientDependent> dependents;
   final ValueChanged<ClientMembership> onMembershipInfo;
+  final bool isLoading;
+  final String? error;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading && memberships.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null && memberships.isEmpty) {
+      return _TabErrorState(message: error, onRetry: onRetry);
+    }
+
     final screenWidth = MediaQuery.sizeOf(context).width;
     final membershipWidth = math.min(screenWidth * 0.85, 320.0);
     final dependentWidth = math.min(screenWidth * 0.55, 200.0);
@@ -34,35 +53,41 @@ class ClientMembershipsTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         ClientDetailSectionHeading('Memberships'),
-        ClientDetailCarousel(
-          height: 148,
-          itemWidth: membershipWidth,
-          itemCount: client.memberships.length,
-          itemBuilder: (context, index) {
-            final m = client.memberships[index];
-            return ClientMembershipCard(
-              membership: m,
-              onInfo: () => onMembershipInfo(m),
-            );
-          },
-        ),
+        if (memberships.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.shield,
+            title: 'No memberships on file',
+            description: 'Membership plans for this client will appear here.',
+          )
+        else
+          ClientDetailCarousel(
+            height: 148,
+            itemWidth: membershipWidth,
+            itemCount: memberships.length,
+            itemBuilder: (context, index) {
+              final m = memberships[index];
+              return ClientMembershipCard(
+                membership: m,
+                onInfo: () => onMembershipInfo(m),
+              );
+            },
+          ),
         const SizedBox(height: 24),
         ClientDetailSectionHeading('Dependents'),
-        if (client.dependents.isEmpty)
-          Text(
-            'No dependents on file.',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
-            ),
+        if (dependents.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.users,
+            title: 'No dependents on file',
+            description:
+                'Dependents linked to this client\'s account will appear here.',
           )
         else
           ClientDetailCarousel(
             height: 168,
             itemWidth: dependentWidth,
-            itemCount: client.dependents.length,
+            itemCount: dependents.length,
             itemBuilder: (context, index) {
-              return ClientDependentCard(dependent: client.dependents[index]);
+              return ClientDependentCard(dependent: dependents[index]);
             },
           ),
       ],
@@ -70,23 +95,82 @@ class ClientMembershipsTab extends StatelessWidget {
   }
 }
 
-class ClientBillingTab extends StatelessWidget {
+
+class ClientBillingTab extends StatefulWidget {
   const ClientBillingTab({
     super.key,
-    required this.client,
+    required this.memberships,
+    required this.paymentMethods,
+    required this.transactionsState,
     required this.onTransactionTap,
+    this.isLoadingPaymentMethods = false,
+    this.paymentMethodsError,
+    this.onRetryPaymentMethods,
+    this.onRetryTransactions,
+    this.onLoadMoreTransactions,
   });
 
-  final Client client;
+  final List<ClientMembership> memberships;
+  final List<ClientPaymentMethod> paymentMethods;
+  final LoadableListState<ClientTransaction> transactionsState;
   final ValueChanged<ClientTransaction> onTransactionTap;
+  final bool isLoadingPaymentMethods;
+  final String? paymentMethodsError;
+  final VoidCallback? onRetryPaymentMethods;
+  final VoidCallback? onRetryTransactions;
+  final Future<void> Function()? onLoadMoreTransactions;
+
+  @override
+  State<ClientBillingTab> createState() => _ClientBillingTabState();
+}
+
+class _ClientBillingTabState extends State<ClientBillingTab> {
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final state = widget.transactionsState;
+    final shouldLoadMore =
+        widget.onLoadMoreTransactions != null &&
+        state.hasMore &&
+        state.items.isNotEmpty &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 240;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      widget.onLoadMoreTransactions!.call().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final upcoming = client.memberships
+    final upcoming = widget.memberships
         .where((m) => m.nextBillingDate != null && m.nextBillingDate != '—')
         .toList();
+    final transactions = widget.transactionsState.items;
 
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         if (upcoming.isNotEmpty) ...[
@@ -112,32 +196,127 @@ class ClientBillingTab extends StatelessWidget {
             ),
           ),
         ),
-        for (var i = 0; i < client.paymentMethods.length; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
-          ClientPaymentMethodCard(method: client.paymentMethods[i]),
-        ],
+        if (widget.isLoadingPaymentMethods && widget.paymentMethods.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.paymentMethodsError != null &&
+            widget.paymentMethods.isEmpty)
+          _TabErrorState(
+            message: widget.paymentMethodsError,
+            onRetry: widget.onRetryPaymentMethods,
+          )
+        else if (widget.paymentMethods.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.creditCard,
+            title: 'No payment methods on file',
+            description:
+                'Saved cards and bank accounts for billing will appear here.',
+          )
+        else
+          for (var i = 0; i < widget.paymentMethods.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            ClientPaymentMethodCard(method: widget.paymentMethods[i]),
+          ],
         const SizedBox(height: 24),
         const ClientDetailSectionHeading('Transactions'),
-        for (var i = 0; i < client.transactions.length; i++) ...[
-          if (i > 0) const SizedBox(height: 8),
-          ClientTransactionRow(
-            transaction: client.transactions[i],
-            onTap: () => onTransactionTap(client.transactions[i]),
+        if (widget.transactionsState.isInitialLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.transactionsState.isInitialError)
+          _TabErrorState(
+            message: widget.transactionsState.operation.errorMessage,
+            onRetry: widget.onRetryTransactions,
+          )
+        else if (transactions.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.receipt,
+            title: 'No transactions on file',
+            description:
+                'Billing history for this client will appear here once charges are recorded.',
+          )
+        else
+          for (var i = 0; i < transactions.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            ClientTransactionRow(
+              transaction: transactions[i],
+              onTap: () => widget.onTransactionTap(transactions[i]),
+            ),
+          ],
+        if (widget.transactionsState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
           ),
-        ],
       ],
     );
   }
 }
 
-class ClientCasesTab extends StatelessWidget {
-  const ClientCasesTab({super.key, required this.client});
 
-  final Client client;
+class ClientCasesTab extends StatefulWidget {
+  const ClientCasesTab({
+    super.key,
+    required this.casesState,
+    this.onRetry,
+    this.onLoadMore,
+  });
+
+  final LoadableListState<ClientCase> casesState;
+  final VoidCallback? onRetry;
+  final Future<void> Function()? onLoadMore;
+
+  @override
+  State<ClientCasesTab> createState() => _ClientCasesTabState();
+}
+
+class _ClientCasesTabState extends State<ClientCasesTab> {
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final state = widget.casesState;
+    final shouldLoadMore =
+        widget.onLoadMore != null &&
+        state.hasMore &&
+        state.items.isNotEmpty &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 240;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      widget.onLoadMore!.call().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final cases = widget.casesState.items;
+
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         ClientDetailSectionHeading(
@@ -158,32 +337,99 @@ class ClientCasesTab extends StatelessWidget {
             ),
           ),
         ),
-        if (client.cases.isEmpty)
-          Text(
-            'No cases for this client.',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
-            ),
+        if (widget.casesState.isInitialLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.casesState.isInitialError)
+          _TabErrorState(
+            message: widget.casesState.operation.errorMessage,
+            onRetry: widget.onRetry,
+          )
+        else if (cases.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.inbox,
+            title: 'No cases for this client',
+            description:
+                'Requests and cases opened for this client will show up here.',
           )
         else
-          for (var i = 0; i < client.cases.length; i++) ...[
+          for (var i = 0; i < cases.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            ClientCaseCard(clientCase: client.cases[i]),
+            ClientCaseCard(clientCase: cases[i]),
           ],
+        if (widget.casesState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
 }
 
-class ClientDocumentsTab extends StatelessWidget {
-  const ClientDocumentsTab({super.key, required this.client});
 
-  final Client client;
+class ClientDocumentsTab extends StatefulWidget {
+  const ClientDocumentsTab({
+    super.key,
+    required this.documentsState,
+    this.onRetry,
+    this.onLoadMore,
+  });
+
+  final LoadableListState<ClientFile> documentsState;
+  final VoidCallback? onRetry;
+  final Future<void> Function()? onLoadMore;
+
+  @override
+  State<ClientDocumentsTab> createState() => _ClientDocumentsTabState();
+}
+
+class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final state = widget.documentsState;
+    final shouldLoadMore =
+        widget.onLoadMore != null &&
+        state.hasMore &&
+        state.items.isNotEmpty &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 240;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      widget.onLoadMore!.call().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final files = widget.documentsState.items;
+
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         ClientDetailSectionHeading(
@@ -204,23 +450,38 @@ class ClientDocumentsTab extends StatelessWidget {
             ),
           ),
         ),
-        if (client.files.isEmpty)
-          Text(
-            'No documents uploaded.',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
-            ),
+        if (widget.documentsState.isInitialLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.documentsState.isInitialError)
+          _TabErrorState(
+            message: widget.documentsState.operation.errorMessage,
+            onRetry: widget.onRetry,
+          )
+        else if (files.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.paperclip,
+            title: 'No documents uploaded',
+            description:
+                'ID cards, bills, and other client files will appear here.',
           )
         else
-          for (var i = 0; i < client.files.length; i++) ...[
+          for (var i = 0; i < files.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            ClientDocumentRow(file: client.files[i]),
+            ClientDocumentRow(file: files[i]),
           ],
+        if (widget.documentsState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
 }
+
 
 class ClientUpcomingBillingCard extends StatelessWidget {
   const ClientUpcomingBillingCard({super.key, required this.memberships});
@@ -325,6 +586,7 @@ class ClientUpcomingBillingCard extends StatelessWidget {
     );
   }
 }
+
 
 class ClientMembershipCard extends StatelessWidget {
   const ClientMembershipCard({
@@ -442,6 +704,7 @@ class ClientMembershipCard extends StatelessWidget {
   }
 }
 
+
 class _MembershipInfoButton extends StatelessWidget {
   const _MembershipInfoButton({required this.onPressed});
 
@@ -467,6 +730,7 @@ class _MembershipInfoButton extends StatelessWidget {
     );
   }
 }
+
 
 class ClientDependentCard extends StatelessWidget {
   const ClientDependentCard({super.key, required this.dependent});
@@ -526,6 +790,7 @@ class ClientDependentCard extends StatelessWidget {
     );
   }
 }
+
 
 class ClientPaymentMethodCard extends StatelessWidget {
   const ClientPaymentMethodCard({super.key, required this.method});
@@ -658,6 +923,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
   }
 }
 
+
 class ClientTransactionRow extends StatelessWidget {
   const ClientTransactionRow({
     super.key,
@@ -734,6 +1000,7 @@ class ClientTransactionRow extends StatelessWidget {
     );
   }
 }
+
 
 class ClientCaseCard extends StatelessWidget {
   const ClientCaseCard({super.key, required this.clientCase});
@@ -832,6 +1099,7 @@ class ClientCaseCard extends StatelessWidget {
   }
 }
 
+
 class ClientDocumentRow extends StatelessWidget {
   const ClientDocumentRow({super.key, required this.file});
 
@@ -840,7 +1108,8 @@ class ClientDocumentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final isImage = file.mime.startsWith('image/');
+    final isImage =
+        file.mime.startsWith('image/') && file.url.isUrl;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -859,7 +1128,15 @@ class ClientDocumentRow extends StatelessWidget {
                 height: 40,
                 color: VCareColors.primary.withValues(alpha: 0.1),
                 child: isImage
-                    ? CachedNetworkImage(imageUrl: file.url, fit: BoxFit.cover)
+                    ? CachedNetworkImage(
+                        imageUrl: file.url,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Icon(
+                          LucideIcons.fileText,
+                          size: 16,
+                          color: VCareColors.primary,
+                        ),
+                      )
                     : Icon(
                         LucideIcons.fileText,
                         size: 16,
@@ -947,6 +1224,36 @@ class ClientDocumentRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TabErrorState extends StatelessWidget {
+  const _TabErrorState({required this.message, this.onRetry});
+
+  final String? message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          Text(
+            message ?? "Something went wrong.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: context.vcare.mutedForeground,
+            ),
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 8),
+            TextButton(onPressed: onRetry, child: const Text("Retry")),
+          ],
+        ],
       ),
     );
   }

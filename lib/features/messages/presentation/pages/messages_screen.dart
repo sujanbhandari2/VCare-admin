@@ -14,6 +14,7 @@ import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_
 import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_group_sheet.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/messages_empty_state.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_search_bar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
@@ -52,6 +53,13 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
     }
   }
 
+  Future<void> _onRefresh() async {
+    if (mounted) {
+      setState(() {});
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+  }
+
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
@@ -81,15 +89,18 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                 }).toList());
 
     final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
 
     return Scaffold(
-      body: CustomScrollView(
+      body: VcareRefreshScrollView(
         controller: _scrollController,
+        onRefresh: _onRefresh,
         slivers: [
           SliverPersistentHeader(
             pinned: true,
             delegate: VcarePinnedPageTitleDelegate(
               safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
               hasSubtitle: true,
               showBottomBorder: _scrolled,
               title: vcareTabPageTitle(

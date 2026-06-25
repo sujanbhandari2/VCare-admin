@@ -1,13 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/clients/data/clients_mock_data.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_detail_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_documents_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_memberships_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_transactions_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tab_bar.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tabs.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_details_drawer.dart';
@@ -17,16 +24,16 @@ import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 /// Client detail — parity with vcareapp [ClientDetailPage].
-class ClientDetailScreen extends StatefulWidget {
+class ClientDetailScreen extends ConsumerStatefulWidget {
   const ClientDetailScreen({super.key, required this.clientId});
 
   final String clientId;
 
   @override
-  State<ClientDetailScreen> createState() => _ClientDetailScreenState();
+  ConsumerState<ClientDetailScreen> createState() => _ClientDetailScreenState();
 }
 
-class _ClientDetailScreenState extends State<ClientDetailScreen>
+class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -34,6 +41,21 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadClientData());
+  }
+
+  void _loadClientData() {
+    final clientId = widget.clientId;
+    ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail();
+    ref
+        .read(clientMembershipsStateProvider(clientId).notifier)
+        .fetchMemberships();
+    ref
+        .read(clientPaymentMethodsStateProvider(clientId).notifier)
+        .fetchPaymentMethods();
+    ref.read(clientTransactionsStateProvider(clientId).notifier).loadInitial();
+    ref.read(clientCasesStateProvider(clientId).notifier).loadInitial();
+    ref.read(clientDocumentsStateProvider(clientId).notifier).loadInitial();
   }
 
   @override
@@ -44,8 +66,27 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final client = ClientsMockData.getById(widget.clientId);
-    if (client == null) {
+    final clientId = widget.clientId;
+    final detailState = ref.watch(clientDetailStateProvider(clientId));
+    final membershipsState = ref.watch(clientMembershipsStateProvider(clientId));
+    final paymentMethodsState = ref.watch(
+      clientPaymentMethodsStateProvider(clientId),
+    );
+    final transactionsState = ref.watch(
+      clientTransactionsStateProvider(clientId),
+    );
+    final casesState = ref.watch(clientCasesStateProvider(clientId));
+    final documentsState = ref.watch(clientDocumentsStateProvider(clientId));
+
+    final detail = detailState.data;
+
+    if (detailState.fetching && detail == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (detail == null) {
       return Scaffold(
         body: CustomScrollView(
           slivers: [
@@ -53,16 +94,16 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
               child: VcarePageHeader(title: 'Client not found', showBack: true),
             ),
             SliverPadding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "We couldn't find that client.",
-                      style: TextStyle(fontSize: 14),
+                      detailState.error ?? "We couldn't find that client.",
+                      style: const TextStyle(fontSize: 14),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     TextButton(
                       onPressed: () => context.pop(),
                       child: const Text('Back to clients'),
@@ -81,16 +122,16 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverToBoxAdapter(
             child: VcarePageHeader(
-              title: client.fullName,
+              title: detail.fullName,
               showBack: true,
               action: IconButton(
-                onPressed: () => ClientDetailsDrawer.show(context, client),
+                onPressed: () => ClientDetailsDrawer.show(context, detail),
                 icon: const Icon(LucideIcons.info, size: 18),
                 tooltip: 'Client details',
               ),
             ),
           ),
-          SliverToBoxAdapter(child: _IdentityCard(client: client)),
+          SliverToBoxAdapter(child: _IdentityCard(detail: detail)),
           SliverPersistentHeader(
             pinned: true,
             delegate: ClientDetailTabBarHeader(
@@ -102,16 +143,51 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
           controller: _tabController,
           children: [
             ClientMembershipsTab(
-              client: client,
+              memberships: membershipsState.data?.memberships ?? const [],
+              dependents: membershipsState.data?.dependents ?? const [],
+              isLoading: membershipsState.fetching,
+              error: membershipsState.error,
+              onRetry: () => ref
+                  .read(clientMembershipsStateProvider(clientId).notifier)
+                  .fetchMemberships(),
               onMembershipInfo: (m) => _showMembershipNote(context, m),
             ),
             ClientBillingTab(
-              client: client,
+              memberships: membershipsState.data?.memberships ?? const [],
+              paymentMethods: paymentMethodsState.methods,
+              transactionsState: transactionsState,
+              isLoadingPaymentMethods: paymentMethodsState.fetching,
+              paymentMethodsError: paymentMethodsState.error,
+              onRetryPaymentMethods: () => ref
+                  .read(clientPaymentMethodsStateProvider(clientId).notifier)
+                  .fetchPaymentMethods(),
+              onRetryTransactions: () => ref
+                  .read(clientTransactionsStateProvider(clientId).notifier)
+                  .loadInitial(),
+              onLoadMoreTransactions: () => ref
+                  .read(clientTransactionsStateProvider(clientId).notifier)
+                  .loadMore(),
               onTransactionTap: (t) =>
-                  _showTransactionDetails(context, t, client.fullName),
+                  _showTransactionDetails(context, t, detail.fullName),
             ),
-            ClientCasesTab(client: client),
-            ClientDocumentsTab(client: client),
+            ClientCasesTab(
+              casesState: casesState,
+              onRetry: () => ref
+                  .read(clientCasesStateProvider(clientId).notifier)
+                  .loadInitial(),
+              onLoadMore: () => ref
+                  .read(clientCasesStateProvider(clientId).notifier)
+                  .loadMore(),
+            ),
+            ClientDocumentsTab(
+              documentsState: documentsState,
+              onRetry: () => ref
+                  .read(clientDocumentsStateProvider(clientId).notifier)
+                  .loadInitial(),
+              onLoadMore: () => ref
+                  .read(clientDocumentsStateProvider(clientId).notifier)
+                  .loadMore(),
+            ),
           ],
         ),
       ),
@@ -143,9 +219,9 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
 }
 
 class _IdentityCard extends StatelessWidget {
-  const _IdentityCard({required this.client});
+  const _IdentityCard({required this.detail});
 
-  final Client client;
+  final ClientDetail detail;
 
   @override
   Widget build(BuildContext context) {
@@ -168,13 +244,13 @@ class _IdentityCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   child: CachedNetworkImage(
-                    imageUrl: client.avatarUrl,
+                    imageUrl: detail.avatarUrl,
                     fit: BoxFit.cover,
                     errorWidget: (_, _, _) => ColoredBox(
                       color: vcare.muted,
                       child: Center(
                         child: Text(
-                          clientInitials(client.fullName),
+                          clientInitials(detail.fullName),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -197,7 +273,7 @@ class _IdentityCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      client.fullName,
+                      detail.fullName,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -206,7 +282,7 @@ class _IdentityCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      client.email,
+                      detail.email,
                       style: TextStyle(
                         fontSize: 12,
                         color: vcare.mutedForeground,
@@ -220,12 +296,12 @@ class _IdentityCard extends StatelessWidget {
               _CircleAction(
                 icon: LucideIcons.phone,
                 filled: true,
-                onTap: () => launchUrlString('tel:${client.phone}'),
+                onTap: () => launchUrlString('tel:${detail.phone}'),
               ),
               const SizedBox(width: 8),
               _CircleAction(
                 icon: LucideIcons.mail,
-                onTap: () => launchUrlString('mailto:${client.email}'),
+                onTap: () => launchUrlString('mailto:${detail.email}'),
               ),
             ],
           ),

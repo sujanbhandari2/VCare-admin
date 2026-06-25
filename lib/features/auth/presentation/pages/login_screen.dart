@@ -10,7 +10,7 @@ import 'package:vcare_admin/shared/widgets/common_circular_icon_button.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/shared/utils/field_validator.dart';
-import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/auth/domain/enums/login_request_type.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/login_request_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
@@ -254,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.invalidate(userLoggedInStateProvider);
 
     //fetching profile
-    ref.read(userProfileStateProvider.notifier).fetchProfile();
+    ref.read(authMeStateProvider.notifier).fetchMe();
 
     // If login success, navigate to home screen
     context.goNamed(AppRouter.home.toPathName);

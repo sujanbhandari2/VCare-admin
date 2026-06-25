@@ -7,8 +7,8 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
-import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_family_section.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_settings_nav.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_sign_out_footer.dart';
@@ -35,7 +35,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _fetchUserProfile() async {
     if (mounted) {
-      ref.read(userProfileStateProvider.notifier).fetchProfile();
+      ref.read(authMeStateProvider.notifier).fetchMe();
     }
   }
 
@@ -49,7 +49,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(userProfileStateProvider);
+    ref.watch(authMeStateProvider);
     final profile = ref.watch(localProfileStateProvider);
 
     return Scaffold(

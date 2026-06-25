@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
@@ -38,6 +40,16 @@ class FakeAuthRepository implements AuthRepository {
   EitherResponseOrException<AuthVerifyOtpResult> verifyOtpResult = Success(
     AuthVerifyOtpResult(session: RepositoryFixtures.authSession()),
   );
+  EitherResponseOrException<AuthSetupAccountResult> setupAccountResult =
+      Success(
+    AuthSetupAccountResult(
+      session: RepositoryFixtures.authSession(),
+      profileId: 'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+    ),
+  );
+  EitherResponseOrException<AuthPreAuthUser> preAuthUserResult = Success(
+    RepositoryFixtures.authPreAuthUser(),
+  );
 
   Map<String, dynamic>? lastLoginPayloads;
   Map<String, dynamic>? lastRegisterPayloads;
@@ -46,6 +58,10 @@ class FakeAuthRepository implements AuthRepository {
   String? lastRequestOtpIdentifier;
   String? lastVerifyOtpIdentifier;
   String? lastVerifyOtpCode;
+  String? lastSetupAccountRegistrationToken;
+  String? lastSetupAccountFirstName;
+  String? lastSetupAccountLastName;
+  String? lastPreAuthUserRegistrationToken;
 
   String get path4AppleLogin => '/auth/apple/';
 
@@ -84,6 +100,34 @@ class FakeAuthRepository implements AuthRepository {
     lastVerifyOtpIdentifier = identifier;
     lastVerifyOtpCode = otp;
     return verifyOtpResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthPreAuthUser>> getPreAuthUser({
+    required String registrationToken,
+    CancelToken? cancelToken,
+  }) async {
+    lastPreAuthUserRegistrationToken = registrationToken;
+    return preAuthUserResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthSetupAccountResult>> setupAccount({
+    required String registrationToken,
+    required String firstName,
+    required String lastName,
+    required String password,
+    required String dob,
+    required String zipCode,
+    required String email,
+    required String phone,
+    String tenantSlug = 'default',
+    CancelToken? cancelToken,
+  }) async {
+    lastSetupAccountRegistrationToken = registrationToken;
+    lastSetupAccountFirstName = firstName;
+    lastSetupAccountLastName = lastName;
+    return setupAccountResult;
   }
 
   @override

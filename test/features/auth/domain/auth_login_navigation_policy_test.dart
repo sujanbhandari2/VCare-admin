@@ -45,7 +45,7 @@ void main() {
       );
     });
 
-    test('resolvePostOtpStep routes pending accounts to activate', () {
+    test('resolvePostOtpStep routes pending accounts to onboard', () {
       const result = AuthIdentifyResult(
         userExists: true,
         multipleAccounts: false,
@@ -56,7 +56,7 @@ void main() {
 
       expect(
         AuthLoginNavigationPolicy.resolvePostOtpStep(result),
-        LoginFlowStep.activate,
+        LoginFlowStep.onboard,
       );
     });
 

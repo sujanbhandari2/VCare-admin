@@ -6,6 +6,7 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
 class FindCareScreen extends StatefulWidget {
@@ -26,18 +27,26 @@ class _FindCareScreenState extends State<FindCareScreen> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    setState(() {});
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+  }
+
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
 
     return Scaffold(
-      body: CustomScrollView(
+      body: VcareRefreshScrollView(
+        onRefresh: _onRefresh,
         slivers: [
           SliverPersistentHeader(
             pinned: true,
             delegate: VcarePinnedPageTitleDelegate(
               safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
               hasSubtitle: true,
               title: vcareTabPageTitle(
                 title: 'Find Care',

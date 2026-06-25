@@ -10,18 +10,29 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:intl/intl.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
 import 'package:vcare_admin/features/auth/domain/auth_identifier_normalizer.dart';
 import 'package:vcare_admin/features/auth/domain/auth_login_navigation_policy.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_identify_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/auth_pre_auth_user_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/auth_setup_account_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_verify_otp_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/login_request_state_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/login_flow_state.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_forgot_steps.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/field_validator.dart';
 
 enum _LoginMethod { phone, email }
 
@@ -60,6 +71,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   final _zipController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _onboardDobController = TextEditingController();
+  final _onboardEmailController = TextEditingController();
+  final _onboardPhoneController = TextEditingController();
   final _forgotEmailController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmNewPasswordController = TextEditingController();
@@ -69,10 +83,13 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
   String? _loadingKey;
   String? _error;
+  Map<String, String> _onboardErrors = {};
   int _resendIn = 0;
   Timer? _resendTimer;
   LoginLookupBranch? _branch;
   LoginClientRecord? _selectedClient;
+  String? _identifiedDisplayName;
+  bool _otpWasSkipped = false;
 
   @override
   void dispose() {
@@ -86,6 +103,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _zipController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _onboardDobController.dispose();
+    _onboardEmailController.dispose();
+    _onboardPhoneController.dispose();
     _forgotEmailController.dispose();
     _newPasswordController.dispose();
     _confirmNewPasswordController.dispose();
@@ -106,9 +126,129 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
   Future<void> _finishSignIn({String? name, String? email}) async {
     setState(() => _loadingKey = 'finish');
-    await VcareMockAuth.signIn(ref);
+
+    final storage = ref.read(storageServiceProvider);
+    final token =
+        storage.get(StorageKeys.loggedInUserToken, defaultValue: '')?.toString() ??
+            '';
+
+    if (token.trim().isEmpty) {
+      await VcareMockAuth.signIn(ref);
+    } else {
+      ref.invalidate(userLoggedInStateProvider);
+      ref.read(authMeStateProvider.notifier).fetchMe();
+    }
+
     if (!mounted) return;
     context.goNamed(AppRouter.home.toPathName);
+  }
+
+  Future<void> _pickOnboardDob() async {
+    final initial = _onboardDobController.text.isNotEmpty
+        ? DateTime.tryParse(_onboardDobController.text)
+        : null;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial ?? DateTime(1990, 1, 15),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(
+      () => _onboardDobController.text = DateFormat('yyyy-MM-dd').format(picked),
+    );
+    _clearOnboardError('dob');
+  }
+
+  void _clearOnboardError(String key) {
+    if (!_onboardErrors.containsKey(key)) {
+      return;
+    }
+    setState(() {
+      _onboardErrors = Map<String, String>.from(_onboardErrors)..remove(key);
+    });
+  }
+
+  Map<String, String> _collectOnboardFieldErrors() {
+    final l10n = context.appLocalization;
+    final errors = <String, String>{};
+
+    final firstNameError = FieldValidator.validateFirstName(
+      _firstNameController.text.trim(),
+      context: context,
+    );
+    if (firstNameError != null) {
+      errors['firstName'] = firstNameError;
+    }
+
+    final lastNameError = FieldValidator.validateField(
+      _lastNameController.text.trim(),
+      context: context,
+      message: l10n.validate_field_required,
+    );
+    if (lastNameError != null) {
+      errors['lastName'] = lastNameError;
+    }
+
+    if (_onboardDobController.text.trim().isEmpty) {
+      errors['dob'] = l10n.validate_field_required;
+    }
+
+    if (_zipController.text.trim().isEmpty) {
+      errors['zip'] = l10n.validate_field_required;
+    } else if (_zipController.text.trim().length < 5) {
+      errors['zip'] = 'Please enter a valid 5-digit ZIP code.';
+    }
+
+    if (_method == _LoginMethod.phone) {
+      final emailError = FieldValidator.validateEmail(
+        _onboardEmailController.text.trim(),
+        context: context,
+      );
+      if (emailError != null) {
+        errors['email'] = emailError;
+      }
+    } else {
+      final phoneDigits = AuthIdentifierNormalizer.normalize(
+        method: LoginFlowMethod.phone,
+        raw: _onboardPhoneController.text,
+      );
+      final phoneError = FieldValidator.validateMobile(
+        phoneDigits,
+        context: context,
+      );
+      if (phoneError != null) {
+        errors['phone'] = phoneError;
+      }
+    }
+
+    final passwordError = FieldValidator.validatePassword(
+      _passwordController.text,
+      context: context,
+      complexValidation: true,
+    );
+    if (passwordError != null) {
+      errors['password'] = passwordError;
+    }
+
+    if (_confirmPasswordController.text.isEmpty) {
+      errors['confirmPassword'] = l10n.validate_field_required;
+    } else if (_passwordController.text != _confirmPasswordController.text) {
+      errors['confirmPassword'] = l10n.validate_password_not_match;
+    }
+
+    return errors;
+  }
+
+  bool _validateOnboardForm() {
+    final errors = _collectOnboardFieldErrors();
+    setState(() {
+      _onboardErrors = errors;
+      _error = null;
+    });
+    return errors.isEmpty;
   }
 
   void _startResendTimer() {
@@ -151,13 +291,32 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     };
   }
 
+  void _hydratePasswordContext(
+    AuthIdentifyResult result, {
+    required bool otpSkipped,
+  }) {
+    _otpWasSkipped = otpSkipped;
+    _identifiedDisplayName = result.accounts.isNotEmpty
+        ? result.accounts.first.displayName
+        : null;
+  }
+
   void _routeAfterIdentify(AuthIdentifyResult result) {
     final skipStep = AuthLoginNavigationPolicy.resolveSkipOtpStep(result);
     if (skipStep != null) {
+      if (skipStep == LoginFlowStep.password) {
+        _hydratePasswordContext(result, otpSkipped: true);
+      }
+      if (skipStep == LoginFlowStep.onboard) {
+        _loadPreAuthUserAndNavigate();
+        return;
+      }
       setState(() => _step = _mapFlowStep(skipStep));
       return;
     }
     setState(() {
+      _otpWasSkipped = false;
+      _identifiedDisplayName = null;
       _step = _LoginStep.verify;
       _otpController.clear();
     });
@@ -165,11 +324,78 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   }
 
   void _routeAfterVerify(AuthIdentifyResult result) {
+    final nextStep = AuthLoginNavigationPolicy.resolvePostOtpStep(result);
+    if (nextStep == LoginFlowStep.password) {
+      _hydratePasswordContext(result, otpSkipped: false);
+    }
+    if (nextStep == LoginFlowStep.onboard) {
+      _loadPreAuthUserAndNavigate();
+      return;
+    }
     setState(() {
-      _step = _mapFlowStep(
-        AuthLoginNavigationPolicy.resolvePostOtpStep(result),
-      );
+      _step = _mapFlowStep(nextStep);
     });
+  }
+
+  void _navigateToOnboard() {
+    setState(() {
+      _loadingKey = null;
+      _step = _LoginStep.onboard;
+    });
+  }
+
+  Future<void> _loadPreAuthUserAndNavigate() async {
+    final registrationToken =
+        ref.read(authVerifyOtpStateProvider).data?.registrationToken;
+
+    if (registrationToken == null || registrationToken.isEmpty) {
+      _navigateToOnboard();
+      return;
+    }
+
+    setState(() {
+      _loadingKey = 'preAuth';
+      _step = _LoginStep.onboard;
+    });
+
+    await ref.read(authPreAuthUserStateProvider.notifier).fetchPreAuthUser(
+          registrationToken: registrationToken,
+          onCompleted: (user) {
+            if (!mounted) return;
+            _applyPreAuthUser(user);
+            setState(() => _loadingKey = null);
+          },
+          onError: (_) {
+            if (!mounted) return;
+            setState(() => _loadingKey = null);
+          },
+        );
+
+    if (mounted && _loadingKey == 'preAuth') {
+      setState(() => _loadingKey = null);
+    }
+  }
+
+  void _applyPreAuthUser(AuthPreAuthUser user) {
+    if (user.firstName != null) {
+      _firstNameController.text = user.firstName!;
+    }
+    if (user.lastName != null) {
+      _lastNameController.text = user.lastName!;
+    }
+    if (user.dob != null) {
+      _onboardDobController.text = user.dob!;
+    }
+    if (user.zipCode != null) {
+      _zipController.text = user.zipCode!;
+    }
+
+    if (_method == _LoginMethod.phone && user.email != null) {
+      _onboardEmailController.text = user.email!;
+    } else if (_method == _LoginMethod.email && user.phone != null) {
+      _onboardPhoneController.text =
+          AuthPhoneFormatter.toDisplayDigits(user.phone!);
+    }
   }
 
   Future<void> _sendCode() async {
@@ -282,10 +508,18 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           ref.read(authIdentifyStateProvider.notifier).clear();
           _step = _LoginStep.identify;
         case _LoginStep.disambiguate:
-        case _LoginStep.password:
         case _LoginStep.activate:
         case _LoginStep.onboard:
           _step = _LoginStep.verify;
+        case _LoginStep.password:
+          if (_otpWasSkipped) {
+            ref.read(authIdentifyStateProvider.notifier).clear();
+            _otpWasSkipped = false;
+            _identifiedDisplayName = null;
+            _step = _LoginStep.identify;
+          } else {
+            _step = _LoginStep.verify;
+          }
         case _LoginStep.biometric:
           _step = _branch is LoginLookupNew
               ? _LoginStep.onboard
@@ -327,13 +561,44 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     });
   }
 
-  void _submitPassword() {
+  Future<void> _submitPassword() async {
     setState(() => _error = null);
     if (_passwordController.text.length < 6) {
       setState(() => _error = 'Enter your password to continue.');
       return;
     }
-    _finishSignIn(name: _selectedClient?.fullName, email: _identifier);
+
+    final identifier = _normalizedIdentifier;
+    if (identifier.isEmpty) {
+      setState(() => _error = 'Enter your email or phone to continue.');
+      return;
+    }
+
+    setState(() => _loadingKey = 'password');
+
+    await ref.read(loginRequestStateProvider.notifier).login(
+          payloads: {
+            'identifier': identifier,
+            'password': _passwordController.text,
+          },
+          onSuccess: (_) {
+            if (!mounted) return;
+            ref.invalidate(userLoggedInStateProvider);
+            ref.read(authMeStateProvider.notifier).fetchMe();
+            context.goNamed(AppRouter.home.toPathName);
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Invalid password.';
+            });
+          },
+        );
+
+    if (mounted && _loadingKey == 'password') {
+      setState(() => _loadingKey = null);
+    }
   }
 
   void _submitActivation() {
@@ -349,22 +614,59 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     setState(() => _step = _LoginStep.biometric);
   }
 
-  void _submitOnboard() {
-    setState(() => _error = null);
-    if (_firstNameController.text.trim().isEmpty ||
-        _lastNameController.text.trim().isEmpty) {
-      setState(() => _error = 'Please enter your name.');
+  Future<void> _submitOnboard() async {
+    if (!_validateOnboardForm()) {
       return;
     }
-    if (_passwordController.text.length < 8) {
-      setState(() => _error = 'Password must be at least 8 characters.');
+
+    final registrationToken =
+        ref.read(authVerifyOtpStateProvider).data?.registrationToken;
+    if (registrationToken == null || registrationToken.isEmpty) {
+      setState(
+        () => _error = 'Session expired. Please verify your code again.',
+      );
       return;
     }
-    if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() => _error = "Passwords don't match.");
-      return;
-    }
-    setState(() => _step = _LoginStep.biometric);
+
+    final identifier = _normalizedIdentifier;
+    final email = _method == _LoginMethod.email
+        ? identifier
+        : _onboardEmailController.text.trim().toLowerCase();
+    final phone = _method == _LoginMethod.phone
+        ? AuthPhoneFormatter.toE164(identifier)
+        : AuthPhoneFormatter.toE164(
+            AuthIdentifierNormalizer.normalize(
+              method: LoginFlowMethod.phone,
+              raw: _onboardPhoneController.text,
+            ),
+          );
+
+    setState(() => _loadingKey = 'onboard');
+
+    await ref.read(authSetupAccountStateProvider.notifier).setupAccount(
+          registrationToken: registrationToken,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          password: _passwordController.text,
+          dob: _onboardDobController.text.trim(),
+          zipCode: _zipController.text.trim(),
+          email: email,
+          phone: phone,
+          onCompleted: (_) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _step = _LoginStep.biometric;
+            });
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Unable to set up account.';
+            });
+          },
+        );
   }
 
   Future<void> _finishBiometric(bool enroll) async {
@@ -712,10 +1014,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   }
 
   Widget _buildPasswordStep(BuildContext context) {
+    final displayName = _identifiedDisplayName ?? _selectedClient?.fullName;
+    final firstName = (displayName ?? 'there').split(' ').first;
     final client = _selectedClient;
-    if (client == null) return const SizedBox.shrink();
     final branch = _branch;
-    final firstName = client.fullName.split(' ').first;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -738,7 +1040,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             style: TextStyle(fontSize: 12, color: VCareColors.destructive),
           ),
         ],
-        if (branch is LoginLookupPassword && branch.biometricEnrolled) ...[
+        if (client != null &&
+            branch is LoginLookupPassword &&
+            branch.biometricEnrolled) ...[
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () =>
@@ -756,7 +1060,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         const SizedBox(height: 12),
         LoginPrimaryButton(
           label: 'Sign in',
-          loading: _loadingKey == 'finish',
+          loading: _loadingKey == 'password',
           onPressed: _loadingKey != null ? null : _submitPassword,
         ),
         const SizedBox(height: 12),
@@ -819,6 +1123,23 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   }
 
   Widget _buildOnboardStep(BuildContext context) {
+    final vcare = context.vcare;
+
+    if (_loadingKey == 'preAuth') {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LoginStepHeader(
+            icon: LucideIcons.userPlus,
+            title: "Let's set up your account",
+            subtitle: Text("A few details and you're in."),
+          ),
+          SizedBox(height: 48),
+          Center(child: CircularProgressIndicator()),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -828,33 +1149,141 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           subtitle: Text("A few details and you're in."),
         ),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: LoginTextField(
-                controller: _firstNameController,
-                hint: 'First name',
+              child: LoginFieldGroup(
+                errorText: _onboardErrors['firstName'],
+                field: LoginTextField(
+                  controller: _firstNameController,
+                  hint: 'First name',
+                  hasError: _onboardErrors.containsKey('firstName'),
+                  onChanged: (_) => _clearOnboardError('firstName'),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: LoginTextField(
-                controller: _lastNameController,
-                hint: 'Last name',
+              child: LoginFieldGroup(
+                errorText: _onboardErrors['lastName'],
+                field: LoginTextField(
+                  controller: _lastNameController,
+                  hint: 'Last name',
+                  hasError: _onboardErrors.containsKey('lastName'),
+                  onChanged: (_) => _clearOnboardError('lastName'),
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        LoginTextField(
-          controller: _passwordController,
-          obscureText: true,
-          hint: 'Create a password (min 8 chars)',
+        LoginFieldGroup(
+          errorText: _onboardErrors['dob'],
+          field: GestureDetector(
+            onTap: _loadingKey != null ? null : _pickOnboardDob,
+            child: AbsorbPointer(
+              child: LoginTextField(
+                controller: _onboardDobController,
+                hint: 'Select date of birth',
+                hasError: _onboardErrors.containsKey('dob'),
+                prefix: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Icon(
+                    LucideIcons.calendar,
+                    size: 16,
+                    color: vcare.mutedForeground,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
-        LoginTextField(
-          controller: _confirmPasswordController,
-          obscureText: true,
-          hint: 'Confirm password',
+        LoginFieldGroup(
+          errorText: _onboardErrors['zip'],
+          field: LoginTextField(
+            controller: _zipController,
+            hint: 'ZIP code',
+            keyboardType: TextInputType.number,
+            hasError: _onboardErrors.containsKey('zip'),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(5),
+            ],
+            onChanged: (_) => _clearOnboardError('zip'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_method == _LoginMethod.phone)
+          LoginFieldGroup(
+            errorText: _onboardErrors['email'],
+            field: LoginTextField(
+              controller: _onboardEmailController,
+              keyboardType: TextInputType.emailAddress,
+              hint: 'Email address',
+              hasError: _onboardErrors.containsKey('email'),
+              onChanged: (_) => _clearOnboardError('email'),
+              prefix: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Icon(
+                  LucideIcons.mail,
+                  size: 16,
+                  color: vcare.mutedForeground,
+                ),
+              ),
+            ),
+          )
+        else
+          LoginFieldGroup(
+            errorText: _onboardErrors['phone'],
+            field: LoginTextField(
+              controller: _onboardPhoneController,
+              keyboardType: TextInputType.phone,
+              hint: '(555) 000-0000',
+              hasError: _onboardErrors.containsKey('phone'),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+              onChanged: (_) => _clearOnboardError('phone'),
+              prefix: Padding(
+                padding: const EdgeInsets.only(left: 16, right: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('+1', style: TextStyle(color: vcare.mutedForeground)),
+                    Container(
+                      width: 1,
+                      height: 16,
+                      margin: const EdgeInsets.only(left: 12),
+                      color: vcare.border,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        LoginFieldGroup(
+          errorText: _onboardErrors['password'],
+          field: LoginTextField(
+            controller: _passwordController,
+            obscureText: true,
+            hint: 'Password',
+            hasError: _onboardErrors.containsKey('password'),
+            onChanged: (_) => _clearOnboardError('password'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        LoginFieldGroup(
+          errorText: _onboardErrors['confirmPassword'],
+          field: LoginTextField(
+            controller: _confirmPasswordController,
+            obscureText: true,
+            hint: 'Confirm password',
+            hasError: _onboardErrors.containsKey('confirmPassword'),
+            onChanged: (_) => _clearOnboardError('confirmPassword'),
+          ),
         ),
         if (_error != null) ...[
           const SizedBox(height: 8),
@@ -864,7 +1293,11 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           ),
         ],
         const SizedBox(height: 12),
-        LoginPrimaryButton(label: 'Continue', onPressed: _submitOnboard),
+        LoginPrimaryButton(
+          label: 'Continue',
+          loading: _loadingKey == 'onboard',
+          onPressed: _loadingKey != null ? null : _submitOnboard,
+        ),
       ],
     );
   }

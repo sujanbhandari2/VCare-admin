@@ -14,12 +14,51 @@ abstract final class VcarePageHeaderLayout {
   static const double subtitleGap = 4;
   static const double subtitleFontSize = 14;
   static const double subtitleLineHeight = 1.25;
+  /// Extra space for font metric rounding and bold glyph ascent.
+  static const double layoutBuffer = 2;
 
-  static double contentHeight({required bool hasSubtitle}) {
-    final titleBlock =
-        topPadding + bottomPadding + titleFontSize * titleLineHeight;
-    if (!hasSubtitle) return titleBlock;
-    return titleBlock + subtitleGap + subtitleFontSize * subtitleLineHeight;
+  static double _scaledLineHeight(double fontSize, double lineHeight, double scale) {
+    return (fontSize * lineHeight * scale).ceilToDouble();
+  }
+
+  static double contentHeight({
+    required bool hasSubtitle,
+    double textScaleFactor = 1.0,
+  }) {
+    final scale = textScaleFactor < 1.0 ? 1.0 : textScaleFactor;
+    final titleLine = _scaledLineHeight(titleFontSize, titleLineHeight, scale);
+    final titleBlock = topPadding + bottomPadding + titleLine;
+    if (!hasSubtitle) return titleBlock + layoutBuffer;
+    final subtitleLine =
+        _scaledLineHeight(subtitleFontSize, subtitleLineHeight, scale);
+    return titleBlock + subtitleGap + subtitleLine + layoutBuffer;
+  }
+
+  static TextStyle titleTextStyle(BuildContext context) {
+    return Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontSize: titleFontSize,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+          height: titleLineHeight,
+        ) ??
+        const TextStyle(
+          fontSize: titleFontSize,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+          height: titleLineHeight,
+        );
+  }
+
+  static TextStyle subtitleTextStyle(
+    BuildContext context,
+    Color mutedForeground,
+  ) {
+    return TextStyle(
+      fontSize: subtitleFontSize,
+      fontWeight: FontWeight.w500,
+      height: subtitleLineHeight,
+      color: mutedForeground.withValues(alpha: 0.8),
+    );
   }
 }
 
@@ -49,6 +88,11 @@ class VcarePageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final titleStyle = VcarePageHeaderLayout.titleTextStyle(context);
+    final subtitleStyle = VcarePageHeaderLayout.subtitleTextStyle(
+      context,
+      vcare.mutedForeground,
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -72,25 +116,29 @@ class VcarePageHeader extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: VcarePageHeaderLayout.titleFontSize,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    height: VcarePageHeaderLayout.titleLineHeight,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStyle,
+                  strutStyle: StrutStyle.fromTextStyle(
+                    titleStyle,
+                    forceStrutHeight: true,
                   ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: VcarePageHeaderLayout.subtitleGap),
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: VcarePageHeaderLayout.subtitleFontSize,
-                      fontWeight: FontWeight.w500,
-                      height: VcarePageHeaderLayout.subtitleLineHeight,
-                      color: vcare.mutedForeground.withValues(alpha: 0.8),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: subtitleStyle,
+                    strutStyle: StrutStyle.fromTextStyle(
+                      subtitleStyle,
+                      forceStrutHeight: true,
                     ),
                   ),
                 ],

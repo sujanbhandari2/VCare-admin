@@ -78,6 +78,20 @@ class AvaStateNotifier extends _$AvaStateNotifier {
     );
   }
 
+  Future<void> refreshMessages() async {
+    state = state.loading();
+    final result = await ref.read(avaRepositoryProvider).getMessages();
+
+    result.when(
+      success: (messages) {
+        state = state.success(messages: messages).copyWith(editingId: null);
+      },
+      failure: (error) {
+        state = state.failure(error.message);
+      },
+    );
+  }
+
   void _handleAvaReply() {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!ref.mounted) return;

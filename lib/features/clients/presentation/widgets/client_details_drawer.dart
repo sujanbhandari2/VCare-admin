@@ -4,19 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 
 /// Right-side panel — parity with vcareapp client info `Sheet side="right"`.
 class ClientDetailsDrawer extends StatelessWidget {
-  const ClientDetailsDrawer({super.key, required this.client});
+  const ClientDetailsDrawer({super.key, required this.detail});
 
-  final Client client;
+  final ClientDetail detail;
 
   /// Web `sm:max-w-md`.
   static const double maxPanelWidth = 448;
 
-  static Future<void> show(BuildContext context, Client client) {
+  static Future<void> show(BuildContext context, ClientDetail detail) {
     return showGeneralDialog<void>(
       context: context,
       useRootNavigator: true,
@@ -25,7 +25,7 @@ class ClientDetailsDrawer extends StatelessWidget {
       barrierColor: Colors.black.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return ClientDetailsDrawer(client: client);
+        return ClientDetailsDrawer(detail: detail);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         final slide = Tween<Offset>(
@@ -94,42 +94,42 @@ class ClientDetailsDrawer extends StatelessWidget {
                             _InfoRow(
                               icon: LucideIcons.user,
                               label: 'Full name',
-                              value: client.fullName,
+                              value: detail.fullName,
                             ),
                             _InfoRow(
                               icon: LucideIcons.mail,
                               label: 'Email',
-                              value: client.email,
+                              value: detail.email,
                             ),
                             _InfoRow(
                               icon: LucideIcons.phone,
                               label: 'Phone',
-                              value: client.phone,
+                              value: detail.phone,
                             ),
                             _InfoRow(
                               icon: LucideIcons.calendar,
                               label: 'Date of birth',
-                              value: formatClientDate(client.dob),
+                              value: formatClientDate(detail.dob),
                             ),
                             _InfoRow(
                               icon: LucideIcons.mapPin,
                               label: 'Location',
-                              value: client.location,
+                              value: detail.location,
                             ),
                             _InfoRow(
                               icon: LucideIcons.user,
                               label: 'Gender',
-                              value: clientGenderLabel(client.gender),
+                              value: clientGenderLabel(detail.gender),
                             ),
                             _InfoRow(
                               icon: LucideIcons.shield,
                               label: 'SSN',
-                              value: client.ssn,
+                              value: detail.ssn,
                             ),
                             _InfoRow(
                               icon: LucideIcons.tag,
                               label: 'Reference',
-                              value: '#${client.id.toUpperCase()}',
+                              value: '#${detail.id.toUpperCase()}',
                             ),
                           ],
                         ),

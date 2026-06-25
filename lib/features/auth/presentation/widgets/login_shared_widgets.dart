@@ -42,30 +42,26 @@ class LoginShell extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // parity: LoginShell.tsx `w-full relative flex items-center justify-center min-h-[56px]`
                   SizedBox(
+                    width: double.infinity,
                     height: 56,
                     child: Stack(
-                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
                       children: [
                         if (onBack != null)
                           Positioned(
                             left: 0,
-                            child: Material(
-                              color: vcare.muted,
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                onTap: onBack,
-                                customBorder: const CircleBorder(),
-                                child: const SizedBox(
-                                  width: 40,
-                                  height: 40,
-                                  child: Icon(LucideIcons.arrowLeft, size: 16),
-                                ),
-                              ),
+                            top: 0,
+                            bottom: 0,
+                            child: _LoginHeaderBackButton(
+                              onTap: onBack!,
+                              backgroundColor: vcare.muted,
                             ),
                           ),
-                        const LoginWordmark(),
+                        const Center(child: LoginWordmark()),
                       ],
                     ),
                   ),
@@ -176,34 +172,28 @@ class LoginFooter extends StatelessWidget {
   }
 }
 
-class LoginBackButton extends StatelessWidget {
-  const LoginBackButton({super.key, required this.onBack});
+/// Circular back control in the login header row — parity: LoginShell.tsx back button.
+class _LoginHeaderBackButton extends StatelessWidget {
+  const _LoginHeaderBackButton({
+    required this.onTap,
+    required this.backgroundColor,
+  });
 
-  final VoidCallback onBack;
+  final VoidCallback onTap;
+  final Color backgroundColor;
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 24),
-        child: TextButton.icon(
-          onPressed: onBack,
-          icon: Icon(
-            LucideIcons.arrowLeft,
-            size: 14,
-            color: vcare.mutedForeground,
-          ),
-          label: Text(
-            'Back',
-            style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-          ),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
+    return Material(
+      color: backgroundColor,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(LucideIcons.arrowLeft, size: 16),
         ),
       ),
     );
@@ -312,6 +302,8 @@ class LoginTextField extends StatelessWidget {
     this.inputFormatters,
     this.textAlign = TextAlign.start,
     this.autofocus = false,
+    this.hasError = false,
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -322,10 +314,17 @@ class LoginTextField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final TextAlign textAlign;
   final bool autofocus;
+  final bool hasError;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final borderColor = hasError ? VCareColors.destructive : vcare.border;
+    final focusedBorderColor = hasError
+        ? VCareColors.destructive
+        : VCareColors.primary.withValues(alpha: 0.4);
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
@@ -333,6 +332,7 @@ class LoginTextField extends StatelessWidget {
       inputFormatters: inputFormatters,
       textAlign: textAlign,
       autofocus: autofocus,
+      onChanged: onChanged,
       style: const TextStyle(fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,
@@ -349,20 +349,62 @@ class LoginTextField extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: vcare.border),
+          borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: vcare.border),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: VCareColors.primary.withValues(alpha: 0.4),
+            color: focusedBorderColor,
             width: 2,
           ),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: VCareColors.destructive),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: VCareColors.destructive, width: 2),
+        ),
       ),
+    );
+  }
+}
+
+class LoginFieldGroup extends StatelessWidget {
+  const LoginFieldGroup({
+    super.key,
+    required this.field,
+    this.errorText,
+  });
+
+  final Widget field;
+  final String? errorText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        field,
+        if (errorText != null && errorText!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              errorText!,
+              style: TextStyle(
+                fontSize: 12,
+                color: VCareColors.destructive,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -567,7 +609,9 @@ class _LoginOtpInputState extends State<LoginOtpInput>
                     boxShadow: isActive
                         ? [
                             BoxShadow(
-                              color: VCareColors.primary.withValues(alpha: 0.12),
+                              color: VCareColors.primary.withValues(
+                                alpha: 0.12,
+                              ),
                               blurRadius: 0,
                               spreadRadius: 2,
                             ),
