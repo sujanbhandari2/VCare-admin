@@ -20,6 +20,7 @@ import 'package:vcare_admin/features/home/presentation/pages/home_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/id_card_screen.dart';
 import 'package:vcare_admin/features/cases/presentation/pages/request_detail_screen.dart';
 import 'package:vcare_admin/features/cases/presentation/pages/request_new_screen.dart';
+import 'package:vcare_admin/features/commission/presentation/pages/commission_detail_screen.dart';
 import 'package:vcare_admin/features/loadable_list_demo/presentation/pages/loadable_list_demo_screen.dart';
 import 'package:vcare_admin/features/messages/presentation/pages/messages_screen.dart';
 import 'package:vcare_admin/features/profile/presentation/pages/profile_edit_screen.dart';
@@ -32,6 +33,7 @@ import 'package:vcare_admin/features/splash/presentation/pages/vcare_splash_scre
 import 'package:vcare_admin/features/find_care/presentation/pages/saved_providers_screen.dart';
 import 'package:vcare_admin/features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:vcare_admin/features/notifications/presentation/pages/notifications_screen.dart';
+import 'package:vcare_admin/features/documents/presentation/pages/documents_screen.dart';
 import 'package:vcare_admin/features/vcare_sync/presentation/pages/vcare_parity_screens.dart'
     hide FindCareCategoryScreen, NotificationsScreen;
 
@@ -78,6 +80,7 @@ class AppRouter {
   static const careTeam = "/care-team";
   static const careTeamDetail = "/care-team/:id";
   static const activity = "/activity";
+  static const commissions = "/commissions";
   static const savedProviders = "/profile/saved-providers";
   static const idCardNew = "/id-card/new";
   static const idCardEdit = "/id-card/:id";
@@ -91,6 +94,7 @@ class AppRouter {
   static const careTeamEditName = "care-team-edit";
   static const careTeamDetailName = "care-team-detail";
   static const activityName = "activity";
+  static const commissionsName = "commissions";
   static const savedProvidersName = "saved-providers";
   static const clientsName = "clients";
   static const clientDetailName = "client-detail";
@@ -368,6 +372,15 @@ class AppRouter {
                       state: state,
                       transitionType: TransitionType.slide,
                       child: const HomeActivityScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'commissions',
+                    name: commissionsName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const CommissionDetailScreen(),
                     ),
                   ),
                   GoRoute(

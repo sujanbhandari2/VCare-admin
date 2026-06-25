@@ -26,6 +26,9 @@ class ApiEndpoints {
   static const String notificationsUnreadCount = "notifications/unread-count/";
   static String notificationMarkRead(String id) => "notifications/$id/read/";
 
+  static const String agentStats = "agents/stats";
+  static const String agentCommissionSummary = "agents/commission-summary";
+  static const String agentCommissionHistory = "agents/commission-history";
   static const String agentClients = "agents/clients";
   static String agentClient(String id) => "agents/clients/$id";
   static String agentClientMemberships(String id) =>
@@ -37,4 +40,7 @@ class ApiEndpoints {
   static String agentClientCases(String id) => "agents/clients/$id/cases";
   static String agentClientDocuments(String id) =>
       "agents/clients/$id/documents";
+
+  static const String files = "files";
+  static String file(String id) => "files/$id";
 }

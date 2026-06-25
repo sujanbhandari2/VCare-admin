@@ -23,9 +23,9 @@ class ClientPaymentMethodsStateData {
   List<ClientPaymentMethod> get methods => data ?? const [];
 
   ClientPaymentMethodsStateData loading() => ClientPaymentMethodsStateData(
-        operation: OperationState.loading(data: data),
-        data: data,
-      );
+    operation: OperationState.loading(data: data),
+    data: data,
+  );
 
   ClientPaymentMethodsStateData success(List<ClientPaymentMethod> methods) =>
       ClientPaymentMethodsStateData(

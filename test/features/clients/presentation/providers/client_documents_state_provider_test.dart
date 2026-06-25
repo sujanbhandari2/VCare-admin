@@ -19,9 +19,7 @@ void main() {
     setUp(() {
       repository = FakeClientRepository();
       container = ProviderContainer(
-        overrides: [
-          clientRepositoryProvider.overrideWith((ref) => repository),
-        ],
+        overrides: [clientRepositoryProvider.overrideWith((ref) => repository)],
       );
     });
 
@@ -81,6 +79,207 @@ void main() {
       expect(state.operation.errorMessage, 'Unable to load documents');
     });
 
+    test('addLocalFile prepends document and increments total', () async {
+      repository.fetchDocumentsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientFile(
+              id: 'doc-1',
+              name: 'insurance-card.jpg',
+              size: '—',
+              uploadedAt: '2026-06-25T06:15:24.432Z',
+              url: 'https://example.com/api/test/insurance-card.jpg',
+              mime: 'image/jpeg',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
+      await notifier.loadInitial();
+      notifier.addLocalFile(
+        const ClientFile(
+          id: 'local-99',
+          name: 'bill.pdf',
+          size: '120 KB',
+          uploadedAt: '2026-06-25',
+          url: 'data:application/pdf;base64,abc',
+          mime: 'application/pdf',
+        ),
+      );
+
+      final state = container.read(clientDocumentsStateProvider('client-1'));
+
+      expect(state.items, hasLength(2));
+      expect(state.totalItems, 2);
+      expect(state.items.first.name, 'bill.pdf');
+    });
+
+    test('renameDocument calls repository and updates local name', () async {
+      repository.fetchDocumentsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientFile(
+              id: 'doc-1',
+              name: 'insurance-card.jpg',
+              size: '—',
+              uploadedAt: '2026-06-25T06:15:24.432Z',
+              url: 'https://example.com/api/test/insurance-card.jpg',
+              mime: 'image/jpeg',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+      repository.renameClientDocumentResult = const Success(null);
+
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
+      await notifier.loadInitial();
+      final result = await notifier.renameDocument(
+        documentId: 'doc-1',
+        name: 'updated-card.jpg',
+      );
+
+      final state = container.read(clientDocumentsStateProvider('client-1'));
+
+      expect(result.success, isTrue);
+      expect(repository.lastRenameDocumentId, 'doc-1');
+      expect(repository.lastRenameName, 'updated-card.jpg');
+      expect(state.items.single.name, 'updated-card.jpg');
+    });
+
+    test('renameDocument failure leaves document name unchanged', () async {
+      repository.fetchDocumentsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientFile(
+              id: 'doc-1',
+              name: 'insurance-card.jpg',
+              size: '—',
+              uploadedAt: '2026-06-25T06:15:24.432Z',
+              url: 'https://example.com/api/test/insurance-card.jpg',
+              mime: 'image/jpeg',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+      repository.renameClientDocumentResult = Failure(
+        HttpException(message: 'Rename failed'),
+      );
+
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
+      await notifier.loadInitial();
+
+      final result = await notifier.renameDocument(
+        documentId: 'doc-1',
+        name: 'updated-card.jpg',
+      );
+
+      final state = container.read(clientDocumentsStateProvider('client-1'));
+
+      expect(result.success, isFalse);
+      expect(result.error, 'Rename failed');
+      expect(state.items.single.name, 'insurance-card.jpg');
+    });
+
+    test('renameLocalFile updates matching document name', () async {
+      repository.fetchDocumentsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientFile(
+              id: 'doc-1',
+              name: 'insurance-card.jpg',
+              size: '—',
+              uploadedAt: '2026-06-25T06:15:24.432Z',
+              url: 'https://example.com/api/test/insurance-card.jpg',
+              mime: 'image/jpeg',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
+      await notifier.loadInitial();
+      notifier.renameLocalFile('doc-1', 'updated-card.jpg');
+
+      final state = container.read(clientDocumentsStateProvider('client-1'));
+      expect(state.items.single.name, 'updated-card.jpg');
+    });
+
+    test('removeLocalFile removes document and decrements total', () async {
+      repository.fetchDocumentsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientFile(
+              id: 'doc-1',
+              name: 'insurance-card.jpg',
+              size: '—',
+              uploadedAt: '2026-06-25T06:15:24.432Z',
+              url: 'https://example.com/api/test/insurance-card.jpg',
+              mime: 'image/jpeg',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
+      await notifier.loadInitial();
+      notifier.removeLocalFile('doc-1');
+
+      final state = container.read(clientDocumentsStateProvider('client-1'));
+      expect(state.items, isEmpty);
+      expect(state.totalItems, 0);
+    });
+
     test('loadMore appends next page items', () async {
       repository.fetchDocumentsResult = Success(
         PaginatedResult(
@@ -105,8 +304,9 @@ void main() {
         ),
       );
 
-      final notifier =
-          container.read(clientDocumentsStateProvider('client-1').notifier);
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
       await notifier.loadInitial();
 
       repository.fetchDocumentsResult = Success(
@@ -138,6 +338,124 @@ void main() {
       expect(state.items, hasLength(2));
       expect(state.items.last.id, 'doc-2');
       expect(repository.lastDocumentsRequest?.page, 2);
+    });
+
+    test(
+      'uploadDocument calls repository with client id and file data',
+      () async {
+        repository.fetchDocumentsResult = Success(
+          PaginatedResult(items: const [], pagination: PaginationMeta.empty),
+        );
+        repository.uploadClientDocumentResult = const Success(null);
+
+        final notifier = container.read(
+          clientDocumentsStateProvider('client-1').notifier,
+        );
+
+        await notifier.uploadDocument(
+          fileName: 'insurance-card.jpg',
+          bytes: const [1, 2, 3],
+        );
+
+        expect(repository.lastUploadClientId, 'client-1');
+        expect(repository.lastUploadFileName, 'insurance-card.jpg');
+        expect(repository.lastUploadBytes, [1, 2, 3]);
+        expect(repository.lastUploadDate, isNotNull);
+        expect(repository.lastDocumentsRequest?.page, 1);
+        expect(repository.lastDocumentsForceRefresh, isTrue);
+      },
+    );
+
+    test(
+      'uploadDocument failure sets upload error without clearing list',
+      () async {
+        repository.fetchDocumentsResult = Success(
+          PaginatedResult(
+            items: const [
+              ClientFile(
+                id: 'doc-1',
+                name: 'insurance-card.jpg',
+                size: '—',
+                uploadedAt: '2026-06-25T06:15:24.432Z',
+                url: 'https://example.com/api/test/insurance-card.jpg',
+                mime: 'image/jpeg',
+              ),
+            ],
+            pagination: const PaginationMeta(
+              page: 1,
+              limit: 20,
+              total: 1,
+              totalPages: 1,
+              hasNext: false,
+              hasPrev: false,
+            ),
+          ),
+        );
+
+        final notifier = container.read(
+          clientDocumentsStateProvider('client-1').notifier,
+        );
+        await notifier.loadInitial();
+
+        repository.uploadClientDocumentResult = Failure(
+          HttpException(message: 'Upload failed'),
+        );
+
+        await notifier.uploadDocument(
+          fileName: 'bill.pdf',
+          bytes: const [4, 5, 6],
+        );
+
+        final state = container.read(clientDocumentsStateProvider('client-1'));
+
+        expect(state.isUploading, isFalse);
+        expect(state.uploadError, 'Upload failed');
+        expect(state.items, hasLength(1));
+        expect(state.items.single.id, 'doc-1');
+      },
+    );
+
+    test('uploadDocument success refreshes documents list', () async {
+      repository.fetchDocumentsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientFile(
+              id: 'doc-new',
+              name: 'new-doc.pdf',
+              size: '—',
+              uploadedAt: '2026-06-25T06:15:24.432Z',
+              url: 'https://example.com/api/test/new-doc.pdf',
+              mime: 'application/pdf',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+      repository.uploadClientDocumentResult = const Success(null);
+
+      final notifier = container.read(
+        clientDocumentsStateProvider('client-1').notifier,
+      );
+
+      await notifier.uploadDocument(
+        fileName: 'new-doc.pdf',
+        bytes: const [7, 8, 9],
+      );
+
+      final state = container.read(clientDocumentsStateProvider('client-1'));
+
+      expect(state.isUploading, isFalse);
+      expect(state.items, hasLength(1));
+      expect(state.items.single.name, 'new-doc.pdf');
+      expect(repository.lastDocumentsRequest?.page, 1);
+      expect(repository.lastDocumentsForceRefresh, isTrue);
     });
   });
 }

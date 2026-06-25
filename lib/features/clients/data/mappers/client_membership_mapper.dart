@@ -40,7 +40,8 @@ extension ClientMembershipModelMapper on ClientMembershipModel {
     return ClientDependent(
       id: dependentClient.id,
       name: dependentClient.toEntity().fullName,
-      relation: relationshipToPrimary ??
+      relation:
+          relationshipToPrimary ??
           enrollmentDisplayLabel ??
           enrollmentType ??
           'Dependent',

@@ -18,6 +18,7 @@ import 'package:vcare_admin/features/clients/presentation/providers/client_trans
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tab_bar.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tabs.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_details_drawer.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_document_preview_dialog.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
@@ -68,7 +69,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
   Widget build(BuildContext context) {
     final clientId = widget.clientId;
     final detailState = ref.watch(clientDetailStateProvider(clientId));
-    final membershipsState = ref.watch(clientMembershipsStateProvider(clientId));
+    final membershipsState = ref.watch(
+      clientMembershipsStateProvider(clientId),
+    );
     final paymentMethodsState = ref.watch(
       clientPaymentMethodsStateProvider(clientId),
     );
@@ -81,9 +84,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     final detail = detailState.data;
 
     if (detailState.fetching && detail == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (detail == null) {
@@ -171,6 +172,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
                   _showTransactionDetails(context, t, detail.fullName),
             ),
             ClientCasesTab(
+              clientId: clientId,
               casesState: casesState,
               onRetry: () => ref
                   .read(clientCasesStateProvider(clientId).notifier)
@@ -180,6 +182,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
                   .loadMore(),
             ),
             ClientDocumentsTab(
+              clientId: clientId,
               documentsState: documentsState,
               onRetry: () => ref
                   .read(clientDocumentsStateProvider(clientId).notifier)
@@ -187,6 +190,8 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
               onLoadMore: () => ref
                   .read(clientDocumentsStateProvider(clientId).notifier)
                   .loadMore(),
+              onDocumentAction: (file, action) =>
+                  _handleDocumentAction(context, clientId, file, action),
             ),
           ],
         ),
@@ -215,6 +220,112 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
         onClose: () => Navigator.pop(sheetContext),
       ),
     );
+  }
+
+  Future<void> _handleDocumentAction(
+    BuildContext context,
+    String clientId,
+    ClientFile file,
+    String action,
+  ) async {
+    switch (action) {
+      case 'preview':
+        await ClientDocumentPreviewDialog.show(context, file);
+      case 'download':
+        await _downloadDocument(context, file);
+      case 'rename':
+        await _renameDocument(context, clientId, file);
+      case 'delete':
+        await _deleteDocument(context, clientId, file);
+    }
+  }
+
+  Future<void> _downloadDocument(BuildContext context, ClientFile file) async {
+    if (file.url.startsWith('data:')) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File saved locally on this device.')),
+      );
+      return;
+    }
+
+    final launched = await launchUrlString(
+      file.url,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!context.mounted) return;
+    if (!launched) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open ${file.name}.')));
+    }
+  }
+
+  Future<void> _renameDocument(
+    BuildContext context,
+    String clientId,
+    ClientFile file,
+  ) async {
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => _RenameDocumentDialog(initialName: file.name),
+    );
+
+    final trimmed = newName?.trim();
+    if (trimmed == null || trimmed.isEmpty || trimmed == file.name) return;
+    if (!context.mounted) return;
+
+    final result = await ref
+        .read(clientDocumentsStateProvider(clientId).notifier)
+        .renameDocument(documentId: file.id, name: trimmed);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.success
+              ? 'Document renamed.'
+              : result.error ?? 'Could not rename document.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteDocument(
+    BuildContext context,
+    String clientId,
+    ClientFile file,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete document?'),
+        content: Text(
+          '${file.name} will be permanently removed. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    ref
+        .read(clientDocumentsStateProvider(clientId).notifier)
+        .removeLocalFile(file.id);
   }
 }
 
@@ -496,6 +607,90 @@ class _MembershipNoteSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RenameDocumentDialog extends StatefulWidget {
+  const _RenameDocumentDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_RenameDocumentDialog> createState() => _RenameDocumentDialogState();
+}
+
+class _RenameDocumentDialogState extends State<_RenameDocumentDialog> {
+  late final TextEditingController _controller;
+  late final String _extension;
+
+  @override
+  void initState() {
+    super.initState();
+    final parts = splitDocumentFileName(widget.initialName);
+    _extension = parts.extension;
+    _controller = TextEditingController(text: parts.baseName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final baseName = _controller.text.trim();
+    if (baseName.isEmpty) return;
+
+    Navigator.pop(
+      context,
+      joinDocumentFileName(baseName: baseName, extension: _extension),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return AlertDialog(
+      title: const Text('Rename document'),
+      content: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Document name'),
+              onSubmitted: (_) => _submit(),
+            ),
+          ),
+          if (_extension.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                _extension,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: vcare.mutedForeground,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

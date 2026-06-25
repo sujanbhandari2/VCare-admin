@@ -14,7 +14,8 @@ part 'clients_list_state_provider.g.dart';
 class ClientsListState extends _$ClientsListState
     with PaginatedListNotifierMixin<ClientListItem> {
   @override
-  LoadableListState<ClientListItem> build() => LoadableListState<ClientListItem>();
+  LoadableListState<ClientListItem> build() =>
+      LoadableListState<ClientListItem>();
 
   @override
   bool get mounted => ref.mounted;

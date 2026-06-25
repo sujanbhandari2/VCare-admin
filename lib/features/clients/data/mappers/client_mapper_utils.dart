@@ -50,7 +50,11 @@ String humanizeApiEnum(String? value) {
   return value
       .toLowerCase()
       .split('_')
-      .map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
+      .map(
+        (part) => part.isEmpty
+            ? part
+            : '${part[0].toUpperCase()}${part.substring(1)}',
+      )
       .join(' ');
 }
 
@@ -95,6 +99,12 @@ String mimeTypeFromFileName(String? fileName) {
   }
   if (name.endsWith('.txt')) return 'text/plain';
   if (name.endsWith('.csv')) return 'text/csv';
+  if (name.endsWith('.ppt')) return 'application/vnd.ms-powerpoint';
+  if (name.endsWith('.pptx')) {
+    return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  }
+  if (name.endsWith('.rtf')) return 'application/rtf';
+  if (name.endsWith('.heic')) return 'image/heic';
 
   return 'application/octet-stream';
 }

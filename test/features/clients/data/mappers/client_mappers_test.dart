@@ -155,6 +155,19 @@ void main() {
       expect(entity.createdAt, '2026-06-25T05:58:27.500Z');
     });
 
+    test('ClientCaseModel prefers title over type in create payload', () {
+      final entity = ClientCaseModel.fromJson({
+        'id': 'f6a7665d-3c1b-4f8f-9d54-553fe2d8f157',
+        'status': 'REQUESTED',
+        'title': 'Referral assistance needed',
+        'createdAt': '2026-06-25T11:29:06.803Z',
+        'updatedAt': '2026-06-25T11:29:06.803Z',
+      }).toEntity();
+
+      expect(entity.title, 'Referral assistance needed');
+      expect(entity.status, ClientCaseStatus.requested);
+    });
+
     test('ClientDocumentModel maps document payload', () {
       const hostBaseUrl = 'https://dev-api-v4.vitafyhealth.com/';
       final entity = ClientDocumentModel.fromJson({

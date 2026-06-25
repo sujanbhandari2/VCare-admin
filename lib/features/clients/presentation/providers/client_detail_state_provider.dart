@@ -19,10 +19,9 @@ class ClientDetailState extends _$ClientDetailState {
       state = state.loading();
     }
 
-    final response = await ref.read(clientRepositoryProvider).fetchClientDetail(
-          clientId,
-          cancelToken: cancelToken,
-        );
+    final response = await ref
+        .read(clientRepositoryProvider)
+        .fetchClientDetail(clientId, cancelToken: cancelToken);
 
     response.when(
       failure: (error) {

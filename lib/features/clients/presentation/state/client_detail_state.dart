@@ -15,17 +15,17 @@ class ClientDetailStateData {
   String? get error => operation.errorMessage;
 
   ClientDetailStateData loading() => ClientDetailStateData(
-        operation: OperationState.loading(data: data),
-        data: data,
-      );
+    operation: OperationState.loading(data: data),
+    data: data,
+  );
 
   ClientDetailStateData success(ClientDetail detail) => ClientDetailStateData(
-        operation: OperationState.success(detail),
-        data: detail,
-      );
+    operation: OperationState.success(detail),
+    data: detail,
+  );
 
   ClientDetailStateData failure(String? message) => ClientDetailStateData(
-        operation: OperationState.failure(message, data: data),
-        data: data,
-      );
+    operation: OperationState.failure(message, data: data),
+    data: data,
+  );
 }

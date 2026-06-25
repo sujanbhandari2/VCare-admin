@@ -523,56 +523,6 @@ class GroupInfoScreen extends StatelessWidget {
   }
 }
 
-class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key});
-
-  @override
-  State<DocumentsScreen> createState() => _DocumentsScreenState();
-}
-
-class _DocumentsScreenState extends State<DocumentsScreen> {
-  String _filter = 'All';
-
-  @override
-  Widget build(BuildContext context) {
-    final documents = VCareCatalog.documents
-        .where((document) => _filter == 'All' || document.kind == _filter)
-        .toList();
-    return _VcareScaffold(
-      title: 'My Documents',
-      subtitle: 'Files from requests, cards, and uploads',
-      showBack: true,
-      children: [
-        Wrap(
-          spacing: 8,
-          children: ['All', 'Images', 'Voice', 'Files']
-              .map(
-                (filter) => ChoiceChip(
-                  label: Text(filter),
-                  selected: _filter == filter,
-                  onSelected: (_) => setState(() => _filter = filter),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: 14),
-        if (documents.isEmpty)
-          const _EmptyPanel(
-            icon: LucideIcons.folderOpen,
-            title: 'No documents here',
-            subtitle: 'Uploads and case attachments will appear here.',
-          )
-        else
-          for (final document in documents)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _DocumentRow(document: document),
-            ),
-      ],
-    );
-  }
-}
-
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
@@ -1542,47 +1492,6 @@ class _EstimateRow extends StatelessWidget {
           Text(
             money.format(estimate),
             style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DocumentRow extends StatelessWidget {
-  const _DocumentRow({required this.document});
-
-  final VCareDocumentItem document;
-
-  @override
-  Widget build(BuildContext context) {
-    return _VcareCard(
-      child: Row(
-        children: [
-          _IconBubble(
-            icon: document.kind == 'Images'
-                ? LucideIcons.image
-                : document.kind == 'Voice'
-                ? LucideIcons.mic
-                : LucideIcons.fileText,
-            background: context.vcare.muted,
-            color: VCareColors.primary,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  document.name,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                Text(
-                  '${document.sourceLabel} · ${document.sizeLabel} · ${DateFormat.MMMd().format(document.createdAt)}',
-                  style: TextStyle(color: context.vcare.mutedForeground),
-                ),
-              ],
-            ),
           ),
         ],
       ),

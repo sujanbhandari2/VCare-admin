@@ -81,6 +81,76 @@ void main() {
       expect(state.operation.errorMessage, 'Unable to load cases');
     });
 
+    test('createCase calls repository and refreshes list on success', () async {
+      repository.fetchCasesResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientCase(
+              id: 'case-1',
+              caseId: 'CASE1',
+              title: 'Procedure Cost',
+              status: ClientCaseStatus.requested,
+              createdAt: '2026-06-25T05:58:27.500Z',
+              updatedAt: '2026-06-25T05:58:27.500Z',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 10,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      bool? completed;
+      final notifier =
+          container.read(clientCasesStateProvider('client-1').notifier);
+
+      await notifier.createCase(
+        title: 'Claim denial appeal',
+        description: 'Need help with enrollment.',
+        onCompleted: (success, error) => completed = success,
+      );
+
+      expect(completed, isTrue);
+      expect(repository.lastCreateCaseClientId, 'client-1');
+      expect(repository.lastCreateCaseTitle, 'Claim denial appeal');
+      expect(repository.lastCreateCaseDescription, 'Need help with enrollment.');
+      expect(repository.lastCasesRequest?.page, 1);
+      expect(repository.lastCasesForceRefresh, isTrue);
+
+      final state = container.read(clientCasesStateProvider('client-1'));
+      expect(state.items, hasLength(1));
+      expect(state.items.first.title, 'Procedure Cost');
+    });
+
+    test('createCase reports failure without refreshing list', () async {
+      repository.createClientCaseResult = Failure(
+        HttpException(message: 'Unable to create case'),
+      );
+
+      bool? completed;
+      String? errorMessage;
+      final notifier =
+          container.read(clientCasesStateProvider('client-1').notifier);
+
+      await notifier.createCase(
+        title: 'Claim denial appeal',
+        description: 'Need help with enrollment.',
+        onCompleted: (success, error) {
+          completed = success;
+          errorMessage = error;
+        },
+      );
+
+      expect(completed, isFalse);
+      expect(errorMessage, 'Unable to create case');
+      expect(repository.lastCreateCaseTitle, 'Claim denial appeal');
+    });
+
     test('loadMore appends next page items', () async {
       repository.fetchCasesResult = Success(
         PaginatedResult(

@@ -1,9 +1,5 @@
 class ClientNameModel {
-  const ClientNameModel({
-    this.firstName,
-    this.middleName,
-    this.lastName,
-  });
+  const ClientNameModel({this.firstName, this.middleName, this.lastName});
 
   final String? firstName;
   final String? middleName;

@@ -2,19 +2,20 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/presentation/state/client_documents_loadable_state.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_create_case_sheet.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_carousel.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_upload_document_sheet.dart';
 import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
@@ -94,7 +95,6 @@ class ClientMembershipsTab extends StatelessWidget {
     );
   }
 }
-
 
 class ClientBillingTab extends StatefulWidget {
   const ClientBillingTab({
@@ -256,14 +256,16 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
   }
 }
 
-
 class ClientCasesTab extends StatefulWidget {
   const ClientCasesTab({
     super.key,
+    required this.clientId,
     required this.casesState,
     this.onRetry,
     this.onLoadMore,
   });
+
+  final String clientId;
 
   final LoadableListState<ClientCase> casesState;
   final VoidCallback? onRetry;
@@ -322,7 +324,8 @@ class _ClientCasesTabState extends State<ClientCasesTab> {
         ClientDetailSectionHeading(
           'Cases',
           trailing: TextButton.icon(
-            onPressed: () => context.pushNamed(AppRouter.requestNewName),
+            onPressed: () =>
+                ClientCreateCaseSheet.show(context, clientId: widget.clientId),
             icon: const Icon(LucideIcons.plus, size: 14),
             label: const Text('New request'),
             style: TextButton.styleFrom(
@@ -369,18 +372,22 @@ class _ClientCasesTabState extends State<ClientCasesTab> {
   }
 }
 
-
 class ClientDocumentsTab extends StatefulWidget {
   const ClientDocumentsTab({
     super.key,
+    required this.clientId,
     required this.documentsState,
     this.onRetry,
     this.onLoadMore,
+    this.onDocumentAction,
   });
 
-  final LoadableListState<ClientFile> documentsState;
+  final String clientId;
+
+  final ClientDocumentsLoadableState documentsState;
   final VoidCallback? onRetry;
   final Future<void> Function()? onLoadMore;
+  final void Function(ClientFile file, String action)? onDocumentAction;
 
   @override
   State<ClientDocumentsTab> createState() => _ClientDocumentsTabState();
@@ -435,7 +442,12 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
         ClientDetailSectionHeading(
           'Documents',
           trailing: TextButton.icon(
-            onPressed: () {},
+            onPressed: widget.documentsState.isUploading
+                ? null
+                : () => ClientUploadDocumentSheet.show(
+                    context,
+                    clientId: widget.clientId,
+                  ),
             icon: const Icon(LucideIcons.upload, size: 14),
             label: const Text('Upload'),
             style: TextButton.styleFrom(
@@ -450,6 +462,27 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
             ),
           ),
         ),
+        if (widget.documentsState.isUploading)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Uploading document...',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: VCareColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (widget.documentsState.isInitialLoading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -470,7 +503,12 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
         else
           for (var i = 0; i < files.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            ClientDocumentRow(file: files[i]),
+            ClientDocumentRow(
+              file: files[i],
+              onAction: widget.onDocumentAction == null
+                  ? null
+                  : (action) => widget.onDocumentAction!(files[i], action),
+            ),
           ],
         if (widget.documentsState.isLoadingMore)
           const Padding(
@@ -481,7 +519,6 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
     );
   }
 }
-
 
 class ClientUpcomingBillingCard extends StatelessWidget {
   const ClientUpcomingBillingCard({super.key, required this.memberships});
@@ -586,7 +623,6 @@ class ClientUpcomingBillingCard extends StatelessWidget {
     );
   }
 }
-
 
 class ClientMembershipCard extends StatelessWidget {
   const ClientMembershipCard({
@@ -704,7 +740,6 @@ class ClientMembershipCard extends StatelessWidget {
   }
 }
 
-
 class _MembershipInfoButton extends StatelessWidget {
   const _MembershipInfoButton({required this.onPressed});
 
@@ -730,7 +765,6 @@ class _MembershipInfoButton extends StatelessWidget {
     );
   }
 }
-
 
 class ClientDependentCard extends StatelessWidget {
   const ClientDependentCard({super.key, required this.dependent});
@@ -790,7 +824,6 @@ class ClientDependentCard extends StatelessWidget {
     );
   }
 }
-
 
 class ClientPaymentMethodCard extends StatelessWidget {
   const ClientPaymentMethodCard({super.key, required this.method});
@@ -923,7 +956,6 @@ class ClientPaymentMethodCard extends StatelessWidget {
   }
 }
 
-
 class ClientTransactionRow extends StatelessWidget {
   const ClientTransactionRow({
     super.key,
@@ -1000,7 +1032,6 @@ class ClientTransactionRow extends StatelessWidget {
     );
   }
 }
-
 
 class ClientCaseCard extends StatelessWidget {
   const ClientCaseCard({super.key, required this.clientCase});
@@ -1099,17 +1130,16 @@ class ClientCaseCard extends StatelessWidget {
   }
 }
 
-
 class ClientDocumentRow extends StatelessWidget {
-  const ClientDocumentRow({super.key, required this.file});
+  const ClientDocumentRow({super.key, required this.file, this.onAction});
 
   final ClientFile file;
+  final void Function(String action)? onAction;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final isImage =
-        file.mime.startsWith('image/') && file.url.isUrl;
+    final isImage = file.mime.startsWith('image/') && file.url.isUrl;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -1170,6 +1200,7 @@ class ClientDocumentRow extends StatelessWidget {
             ),
             PopupMenuButton<String>(
               padding: EdgeInsets.zero,
+              onSelected: onAction,
               icon: Icon(
                 LucideIcons.moreVertical,
                 size: 16,

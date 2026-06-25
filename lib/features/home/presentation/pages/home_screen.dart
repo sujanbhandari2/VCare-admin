@@ -14,6 +14,8 @@ import 'package:vcare_admin/features/profile/presentation/providers/auth_me_stat
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
+import 'package:vcare_admin/features/home/presentation/providers/agent_stats_state_provider.dart';
+import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_membership_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_metrics_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
@@ -48,6 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(notificationInboxStateProvider.notifier).fetchInbox();
       if (ref.read(userLoggedInStateProvider)) {
         ref.read(authMeStateProvider.notifier).fetchMe();
+        ref.read(agentStatsStateProvider.notifier).fetchStats();
       }
     });
   }
@@ -147,6 +150,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       futures.add(
         ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
       );
+      futures.add(
+        ref
+            .read(agentStatsStateProvider.notifier)
+            .fetchStats(forceRefresh: true),
+      );
     }
 
     await Future.wait(futures);
@@ -161,6 +169,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final profile = ref.watch(localProfileStateProvider);
     final authMeState = ref.watch(authMeStateProvider);
     final inboxState = ref.watch(notificationInboxStateProvider);
+    final agentStatsState = ref.watch(agentStatsStateProvider);
+    final agentStats = agentStatsState.data;
+    final hasCommission = agentStats?.hasCommission ?? false;
+    final totalClients = agentStats == null
+        ? '—'
+        : formatAgentStatCount(agentStats.totalClients);
+    final totalCommission = agentStats == null
+        ? '—'
+        : formatAgentStatMoney(agentStats.totalCommission);
+    final totalSales = agentStats == null
+        ? '—'
+        : formatAgentStatMoney(agentStats.totalSales);
     final headerProfile = homeProfileFromLocal(profile);
     final greetingLabel = authMeState.firstName?.trim().isNotEmpty == true
         ? 'Welcome back, ${authMeState.firstName!.trim()}'
@@ -217,8 +237,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeMetricsSection(
+                    hasCommission: hasCommission,
+                    totalClients: totalClients,
+                    totalCommission: totalCommission,
+                    totalSales: totalSales,
                     onTotalClientsTap: () =>
                         context.goNamed(AppRouter.clientsName),
+                    onTotalCommissionTap: () =>
+                        context.pushNamed(AppRouter.commissionsName),
+                    onTotalSalesTap: () =>
+                        context.pushNamed(AppRouter.commissionsName),
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeRecentActivitySection(

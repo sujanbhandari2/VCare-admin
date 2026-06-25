@@ -7,12 +7,18 @@ extension ClientCaseModelMapper on ClientCaseModel {
     return ClientCase(
       id: id,
       caseId: shortCaseId(id),
-      title: type?.trim().isNotEmpty == true ? type!.trim() : '—',
+      title: _resolveTitle(title, type),
       status: _mapStatus(status),
       createdAt: createdAt ?? '',
       updatedAt: updatedAt ?? createdAt ?? '',
     );
   }
+}
+
+String _resolveTitle(String? title, String? type) {
+  if (title?.trim().isNotEmpty == true) return title!.trim();
+  if (type?.trim().isNotEmpty == true) return type!.trim();
+  return '—';
 }
 
 ClientCaseStatus _mapStatus(String? status) {

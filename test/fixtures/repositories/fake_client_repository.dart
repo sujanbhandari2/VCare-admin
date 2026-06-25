@@ -10,29 +10,29 @@ import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/pagination/pagination_meta.dart';
 
 class FakeClientRepository implements ClientRepository {
-  EitherResponseOrException<PaginatedResult<ClientListItem>> fetchClientsResult =
-      Success(
-        PaginatedResult(
-          items: const [
-            ClientListItem(
-              id: 'client-1',
-              fullName: 'Aspen Michael',
-              email: 'test@example.com',
-              phone: '+11111111111',
-              location: 'City, ST',
-              avatarUrl: '',
-            ),
-          ],
-          pagination: const PaginationMeta(
-            page: 1,
-            limit: 20,
-            total: 1,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false,
-          ),
+  EitherResponseOrException<PaginatedResult<ClientListItem>>
+  fetchClientsResult = Success(
+    PaginatedResult(
+      items: const [
+        ClientListItem(
+          id: 'client-1',
+          fullName: 'Aspen Michael',
+          email: 'test@example.com',
+          phone: '+11111111111',
+          location: 'City, ST',
+          avatarUrl: '',
         ),
-      );
+      ],
+      pagination: const PaginationMeta(
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      ),
+    ),
+  );
 
   EitherResponseOrException<ClientDetail> fetchDetailResult = Success(
     const ClientDetail(
@@ -60,44 +60,67 @@ class FakeClientRepository implements ClientRepository {
         ),
       );
 
-  EitherResponseOrException<List<ClientPaymentMethod>> fetchPaymentMethodsResult =
-      Success(const []);
+  EitherResponseOrException<List<ClientPaymentMethod>>
+  fetchPaymentMethodsResult = Success(const []);
 
   EitherResponseOrException<PaginatedResult<ClientTransaction>>
   fetchTransactionsResult = Success(
-    PaginatedResult(
-      items: const [],
-      pagination: PaginationMeta.empty,
-    ),
+    PaginatedResult(items: const [], pagination: PaginationMeta.empty),
   );
 
   EitherResponseOrException<PaginatedResult<ClientCase>> fetchCasesResult =
       Success(
-        PaginatedResult(
-          items: const [],
-          pagination: PaginationMeta.empty,
-        ),
+        PaginatedResult(items: const [], pagination: PaginationMeta.empty),
       );
 
   EitherResponseOrException<PaginatedResult<ClientFile>> fetchDocumentsResult =
       Success(
-        PaginatedResult(
-          items: const [],
-          pagination: PaginationMeta.empty,
-        ),
+        PaginatedResult(items: const [], pagination: PaginationMeta.empty),
       );
+
+  EitherResponseOrException<void> uploadClientDocumentResult = const Success(
+    null,
+  );
+
+  EitherResponseOrException<void> renameClientDocumentResult = const Success(
+    null,
+  );
+
+  EitherResponseOrException<ClientCase> createClientCaseResult = Success(
+    const ClientCase(
+      id: 'case-new',
+      caseId: 'CASENEW',
+      title: 'New case',
+      status: ClientCaseStatus.requested,
+      createdAt: '2026-06-25T11:29:06.803Z',
+      updatedAt: '2026-06-25T11:29:06.803Z',
+    ),
+  );
+
+  String? lastUploadClientId;
+  String? lastUploadFileName;
+  List<int>? lastUploadBytes;
+  String? lastUploadNote;
+  String? lastUploadDate;
+
+  String? lastRenameDocumentId;
+  String? lastRenameName;
+
+  String? lastCreateCaseClientId;
+  String? lastCreateCaseTitle;
+  String? lastCreateCaseDescription;
 
   PaginatedListRequest? lastClientsRequest;
   String? lastClientId;
   PaginatedListRequest? lastTransactionsRequest;
   PaginatedListRequest? lastCasesRequest;
+  bool? lastCasesForceRefresh;
   PaginatedListRequest? lastDocumentsRequest;
+  bool? lastDocumentsForceRefresh;
 
   @override
-  Future<EitherResponseOrException<PaginatedResult<ClientListItem>>> fetchClients(
-    PaginatedListRequest request, {
-    CancelToken? cancelToken,
-  }) async {
+  Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
+  fetchClients(PaginatedListRequest request, {CancelToken? cancelToken}) async {
     lastClientsRequest = request;
 
     if (request.page > 1) {
@@ -139,19 +162,14 @@ class FakeClientRepository implements ClientRepository {
 
   @override
   Future<EitherResponseOrException<ClientMembershipsResult>>
-  fetchClientMemberships(
-    String clientId, {
-    CancelToken? cancelToken,
-  }) async {
+  fetchClientMemberships(String clientId, {CancelToken? cancelToken}) async {
     lastClientId = clientId;
     return fetchMembershipsResult;
   }
 
   @override
-  Future<EitherResponseOrException<List<ClientPaymentMethod>>> fetchPaymentMethods(
-    String clientId, {
-    CancelToken? cancelToken,
-  }) async {
+  Future<EitherResponseOrException<List<ClientPaymentMethod>>>
+  fetchPaymentMethods(String clientId, {CancelToken? cancelToken}) async {
     lastClientId = clientId;
     return fetchPaymentMethodsResult;
   }
@@ -173,10 +191,25 @@ class FakeClientRepository implements ClientRepository {
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) async {
     lastClientId = clientId;
     lastCasesRequest = request;
+    lastCasesForceRefresh = forceRefresh;
     return fetchCasesResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<ClientCase>> createClientCase({
+    required String clientId,
+    required String title,
+    required String description,
+    CancelToken? cancelToken,
+  }) async {
+    lastCreateCaseClientId = clientId;
+    lastCreateCaseTitle = title;
+    lastCreateCaseDescription = description;
+    return createClientCaseResult;
   }
 
   @override
@@ -184,9 +217,39 @@ class FakeClientRepository implements ClientRepository {
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) async {
     lastClientId = clientId;
     lastDocumentsRequest = request;
+    lastDocumentsForceRefresh = forceRefresh;
     return fetchDocumentsResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> uploadClientDocument({
+    required String clientId,
+    required String fileName,
+    required List<int> bytes,
+    String? note,
+    String? date,
+    CancelToken? cancelToken,
+  }) async {
+    lastUploadClientId = clientId;
+    lastUploadFileName = fileName;
+    lastUploadBytes = bytes;
+    lastUploadNote = note;
+    lastUploadDate = date;
+    return uploadClientDocumentResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> renameClientDocument({
+    required String documentId,
+    required String name,
+    CancelToken? cancelToken,
+  }) async {
+    lastRenameDocumentId = documentId;
+    lastRenameName = name;
+    return renameClientDocumentResult;
   }
 }

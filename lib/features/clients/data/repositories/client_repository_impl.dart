@@ -4,6 +4,8 @@ import 'package:vcare_admin/core/config/api_endpoints.dart';
 import 'package:vcare_admin/core/config/flavor/configuration.dart';
 import 'package:vcare_admin/core/services/network/api_client.dart';
 import 'package:vcare_admin/core/services/network/http_response_validator.dart';
+import 'package:vcare_admin/core/services/network/models/form_file.dart';
+import 'package:vcare_admin/core/services/network/models/request_body.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_case_mapper.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_detail_mapper.dart';
@@ -33,10 +35,8 @@ class ClientRepositoryImpl implements ClientRepository {
   final ApiClient apiClient;
 
   @override
-  Future<EitherResponseOrException<PaginatedResult<ClientListItem>>> fetchClients(
-    PaginatedListRequest request, {
-    CancelToken? cancelToken,
-  }) {
+  Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
+  fetchClients(PaginatedListRequest request, {CancelToken? cancelToken}) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClients,
@@ -79,10 +79,8 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
-  Future<EitherResponseOrException<ClientMembershipsResult>> fetchClientMemberships(
-    String clientId, {
-    CancelToken? cancelToken,
-  }) {
+  Future<EitherResponseOrException<ClientMembershipsResult>>
+  fetchClientMemberships(String clientId, {CancelToken? cancelToken}) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClientMemberships(clientId),
@@ -92,9 +90,8 @@ class ClientRepositoryImpl implements ClientRepository {
 
       final model = ResponseValidator.parse(
         response,
-        (data) => ClientMembershipsResultModel.fromJson(
-          data as Map<String, dynamic>,
-        ),
+        (data) =>
+            ClientMembershipsResultModel.fromJson(data as Map<String, dynamic>),
         dataValidator: (data) => data is Map && data['details'] is List,
       );
 
@@ -103,10 +100,8 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
-  Future<EitherResponseOrException<List<ClientPaymentMethod>>> fetchPaymentMethods(
-    String clientId, {
-    CancelToken? cancelToken,
-  }) {
+  Future<EitherResponseOrException<List<ClientPaymentMethod>>>
+  fetchPaymentMethods(String clientId, {CancelToken? cancelToken}) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClientPaymentMethods(clientId),
@@ -114,21 +109,17 @@ class ClientRepositoryImpl implements ClientRepository {
         cancelToken: cancelToken,
       );
 
-      final methods = ResponseValidator.parse(
-        response,
-        (data) {
-          if (data is! List) return <ClientPaymentMethod>[];
-          return data
-              .whereType<Map>()
-              .map(
-                (item) => ClientPaymentMethodModel.fromJson(
-                  Map<String, dynamic>.from(item),
-                ).toEntity(),
-              )
-              .toList();
-        },
-        dataValidator: (data) => data is List,
-      );
+      final methods = ResponseValidator.parse(response, (data) {
+        if (data is! List) return <ClientPaymentMethod>[];
+        return data
+            .whereType<Map>()
+            .map(
+              (item) => ClientPaymentMethodModel.fromJson(
+                Map<String, dynamic>.from(item),
+              ).toEntity(),
+            )
+            .toList();
+      }, dataValidator: (data) => data is List);
 
       return methods;
     });
@@ -165,6 +156,7 @@ class ClientRepositoryImpl implements ClientRepository {
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
@@ -176,6 +168,7 @@ class ClientRepositoryImpl implements ClientRepository {
         },
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final parsed = PaginatedResponseParser.parse(
@@ -190,10 +183,41 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
+  Future<EitherResponseOrException<ClientCase>> createClientCase({
+    required String clientId,
+    required String title,
+    required String description,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.agentClientCases(clientId),
+        JsonRequestBody({
+          'title': title,
+          'description': description,
+        }),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => ClientCaseModel.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        ),
+        dataValidator: (data) => data is Map && data['id'] != null,
+      );
+
+      return model.toEntity();
+    });
+  }
+
+  @override
   Future<EitherResponseOrException<PaginatedResult<ClientFile>>> fetchDocuments(
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) {
     return safeNetworkCall(() async {
       final hostBaseUrl = Configuration.of().baseUrl;
@@ -203,6 +227,7 @@ class ClientRepositoryImpl implements ClientRepository {
         queryParameters: request.toQueryParameters(),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final parsed = PaginatedResponseParser.parse(
@@ -213,6 +238,59 @@ class ClientRepositoryImpl implements ClientRepository {
       );
 
       return parsed;
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> uploadClientDocument({
+    required String clientId,
+    required String fileName,
+    required List<int> bytes,
+    String? note,
+    String? date,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.files,
+        MultipartFormData(
+          fields: {
+            'category': 'CLIENT',
+            'categoryReferenceId': clientId,
+            if (note != null) 'note': note,
+            if (date != null) 'date': date,
+          },
+          files: [
+            FormFile.fromBytes(
+              fieldName: 'files',
+              bytes: bytes,
+              fileName: fileName,
+            ),
+          ],
+        ),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      ResponseValidator.ensureValid(response);
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> renameClientDocument({
+    required String documentId,
+    required String name,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.patch(
+        ApiEndpoints.file(documentId),
+        JsonRequestBody({'name': name}),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      ResponseValidator.ensureValid(response);
     });
   }
 }

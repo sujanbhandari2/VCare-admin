@@ -21,9 +21,9 @@ class ClientMembershipsStateData {
   String? get error => operation.errorMessage;
 
   ClientMembershipsStateData loading() => ClientMembershipsStateData(
-        operation: OperationState.loading(data: data),
-        data: data,
-      );
+    operation: OperationState.loading(data: data),
+    data: data,
+  );
 
   ClientMembershipsStateData success(ClientMembershipsResult result) =>
       ClientMembershipsStateData(
