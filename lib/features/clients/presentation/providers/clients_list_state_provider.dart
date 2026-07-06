@@ -13,6 +13,8 @@ part 'clients_list_state_provider.g.dart';
 @Riverpod(keepAlive: true)
 class ClientsListState extends _$ClientsListState
     with PaginatedListNotifierMixin<ClientListItem> {
+  bool _forceRefreshNextFetch = false;
+
   @override
   LoadableListState<ClientListItem> build() =>
       LoadableListState<ClientListItem>();
@@ -21,9 +23,21 @@ class ClientsListState extends _$ClientsListState
   bool get mounted => ref.mounted;
 
   @override
+  Future<void> refresh({Map<String, dynamic>? extras}) async {
+    _forceRefreshNextFetch = true;
+    await super.refresh(extras: extras);
+  }
+
+  @override
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>> fetchPage(
     PaginatedListRequest request,
   ) {
-    return ref.read(clientRepositoryProvider).fetchClients(request);
+    final forceRefresh = _forceRefreshNextFetch;
+    _forceRefreshNextFetch = false;
+
+    return ref.read(clientRepositoryProvider).fetchClients(
+      request,
+      forceRefresh: forceRefresh,
+    );
   }
 }

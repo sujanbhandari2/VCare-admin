@@ -9,7 +9,11 @@ import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 
 abstract class ClientRepository {
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
-  fetchClients(PaginatedListRequest request, {CancelToken? cancelToken});
+  fetchClients(
+    PaginatedListRequest request, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  });
 
   Future<EitherResponseOrException<ClientDetail>> fetchClientDetail(
     String clientId, {

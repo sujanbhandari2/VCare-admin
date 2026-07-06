@@ -18,6 +18,8 @@ import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
 import 'package:vcare_admin/features/auth/domain/auth_identifier_normalizer.dart';
 import 'package:vcare_admin/features/auth/domain/auth_login_navigation_policy.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_validator.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_phone_country.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_identify_state_provider.dart';
@@ -29,6 +31,7 @@ import 'package:vcare_admin/features/profile/presentation/providers/auth_me_stat
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/login_flow_state.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_forgot_steps.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_phone_country_selector.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
@@ -61,6 +64,7 @@ class VcareLoginScreen extends ConsumerStatefulWidget {
 class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   _LoginMethod _method = _LoginMethod.phone;
   _LoginStep _step = _LoginStep.identify;
+  AuthPhoneCountry _phoneCountry = AuthPhoneCountry.usa;
 
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -77,6 +81,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   final _forgotEmailController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmNewPasswordController = TextEditingController();
+  final _identifyFocusNode = FocusNode();
 
   List<LoginClientRecord> _forgotAccounts = [];
   LoginClientRecord? _forgotSelected;
@@ -109,7 +114,23 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _forgotEmailController.dispose();
     _newPasswordController.dispose();
     _confirmNewPasswordController.dispose();
+    _identifyFocusNode.dispose();
     super.dispose();
+  }
+
+  void _switchLoginMethod(_LoginMethod method) {
+    if (_method == method) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _method = method;
+      _error = null;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _identifyFocusNode.requestFocus();
+    });
   }
 
   String get _identifier => _method == _LoginMethod.phone
@@ -118,8 +139,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
   String get _destination => _method == _LoginMethod.phone
       ? (_phoneController.text.isEmpty
-            ? '+1 (555) 000-0000'
-            : _phoneController.text)
+            ? '${_phoneCountry.dialCodeDisplay} ${_phoneCountry.hint}'
+            : '${_phoneCountry.dialCodeDisplay} ${_phoneController.text.trim()}')
       : (_emailController.text.isEmpty
             ? 'you@example.com'
             : _emailController.text);
@@ -211,12 +232,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         errors['email'] = emailError;
       }
     } else {
-      final phoneDigits = AuthIdentifierNormalizer.normalize(
-        method: LoginFlowMethod.phone,
-        raw: _onboardPhoneController.text,
-      );
-      final phoneError = FieldValidator.validateMobile(
-        phoneDigits,
+      final phoneError = AuthPhoneValidator.validate(
+        _onboardPhoneController.text,
+        country: _phoneCountry,
         context: context,
       );
       if (phoneError != null) {
@@ -273,6 +291,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             ? LoginFlowMethod.phone
             : LoginFlowMethod.email,
         raw: _identifier,
+        phoneCountry:
+            _method == _LoginMethod.phone ? _phoneCountry : null,
       );
 
   _LoginStep _mapFlowStep(LoginFlowStep step) {
@@ -393,12 +413,45 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     if (_method == _LoginMethod.phone && user.email != null) {
       _onboardEmailController.text = user.email!;
     } else if (_method == _LoginMethod.email && user.phone != null) {
-      _onboardPhoneController.text =
-          AuthPhoneFormatter.toDisplayDigits(user.phone!);
+      _phoneCountry = AuthPhoneFormatter.detectCountry(user.phone!);
+      _onboardPhoneController.text = AuthPhoneFormatter.toDisplayDigits(
+        user.phone!,
+        fallback: _phoneCountry,
+      );
     }
   }
 
+  void _onPhoneCountryChanged(AuthPhoneCountry country) {
+    setState(() {
+      _phoneCountry = country;
+      _error = null;
+      _onboardErrors = Map<String, String>.from(_onboardErrors)..remove('phone');
+      final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+      if (digits.length > country.nationalLength) {
+        _phoneController.text = digits.substring(0, country.nationalLength);
+      }
+      final onboardDigits =
+          _onboardPhoneController.text.replaceAll(RegExp(r'\D'), '');
+      if (onboardDigits.length > country.nationalLength) {
+        _onboardPhoneController.text =
+            onboardDigits.substring(0, country.nationalLength);
+      }
+    });
+  }
+
   Future<void> _sendCode() async {
+    if (_method == _LoginMethod.phone) {
+      final phoneError = AuthPhoneValidator.validate(
+        _phoneController.text,
+        country: _phoneCountry,
+        context: context,
+      );
+      if (phoneError != null) {
+        setState(() => _error = phoneError);
+        return;
+      }
+    }
+
     final identifier = _normalizedIdentifier;
     if (identifier.isEmpty) {
       setState(() {
@@ -633,8 +686,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         ? identifier
         : _onboardEmailController.text.trim().toLowerCase();
     final phone = _method == _LoginMethod.phone
-        ? AuthPhoneFormatter.toE164(identifier)
-        : AuthPhoneFormatter.toE164(
+        ? _normalizedIdentifier
+        : AuthPhoneFormatter.toApiDigits(
+            _phoneCountry.dialCode,
             AuthIdentifierNormalizer.normalize(
               method: LoginFlowMethod.phone,
               raw: _onboardPhoneController.text,
@@ -896,49 +950,58 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               _MethodTab(
                 label: 'Phone',
                 selected: _method == _LoginMethod.phone,
-                onTap: () => setState(() => _method = _LoginMethod.phone),
+                onTap: () => _switchLoginMethod(_LoginMethod.phone),
               ),
               _MethodTab(
                 label: 'Email',
                 selected: _method == _LoginMethod.email,
-                onTap: () => setState(() => _method = _LoginMethod.email),
+                onTap: () => _switchLoginMethod(_LoginMethod.email),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
         if (_method == _LoginMethod.phone)
-          LoginTextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            hint: '(555) 000-0000',
-            prefix: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('+1', style: TextStyle(color: vcare.mutedForeground)),
-                  Container(
-                    width: 1,
-                    height: 16,
-                    margin: const EdgeInsets.only(left: 12),
-                    color: vcare.border,
-                  ),
-                ],
+          LoginFieldGroup(
+            errorText: _error,
+            field: LoginTextField(
+              key: const ValueKey('login-identify-phone'),
+              controller: _phoneController,
+              focusNode: _identifyFocusNode,
+              keyboardType: TextInputType.phone,
+              hint: _phoneCountry.hint,
+              hasError: _error != null,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(_phoneCountry.nationalLength),
+              ],
+              onChanged: (_) => setState(() => _error = null),
+              prefix: LoginPhoneCountrySelector(
+                selected: _phoneCountry,
+                onChanged: _onPhoneCountryChanged,
               ),
             ),
           )
         else
-          LoginTextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            hint: 'you@example.com',
-            prefix: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Icon(
-                LucideIcons.mail,
-                size: 16,
-                color: vcare.mutedForeground,
+          LoginFieldGroup(
+            errorText: _error,
+            field: LoginTextField(
+              key: const ValueKey('login-identify-email'),
+              controller: _emailController,
+              focusNode: _identifyFocusNode,
+              keyboardType: TextInputType.emailAddress,
+              textCapitalization: TextCapitalization.none,
+              autocorrect: false,
+              hint: 'you@example.com',
+              hasError: _error != null,
+              onChanged: (_) => setState(() => _error = null),
+              prefix: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Icon(
+                  LucideIcons.mail,
+                  size: 16,
+                  color: vcare.mutedForeground,
+                ),
               ),
             ),
           ),
@@ -1239,27 +1302,16 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             field: LoginTextField(
               controller: _onboardPhoneController,
               keyboardType: TextInputType.phone,
-              hint: '(555) 000-0000',
+              hint: _phoneCountry.hint,
               hasError: _onboardErrors.containsKey('phone'),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
+                LengthLimitingTextInputFormatter(_phoneCountry.nationalLength),
               ],
               onChanged: (_) => _clearOnboardError('phone'),
-              prefix: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 12),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('+1', style: TextStyle(color: vcare.mutedForeground)),
-                    Container(
-                      width: 1,
-                      height: 16,
-                      margin: const EdgeInsets.only(left: 12),
-                      color: vcare.border,
-                    ),
-                  ],
-                ),
+              prefix: LoginPhoneCountrySelector(
+                selected: _phoneCountry,
+                onChanged: _onPhoneCountryChanged,
               ),
             ),
           ),

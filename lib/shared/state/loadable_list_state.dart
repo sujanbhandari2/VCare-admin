@@ -28,6 +28,8 @@ class LoadableListState<T extends LoadableListItem> {
 
   bool get isInitialLoading => operation.isLoading && items.isEmpty;
 
+  bool get isRefreshing => operation.isLoading && items.isNotEmpty;
+
   bool get isInitialError => operation.hasError && items.isEmpty;
 
   bool get isEmpty =>
@@ -39,7 +41,11 @@ class LoadableListState<T extends LoadableListItem> {
   LoadableListState<T> loading({Map<String, dynamic>? extras}) =>
       LoadableListState<T>(
         operation: OperationState<List<T>>.loading(data: items),
-      ).._extras = extras;
+        isLoadingMore: false,
+        loadMoreErrorMessage: null,
+      )
+        .._extras = extras ?? this.extras
+        .._total = _total;
 
   LoadableListState<T> success({required List<T> items, required int total}) =>
       LoadableListState<T>(operation: OperationState<List<T>>.success(items))

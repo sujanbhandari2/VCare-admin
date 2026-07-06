@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -9,7 +7,7 @@ import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
-import 'package:vcare_admin/shared/widgets/common_image.dart';
+import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 
 /// Parity with vcareapp ProfileSummaryCard.
 class ProfileSummaryCard extends StatelessWidget {
@@ -48,7 +46,11 @@ class ProfileSummaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _ProfileAvatar(photoUrl: profile.photoUrl),
+                  ProfileAvatar(
+                    name: profile.fullName,
+                    photoUrl: profile.photoUrl,
+                    size: 64,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -107,41 +109,6 @@ class ProfileSummaryCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({this.photoUrl});
-
-  final String? photoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final fallback = HomeMockData.member.photoAsset;
-    final source = photoUrl ?? fallback;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: source.startsWith('assets/')
-          ? CommonImage(
-              assetsOrUrlOrPath: source,
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-            )
-          : Image.file(
-              File(source),
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => CommonImage(
-                assetsOrUrlOrPath: fallback,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-              ),
-            ),
     );
   }
 }

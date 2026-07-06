@@ -48,6 +48,21 @@ void main() {
       expect(failure.items, [ListItem.value(1), ListItem.value(2)]);
     });
 
+    test('loading preserves total and exposes isRefreshing', () {
+      final state = LoadableListState<ListItem>().success(
+        items: [ListItem.value(1)],
+        total: 1,
+      );
+
+      final refreshing = state.loading();
+
+      expect(refreshing.isRefreshing, isTrue);
+      expect(refreshing.isInitialLoading, isFalse);
+      expect(refreshing.hasMore, isFalse);
+      expect(refreshing.totalItems, 1);
+      expect(refreshing.items, [ListItem.value(1)]);
+    });
+
     test('append helpers merge items and preserve pagination flags', () {
       final state = LoadableListState<ListItem>()
           .success(items: [ListItem.value(1), ListItem.value(2)], total: 2)

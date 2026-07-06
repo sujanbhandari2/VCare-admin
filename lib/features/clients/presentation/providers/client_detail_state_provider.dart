@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/state/client_detail_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'client_detail_state_provider.g.dart';
 
@@ -26,7 +27,7 @@ class ClientDetailState extends _$ClientDetailState {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
       },
       success: (detail) {

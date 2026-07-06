@@ -5,22 +5,14 @@ import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
 export 'package:vcare_admin/features/shell/data/shell_mock_data.dart'
     show ProviderCategoryItem;
 
-const findCareCategoryPageSize = 15;
+export 'package:vcare_admin/features/find_care/utils/cms_medicare_query_builder.dart'
+    show findCareCategoryPageSize;
 
 ProviderCategoryItem? findCareCategoryBySlug(String slug) {
   for (final category in ShellMockData.providerCategories) {
     if (category.slug == slug) return category;
   }
   return null;
-}
-
-String? parseSearchState(String locationText) {
-  final trimmed = locationText.trim();
-  if (trimmed.isEmpty) return null;
-  final parts = trimmed.split(',');
-  if (parts.length < 2) return null;
-  final state = parts.last.trim();
-  return state.length == 2 ? state.toUpperCase() : state;
 }
 
 String npiFromCatalogId(String id) {
@@ -70,8 +62,9 @@ MedicareProviderListItem _catalogToMedicareItem(VCareProvider provider) {
     row: MedicareProviderLookupRow(
       npi: npi,
       firstName: firstName,
-      lastName: lastName,
+      lastOrOrgName: lastName,
       providerType: provider.specialty,
+      entityCode: 'I',
       street1: provider.address,
       city: city,
       state: state,

@@ -3,6 +3,7 @@ import 'package:vcare_admin/shared/models/loadable_list_item.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 /// Reusable pagination flow for [LoadableListState] notifiers.
 mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
@@ -17,6 +18,7 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
   int get pageSize => defaultPageSize;
 
   int _currentPage = 0;
+  int _requestGeneration = 0;
 
   String? get searchQuery {
     final value = state.extras?[searchExtraKey];
@@ -36,6 +38,8 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
   }
 
   Future<void> loadInitial({Map<String, dynamic>? extras}) async {
+    final generation = ++_requestGeneration;
+
     if (mounted) {
       state = state.loading(extras: extras ?? state.extras);
     }
@@ -44,18 +48,20 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
 
     response.when(
       failure: (error) {
-        if (mounted) {
-          state = state.failure(error.message);
+        if (!mounted || generation != _requestGeneration) {
+          return;
         }
+        state = state.failure(error.userMessage);
       },
       success: (result) {
-        _currentPage = result.pagination.page;
-        if (mounted) {
-          state = state.success(
-            items: result.items,
-            total: result.pagination.total,
-          );
+        if (!mounted || generation != _requestGeneration) {
+          return;
         }
+        _currentPage = result.pagination.page;
+        state = state.success(
+          items: result.items,
+          total: result.pagination.total,
+        );
       },
     );
   }
@@ -77,9 +83,14 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
   }
 
   Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) {
+    if (state.isLoadingMore ||
+        !state.hasMore ||
+        state.isInitialLoading ||
+        state.isRefreshing) {
       return;
     }
+
+    final generation = _requestGeneration;
 
     if (mounted) {
       state = state.loadingMore();
@@ -90,18 +101,20 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
 
     response.when(
       failure: (error) {
-        if (mounted) {
-          state = state.appendFailure(error.message);
+        if (!mounted || generation != _requestGeneration) {
+          return;
         }
+        state = state.appendFailure(error.userMessage);
       },
       success: (result) {
-        _currentPage = result.pagination.page;
-        if (mounted) {
-          state = state.appendSuccess(
-            appendedItems: result.items,
-            total: result.pagination.total,
-          );
+        if (!mounted || generation != _requestGeneration) {
+          return;
         }
+        _currentPage = result.pagination.page;
+        state = state.appendSuccess(
+          appendedItems: result.items,
+          total: result.pagination.total,
+        );
       },
     );
   }

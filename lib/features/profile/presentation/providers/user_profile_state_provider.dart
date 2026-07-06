@@ -7,6 +7,7 @@ import 'package:vcare_admin/features/auth/presentation/providers/logged_in_user_
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/user_profile_repository_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/state/user_profile_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'user_profile_state_provider.g.dart';
 
@@ -64,7 +65,7 @@ class UserProfileStateNotifier extends _$UserProfileStateNotifier {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.fetchFailure(error.message);
+          state = state.fetchFailure(error.userMessage);
         }
 
         // Trigger onCompleted callback
@@ -136,7 +137,7 @@ class UserProfileStateNotifier extends _$UserProfileStateNotifier {
       failure: (error) {
         if (ref.mounted) {
           state = state.updateFailure(
-            error.message,
+            error.userMessage,
             fallbackProfile: userDetails,
           );
         }

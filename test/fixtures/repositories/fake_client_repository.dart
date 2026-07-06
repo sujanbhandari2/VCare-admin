@@ -111,6 +111,8 @@ class FakeClientRepository implements ClientRepository {
   String? lastCreateCaseDescription;
 
   PaginatedListRequest? lastClientsRequest;
+  bool? lastClientsForceRefresh;
+  Future<void>? fetchClientsPage2Delay;
   String? lastClientId;
   PaginatedListRequest? lastTransactionsRequest;
   PaginatedListRequest? lastCasesRequest;
@@ -120,8 +122,17 @@ class FakeClientRepository implements ClientRepository {
 
   @override
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
-  fetchClients(PaginatedListRequest request, {CancelToken? cancelToken}) async {
+  fetchClients(
+    PaginatedListRequest request, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) async {
     lastClientsRequest = request;
+    lastClientsForceRefresh = forceRefresh;
+
+    if (request.page > 1 && fetchClientsPage2Delay != null) {
+      await fetchClientsPage2Delay;
+    }
 
     if (request.page > 1) {
       return Success(

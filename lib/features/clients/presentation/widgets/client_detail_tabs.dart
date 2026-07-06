@@ -17,6 +17,8 @@ import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_upload_document_sheet.dart';
 import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
   const ClientMembershipsTab({
@@ -51,6 +53,7 @@ class ClientMembershipsTab extends StatelessWidget {
     final dependentWidth = math.min(screenWidth * 0.55, 200.0);
 
     return ListView(
+      physics: VcareRefreshScrollView.physics,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         ClientDetailSectionHeading('Memberships'),
@@ -171,6 +174,7 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
 
     return ListView(
       controller: _scrollController,
+      physics: VcareRefreshScrollView.physics,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         if (upcoming.isNotEmpty) ...[
@@ -319,6 +323,7 @@ class _ClientCasesTabState extends State<ClientCasesTab> {
 
     return ListView(
       controller: _scrollController,
+      physics: VcareRefreshScrollView.physics,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         ClientDetailSectionHeading(
@@ -437,6 +442,7 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
 
     return ListView(
       controller: _scrollController,
+      physics: VcareRefreshScrollView.physics,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
         ClientDetailSectionHeading(
@@ -1268,24 +1274,9 @@ class _TabErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        children: [
-          Text(
-            message ?? "Something went wrong.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
-            ),
-          ),
-          if (onRetry != null) ...[
-            const SizedBox(height: 8),
-            TextButton(onPressed: onRetry, child: const Text("Retry")),
-          ],
-        ],
-      ),
+    return VcareInlineErrorCard(
+      message: message,
+      onRetry: onRetry,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/features/home/utils/referral_utils.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/shared/utils/qr_code_utils.dart';
 
 /// Share/copy helpers — parity with vcareapp [useReferralActions].
 class ReferralActions {
@@ -13,9 +14,10 @@ class ReferralActions {
 
   String get username => referralUsernameFromEmail(profile.email);
 
-  String get referralUrl => referralUrlFromEmail(profile.email);
-
-  String get qrImageUrl => referralQrImageUrl(referralUrl, size: 320);
+  String get referralUrl => resolveReferralUrl(
+        email: profile.email,
+        referralLink: profile.referralLink,
+      );
 
   String get shareText => '${profile.fullName} invited you to VCare';
 
@@ -24,13 +26,13 @@ class ReferralActions {
     Fluttertoast.showToast(msg: 'Referral link copied');
   }
 
-  Future<void> openQrImage() async {
-    final launched = await launchUrlString(
-      qrImageUrl,
-      mode: LaunchMode.externalApplication,
+  Future<void> saveQrImage() async {
+    final shared = await QrCodeUtils.sharePng(
+      referralUrl,
+      fileName: 'vcare-referral-qr.png',
     );
-    if (!launched) {
-      Fluttertoast.showToast(msg: "Couldn't open QR image");
+    if (!shared) {
+      Fluttertoast.showToast(msg: "Couldn't share QR image");
     }
   }
 

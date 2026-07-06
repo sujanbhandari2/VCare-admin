@@ -2,14 +2,20 @@ class AuthMeModel {
   const AuthMeModel({
     required this.user,
     this.menu = const [],
+    this.agentProfile,
+    this.clientProfile,
   });
 
   final AuthMeUserModel user;
   final List<String> menu;
+  final AuthMeAgentProfileModel? agentProfile;
+  final AuthMeClientProfileModel? clientProfile;
 
   factory AuthMeModel.fromJson(Map<String, dynamic> json) {
     final userRaw = json['user'];
     final menuRaw = json['menu'];
+    final agentProfileRaw = json['agentProfile'];
+    final clientProfileRaw = json['clientProfile'];
 
     return AuthMeModel(
       user: userRaw is Map<String, dynamic>
@@ -18,6 +24,46 @@ class AuthMeModel {
       menu: menuRaw is List
           ? menuRaw.whereType<String>().toList()
           : const [],
+      agentProfile: agentProfileRaw is Map<String, dynamic>
+          ? AuthMeAgentProfileModel.fromJson(agentProfileRaw)
+          : null,
+      clientProfile: clientProfileRaw is Map<String, dynamic>
+          ? AuthMeClientProfileModel.fromJson(clientProfileRaw)
+          : null,
+    );
+  }
+}
+
+class AuthMeAgentProfileModel {
+  const AuthMeAgentProfileModel({
+    this.profilePreviewLink,
+    this.referralLink,
+  });
+
+  final String? profilePreviewLink;
+  final String? referralLink;
+
+  factory AuthMeAgentProfileModel.fromJson(Map<String, dynamic> json) {
+    return AuthMeAgentProfileModel(
+      profilePreviewLink: json['profilePreviewLink'] as String?,
+      referralLink: json['referralLink'] as String?,
+    );
+  }
+}
+
+class AuthMeClientProfileModel {
+  const AuthMeClientProfileModel({
+    this.profilePreviewLink,
+    this.referralLink,
+  });
+
+  final String? profilePreviewLink;
+  final String? referralLink;
+
+  factory AuthMeClientProfileModel.fromJson(Map<String, dynamic> json) {
+    return AuthMeClientProfileModel(
+      profilePreviewLink: json['profilePreviewLink'] as String?,
+      referralLink: json['referralLink'] as String?,
     );
   }
 }
@@ -35,6 +81,7 @@ class AuthMeUserModel {
     this.emailVerifiedAt,
     this.status,
     this.profileImage,
+    this.profilePreviewLink,
     this.mfaEnabled,
     this.userType,
     this.createdAt,
@@ -55,6 +102,7 @@ class AuthMeUserModel {
   final String? emailVerifiedAt;
   final String? status;
   final String? profileImage;
+  final String? profilePreviewLink;
   final bool? mfaEnabled;
   final String? userType;
   final String? createdAt;
@@ -80,6 +128,7 @@ class AuthMeUserModel {
       emailVerifiedAt: json['emailVerifiedAt'] as String?,
       status: json['status'] as String?,
       profileImage: json['profileImage'] as String?,
+      profilePreviewLink: json['profilePreviewLink'] as String?,
       mfaEnabled: json['mfaEnabled'] as bool?,
       userType: json['userType'] as String?,
       createdAt: json['createdAt'] as String?,

@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/forgot_password_request_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'forgot_password_request_state_provider.g.dart';
 
@@ -50,15 +51,15 @@ class ForgotPasswordRequestStateNotifier
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
 
         // Trigger on completed callback
         onCompleted?.call(false);
 
         // Showing toast message in case of error
-        if (error.message != null) {
-          Fluttertoast.showToast(msg: error.message!);
+        if (error.userMessage.isNotEmpty) {
+          Fluttertoast.showToast(msg: error.userMessage);
         }
       },
       success: (result) {

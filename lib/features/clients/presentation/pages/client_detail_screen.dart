@@ -22,7 +22,10 @@ import 'package:vcare_admin/features/clients/presentation/widgets/client_documen
 import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// Client detail — parity with vcareapp [ClientDetailPage].
 class ClientDetailScreen extends ConsumerStatefulWidget {
@@ -59,6 +62,24 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     ref.read(clientDocumentsStateProvider(clientId).notifier).loadInitial();
   }
 
+  Future<void> _onRefresh() async {
+    final clientId = widget.clientId;
+    await Future.wait([
+      ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail(),
+      ref
+          .read(clientMembershipsStateProvider(clientId).notifier)
+          .fetchMemberships(),
+      ref
+          .read(clientPaymentMethodsStateProvider(clientId).notifier)
+          .fetchPaymentMethods(),
+      ref.read(clientTransactionsStateProvider(clientId).notifier).refresh(),
+      ref.read(clientCasesStateProvider(clientId).notifier).refresh(),
+      ref
+          .read(clientDocumentsStateProvider(clientId).notifier)
+          .loadInitial(forceRefresh: true),
+    ]);
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -82,6 +103,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     final documentsState = ref.watch(clientDocumentsStateProvider(clientId));
 
     final detail = detailState.data;
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
+    final vcare = context.vcare;
 
     if (detailState.fetching && detail == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -91,26 +115,25 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
-              child: VcarePageHeader(title: 'Client not found', showBack: true),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.all(20),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      detailState.error ?? "We couldn't find that client.",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: const Text('Back to clients'),
-                    ),
-                  ],
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: VcarePinnedPageTitleDelegate(
+                safeTop: safeTop,
+                textScaleFactor: textScaleFactor,
+                hasSubtitle: false,
+                title: vcareTabPageTitle(
+                  title: 'Client not found',
+                  showBack: true,
                 ),
+              ),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: VcareErrorStatePanel(
+                title: 'Client not found',
+                message: detailState.error,
+                actionLabel: 'Back to clients',
+                onAction: () => context.pop(),
               ),
             ),
           ],
@@ -119,16 +142,31 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     }
 
     return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: detail.fullName,
-              showBack: true,
-              action: IconButton(
-                onPressed: () => ClientDetailsDrawer.show(context, detail),
-                icon: const Icon(LucideIcons.info, size: 18),
-                tooltip: 'Client details',
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: NestedScrollView(
+          physics: VcareRefreshScrollView.physics,
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
+              hasSubtitle: false,
+              title: vcareTabPageTitle(
+                title: detail.fullName,
+                showBack: true,
+                action: IconButton(
+                  onPressed: () => ClientDetailsDrawer.show(context, detail),
+                  icon: const Icon(LucideIcons.info, size: 16),
+                  tooltip: 'Client details',
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(32, 32),
+                    maximumSize: const Size(32, 32),
+                    padding: EdgeInsets.zero,
+                    foregroundColor: vcare.mutedForeground,
+                  ),
+                ),
               ),
             ),
           ),
@@ -196,6 +234,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -281,15 +320,19 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
 
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.success
-              ? 'Document renamed.'
-              : result.error ?? 'Could not rename document.',
-        ),
-      ),
-    );
+    if (result.success) {
+      context.showVcareToast(
+        title: 'Renamed',
+        description: trimmed,
+        variant: VcareToastVariant.info,
+      );
+    } else {
+      context.showVcareToast(
+        title: 'Could not rename document',
+        description: result.error,
+        variant: VcareToastVariant.destructive,
+      );
+    }
   }
 
   Future<void> _deleteDocument(

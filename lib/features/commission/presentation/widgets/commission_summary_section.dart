@@ -5,6 +5,8 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_summary.dart';
 import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
 class CommissionSummarySection extends StatelessWidget {
   const CommissionSummarySection({
@@ -25,7 +27,10 @@ class CommissionSummarySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (error != null) {
-      return _SummaryError(message: error!, onRetry: onRetry);
+      return VcareInlineErrorCard(
+        message: error,
+        onRetry: onRetry,
+      );
     }
 
     final totalSales = isLoading
@@ -116,41 +121,6 @@ class _AgencyInfoBanner extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryError extends StatelessWidget {
-  const _SummaryError({required this.message, this.onRetry});
-
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: vcare.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            message,
-            style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
-          ),
-          if (onRetry != null) ...[
-            const SizedBox(height: 8),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
         ],
       ),
     );

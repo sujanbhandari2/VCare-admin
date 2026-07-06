@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
 import 'package:vcare_admin/shared/state/operation_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'client_payment_methods_state_provider.g.dart';
 
@@ -61,7 +62,7 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
       },
       success: (methods) {

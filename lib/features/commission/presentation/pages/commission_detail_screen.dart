@@ -11,8 +11,11 @@ import 'package:vcare_admin/features/commission/presentation/widgets/commission_
 import 'package:vcare_admin/features/commission/presentation/widgets/commission_history_row.dart';
 import 'package:vcare_admin/features/commission/presentation/widgets/commission_summary_section.dart';
 import 'package:vcare_admin/features/commission/utils/commission_utils.dart';
-import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
 class CommissionDetailScreen extends ConsumerStatefulWidget {
   const CommissionDetailScreen({super.key});
@@ -97,14 +100,25 @@ class _CommissionDetailScreenState extends ConsumerState<CommissionDetailScreen>
         );
 
     final filteredItems = filterCommissionHistory(historyState.items, _filter);
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
 
     return Scaffold(
       body: VcareRefreshScrollView(
         controller: _scrollController,
         onRefresh: _onRefresh,
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'My Commissions', showBack: true),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
+              hasSubtitle: false,
+              title: vcareTabPageTitle(
+                title: 'My Commissions',
+                showBack: true,
+              ),
+            ),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
@@ -155,9 +169,8 @@ class _CommissionDetailScreenState extends ConsumerState<CommissionDetailScreen>
                       child: Center(child: CircularProgressIndicator()),
                     )
                   else if (historyState.isInitialError)
-                    _HistoryMessage(
-                      message: historyState.operation.errorMessage ??
-                          'Failed to load commission history.',
+                    VcareInlineErrorCard(
+                      message: historyState.operation.errorMessage,
                       onRetry: () => ref
                           .read(commissionHistoryStateProvider.notifier)
                           .loadInitial(),
@@ -190,7 +203,10 @@ class _CommissionDetailScreenState extends ConsumerState<CommissionDetailScreen>
                               .read(commissionHistoryStateProvider.notifier)
                               .loadMore(),
                           child: Text(
-                            historyState.loadMoreErrorMessage!,
+                            NetworkErrorMessage.displayMessage(
+                              context,
+                              message: historyState.loadMoreErrorMessage,
+                            ),
                             style: TextStyle(color: vcare.mutedForeground),
                           ),
                         ),
@@ -226,7 +242,7 @@ class _HistoryMessage extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            message,
+            NetworkErrorMessage.displayMessage(context, message: message),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -235,7 +251,10 @@ class _HistoryMessage extends StatelessWidget {
           ),
           if (onRetry != null) ...[
             const SizedBox(height: 8),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(context.appLocalization.retry),
+            ),
           ],
         ],
       ),

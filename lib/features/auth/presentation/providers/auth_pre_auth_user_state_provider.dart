@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/auth_pre_auth_user_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'auth_pre_auth_user_state_provider.g.dart';
 
@@ -40,9 +41,9 @@ class AuthPreAuthUserStateNotifier extends _$AuthPreAuthUserStateNotifier {
     await response.when<Future<void>>(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (result) async {
         if (ref.mounted) {

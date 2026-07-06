@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/notification_item.dart';
 import '../state/notification_inbox_state.dart';
 import 'notification_repository_provider.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'notification_inbox_state_provider.g.dart';
 
@@ -30,7 +31,7 @@ class NotificationInboxStateNotifier extends _$NotificationInboxStateNotifier {
     await response.when(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
         onCompleted?.call(null);
       },

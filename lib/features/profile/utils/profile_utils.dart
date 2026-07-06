@@ -15,12 +15,17 @@ String formatProfileDob(String? input) {
 }
 
 String profileInitials(String name) {
-  return name
+  final parts = name
       .split(' ')
       .where((part) => part.isNotEmpty)
-      .take(2)
-      .map((part) => part[0].toUpperCase())
-      .join();
+      .toList();
+  if (parts.isEmpty) {
+    return '';
+  }
+  if (parts.length == 1) {
+    return parts.first[0].toUpperCase();
+  }
+  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
 }
 
 int ageFromDob(String dob) {

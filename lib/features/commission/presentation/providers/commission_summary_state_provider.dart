@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_summary.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_repository_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/state/commission_summary_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'commission_summary_state_provider.g.dart';
 
@@ -28,7 +29,7 @@ class CommissionSummaryStateNotifier extends _$CommissionSummaryStateNotifier {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
         onCompleted?.call(null);
       },

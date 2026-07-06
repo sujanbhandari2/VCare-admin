@@ -9,6 +9,8 @@ import 'package:vcare_admin/features/clients/presentation/providers/clients_list
 import 'package:vcare_admin/features/clients/presentation/widgets/client_row.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/clients_empty_state.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_search_bar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
@@ -51,6 +53,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         listState.hasMore &&
         listState.items.isNotEmpty &&
         !listState.isLoadingMore &&
+        !listState.isRefreshing &&
         listState.loadMoreErrorMessage == null &&
         !listState.isInitialLoading &&
         !listState.isInitialError &&
@@ -136,9 +139,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           else if (listState.isInitialError)
             SliverFillRemaining(
               hasScrollBody: false,
-              child: _ClientsErrorState(
+              child: VcareErrorStatePanel(
+                title: 'Unable to load clients',
                 message: listState.operation.errorMessage,
-                onRetry: () =>
+                actionLabel: context.appLocalization.retry,
+                onAction: () =>
                     ref.read(clientsListStateProvider.notifier).loadInitial(),
               ),
             )
@@ -169,31 +174,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                 },
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClientsErrorState extends StatelessWidget {
-  const _ClientsErrorState({required this.message, required this.onRetry});
-
-  final String? message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            message ?? 'Unable to load clients.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

@@ -4,8 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
-import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
+import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
 import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
@@ -39,7 +38,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late HomeViewData _data;
-  bool _previewEmptySaved = false;
   bool _previewNoMembership = false;
 
   @override
@@ -51,6 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (ref.read(userLoggedInStateProvider)) {
         ref.read(authMeStateProvider.notifier).fetchMe();
         ref.read(agentStatsStateProvider.notifier).fetchStats();
+        ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders();
       }
     });
   }
@@ -65,55 +64,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       !_previewNoMembership && _data.member.memberId.isNotEmpty;
 
   List<SavedProviderItem> get _savedProviders {
-    if (_previewEmptySaved) return [];
     return buildHomeSavedProviders(
-      mockFavoriteIds: ref.watch(providerFavoritesProvider),
-      cmsFavorites: ref.watch(cmsProviderFavoritesProvider),
+      savedProviders: ref.watch(savedProvidersStateProvider).providers,
     );
   }
 
-  void _removeFavorite(SavedProviderItem item) {
-    if (item.kind == HomeSavedProviderKind.cms) {
-      final npi = item.medicareNpi;
-      if (npi == null) return;
-      ref.read(cmsProviderFavoritesProvider.notifier).remove(npi);
-    } else {
-      final id = item.providerId ?? item.key.replaceFirst('m-', '');
-      ref.read(providerFavoritesProvider.notifier).toggle(id);
-    }
+  Future<void> _removeFavorite(SavedProviderItem item) async {
+    final npi = item.medicareNpi;
+    if (npi == null) return;
+
+    final removed = await ref
+        .read(savedProvidersStateProvider.notifier)
+        .removeByNpi(npi);
+    if (!mounted || !removed) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text('Provider removed: ${item.name}'),
-          action: item.kind == HomeSavedProviderKind.mock
-              ? SnackBarAction(
-                  label: 'Undo',
-                  onPressed: () {
-                    final id =
-                        item.providerId ?? item.key.replaceFirst('m-', '');
-                    ref.read(providerFavoritesProvider.notifier).toggle(id);
-                  },
-                )
-              : null,
-        ),
+        SnackBar(content: Text('Provider removed: ${item.name}')),
       );
   }
 
   void _openSavedProvider(SavedProviderItem item) {
-    if (item.kind == HomeSavedProviderKind.cms) {
-      final npi = item.medicareNpi;
-      if (npi == null) return;
-      context.pushNamed(
-        AppRouter.medicareProviderDetailName,
-        pathParameters: {'npi': npi},
-      );
-      return;
-    }
-
-    final id = item.providerId ?? item.key.replaceFirst('m-', '');
-    context.pushNamed(AppRouter.providerDetailName, pathParameters: {'id': id});
+    final npi = item.medicareNpi;
+    if (npi == null) return;
+    context.pushNamed(
+      AppRouter.medicareProviderDetailName,
+      pathParameters: {'npi': npi},
+    );
   }
 
   void _handleActivityTap(ActivityItem item) {
@@ -154,6 +132,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref
             .read(agentStatsStateProvider.notifier)
             .fetchStats(forceRefresh: true),
+      );
+      futures.add(
+        ref
+            .read(savedProvidersStateProvider.notifier)
+            .fetchSavedProviders(forceRefresh: true),
       );
     }
 
@@ -262,12 +245,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onFindCare: () =>
                         context.pushNamed(AppRouter.findCare.toPathName),
                     onProviderTap: _openSavedProvider,
-                    previewEmpty: _previewEmptySaved,
-                    onPreviewToggle: kDebugMode
-                        ? () => setState(
-                            () => _previewEmptySaved = !_previewEmptySaved,
-                          )
-                        : null,
                     onRemove: _removeFavorite,
                   ),
                   const SizedBox(height: 16),
@@ -314,26 +291,35 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final compact = shrinkOffset > 12;
-    final headerHeight = compact ? _compactHeight : _expandedHeight;
+    final extent = (maxExtent - shrinkOffset).clamp(minExtent, maxExtent);
+    final contentHeight = extent - safeTop;
 
     return ColoredBox(
       color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(height: safeTop),
-          SizedBox(
-            height: headerHeight,
-            child: HomePageHeader(
-              profile: profile,
-              greetingLabel: greetingLabel,
-              unreadCount: unreadCount,
-              compact: compact,
-              onProfileTap: onProfileTap,
-              onNotificationsTap: onNotificationsTap,
+      child: SizedBox(
+        height: extent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(height: safeTop),
+            SizedBox(
+              height: contentHeight,
+              child: ClipRect(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: HomePageHeader(
+                    profile: profile,
+                    greetingLabel: greetingLabel,
+                    unreadCount: unreadCount,
+                    compact: compact,
+                    onProfileTap: onProfileTap,
+                    onNotificationsTap: onNotificationsTap,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

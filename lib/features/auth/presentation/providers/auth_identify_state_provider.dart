@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/auth_identify_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'auth_identify_state_provider.g.dart';
 
@@ -39,9 +40,9 @@ class AuthIdentifyStateNotifier extends _$AuthIdentifyStateNotifier {
     await response.when<Future<void>>(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (result) async {
         if (!result.atLeastOneAccountLoggedIn) {
@@ -52,9 +53,9 @@ class AuthIdentifyStateNotifier extends _$AuthIdentifyStateNotifier {
           final otpFailed = otpResponse.when(
             failure: (error) {
               if (ref.mounted) {
-                state = state.failure(error.message);
+                state = state.failure(error.userMessage);
               }
-              onError?.call(error.message);
+              onError?.call(error.userMessage);
               return true;
             },
             success: (_) => false,
@@ -87,7 +88,7 @@ class AuthIdentifyStateNotifier extends _$AuthIdentifyStateNotifier {
         .requestOtp(identifier: identifier, cancelToken: cancelToken);
 
     response.when(
-      failure: (error) => onError?.call(error.message),
+      failure: (error) => onError?.call(error.userMessage),
       success: (_) => onCompleted?.call(),
     );
   }
@@ -127,9 +128,9 @@ class AuthRequestOtpStateNotifier extends _$AuthRequestOtpStateNotifier {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (_) {
         if (ref.mounted) {

@@ -70,6 +70,7 @@ class LocalProfileModel {
     required this.phone,
     required this.dob,
     this.photoUrl,
+    this.referralLink,
     this.address,
   });
 
@@ -78,6 +79,7 @@ class LocalProfileModel {
   final String phone;
   final String dob;
   final String? photoUrl;
+  final String? referralLink;
   final ProfileAddressModel? address;
 
   factory LocalProfileModel.fromJson(Map<String, dynamic> json) {
@@ -88,6 +90,7 @@ class LocalProfileModel {
       phone: json['phone'] as String? ?? '',
       dob: json['dob'] as String? ?? '',
       photoUrl: json['photoUrl'] as String?,
+      referralLink: json['referralLink'] as String?,
       address: rawAddress is Map
           ? ProfileAddressModel.fromJson(Map<String, dynamic>.from(rawAddress))
           : null,
@@ -101,6 +104,7 @@ class LocalProfileModel {
       'phone': phone,
       'dob': dob,
       if (photoUrl != null) 'photoUrl': photoUrl,
+      if (referralLink != null) 'referralLink': referralLink,
       if (address != null) 'address': address!.toJson(),
     };
   }
@@ -112,6 +116,7 @@ class LocalProfileModel {
       phone: phone,
       dob: dob,
       photoUrl: photoUrl,
+      referralLink: referralLink,
       address: address?.toEntity(),
     );
   }
@@ -123,6 +128,7 @@ class LocalProfileModel {
       phone: profile.phone,
       dob: profile.dob,
       photoUrl: profile.photoUrl,
+      referralLink: profile.referralLink,
       address: profile.address == null
           ? null
           : ProfileAddressModel.fromEntity(profile.address!),

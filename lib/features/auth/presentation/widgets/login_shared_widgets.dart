@@ -301,7 +301,10 @@ class LoginTextField extends StatelessWidget {
     this.obscureText = false,
     this.inputFormatters,
     this.textAlign = TextAlign.start,
+    this.textCapitalization = TextCapitalization.sentences,
+    this.autocorrect = true,
     this.autofocus = false,
+    this.focusNode,
     this.hasError = false,
     this.onChanged,
   });
@@ -313,7 +316,10 @@ class LoginTextField extends StatelessWidget {
   final bool obscureText;
   final List<TextInputFormatter>? inputFormatters;
   final TextAlign textAlign;
+  final TextCapitalization textCapitalization;
+  final bool autocorrect;
   final bool autofocus;
+  final FocusNode? focusNode;
   final bool hasError;
   final ValueChanged<String>? onChanged;
 
@@ -327,10 +333,13 @@ class LoginTextField extends StatelessWidget {
 
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       obscureText: obscureText,
       inputFormatters: inputFormatters,
       textAlign: textAlign,
+      textCapitalization: textCapitalization,
+      autocorrect: autocorrect,
       autofocus: autofocus,
       onChanged: onChanged,
       style: const TextStyle(fontWeight: FontWeight.w500),

@@ -76,8 +76,8 @@ class _ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final referralUrl = referralUrlFromEmail(member.email);
-    final qrUrl = referralQrImageUrl(referralUrl);
+    final referralUrl =
+        member.referralUrl ?? referralUrlFromEmail(member.email);
 
     return Material(
       color: Colors.transparent,
@@ -190,7 +190,7 @@ class _ReferralCard extends StatelessWidget {
                               fit: BoxFit.contain,
                             ),
                             const Spacer(),
-                            ReferralQrCode(imageUrl: qrUrl),
+                            ReferralQrCode(data: referralUrl),
                           ],
                         ),
                       ],

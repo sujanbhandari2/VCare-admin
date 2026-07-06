@@ -19,6 +19,7 @@ void main() {
           'emailVerifiedAt': '2026-06-23T07:22:39.597Z',
           'status': 'ACTIVE',
           'profileImage': null,
+          'profilePreviewLink': null,
           'mfaEnabled': false,
           'userType': 'CLIENT',
           'createdAt': '2026-06-23T07:22:39.599Z',
@@ -60,6 +61,30 @@ void main() {
       expect(entity.user.tenantAssociations, hasLength(1));
       expect(entity.user.tenantAssociations.first.tenantName, 'Default');
       expect(entity.menu, ['files', 'activities']);
+    });
+
+    test('fromJson maps profilePreviewLink and agentProfile preview link', () {
+      final model = AuthMeModel.fromJson({
+        'user': {
+          'firstName': 'Omnis',
+          'lastName': 'Porro',
+          'profilePreviewLink': 'https://cdn.example.com/user-preview.jpg',
+        },
+        'agentProfile': {
+          'profilePreviewLink': 'https://cdn.example.com/agent-preview.jpg',
+          'referralLink': 'https://localhost:8080/refer/AGT-22581',
+        },
+        'menu': [],
+      });
+
+      final entity = model.toEntity();
+
+      expect(entity.user.profilePreviewLink,
+          'https://cdn.example.com/user-preview.jpg');
+      expect(entity.agentProfile?.profilePreviewLink,
+          'https://cdn.example.com/agent-preview.jpg');
+      expect(entity.agentProfile?.referralLink,
+          'https://localhost:8080/refer/AGT-22581');
     });
   });
 }

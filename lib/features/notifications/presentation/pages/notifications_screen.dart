@@ -9,6 +9,7 @@ import 'package:vcare_admin/features/notifications/domain/entities/notification_
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
 import 'package:vcare_admin/features/notifications/presentation/widgets/notification_inbox_tile.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -58,11 +59,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             else if (inboxState.hasError && inboxState.items.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _NotificationsMessagePanel(
+                child: VcareErrorStatePanel(
                   icon: LucideIcons.alertCircle,
                   title: 'Could not load notifications',
-                  subtitle: inboxState.error ?? 'Please try again.',
-                  actionLabel: 'Retry',
+                  message: inboxState.error,
+                  actionLabel: context.appLocalization.retry,
                   onAction: () => ref
                       .read(notificationInboxStateProvider.notifier)
                       .fetchInbox(),

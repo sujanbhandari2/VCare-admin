@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/features/home/domain/entities/agent_stats.dart';
 import 'package:vcare_admin/features/home/presentation/providers/agent_stats_repository_provider.dart';
 import 'package:vcare_admin/features/home/presentation/state/agent_stats_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'agent_stats_state_provider.g.dart';
 
@@ -29,7 +30,7 @@ class AgentStatsStateNotifier extends _$AgentStatsStateNotifier {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
         onCompleted?.call(null);
       },

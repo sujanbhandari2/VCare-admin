@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_location_provider.dart';
+import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
-class FindCareScreen extends StatefulWidget {
+class FindCareScreen extends ConsumerStatefulWidget {
   const FindCareScreen({super.key});
 
   @override
-  State<FindCareScreen> createState() => _FindCareScreenState();
+  ConsumerState<FindCareScreen> createState() => _FindCareScreenState();
 }
 
-class _FindCareScreenState extends State<FindCareScreen> {
+class _FindCareScreenState extends ConsumerState<FindCareScreen> {
   final _searchController = TextEditingController();
-  final _locationController = TextEditingController(text: 'San Francisco, CA');
+  late final TextEditingController _locationController;
+
+  @override
+  void initState() {
+    super.initState();
+    final location = ref.read(findCareSearchLocationProvider);
+    _locationController = TextEditingController(text: location.displayLabel);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(userLoggedInStateProvider)) {
+        ref
+            .read(savedProvidersStateProvider.notifier)
+            .ensureSavedProvidersLoaded();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -32,11 +51,29 @@ class _FindCareScreenState extends State<FindCareScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 300));
   }
 
+  void _openSearch() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
+    ref.read(findCareSearchLocationProvider.notifier).setFromDisplayText(
+          _locationController.text,
+        );
+    context.pushNamed(
+      AppRouter.findCareSearchName,
+      queryParameters: {'q': query},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     final safeTop = MediaQuery.paddingOf(context).top;
     final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
+    final location = ref.watch(findCareSearchLocationProvider);
+
+    if (_locationController.text != location.displayLabel &&
+        location.displayLabel.isNotEmpty) {
+      _locationController.text = location.displayLabel;
+    }
 
     return Scaffold(
       body: VcareRefreshScrollView(
@@ -58,12 +95,47 @@ class _FindCareScreenState extends State<FindCareScreen> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _LocationBar(
-                  controller: _locationController,
-                  vcare: vcare,
-                  searchController: _searchController,
-                  onSearch: () =>
-                      context.pushNamed(AppRouter.findCareSearchName),
+                FindCareLocationBar(
+                  locationController: _locationController,
+                  onDetectLocation: () async {
+                    await ref
+                        .read(findCareSearchLocationProvider.notifier)
+                        .detectCurrentLocation();
+                    final updated = ref.read(findCareSearchLocationProvider);
+                    _locationController.text = updated.displayLabel;
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Search area updated: ${updated.displayLabel}',
+                        ),
+                      ),
+                    );
+                  },
+                  actions: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _NameSearchField(controller: _searchController),
+                      const SizedBox(height: 8),
+                      ListenableBuilder(
+                        listenable: _searchController,
+                        builder: (context, _) {
+                          return FilledButton(
+                            onPressed: _searchController.text.trim().isEmpty
+                                ? null
+                                : _openSearch,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: VCareColors.primary,
+                              foregroundColor: VCareColors.primaryForeground,
+                              shape: const StadiumBorder(),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Search providers'),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text.rich(
@@ -216,141 +288,42 @@ class _FindCareScreenState extends State<FindCareScreen> {
   }
 }
 
-class _LocationBar extends StatelessWidget {
-  const _LocationBar({
-    required this.controller,
-    required this.vcare,
-    required this.searchController,
-    this.onSearch,
-  });
+class _NameSearchField extends StatelessWidget {
+  const _NameSearchField({required this.controller});
 
   final TextEditingController controller;
-  final VCareThemeExtension vcare;
-  final TextEditingController searchController;
-  final VoidCallback? onSearch;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Material(
-          color: vcare.accent.withValues(alpha: 0.08),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: vcare.accent.withValues(alpha: 0.25)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(LucideIcons.mapPin, size: 16, color: vcare.accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Searching near',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                          color: vcare.mutedForeground,
-                        ),
-                      ),
-                      TextField(
-                        controller: controller,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          hintText: 'City, State',
-                          hintStyle: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: vcare.mutedForeground,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+    final vcare = context.vcare;
+    return Material(
+      color: vcare.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
+        side: BorderSide(color: vcare.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Row(
+          children: [
+            Icon(LucideIcons.search, size: 16, color: vcare.mutedForeground),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                style: const TextStyle(fontSize: 14),
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  hintText: 'Search by provider name, NPI, Service name',
+                  hintStyle: TextStyle(color: vcare.mutedForeground),
                 ),
-                const SizedBox(width: 8),
-                Material(
-                  color: vcare.muted,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    onTap: () {},
-                    customBorder: const CircleBorder(),
-                    child: const SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: Icon(LucideIcons.locateFixed, size: 18),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Material(
-          color: vcare.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(999),
-            side: BorderSide(color: vcare.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                Icon(
-                  LucideIcons.search,
-                  size: 16,
-                  color: vcare.mutedForeground,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    style: const TextStyle(fontSize: 14),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      hintText: 'Search by provider name, NPI, Service name',
-                      hintStyle: TextStyle(color: vcare.mutedForeground),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        ListenableBuilder(
-          listenable: searchController,
-          builder: (context, _) {
-            return SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: searchController.text.trim().isEmpty
-                    ? null
-                    : onSearch,
-                style: FilledButton.styleFrom(
-                  backgroundColor: VCareColors.primary,
-                  foregroundColor: VCareColors.primaryForeground,
-                  shape: const StadiumBorder(),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('Search providers'),
               ),
-            );
-          },
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

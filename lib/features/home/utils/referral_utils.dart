@@ -31,7 +31,15 @@ String referralUrlFromSlug(String slug) => 'https://$referralUrlPrefix$slug';
 String referralUrlFromEmail(String email) =>
     referralUrlFromSlug(referralUsernameFromEmail(email));
 
-String referralQrImageUrl(String referralUrl, {int size = 160}) {
-  return 'https://api.qrserver.com/v1/create-qr-code/'
-      '?size=${size}x$size&margin=0&data=${Uri.encodeComponent(referralUrl)}';
+/// Uses the server-provided [referralLink] when available, otherwise derives
+/// a link from the user's email slug.
+String resolveReferralUrl({
+  required String email,
+  String? referralLink,
+}) {
+  final trimmedLink = referralLink?.trim();
+  if (trimmedLink != null && trimmedLink.isNotEmpty) {
+    return trimmedLink;
+  }
+  return referralUrlFromEmail(email);
 }

@@ -17,6 +17,7 @@ class HomeMember {
     required this.dobLabel,
     this.groupNumber = 'GRP-22841',
     this.effectiveDate = 'Jan 1, 2026',
+    this.referralUrl,
   });
 
   final String fullName;
@@ -28,13 +29,14 @@ class HomeMember {
   final String dobLabel;
   final String groupNumber;
   final String effectiveDate;
+  final String? referralUrl;
 }
 
 class HomeProfile {
-  const HomeProfile({required this.fullName, required this.photoAsset});
+  const HomeProfile({required this.fullName, this.photoUrl});
 
   final String fullName;
-  final String photoAsset;
+  final String? photoUrl;
 }
 
 class CareTeamMember {

@@ -8,6 +8,7 @@ class LocalProfile {
     required this.phone,
     required this.dob,
     this.photoUrl,
+    this.referralLink,
     this.address,
   });
 
@@ -16,6 +17,7 @@ class LocalProfile {
   final String phone;
   final String dob;
   final String? photoUrl;
+  final String? referralLink;
   final ProfileAddress? address;
 
   LocalProfile copyWith({
@@ -24,9 +26,11 @@ class LocalProfile {
     String? phone,
     String? dob,
     String? photoUrl,
+    String? referralLink,
     ProfileAddress? address,
     bool clearAddress = false,
     bool clearPhoto = false,
+    bool clearReferralLink = false,
   }) {
     return LocalProfile(
       fullName: fullName ?? this.fullName,
@@ -34,6 +38,8 @@ class LocalProfile {
       phone: phone ?? this.phone,
       dob: dob ?? this.dob,
       photoUrl: clearPhoto ? null : (photoUrl ?? this.photoUrl),
+      referralLink:
+          clearReferralLink ? null : (referralLink ?? this.referralLink),
       address: clearAddress ? null : (address ?? this.address),
     );
   }

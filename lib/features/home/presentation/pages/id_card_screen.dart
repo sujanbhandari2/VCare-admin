@@ -40,7 +40,7 @@ class IdCardScreen extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: actions.openQrImage,
+                    onPressed: actions.saveQrImage,
                     icon: const Icon(LucideIcons.download, size: 20),
                     tooltip: 'Download referral QR',
                     style: IconButton.styleFrom(

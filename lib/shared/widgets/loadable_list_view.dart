@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../models/loadable_list_item.dart';
 import '../state/loadable_list_state.dart';
 import '../utils/extension_functions.dart';
+import '../utils/network_error_message.dart';
+import 'vcare_error_state_panel.dart';
 
 enum LoadableListHeaderBehavior { normal, pinned, floating }
 
@@ -321,23 +323,11 @@ class _DefaultErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message ?? context.appLocalization.something_went_wrong),
-            if (onRetry != null) ...[
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: onRetry,
-                child: Text(context.appLocalization.retry),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return VcareErrorStatePanel(
+      title: context.appLocalization.something_went_wrong,
+      message: message,
+      actionLabel: context.appLocalization.retry,
+      onAction: onRetry == null ? null : () => onRetry!(),
     );
   }
 }
@@ -350,14 +340,17 @@ class _DefaultLoadMoreErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayMessage = NetworkErrorMessage.displayMessage(
+      context,
+      message: message,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              message ?? context.appLocalization.failed_to_load_more_items,
-            ),
+            child: Text(displayMessage),
           ),
           if (onRetry != null)
             TextButton(

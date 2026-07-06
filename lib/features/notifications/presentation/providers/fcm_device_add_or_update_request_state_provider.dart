@@ -9,6 +9,7 @@ import '../../../../core/services/storage/storage_service_provider.dart';
 import '../../../../shared/utils/logger.dart';
 import '../state/fcm_device_add_or_update_request_state.dart';
 import 'notification_repository_provider.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'fcm_device_add_or_update_request_state_provider.g.dart';
 
@@ -65,9 +66,9 @@ class FcmDeviceAddOrUpdateRequestStateNotifier
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (_) {
         if (ref.mounted) {

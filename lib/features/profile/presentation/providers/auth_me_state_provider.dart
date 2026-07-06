@@ -8,6 +8,7 @@ import 'package:vcare_admin/features/profile/data/mappers/auth_me_to_local_profi
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/user_profile_repository_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/state/auth_me_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'auth_me_state_provider.g.dart';
 
@@ -46,7 +47,7 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
     await response.when<Future<void>>(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
         onCompleted?.call(null);
       },
@@ -55,7 +56,7 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
           state = state.success(authMe);
         }
 
-        final localProfile = localProfileFromAuthMeUser(authMe.user);
+        final localProfile = localProfileFromAuthMe(authMe);
         await ref.read(localProfileStateProvider.notifier).save(localProfile);
 
         onCompleted?.call(authMe);

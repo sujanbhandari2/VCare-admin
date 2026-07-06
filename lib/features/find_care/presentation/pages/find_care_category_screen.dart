@@ -4,10 +4,12 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/find_care_category_search_state_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_location_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_category_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class FindCareCategoryScreen extends ConsumerStatefulWidget {
@@ -20,105 +22,61 @@ class FindCareCategoryScreen extends ConsumerStatefulWidget {
       _FindCareCategoryScreenState();
 }
 
-class _FindCareCategoryScreenState
-    extends ConsumerState<FindCareCategoryScreen> {
-  final _locationController = TextEditingController(text: 'San Francisco, CA');
+class _FindCareCategoryScreenState extends ConsumerState<FindCareCategoryScreen> {
   final _queryController = TextEditingController();
-
-  String? _submittedKeyword;
-  bool _isLoading = false;
-  bool _isLoadingMore = false;
-  List<MedicareProviderListItem> _allItems = [];
-  int _visibleCount = 0;
+  late final TextEditingController _locationController;
 
   ProviderCategoryItem? get _category => findCareCategoryBySlug(widget.slug);
-
-  List<MedicareProviderListItem> get _visibleItems =>
-      _allItems.take(_visibleCount).toList();
-
-  bool get _hasMore => _visibleCount < _allItems.length;
 
   @override
   void initState() {
     super.initState();
-    _queryController.addListener(_onQueryChanged);
+    final location = ref.read(findCareSearchLocationProvider);
+    _locationController = TextEditingController(text: location.displayLabel);
   }
 
   @override
   void didUpdateWidget(FindCareCategoryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.slug != widget.slug) {
-      _resetSearch();
+      ref.read(findCareCategorySearchStateProvider.notifier).reset();
+      _queryController.clear();
     }
   }
 
   @override
   void dispose() {
-    _queryController.removeListener(_onQueryChanged);
-    _locationController.dispose();
     _queryController.dispose();
+    _locationController.dispose();
     super.dispose();
-  }
-
-  void _onQueryChanged() => setState(() {});
-
-  void _resetSearch() {
-    setState(() {
-      _submittedKeyword = null;
-      _isLoading = false;
-      _isLoadingMore = false;
-      _allItems = [];
-      _visibleCount = 0;
-      _queryController.clear();
-    });
   }
 
   Future<void> _runSearch() async {
     final category = _category;
     if (category == null) return;
-
-    setState(() {
-      _submittedKeyword = _queryController.text.trim();
-      _isLoading = true;
-      _allItems = [];
-      _visibleCount = 0;
-    });
-
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    if (!mounted) return;
-
-    final results = searchCategoryProviders(
-      slug: widget.slug,
-      keyword: _submittedKeyword ?? '',
-      stateFilter: parseSearchState(_locationController.text),
-    );
-
-    setState(() {
-      _allItems = results;
-      _visibleCount = results.length.clamp(0, findCareCategoryPageSize);
-      _isLoading = false;
-    });
+    await ref.read(findCareSearchLocationProvider.notifier).setFromDisplayText(
+          _locationController.text,
+        );
+    await ref.read(findCareCategorySearchStateProvider.notifier).search(
+          slug: widget.slug,
+          keyword: _queryController.text,
+        );
   }
 
   Future<void> _loadMore() async {
-    if (!_hasMore || _isLoadingMore) return;
-    setState(() => _isLoadingMore = true);
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    if (!mounted) return;
-    setState(() {
-      _visibleCount = (_visibleCount + findCareCategoryPageSize).clamp(
-        0,
-        _allItems.length,
-      );
-      _isLoadingMore = false;
-    });
+    await ref.read(findCareCategorySearchStateProvider.notifier).loadMore(
+          slug: widget.slug,
+          keyword: _queryController.text,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final category = _category;
     final vcare = context.vcare;
+    final searchState = ref.watch(findCareCategorySearchStateProvider);
+    final location = ref.watch(findCareSearchLocationProvider);
+    final stateLabel = location.state.trim().isEmpty ? null : location.state;
 
     if (category == null) {
       return Scaffold(
@@ -142,9 +100,6 @@ class _FindCareCategoryScreenState
       );
     }
 
-    final stateLabel = parseSearchState(_locationController.text);
-    final hasSearched = _submittedKeyword != null;
-
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -161,13 +116,12 @@ class _FindCareCategoryScreenState
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(
                   locationController: _locationController,
-                  onDetectLocation: () {
-                    _locationController.text = 'San Francisco, CA';
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Search area updated: San Francisco, CA'),
-                      ),
-                    );
+                  onDetectLocation: () async {
+                    await ref
+                        .read(findCareSearchLocationProvider.notifier)
+                        .detectCurrentLocation();
+                    final updated = ref.read(findCareSearchLocationProvider);
+                    _locationController.text = updated.displayLabel;
                   },
                   actions: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -179,12 +133,12 @@ class _FindCareCategoryScreenState
                       ),
                       const SizedBox(height: 8),
                       FilledButton(
-                        onPressed: _isLoading ? null : _runSearch,
+                        onPressed: searchState.loading ? null : _runSearch,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: const StadiumBorder(),
                         ),
-                        child: _isLoading && !_isLoadingMore
+                        child: searchState.loading && !searchState.loadingMore
                             ? Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -206,7 +160,7 @@ class _FindCareCategoryScreenState
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (!hasSearched)
+                if (!searchState.hasSearched)
                   Text(
                     'Tap Search providers to load ${category.label} from the '
                     'CMS Medicare Physician directory (filtered by Medicare '
@@ -219,35 +173,45 @@ class _FindCareCategoryScreenState
                       color: vcare.mutedForeground,
                     ),
                   ),
-                if (hasSearched && !_isLoading && _visibleItems.isEmpty) ...[
+                if (searchState.error != null) ...[
+                  const SizedBox(height: 8),
+                  VcareInlineErrorCard(message: searchState.error),
+                ],
+                if (searchState.hasSearched &&
+                    !searchState.loading &&
+                    searchState.items.isEmpty) ...[
                   const SizedBox(height: 8),
                   _SearchEmptyState(
                     categoryLabel: category.label,
                     stateLabel: stateLabel,
-                    keyword: _submittedKeyword,
+                    keyword: searchState.submittedKeyword,
                   ),
                 ],
-                if (hasSearched && _isLoading && _visibleItems.isEmpty) ...[
+                if (searchState.hasSearched &&
+                    searchState.loading &&
+                    searchState.items.isEmpty) ...[
                   const SizedBox(height: 8),
                   const _ResultsSkeleton(),
                 ],
-                if (_visibleItems.isNotEmpty) ...[
+                if (searchState.items.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  for (final item in _visibleItems)
+                  for (final item in searchState.items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: MedicareProviderResultCardWithFavorite(item: item),
                     ),
                 ],
-                if (hasSearched && _hasMore) ...[
+                if (searchState.hasSearched && searchState.hasMore) ...[
                   const SizedBox(height: 4),
                   OutlinedButton(
-                    onPressed: _isLoadingMore ? null : _loadMore,
+                    onPressed: searchState.loadingMore ? null : _loadMore,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(44),
                       shape: const StadiumBorder(),
                     ),
-                    child: Text(_isLoadingMore ? 'Loading…' : 'Load more'),
+                    child: Text(
+                      searchState.loadingMore ? 'Loading…' : 'Load more',
+                    ),
                   ),
                 ],
               ]),

@@ -43,4 +43,7 @@ class ApiEndpoints {
 
   static const String files = "files";
   static String file(String id) => "files/$id";
+
+  static const String providersSave = "providers/save";
+  static String providerSaveById(String providerId) => "providers/save/$providerId";
 }

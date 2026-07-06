@@ -45,7 +45,11 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
     super.initState();
     _slug = referralUsernameFromEmail(widget.profile.email);
     _draftController = TextEditingController(text: _slug);
-    _loadSlug();
+    if (_hasApiReferralLink) {
+      _loaded = true;
+    } else {
+      _loadSlug();
+    }
   }
 
   Future<void> _loadSlug() async {
@@ -66,7 +70,17 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
     super.dispose();
   }
 
-  String get _referralUrl => referralUrlFromSlug(_slug);
+  bool get _hasApiReferralLink {
+    final link = widget.profile.referralLink?.trim();
+    return link != null && link.isNotEmpty;
+  }
+
+  String get _referralUrl {
+    if (_hasApiReferralLink) {
+      return widget.profile.referralLink!.trim();
+    }
+    return referralUrlFromSlug(_slug);
+  }
 
   void _startEdit() {
     setState(() {
@@ -138,7 +152,6 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
     }
 
     final vcare = context.vcare;
-    final qrUrl = referralQrImageUrl(_referralUrl, size: 320);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -263,7 +276,7 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
                               ),
                               const SizedBox(height: 4),
                               ReferralQrCode(
-                                imageUrl: qrUrl,
+                                data: _referralUrl,
                                 size: 112,
                                 padding: 6,
                                 borderRadius: 12,
@@ -359,7 +372,7 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    if (!_isEditing)
+                    if (!_isEditing && !_hasApiReferralLink)
                       TextButton.icon(
                         onPressed: _startEdit,
                         icon: const Icon(LucideIcons.pencil, size: 12),

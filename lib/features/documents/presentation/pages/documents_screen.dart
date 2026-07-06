@@ -13,6 +13,9 @@ import 'package:vcare_admin/features/documents/presentation/widgets/documents_em
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_filters.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_upload_actions.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 
@@ -172,9 +175,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (listState.isInitialError && items.isEmpty)
-                  _DocumentsErrorState(
+                  VcareErrorStatePanel(
+                    title: 'Unable to load documents',
                     message: listState.operation.errorMessage,
-                    onRetry: () => ref
+                    padding: const EdgeInsets.all(24),
+                    actionLabel: context.appLocalization.retry,
+                    onAction: () => ref
                         .read(documentsListStateProvider.notifier)
                         .loadInitial(),
                   )
@@ -206,7 +212,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                             .read(documentsListStateProvider.notifier)
                             .loadMore(),
                         child: Text(
-                          listState.loadMoreErrorMessage!,
+                          NetworkErrorMessage.displayMessage(
+                            context,
+                            message: listState.loadMoreErrorMessage,
+                          ),
                           style: TextStyle(color: VCareColors.primary),
                         ),
                       ),
@@ -216,40 +225,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DocumentsErrorState extends StatelessWidget {
-  const _DocumentsErrorState({this.message, required this.onRetry});
-
-  final String? message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: vcare.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text(
-              message ?? 'Unable to load documents.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
-            ),
-            const SizedBox(height: 12),
-            TextButton(onPressed: onRetry, child: const Text('Try again')),
-          ],
-        ),
       ),
     );
   }

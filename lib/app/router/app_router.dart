@@ -9,8 +9,12 @@ import 'package:vcare_admin/features/ava/presentation/pages/ava_screen.dart';
 import 'package:vcare_admin/features/cases/presentation/pages/cases_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/client_detail_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/clients_screen.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 import 'package:vcare_admin/features/find_care/presentation/pages/find_care_category_screen.dart';
 import 'package:vcare_admin/features/find_care/presentation/pages/find_care_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/find_care_search_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_detail_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_lookup_screen.dart';
 import 'package:vcare_admin/features/find_care/presentation/pages/provider_detail_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/card_edit_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/care_team_detail_screen.dart';
@@ -228,7 +232,9 @@ class AppRouter {
                     pageBuilder: (_, state) => _pageBuilder(
                       state: state,
                       transitionType: TransitionType.slide,
-                      child: const FindCareSearchScreen(),
+                      child: FindCareSearchScreen(
+                        initialQuery: state.uri.queryParameters['q'],
+                      ),
                     ),
                   ),
                   GoRoute(
@@ -252,13 +258,35 @@ class AppRouter {
                   GoRoute(
                     path: 'provider/medicare/:npi',
                     name: medicareProviderDetailName,
-                    pageBuilder: (_, state) => _pageBuilder(
-                      state: state,
-                      transitionType: TransitionType.slide,
-                      child: MedicareProviderDetailScreen(
-                        npi: state.pathParameters['npi'] ?? '',
-                      ),
-                    ),
+                    pageBuilder: (_, state) {
+                      final extra = state.extra;
+                      MedicareProviderLookupRow? passedRow;
+                      Map<String, String>? passedRaw;
+                      if (extra is Map) {
+                        final row = extra['row'];
+                        final raw = extra['raw'];
+                        if (row is MedicareProviderLookupRow) {
+                          passedRow = row;
+                        }
+                        if (raw is Map) {
+                          passedRaw = raw.map(
+                            (key, value) => MapEntry(
+                              key.toString(),
+                              value.toString(),
+                            ),
+                          );
+                        }
+                      }
+                      return _pageBuilder(
+                        state: state,
+                        transitionType: TransitionType.slide,
+                        child: MedicareProviderDetailScreen(
+                          npi: state.pathParameters['npi'] ?? '',
+                          passedRow: passedRow,
+                          passedRaw: passedRaw,
+                        ),
+                      );
+                    },
                   ),
                   GoRoute(
                     path: 'provider/:id',

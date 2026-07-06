@@ -6,22 +6,36 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
-import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_saved_provider_card.dart';
+import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
-class SavedProvidersScreen extends ConsumerWidget {
+class SavedProvidersScreen extends ConsumerStatefulWidget {
   const SavedProvidersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SavedProvidersScreen> createState() =>
+      _SavedProvidersScreenState();
+}
+
+class _SavedProvidersScreenState extends ConsumerState<SavedProvidersScreen> {
+  var _loaded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) {
+      _loaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders();
+      });
+    }
+
+    final savedProvidersState = ref.watch(savedProvidersStateProvider);
     final providers = buildHomeSavedProviders(
-      mockFavoriteIds: ref.watch(providerFavoritesProvider),
-      cmsFavorites: ref.watch(cmsProviderFavoritesProvider),
+      savedProviders: savedProvidersState.providers,
     );
 
     return Scaffold(
@@ -34,7 +48,12 @@ class SavedProvidersScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                if (providers.isEmpty)
+                if (savedProvidersState.fetching && providers.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (providers.isEmpty)
                   _SavedProvidersEmptyState(
                     onFindCare: () =>
                         context.pushNamed(AppRouter.findCare.toPathName),
@@ -46,7 +65,7 @@ class SavedProvidersScreen extends ConsumerWidget {
                       child: SavedProviderListCard(
                         item: item,
                         onTap: () => _openProvider(context, item),
-                        onRemove: () => _removeProvider(context, ref, item),
+                        onRemove: () => _removeProvider(context, item),
                         onCall: item.phone == null
                             ? null
                             : () => _launchTel(context, item.phone!),
@@ -62,34 +81,25 @@ class SavedProvidersScreen extends ConsumerWidget {
   }
 
   void _openProvider(BuildContext context, SavedProviderItem item) {
-    if (item.kind == HomeSavedProviderKind.cms) {
-      final npi = item.medicareNpi;
-      if (npi == null) return;
-      context.pushNamed(
-        AppRouter.medicareProviderDetailName,
-        pathParameters: {'npi': npi},
-      );
-      return;
-    }
-
-    final id = item.providerId ?? item.key.replaceFirst('m-', '');
-    context.pushNamed(AppRouter.providerDetailName, pathParameters: {'id': id});
+    final npi = item.medicareNpi;
+    if (npi == null) return;
+    context.pushNamed(
+      AppRouter.medicareProviderDetailName,
+      pathParameters: {'npi': npi},
+    );
   }
 
-  void _removeProvider(
+  Future<void> _removeProvider(
     BuildContext context,
-    WidgetRef ref,
     SavedProviderItem item,
-  ) {
-    if (item.kind == HomeSavedProviderKind.cms) {
-      final npi = item.medicareNpi;
-      if (npi != null) {
-        ref.read(cmsProviderFavoritesProvider.notifier).remove(npi);
-      }
-    } else {
-      final id = item.providerId ?? item.key.replaceFirst('m-', '');
-      ref.read(providerFavoritesProvider.notifier).toggle(id);
-    }
+  ) async {
+    final npi = item.medicareNpi;
+    if (npi == null) return;
+
+    final removed = await ref
+        .read(savedProvidersStateProvider.notifier)
+        .removeByNpi(npi);
+    if (!context.mounted || !removed) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

@@ -19,7 +19,7 @@ class HomeMockData {
 
   static const profile = HomeProfile(
     fullName: 'Liam Smith',
-    photoAsset: VCareAssets.member,
+    photoUrl: VCareAssets.member,
   );
 
   static const careTeam = <CareTeamMember>[

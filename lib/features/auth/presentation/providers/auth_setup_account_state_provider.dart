@@ -9,6 +9,7 @@ import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_res
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/auth_setup_account_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'auth_setup_account_state_provider.g.dart';
 
@@ -59,9 +60,9 @@ class AuthSetupAccountStateNotifier extends _$AuthSetupAccountStateNotifier {
     await response.when<Future<void>>(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (result) async {
         await _storeUserData(result);

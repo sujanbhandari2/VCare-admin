@@ -82,7 +82,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
               children: [
                 Center(
                   child: ReferralQrCode(
-                    imageUrl: _actions.qrImageUrl,
+                    data: _actions.referralUrl,
                     size: 160,
                     padding: 8,
                     borderRadius: 16,
@@ -174,7 +174,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _actions.openQrImage,
+                        onPressed: _actions.saveQrImage,
                         icon: const Icon(LucideIcons.download, size: 16),
                         label: const Text('Save QR'),
                         style: FilledButton.styleFrom(

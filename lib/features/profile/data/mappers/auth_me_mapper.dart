@@ -6,6 +6,26 @@ extension AuthMeMapper on model.AuthMeModel {
     return AuthMe(
       user: user.toEntity(),
       menu: menu,
+      agentProfile: agentProfile?.toEntity(),
+      clientProfile: clientProfile?.toEntity(),
+    );
+  }
+}
+
+extension AuthMeAgentProfileMapper on model.AuthMeAgentProfileModel {
+  AuthMeAgentProfile toEntity() {
+    return AuthMeAgentProfile(
+      profilePreviewLink: profilePreviewLink,
+      referralLink: referralLink,
+    );
+  }
+}
+
+extension AuthMeClientProfileMapper on model.AuthMeClientProfileModel {
+  AuthMeClientProfile toEntity() {
+    return AuthMeClientProfile(
+      profilePreviewLink: profilePreviewLink,
+      referralLink: referralLink,
     );
   }
 }
@@ -24,6 +44,7 @@ extension AuthMeUserMapper on model.AuthMeUserModel {
       emailVerifiedAt: emailVerifiedAt,
       status: status,
       profileImage: profileImage,
+      profilePreviewLink: profilePreviewLink,
       mfaEnabled: mfaEnabled,
       userType: userType,
       createdAt: createdAt,

@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
-import 'package:vcare_admin/shared/widgets/common_image.dart';
+import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 
 class HomePageHeader extends StatelessWidget {
   const HomePageHeader({
@@ -47,7 +47,12 @@ class HomePageHeader extends StatelessWidget {
                 border: Border.all(color: vcare.border),
               ),
               clipBehavior: Clip.antiAlias,
-              child: _ProfileAvatar(photoSource: profile.photoAsset),
+              child: ProfileAvatar(
+                name: profile.fullName,
+                photoUrl: profile.photoUrl,
+                size: avatarSize,
+                circular: true,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -103,21 +108,6 @@ class HomePageHeader extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({required this.photoSource});
-
-  final String photoSource;
-
-  @override
-  Widget build(BuildContext context) {
-    if (photoSource.startsWith('assets/')) {
-      return Image.asset(photoSource, fit: BoxFit.cover);
-    }
-
-    return CommonImage(assetsOrUrlOrPath: photoSource, fit: BoxFit.cover);
   }
 }
 

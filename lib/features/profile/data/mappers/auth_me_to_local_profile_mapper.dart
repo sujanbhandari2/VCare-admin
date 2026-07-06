@@ -4,7 +4,8 @@ import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 
 /// Maps the authenticated user from `GET auth/me` into the persisted
 /// [LocalProfile] used by home header, profile screen, and ID card.
-LocalProfile localProfileFromAuthMeUser(AuthMeUser user) {
+LocalProfile localProfileFromAuthMe(AuthMe authMe) {
+  final user = authMe.user;
   final fullName = user.displayName;
 
   return LocalProfile(
@@ -12,6 +13,14 @@ LocalProfile localProfileFromAuthMeUser(AuthMeUser user) {
     email: user.email ?? '',
     phone: user.phoneNumber ?? '',
     dob: formatProfileDob(user.dateOfBirth),
-    photoUrl: user.profileImage,
+    photoUrl: authMe.profilePhotoUrl,
+    referralLink: authMe.referralLink,
+  );
+}
+
+/// Backward-compatible helper when only [AuthMeUser] is available.
+LocalProfile localProfileFromAuthMeUser(AuthMeUser user) {
+  return localProfileFromAuthMe(
+    AuthMe(user: user),
   );
 }

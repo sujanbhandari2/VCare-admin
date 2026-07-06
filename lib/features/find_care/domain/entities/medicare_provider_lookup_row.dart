@@ -2,8 +2,9 @@ class MedicareProviderLookupRow {
   const MedicareProviderLookupRow({
     required this.npi,
     required this.firstName,
-    required this.lastName,
+    required this.lastOrOrgName,
     required this.providerType,
+    required this.entityCode,
     required this.street1,
     this.street2,
     required this.city,
@@ -13,8 +14,9 @@ class MedicareProviderLookupRow {
 
   final String npi;
   final String firstName;
-  final String lastName;
+  final String lastOrOrgName;
   final String providerType;
+  final String entityCode;
   final String street1;
   final String? street2;
   final String city;
@@ -30,9 +32,11 @@ class MedicareProviderListItem {
 }
 
 String formatMedicareProviderName(MedicareProviderLookupRow row) {
-  final parts = [row.firstName, row.lastName].where((p) => p.trim().isNotEmpty);
-  final joined = parts.join(' ').trim();
-  return joined.isEmpty ? 'Medicare provider' : joined;
+  if (row.entityCode == 'O' || row.firstName.trim().isEmpty) {
+    return row.lastOrOrgName.trim().isEmpty ? '—' : row.lastOrOrgName.trim();
+  }
+  final joined = '${row.firstName} ${row.lastOrOrgName}'.trim();
+  return joined.isEmpty ? '—' : joined;
 }
 
 String formatMedicareProviderLocation(MedicareProviderLookupRow row) {
@@ -45,4 +49,39 @@ String formatMedicareProviderLocation(MedicareProviderLookupRow row) {
       ? '${row.city}, ${row.state} ${row.zip5}'.trim()
       : '${row.state} ${row.zip5}'.trim();
   return [street, cityState].where((part) => part.isNotEmpty).join(' · ');
+}
+
+Map<String, dynamic> medicareProviderLookupRowToJson(
+  MedicareProviderLookupRow row,
+) {
+  return {
+    'npi': row.npi,
+    'firstName': row.firstName,
+    'lastOrOrgName': row.lastOrOrgName,
+    'providerType': row.providerType,
+    'entityCode': row.entityCode,
+    'street1': row.street1,
+    'street2': row.street2,
+    'city': row.city,
+    'state': row.state,
+    'zip5': row.zip5,
+  };
+}
+
+MedicareProviderLookupRow medicareProviderLookupRowFromJson(
+  Map<String, dynamic> json,
+) {
+  return MedicareProviderLookupRow(
+    npi: json['npi']?.toString() ?? '',
+    firstName: json['firstName']?.toString() ?? '',
+    lastOrOrgName:
+        json['lastOrOrgName']?.toString() ?? json['lastName']?.toString() ?? '',
+    providerType: json['providerType']?.toString() ?? '',
+    entityCode: json['entityCode']?.toString() ?? '',
+    street1: json['street1']?.toString() ?? '',
+    street2: json['street2']?.toString(),
+    city: json['city']?.toString() ?? '',
+    state: json['state']?.toString() ?? '',
+    zip5: json['zip5']?.toString() ?? '',
+  );
 }

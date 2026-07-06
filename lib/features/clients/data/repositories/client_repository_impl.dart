@@ -36,13 +36,18 @@ class ClientRepositoryImpl implements ClientRepository {
 
   @override
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
-  fetchClients(PaginatedListRequest request, {CancelToken? cancelToken}) {
+  fetchClients(
+    PaginatedListRequest request, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClients,
         queryParameters: request.toQueryParameters(),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final parsed = PaginatedResponseParser.parse(

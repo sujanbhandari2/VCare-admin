@@ -10,24 +10,33 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_mapper_utils.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_documents_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class ClientUploadDocumentSheet extends StatelessWidget {
-  const ClientUploadDocumentSheet({super.key, required this.clientId});
+  const ClientUploadDocumentSheet({
+    super.key,
+    required this.clientId,
+    required this.hostContext,
+  });
 
   final String clientId;
+  final BuildContext hostContext;
 
   static final _picker = ImagePicker();
 
   static Future<void> show(BuildContext context, {required String clientId}) {
     return context.showBottomSheet<void>(
-      builder: (sheetContext) => ClientUploadDocumentSheet(clientId: clientId),
+      builder: (sheetContext) => ClientUploadDocumentSheet(
+        clientId: clientId,
+        hostContext: context,
+      ),
     );
   }
 
   static Future<void> _uploadFile(
     ProviderContainer container,
     String clientId,
-    ScaffoldMessengerState messenger, {
+    BuildContext context, {
     required String name,
     required List<int> bytes,
     required String mime,
@@ -43,13 +52,17 @@ class ClientUploadDocumentSheet extends StatelessWidget {
           fileName: displayName,
           bytes: bytes,
           onCompleted: (success, error) {
+            if (!context.mounted) return;
             if (success) {
-              messenger.showSnackBar(
-                SnackBar(content: Text('$displayName uploaded.')),
+              context.showVcareToast(
+                title: 'Uploaded 1 file',
+                variant: VcareToastVariant.success,
               );
             } else {
-              messenger.showSnackBar(
-                SnackBar(content: Text(error ?? 'Upload failed.')),
+              context.showVcareToast(
+                title: 'Upload failed',
+                description: error,
+                variant: VcareToastVariant.destructive,
               );
             }
           },
@@ -59,16 +72,17 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   static Future<void> pickFromGallery(
     ProviderContainer container,
     String clientId,
-    ScaffoldMessengerState messenger,
+    BuildContext context,
   ) async {
     final image = await _picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
+    if (!context.mounted) return;
     await _uploadFile(
       container,
       clientId,
-      messenger,
+      context,
       name: image.name,
       bytes: bytes,
       mime: 'image/jpeg',
@@ -78,15 +92,16 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   static Future<void> takePicture(
     ProviderContainer container,
     String clientId,
-    ScaffoldMessengerState messenger,
+    BuildContext context,
   ) async {
     final image = await _picker.pickImage(source: ImageSource.camera);
     if (image == null) return;
     final bytes = await image.readAsBytes();
+    if (!context.mounted) return;
     await _uploadFile(
       container,
       clientId,
-      messenger,
+      context,
       name: image.name,
       bytes: bytes,
       mime: 'image/jpeg',
@@ -96,7 +111,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   static Future<void> chooseFile(
     ProviderContainer container,
     String clientId,
-    ScaffoldMessengerState messenger,
+    BuildContext context,
   ) async {
     const typeGroups = [
       XTypeGroup(
@@ -138,10 +153,11 @@ class ClientUploadDocumentSheet extends StatelessWidget {
 
     final bytes = await file.readAsBytes();
     final mime = mimeTypeFromFileName(file.name);
+    if (!context.mounted) return;
     await _uploadFile(
       container,
       clientId,
-      messenger,
+      context,
       name: file.name,
       bytes: bytes,
       mime: mime,
@@ -186,19 +202,32 @@ class ClientUploadDocumentSheet extends StatelessWidget {
                 _UploadOption(
                   icon: LucideIcons.image,
                   label: 'Upload from gallery',
-                  onTap: () =>
-                      _onOptionSelected(context, clientId, pickFromGallery),
+                  onTap: () => _onOptionSelected(
+                    sheetContext: context,
+                    hostContext: hostContext,
+                    clientId: clientId,
+                    action: pickFromGallery,
+                  ),
                 ),
                 _UploadOption(
                   icon: LucideIcons.camera,
                   label: 'Take a picture',
-                  onTap: () =>
-                      _onOptionSelected(context, clientId, takePicture),
+                  onTap: () => _onOptionSelected(
+                    sheetContext: context,
+                    hostContext: hostContext,
+                    clientId: clientId,
+                    action: takePicture,
+                  ),
                 ),
                 _UploadOption(
                   icon: LucideIcons.paperclip,
                   label: 'Choose file',
-                  onTap: () => _onOptionSelected(context, clientId, chooseFile),
+                  onTap: () => _onOptionSelected(
+                    sheetContext: context,
+                    hostContext: hostContext,
+                    clientId: clientId,
+                    action: chooseFile,
+                  ),
                 ),
               ],
             ),
@@ -208,21 +237,22 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     );
   }
 
-  static void _onOptionSelected(
-    BuildContext context,
-    String clientId,
-    Future<void> Function(
+  static void _onOptionSelected({
+    required BuildContext sheetContext,
+    required BuildContext hostContext,
+    required String clientId,
+    required Future<void> Function(
       ProviderContainer container,
       String clientId,
-      ScaffoldMessengerState messenger,
+      BuildContext context,
     )
     action,
-  ) {
-    final container = ProviderScope.containerOf(context);
-    final messenger = ScaffoldMessenger.of(context);
-    context.pop();
+  }) {
+    final container = ProviderScope.containerOf(hostContext);
+    sheetContext.pop();
     Future<void>.delayed(const Duration(milliseconds: 225), () {
-      action(container, clientId, messenger);
+      if (!hostContext.mounted) return;
+      action(container, clientId, hostContext);
     });
   }
 }

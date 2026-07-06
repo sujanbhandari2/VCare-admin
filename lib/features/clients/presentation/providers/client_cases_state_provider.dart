@@ -7,6 +7,7 @@ import 'package:vcare_admin/shared/pagination/paginated_list_notifier_mixin.dart
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'client_cases_state_provider.g.dart';
 
@@ -60,7 +61,7 @@ class ClientCasesState extends _$ClientCasesState
 
     await response.when(
       failure: (error) async {
-        onCompleted?.call(false, error.message);
+        onCompleted?.call(false, error.userMessage);
       },
       success: (_) async {
         _forceRefreshNextFetch = true;

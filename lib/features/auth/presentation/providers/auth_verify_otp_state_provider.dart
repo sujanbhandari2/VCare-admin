@@ -9,6 +9,7 @@ import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/auth_verify_otp_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'auth_verify_otp_state_provider.g.dart';
 
@@ -45,9 +46,9 @@ class AuthVerifyOtpStateNotifier extends _$AuthVerifyOtpStateNotifier {
     await response.when<Future<void>>(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (result) async {
         final session = result.session;

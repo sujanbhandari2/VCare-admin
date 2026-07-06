@@ -3,10 +3,71 @@ class AuthMe {
   const AuthMe({
     required this.user,
     this.menu = const [],
+    this.agentProfile,
+    this.clientProfile,
   });
 
   final AuthMeUser user;
   final List<String> menu;
+  final AuthMeAgentProfile? agentProfile;
+  final AuthMeClientProfile? clientProfile;
+
+  /// Best available profile photo URL from user or nested profile payloads.
+  String? get profilePhotoUrl {
+    final fromUser = user.profilePhotoUrl;
+    if (fromUser != null) {
+      return fromUser;
+    }
+
+    final agentPreview = agentProfile?.profilePreviewLink?.trim();
+    if (agentPreview != null && agentPreview.isNotEmpty) {
+      return agentPreview;
+    }
+
+    final clientPreview = clientProfile?.profilePreviewLink?.trim();
+    if (clientPreview != null && clientPreview.isNotEmpty) {
+      return clientPreview;
+    }
+
+    return null;
+  }
+
+  /// Server-provided referral link from agent or client profile payloads.
+  String? get referralLink {
+    final agentLink = agentProfile?.referralLink?.trim();
+    if (agentLink != null && agentLink.isNotEmpty) {
+      return agentLink;
+    }
+
+    final clientLink = clientProfile?.referralLink?.trim();
+    if (clientLink != null && clientLink.isNotEmpty) {
+      return clientLink;
+    }
+
+    return null;
+  }
+}
+
+/// Agent-specific profile payload nested under auth/me for agent users.
+class AuthMeAgentProfile {
+  const AuthMeAgentProfile({
+    this.profilePreviewLink,
+    this.referralLink,
+  });
+
+  final String? profilePreviewLink;
+  final String? referralLink;
+}
+
+/// Client-specific profile payload nested under auth/me for client users.
+class AuthMeClientProfile {
+  const AuthMeClientProfile({
+    this.profilePreviewLink,
+    this.referralLink,
+  });
+
+  final String? profilePreviewLink;
+  final String? referralLink;
 }
 
 /// User identity and tenant context from the auth/me endpoint.
@@ -23,6 +84,7 @@ class AuthMeUser {
     this.emailVerifiedAt,
     this.status,
     this.profileImage,
+    this.profilePreviewLink,
     this.mfaEnabled,
     this.userType,
     this.createdAt,
@@ -43,6 +105,7 @@ class AuthMeUser {
   final String? emailVerifiedAt;
   final String? status;
   final String? profileImage;
+  final String? profilePreviewLink;
   final bool? mfaEnabled;
   final String? userType;
   final String? createdAt;
@@ -58,6 +121,21 @@ class AuthMeUser {
         .map((part) => part!.trim())
         .toList();
     return parts.join(' ');
+  }
+
+  /// Profile photo URL from preview link or legacy profile image field.
+  String? get profilePhotoUrl {
+    final preview = profilePreviewLink?.trim();
+    if (preview != null && preview.isNotEmpty) {
+      return preview;
+    }
+
+    final image = profileImage?.trim();
+    if (image != null && image.isNotEmpty) {
+      return image;
+    }
+
+    return null;
   }
 }
 

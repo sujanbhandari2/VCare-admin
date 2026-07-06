@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -13,8 +12,6 @@ class HomeSavedProvidersSection extends StatelessWidget {
   const HomeSavedProvidersSection({
     super.key,
     required this.providers,
-    this.previewEmpty = false,
-    this.onPreviewToggle,
     this.onSeeAll,
     this.onFindCare,
     this.onProviderTap,
@@ -22,8 +19,6 @@ class HomeSavedProvidersSection extends StatelessWidget {
   });
 
   final List<SavedProviderItem> providers;
-  final bool previewEmpty;
-  final VoidCallback? onPreviewToggle;
   final VoidCallback? onSeeAll;
   final VoidCallback? onFindCare;
   final void Function(SavedProviderItem item)? onProviderTap;
@@ -32,20 +27,16 @@ class HomeSavedProvidersSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final items = previewEmpty ? <SavedProviderItem>[] : providers;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HomeSectionHeader(
           title: 'Saved Providers',
-          seeAllLabel: items.isNotEmpty ? 'See all' : null,
+          seeAllLabel: providers.isNotEmpty ? 'See all' : null,
           onSeeAll: onSeeAll,
-          showPreviewToggle: kDebugMode,
-          previewEmpty: previewEmpty,
-          onPreviewToggle: onPreviewToggle,
         ),
-        if (items.isEmpty)
+        if (providers.isEmpty)
           HomeEmptyStateCard(
             icon: LucideIcons.heart,
             title: 'Save your go-to providers',
@@ -59,10 +50,10 @@ class HomeSavedProvidersSection extends StatelessWidget {
         else
           HomeHorizontalCarouselSized(
             height: 112,
-            itemCount: items.length > 6 ? 6 : items.length,
+            itemCount: providers.length > 6 ? 6 : providers.length,
             itemWidth: 260,
             itemBuilder: (context, index) {
-              final p = items[index];
+              final p = providers[index];
               return HomeSavedProviderCard(
                 item: p,
                 onTap: () => onProviderTap?.call(p),

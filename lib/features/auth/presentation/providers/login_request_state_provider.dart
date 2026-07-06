@@ -10,6 +10,7 @@ import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/enums/login_request_type.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/login_request_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'login_request_state_provider.g.dart';
 
@@ -72,11 +73,11 @@ class LoginRequestStateNotifier extends _$LoginRequestStateNotifier {
     await response.when<Future<void>>(
       failure: (error) async {
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
 
         // Trigger on error callback
-        onError?.call(error.message);
+        onError?.call(error.userMessage);
       },
       success: (result) async {
         if (ref.mounted) {

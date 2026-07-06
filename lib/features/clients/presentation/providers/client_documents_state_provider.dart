@@ -8,6 +8,7 @@ import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/state/operation_state.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'client_documents_state_provider.g.dart';
 
@@ -52,7 +53,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.copyWithList(state.list.failure(error.message));
+          state = state.copyWithList(state.list.failure(error.userMessage));
         }
       },
       success: (result) {
@@ -84,7 +85,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     response.when(
       failure: (error) {
         if (ref.mounted) {
-          state = state.copyWithList(state.list.appendFailure(error.message));
+          state = state.copyWithList(state.list.appendFailure(error.userMessage));
         }
       },
       success: (result) {
@@ -125,10 +126,10 @@ class ClientDocumentsState extends _$ClientDocumentsState {
       failure: (error) async {
         if (ref.mounted) {
           state = state.copyWithUpload(
-            OperationState<void>.failure(error.message),
+            OperationState<void>.failure(error.userMessage),
           );
         }
-        onCompleted?.call(false, error.message);
+        onCompleted?.call(false, error.userMessage);
       },
       success: (_) async {
         await loadInitial(forceRefresh: true);
@@ -164,7 +165,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
         .renameClientDocument(documentId: documentId, name: trimmed);
 
     return response.when(
-      failure: (error) => (success: false, error: error.message),
+      failure: (error) => (success: false, error: error.userMessage),
       success: (_) {
         if (ref.mounted) {
           renameLocalFile(documentId, trimmed);

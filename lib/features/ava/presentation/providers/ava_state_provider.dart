@@ -4,6 +4,7 @@ import '../state/ava_state.dart';
 import 'ava_repository_provider.dart';
 import '../../domain/entities/ava_message.dart';
 import '../../data/ava_mock_data.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'ava_state_provider.g.dart';
 
@@ -49,7 +50,7 @@ class AvaStateNotifier extends _$AvaStateNotifier {
         state = state.success(messages: messages).copyWith(editingId: null);
       },
       failure: (error) {
-        state = state.failure(error.message);
+        state = state.failure(error.userMessage);
       },
     );
   }
@@ -73,7 +74,7 @@ class AvaStateNotifier extends _$AvaStateNotifier {
         );
       },
       failure: (error) {
-        state = state.failure(error.message);
+        state = state.failure(error.userMessage);
       },
     );
   }
@@ -87,7 +88,7 @@ class AvaStateNotifier extends _$AvaStateNotifier {
         state = state.success(messages: messages).copyWith(editingId: null);
       },
       failure: (error) {
-        state = state.failure(error.message);
+        state = state.failure(error.userMessage);
       },
     );
   }

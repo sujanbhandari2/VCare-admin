@@ -1,20 +1,20 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/shared/utils/qr_code_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_qr_code.dart';
 
 /// QR tile used on home referral card and detail/share surfaces.
 class ReferralQrCode extends StatelessWidget {
   const ReferralQrCode({
     super.key,
-    required this.imageUrl,
+    required this.data,
     this.size = 64,
     this.padding = 4,
     this.borderRadius = 12,
   });
 
-  final String imageUrl;
+  final String data;
   final double size;
   final double padding;
   final double borderRadius;
@@ -24,6 +24,7 @@ class ReferralQrCode extends StatelessWidget {
     final vcare = context.vcare;
     final surface = Theme.of(context).colorScheme.surface;
     final innerRadius = borderRadius - 4;
+    final qrSize = size - (padding * 2);
 
     return Semantics(
       label: 'Referral QR code',
@@ -49,22 +50,12 @@ class ReferralQrCode extends StatelessWidget {
             borderRadius: BorderRadius.circular(
               innerRadius.clamp(0, borderRadius),
             ),
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.contain,
-              placeholder: (_, _) => const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-              errorWidget: (_, _, _) => Icon(
-                LucideIcons.qrCode,
-                size: size * 0.45,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.4),
+            child: VcareQrCode(
+              data: data,
+              size: qrSize,
+              decoration: QrCodeUtils.decoration(
+                foreground: Colors.black,
+                background: surface,
               ),
             ),
           ),

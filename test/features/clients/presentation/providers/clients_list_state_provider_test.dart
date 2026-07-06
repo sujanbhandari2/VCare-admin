@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -57,6 +59,56 @@ void main() {
 
       expect(state.isInitialError, isTrue);
       expect(state.operation.errorMessage, 'Unable to load clients');
+    });
+
+    test('refresh forces network refresh', () async {
+      await container.read(clientsListStateProvider.notifier).loadInitial();
+      expect(repository.lastClientsForceRefresh, isFalse);
+
+      await container.read(clientsListStateProvider.notifier).refresh();
+
+      expect(repository.lastClientsForceRefresh, isTrue);
+      expect(repository.lastClientsRequest?.page, 1);
+    });
+
+    test('refresh ignores stale loadMore response', () async {
+      final page2Gate = Completer<void>();
+      repository.fetchClientsPage2Delay = page2Gate.future;
+      repository.fetchClientsResult = Success(
+        PaginatedResult(
+          items: const [
+            ClientListItem(
+              id: 'client-1',
+              fullName: 'Aspen Michael',
+              email: 'test@example.com',
+              phone: '+11111111111',
+              location: 'City, ST',
+              avatarUrl: '',
+            ),
+          ],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 2,
+            totalPages: 2,
+            hasNext: true,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      final notifier = container.read(clientsListStateProvider.notifier);
+      await notifier.loadInitial();
+
+      final loadMoreFuture = notifier.loadMore();
+      await notifier.refresh();
+      page2Gate.complete();
+      await loadMoreFuture;
+
+      final state = container.read(clientsListStateProvider);
+
+      expect(state.items, hasLength(1));
+      expect(state.items.first.id, 'client-1');
     });
 
     test('loadMore appends next page items', () async {
