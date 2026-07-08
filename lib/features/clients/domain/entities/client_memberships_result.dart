@@ -5,12 +5,10 @@ class ClientMembershipsResult {
   const ClientMembershipsResult({
     required this.clientId,
     required this.memberships,
-    required this.dependents,
     required this.totalGroup,
   });
 
   final String clientId;
   final List<ClientMembership> memberships;
-  final List<ClientDependent> dependents;
   final int totalGroup;
 }

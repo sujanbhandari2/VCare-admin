@@ -65,12 +65,14 @@ class ClientRepositoryImpl implements ClientRepository {
   Future<EitherResponseOrException<ClientDetail>> fetchClientDetail(
     String clientId, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClient(clientId),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final model = ResponseValidator.parse(
@@ -85,12 +87,17 @@ class ClientRepositoryImpl implements ClientRepository {
 
   @override
   Future<EitherResponseOrException<ClientMembershipsResult>>
-  fetchClientMemberships(String clientId, {CancelToken? cancelToken}) {
+  fetchClientMemberships(
+    String clientId, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClientMemberships(clientId),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final model = ResponseValidator.parse(
@@ -105,13 +112,46 @@ class ClientRepositoryImpl implements ClientRepository {
   }
 
   @override
+  Future<EitherResponseOrException<PaginatedResult<ClientDependent>>>
+  fetchDependents(
+    String clientId,
+    PaginatedListRequest request, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.get(
+        ApiEndpoints.clientDependents(clientId),
+        queryParameters: request.toQueryParameters(),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
+      );
+
+      final parsed = PaginatedResponseParser.parse(
+        response,
+        (json) => ClientMembershipModel.fromJson(
+          Map<String, dynamic>.from(json as Map),
+        ).toDependentEntityOrFallback(),
+      );
+
+      return parsed;
+    });
+  }
+
+  @override
   Future<EitherResponseOrException<List<ClientPaymentMethod>>>
-  fetchPaymentMethods(String clientId, {CancelToken? cancelToken}) {
+  fetchPaymentMethods(
+    String clientId, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
         ApiEndpoints.agentClientPaymentMethods(clientId),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final methods = ResponseValidator.parse(response, (data) {
@@ -136,6 +176,7 @@ class ClientRepositoryImpl implements ClientRepository {
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
@@ -143,6 +184,7 @@ class ClientRepositoryImpl implements ClientRepository {
         queryParameters: request.toQueryParameters(),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       final parsed = PaginatedResponseParser.parse(

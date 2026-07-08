@@ -35,5 +35,13 @@ void main() {
       expect(state.data?.id, 'client-1');
       expect(repository.lastClientId, 'client-1');
     });
+
+    test('fetchDetail forces network refresh', () async {
+      await container
+          .read(clientDetailStateProvider('client-1').notifier)
+          .fetchDetail();
+
+      expect(repository.lastDetailForceRefresh, isTrue);
+    });
   });
 }

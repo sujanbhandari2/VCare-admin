@@ -48,6 +48,7 @@ class CommissionRepositoryImpl implements CommissionRepository {
       fetchHistory(
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
@@ -55,6 +56,7 @@ class CommissionRepositoryImpl implements CommissionRepository {
         queryParameters: request.toQueryParameters(),
         isAuthenticated: true,
         cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
       );
 
       return PaginatedResponseParser.parse(

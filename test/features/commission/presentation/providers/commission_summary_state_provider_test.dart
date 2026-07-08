@@ -47,7 +47,11 @@ void main() {
 
     test('fetchSummary sets failure on error', () async {
       repository.fetchSummaryResult = Failure(
-        HttpException(title: 'Error', message: 'Summary failed'),
+        HttpException(
+          title: 'Error',
+          message: 'Summary failed',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container

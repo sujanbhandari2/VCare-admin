@@ -61,7 +61,8 @@ void main() {
       final state = container.read(commissionHistoryStateProvider);
       expect(state.items, [sampleItem]);
       expect(state.totalItems, 1);
-      expect(repository.fetchHistoryCallCount, 1);
+      expect(repository.fetchHistoryCallCount, 2);
+      expect(repository.lastHistoryForceRefresh, isTrue);
     });
   });
 }

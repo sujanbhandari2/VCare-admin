@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
@@ -18,6 +20,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
 
   late final String _clientId;
   int _currentPage = 0;
+  int _generation = 0;
 
   @override
   ClientDocumentsLoadableState build(String clientId) {
@@ -40,9 +43,15 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     );
   }
 
-  Future<void> loadInitial({bool forceRefresh = false}) async {
+  Future<void> loadInitial({bool forceRefresh = true}) async {
+    final generation = ++_generation;
+
     if (ref.mounted) {
       state = state.copyWithList(state.list.loading());
+    }
+
+    if (forceRefresh && state.list.items.isEmpty) {
+      unawaited(_warmFromCache(generation));
     }
 
     final response = await _fetchPage(
@@ -50,15 +59,19 @@ class ClientDocumentsState extends _$ClientDocumentsState {
       forceRefresh: forceRefresh,
     );
 
+    if (!ref.mounted || generation != _generation) {
+      return;
+    }
+
     response.when(
       failure: (error) {
-        if (ref.mounted) {
+        if (ref.mounted && generation == _generation) {
           state = state.copyWithList(state.list.failure(error.userMessage));
         }
       },
       success: (result) {
         _currentPage = result.pagination.page;
-        if (ref.mounted) {
+        if (ref.mounted && generation == _generation) {
           state = state.copyWithList(
             state.list.success(
               items: result.items,
@@ -69,6 +82,36 @@ class ClientDocumentsState extends _$ClientDocumentsState {
       },
     );
   }
+
+  Future<void> _warmFromCache(int generation) async {
+    final response = await _fetchPage(
+      _buildRequest(page: 1),
+      forceRefresh: false,
+    );
+
+    if (!ref.mounted || generation != _generation) {
+      return;
+    }
+
+    response.when(
+      failure: (_) {},
+      success: (result) {
+        if (!ref.mounted || generation != _generation) {
+          return;
+        }
+        _currentPage = result.pagination.page;
+        state = state.copyWithList(
+          state.list.success(
+            items: result.items,
+            total: result.pagination.total,
+          ),
+        );
+        state = state.copyWithList(state.list.loading());
+      },
+    );
+  }
+
+  Future<void> refresh() => loadInitial(forceRefresh: true);
 
   Future<void> loadMore() async {
     if (state.list.isLoadingMore || !state.hasMore) {

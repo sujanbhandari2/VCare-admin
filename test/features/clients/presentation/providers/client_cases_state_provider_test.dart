@@ -66,9 +66,20 @@ void main() {
       expect(repository.lastCasesRequest?.limit, 10);
     });
 
+    test('loadInitial forces network refresh', () async {
+      await container
+          .read(clientCasesStateProvider('client-1').notifier)
+          .loadInitial();
+
+      expect(repository.lastCasesForceRefresh, isTrue);
+    });
+
     test('loadInitial failure stores error', () async {
       repository.fetchCasesResult = Failure(
-        HttpException(message: 'Unable to load cases'),
+        HttpException(
+          message: 'Unable to load cases',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container
@@ -129,7 +140,10 @@ void main() {
 
     test('createCase reports failure without refreshing list', () async {
       repository.createClientCaseResult = Failure(
-        HttpException(message: 'Unable to create case'),
+        HttpException(
+          message: 'Unable to create case',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       bool? completed;

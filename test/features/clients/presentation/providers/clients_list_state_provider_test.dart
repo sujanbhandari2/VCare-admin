@@ -8,6 +8,7 @@ import 'package:vcare_admin/core/services/network/typedefs/response_or_exception
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
+import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/pagination/pagination_meta.dart';
 
@@ -41,6 +42,20 @@ void main() {
       expect(state.items.first.id, 'client-1');
     });
 
+    test('loadInitial forces network refresh on cold start', () async {
+      await container.read(clientsListStateProvider.notifier).loadInitial();
+
+      expect(repository.lastClientsForceRefresh, isTrue);
+    });
+
+    test('loadInitial uses cache after session is hydrated', () async {
+      container.read(networkFetchSessionProvider.notifier).markSessionHydrated();
+
+      await container.read(clientsListStateProvider.notifier).loadInitial();
+
+      expect(repository.lastClientsForceRefresh, isFalse);
+    });
+
     test('search passes query to repository request', () async {
       await container.read(clientsListStateProvider.notifier).search('Aspen');
 
@@ -50,7 +65,10 @@ void main() {
 
     test('loadInitial failure stores error', () async {
       repository.fetchClientsResult = Failure(
-        HttpException(message: 'Unable to load clients'),
+        HttpException(
+          message: 'Unable to load clients',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container.read(clientsListStateProvider.notifier).loadInitial();
@@ -62,6 +80,7 @@ void main() {
     });
 
     test('refresh forces network refresh', () async {
+      container.read(networkFetchSessionProvider.notifier).markSessionHydrated();
       await container.read(clientsListStateProvider.notifier).loadInitial();
       expect(repository.lastClientsForceRefresh, isFalse);
 

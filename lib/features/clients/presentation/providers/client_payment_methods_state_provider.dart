@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
+import 'package:vcare_admin/shared/network/stale_while_revalidate.dart';
 import 'package:vcare_admin/shared/state/operation_state.dart';
 import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
@@ -18,6 +19,10 @@ class ClientPaymentMethodsStateData {
   final List<ClientPaymentMethod>? data;
 
   bool get fetching => operation.isLoading;
+
+  bool get isRefreshing => operation.isLoading && data != null;
+
+  bool get isInitialLoading => operation.isLoading && data == null;
 
   String? get error => operation.errorMessage;
 
@@ -43,6 +48,8 @@ class ClientPaymentMethodsStateData {
 
 @Riverpod(keepAlive: true)
 class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
+  int _generation = 0;
+
   @override
   ClientPaymentMethodsStateData build(String clientId) =>
       const ClientPaymentMethodsStateData();
@@ -51,24 +58,41 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
     bool forceRefresh = true,
     CancelToken? cancelToken,
   }) async {
+    final generation = ++_generation;
+
     if (ref.mounted) {
       state = state.loading();
     }
 
-    final response = await ref
-        .read(clientRepositoryProvider)
-        .fetchPaymentMethods(clientId, cancelToken: cancelToken);
-
-    response.when(
-      failure: (error) {
-        if (ref.mounted) {
-          state = state.failure(error.userMessage);
-        }
+    await fetchStaleWhileRevalidate(
+      isCurrentGeneration: () => ref.mounted && _generation == generation,
+      currentData: state.data,
+      forceNetwork: forceRefresh,
+      fetch: ({required bool forceRefresh}) => ref
+          .read(clientRepositoryProvider)
+          .fetchPaymentMethods(
+            clientId,
+            cancelToken: cancelToken,
+            forceRefresh: forceRefresh,
+          ),
+      onStaleData: (methods) {
+        if (!ref.mounted || _generation != generation) return;
+        state = state.success(methods);
+        state = state.loading();
       },
-      success: (methods) {
-        if (ref.mounted) {
-          state = state.success(methods);
-        }
+      onFinalResult: (response) {
+        response.when(
+          failure: (error) {
+            if (ref.mounted && _generation == generation) {
+              state = state.failure(error.userMessage);
+            }
+          },
+          success: (methods) {
+            if (ref.mounted && _generation == generation) {
+              state = state.success(methods);
+            }
+          },
+        );
       },
     );
   }

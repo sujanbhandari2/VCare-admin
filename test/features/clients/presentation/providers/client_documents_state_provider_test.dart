@@ -66,7 +66,10 @@ void main() {
 
     test('loadInitial failure stores error', () async {
       repository.fetchDocumentsResult = Failure(
-        HttpException(message: 'Unable to load documents'),
+        HttpException(
+          message: 'Unable to load documents',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container
@@ -191,7 +194,10 @@ void main() {
         ),
       );
       repository.renameClientDocumentResult = Failure(
-        HttpException(message: 'Rename failed'),
+        HttpException(
+          message: 'Rename failed',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       final notifier = container.read(
@@ -398,7 +404,10 @@ void main() {
         await notifier.loadInitial();
 
         repository.uploadClientDocumentResult = Failure(
-          HttpException(message: 'Upload failed'),
+          HttpException(
+            message: 'Upload failed',
+            errorType: HttpErrorType.client,
+          ),
         );
 
         await notifier.uploadDocument(

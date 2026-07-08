@@ -12,6 +12,10 @@ class ClientDetailStateData {
 
   bool get fetching => operation.isLoading;
 
+  bool get isRefreshing => operation.isLoading && data != null;
+
+  bool get isInitialLoading => operation.isLoading && data == null;
+
   String? get error => operation.errorMessage;
 
   ClientDetailStateData loading() => ClientDetailStateData(

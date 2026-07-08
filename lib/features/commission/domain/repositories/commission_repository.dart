@@ -16,5 +16,6 @@ abstract class CommissionRepository {
       fetchHistory(
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   });
 }

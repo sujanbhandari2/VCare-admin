@@ -185,7 +185,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _pickDob() async {
-    final initial = _dob.isNotEmpty ? DateTime.tryParse(_dob) : null;
+    final initial = parseProfileDob(_dob);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial ?? DateTime(1990, 5, 14),
@@ -232,9 +232,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final savedAddress = ref.watch(localProfileStateProvider).address;
-    final dobLabel = _dob.isEmpty
+    final parsedDob = parseProfileDob(_dob);
+    final dobLabel = parsedDob == null
         ? 'Select date of birth'
-        : DateFormat('MMM d, yyyy').format(DateTime.parse(_dob));
+        : DateFormat('MMM d, yyyy').format(parsedDob);
 
     return Scaffold(
       body: Column(

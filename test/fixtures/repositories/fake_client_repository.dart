@@ -55,10 +55,14 @@ class FakeClientRepository implements ClientRepository {
         const ClientMembershipsResult(
           clientId: 'client-1',
           memberships: [],
-          dependents: [],
           totalGroup: 0,
         ),
       );
+
+  EitherResponseOrException<PaginatedResult<ClientDependent>>
+  fetchDependentsResult = Success(
+    PaginatedResult(items: const [], pagination: PaginationMeta.empty),
+  );
 
   EitherResponseOrException<List<ClientPaymentMethod>>
   fetchPaymentMethodsResult = Success(const []);
@@ -119,6 +123,12 @@ class FakeClientRepository implements ClientRepository {
   bool? lastCasesForceRefresh;
   PaginatedListRequest? lastDocumentsRequest;
   bool? lastDocumentsForceRefresh;
+  bool? lastDetailForceRefresh;
+  bool? lastMembershipsForceRefresh;
+  bool? lastDependentsForceRefresh;
+  PaginatedListRequest? lastDependentsRequest;
+  bool? lastPaymentMethodsForceRefresh;
+  bool? lastTransactionsForceRefresh;
 
   @override
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
@@ -166,22 +176,48 @@ class FakeClientRepository implements ClientRepository {
   Future<EitherResponseOrException<ClientDetail>> fetchClientDetail(
     String clientId, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) async {
     lastClientId = clientId;
+    lastDetailForceRefresh = forceRefresh;
     return fetchDetailResult;
   }
 
   @override
   Future<EitherResponseOrException<ClientMembershipsResult>>
-  fetchClientMemberships(String clientId, {CancelToken? cancelToken}) async {
+  fetchClientMemberships(
+    String clientId, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) async {
     lastClientId = clientId;
+    lastMembershipsForceRefresh = forceRefresh;
     return fetchMembershipsResult;
   }
 
   @override
-  Future<EitherResponseOrException<List<ClientPaymentMethod>>>
-  fetchPaymentMethods(String clientId, {CancelToken? cancelToken}) async {
+  Future<EitherResponseOrException<PaginatedResult<ClientDependent>>>
+  fetchDependents(
+    String clientId,
+    PaginatedListRequest request, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) async {
     lastClientId = clientId;
+    lastDependentsRequest = request;
+    lastDependentsForceRefresh = forceRefresh;
+    return fetchDependentsResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<List<ClientPaymentMethod>>>
+  fetchPaymentMethods(
+    String clientId, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) async {
+    lastClientId = clientId;
+    lastPaymentMethodsForceRefresh = forceRefresh;
     return fetchPaymentMethodsResult;
   }
 
@@ -191,9 +227,11 @@ class FakeClientRepository implements ClientRepository {
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) async {
     lastClientId = clientId;
     lastTransactionsRequest = request;
+    lastTransactionsForceRefresh = forceRefresh;
     return fetchTransactionsResult;
   }
 

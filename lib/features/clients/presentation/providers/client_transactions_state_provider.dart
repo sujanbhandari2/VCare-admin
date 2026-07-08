@@ -25,10 +25,18 @@ class ClientTransactionsState extends _$ClientTransactionsState
   bool get mounted => ref.mounted;
 
   @override
+  bool resolveForceRefresh() => true;
+
+  @override
   Future<EitherResponseOrException<PaginatedResult<ClientTransaction>>>
-  fetchPage(PaginatedListRequest request) {
-    return ref
-        .read(clientRepositoryProvider)
-        .fetchTransactions(_clientId, request);
+  fetchPage(
+    PaginatedListRequest request, {
+    bool forceRefresh = false,
+  }) {
+    return ref.read(clientRepositoryProvider).fetchTransactions(
+      _clientId,
+      request,
+      forceRefresh: forceRefresh,
+    );
   }
 }

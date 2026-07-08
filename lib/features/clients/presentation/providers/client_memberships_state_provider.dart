@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
+import 'package:vcare_admin/shared/network/stale_while_revalidate.dart';
 import 'package:vcare_admin/shared/state/operation_state.dart';
 import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
@@ -18,6 +19,10 @@ class ClientMembershipsStateData {
   final ClientMembershipsResult? data;
 
   bool get fetching => operation.isLoading;
+
+  bool get isRefreshing => operation.isLoading && data != null;
+
+  bool get isInitialLoading => operation.isLoading && data == null;
 
   String? get error => operation.errorMessage;
 
@@ -41,6 +46,8 @@ class ClientMembershipsStateData {
 
 @Riverpod(keepAlive: true)
 class ClientMembershipsState extends _$ClientMembershipsState {
+  int _generation = 0;
+
   @override
   ClientMembershipsStateData build(String clientId) =>
       const ClientMembershipsStateData();
@@ -49,24 +56,41 @@ class ClientMembershipsState extends _$ClientMembershipsState {
     bool forceRefresh = true,
     CancelToken? cancelToken,
   }) async {
+    final generation = ++_generation;
+
     if (ref.mounted) {
       state = state.loading();
     }
 
-    final response = await ref
-        .read(clientRepositoryProvider)
-        .fetchClientMemberships(clientId, cancelToken: cancelToken);
-
-    response.when(
-      failure: (error) {
-        if (ref.mounted) {
-          state = state.failure(error.userMessage);
-        }
+    await fetchStaleWhileRevalidate(
+      isCurrentGeneration: () => ref.mounted && _generation == generation,
+      currentData: state.data,
+      forceNetwork: forceRefresh,
+      fetch: ({required bool forceRefresh}) => ref
+          .read(clientRepositoryProvider)
+          .fetchClientMemberships(
+            clientId,
+            cancelToken: cancelToken,
+            forceRefresh: forceRefresh,
+          ),
+      onStaleData: (result) {
+        if (!ref.mounted || _generation != generation) return;
+        state = state.success(result);
+        state = state.loading();
       },
-      success: (result) {
-        if (ref.mounted) {
-          state = state.success(result);
-        }
+      onFinalResult: (response) {
+        response.when(
+          failure: (error) {
+            if (ref.mounted && _generation == generation) {
+              state = state.failure(error.userMessage);
+            }
+          },
+          success: (result) {
+            if (ref.mounted && _generation == generation) {
+              state = state.success(result);
+            }
+          },
+        );
       },
     );
   }

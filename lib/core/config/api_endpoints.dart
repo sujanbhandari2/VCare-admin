@@ -40,6 +40,7 @@ class ApiEndpoints {
   static String agentClientCases(String id) => "agents/clients/$id/cases";
   static String agentClientDocuments(String id) =>
       "agents/clients/$id/documents";
+  static String clientDependents(String id) => "clients/$id/dependents";
 
   static const String files = "files";
   static String file(String id) => "files/$id";

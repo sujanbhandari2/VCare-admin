@@ -31,6 +31,7 @@ class FakeCommissionRepository implements CommissionRepository {
   int fetchSummaryCallCount = 0;
   int fetchHistoryCallCount = 0;
   PaginatedListRequest? lastHistoryRequest;
+  bool? lastHistoryForceRefresh;
 
   @override
   Future<EitherResponseOrException<CommissionSummary>> fetchSummary({
@@ -46,9 +47,11 @@ class FakeCommissionRepository implements CommissionRepository {
       fetchHistory(
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   }) async {
     fetchHistoryCallCount++;
     lastHistoryRequest = request;
+    lastHistoryForceRefresh = forceRefresh;
     return fetchHistoryResult;
   }
 }

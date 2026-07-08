@@ -21,10 +21,17 @@ class CommissionHistoryState extends _$CommissionHistoryState
   bool get mounted => ref.mounted;
 
   @override
+  bool resolveForceRefresh() => true;
+
+  @override
   Future<EitherResponseOrException<PaginatedResult<CommissionHistoryItem>>>
-      fetchPage(
-    PaginatedListRequest request,
-  ) {
-    return ref.read(commissionRepositoryProvider).fetchHistory(request);
+  fetchPage(
+    PaginatedListRequest request, {
+    bool forceRefresh = false,
+  }) {
+    return ref.read(commissionRepositoryProvider).fetchHistory(
+      request,
+      forceRefresh: forceRefresh,
+    );
   }
 }

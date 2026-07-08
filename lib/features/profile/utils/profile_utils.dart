@@ -1,11 +1,29 @@
+import 'package:intl/intl.dart';
+
 import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+
+/// Parses profile DOB from ISO (`yyyy-MM-dd`, timestamps) or US (`MM/dd/yyyy`).
+DateTime? parseProfileDob(String? input) {
+  if (input == null || input.isEmpty) {
+    return null;
+  }
+  final iso = DateTime.tryParse(input);
+  if (iso != null) {
+    return iso;
+  }
+  try {
+    return DateFormat('MM/dd/yyyy').parseStrict(input);
+  } on FormatException {
+    return null;
+  }
+}
 
 /// US date format MM/DD/YYYY — parity with vcareapp formatUsDate.
 String formatProfileDob(String? input) {
   if (input == null || input.isEmpty) {
     return '';
   }
-  final parsed = DateTime.tryParse(input);
+  final parsed = parseProfileDob(input);
   if (parsed == null) {
     return input;
   }
@@ -29,7 +47,7 @@ String profileInitials(String name) {
 }
 
 int ageFromDob(String dob) {
-  final parsed = DateTime.tryParse(dob);
+  final parsed = parseProfileDob(dob);
   if (parsed == null) {
     return 0;
   }

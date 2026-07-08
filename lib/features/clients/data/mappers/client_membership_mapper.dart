@@ -40,13 +40,29 @@ extension ClientMembershipModelMapper on ClientMembershipModel {
     return ClientDependent(
       id: dependentClient.id,
       name: dependentClient.toEntity().fullName,
-      relation:
-          relationshipToPrimary ??
-          enrollmentDisplayLabel ??
-          enrollmentType ??
-          'Dependent',
+      relation: _resolveDependentRelation(
+        relationshipToPrimary: relationshipToPrimary,
+        enrollmentDisplayLabel: enrollmentDisplayLabel,
+        enrollmentType: enrollmentType,
+      ),
       avatarUrl: '',
     );
+  }
+
+  ClientDependent toDependentEntityOrFallback() {
+    return toDependentEntity() ??
+        ClientDependent(
+          id: client?.id ?? clientId ?? id,
+          name: client != null
+              ? client!.toEntity().fullName
+              : (enrollmentDisplayLabel ?? 'Dependent'),
+          relation: _resolveDependentRelation(
+            relationshipToPrimary: relationshipToPrimary,
+            enrollmentDisplayLabel: enrollmentDisplayLabel,
+            enrollmentType: enrollmentType,
+          ),
+          avatarUrl: '',
+        );
   }
 
   ClientMembershipStatus _mapStatus(String? value) {
@@ -67,22 +83,30 @@ extension ClientMembershipModelMapper on ClientMembershipModel {
 
 extension ClientMembershipsResultModelMapper on ClientMembershipsResultModel {
   ClientMembershipsResult toEntity() {
-    final memberships = <ClientMembership>[];
-    final dependents = <ClientDependent>[];
-
-    for (final detail in details) {
-      memberships.add(detail.toEntity());
-      final dependent = detail.toDependentEntity();
-      if (dependent != null) {
-        dependents.add(dependent);
-      }
-    }
+    final memberships = details.map((detail) => detail.toEntity()).toList();
 
     return ClientMembershipsResult(
       clientId: clientId,
       memberships: memberships,
-      dependents: dependents,
       totalGroup: totalGroup,
     );
   }
+}
+
+String _resolveDependentRelation({
+  String? relationshipToPrimary,
+  String? enrollmentDisplayLabel,
+  String? enrollmentType,
+}) {
+  if (relationshipToPrimary != null && relationshipToPrimary.trim().isNotEmpty) {
+    return humanizeApiEnum(relationshipToPrimary);
+  }
+  if (enrollmentDisplayLabel != null && enrollmentDisplayLabel.trim().isNotEmpty) {
+    return enrollmentDisplayLabel;
+  }
+  final typeLabel = humanizeApiEnum(enrollmentType);
+  if (typeLabel != '—') {
+    return typeLabel;
+  }
+  return 'Dependent';
 }

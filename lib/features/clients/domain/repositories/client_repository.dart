@@ -18,19 +18,37 @@ abstract class ClientRepository {
   Future<EitherResponseOrException<ClientDetail>> fetchClientDetail(
     String clientId, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   });
 
   Future<EitherResponseOrException<ClientMembershipsResult>>
-  fetchClientMemberships(String clientId, {CancelToken? cancelToken});
+  fetchClientMemberships(
+    String clientId, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  });
+
+  Future<EitherResponseOrException<PaginatedResult<ClientDependent>>>
+  fetchDependents(
+    String clientId,
+    PaginatedListRequest request, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  });
 
   Future<EitherResponseOrException<List<ClientPaymentMethod>>>
-  fetchPaymentMethods(String clientId, {CancelToken? cancelToken});
+  fetchPaymentMethods(
+    String clientId, {
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  });
 
   Future<EitherResponseOrException<PaginatedResult<ClientTransaction>>>
   fetchTransactions(
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
+    bool forceRefresh = false,
   });
 
   Future<EitherResponseOrException<PaginatedResult<ClientCase>>> fetchCases(

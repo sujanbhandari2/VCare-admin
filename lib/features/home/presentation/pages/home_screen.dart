@@ -22,6 +22,7 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_recent_activ
 import 'package:vcare_admin/features/home/presentation/widgets/home_saved_providers_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
+import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:go_router/go_router.dart';
@@ -44,12 +45,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _data = _buildViewData();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationInboxStateProvider.notifier).fetchInbox();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(notificationInboxStateProvider.notifier).fetchInbox();
       if (ref.read(userLoggedInStateProvider)) {
-        ref.read(authMeStateProvider.notifier).fetchMe();
-        ref.read(agentStatsStateProvider.notifier).fetchStats();
-        ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders();
+        await Future.wait([
+          ref.read(authMeStateProvider.notifier).fetchMe(),
+          ref.read(agentStatsStateProvider.notifier).fetchStats(),
+          ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders(),
+        ]);
+      }
+      if (mounted) {
+        ref.read(networkFetchSessionProvider.notifier).markSessionHydrated();
       }
     });
   }

@@ -10,6 +10,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_dependents_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_detail_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_documents_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_memberships_state_provider.dart';
@@ -54,6 +55,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     ref
         .read(clientMembershipsStateProvider(clientId).notifier)
         .fetchMemberships();
+    ref.read(clientDependentsStateProvider(clientId).notifier).fetchDependents();
     ref
         .read(clientPaymentMethodsStateProvider(clientId).notifier)
         .fetchPaymentMethods();
@@ -69,14 +71,13 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
       ref
           .read(clientMembershipsStateProvider(clientId).notifier)
           .fetchMemberships(),
+      ref.read(clientDependentsStateProvider(clientId).notifier).fetchDependents(),
       ref
           .read(clientPaymentMethodsStateProvider(clientId).notifier)
           .fetchPaymentMethods(),
       ref.read(clientTransactionsStateProvider(clientId).notifier).refresh(),
       ref.read(clientCasesStateProvider(clientId).notifier).refresh(),
-      ref
-          .read(clientDocumentsStateProvider(clientId).notifier)
-          .loadInitial(forceRefresh: true),
+      ref.read(clientDocumentsStateProvider(clientId).notifier).refresh(),
     ]);
   }
 
@@ -93,6 +94,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     final membershipsState = ref.watch(
       clientMembershipsStateProvider(clientId),
     );
+    final dependentsState = ref.watch(clientDependentsStateProvider(clientId));
     final paymentMethodsState = ref.watch(
       clientPaymentMethodsStateProvider(clientId),
     );
@@ -183,12 +185,17 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
           children: [
             ClientMembershipsTab(
               memberships: membershipsState.data?.memberships ?? const [],
-              dependents: membershipsState.data?.dependents ?? const [],
+              dependents: dependentsState.dependents,
               isLoading: membershipsState.fetching,
               error: membershipsState.error,
+              isLoadingDependents: dependentsState.fetching,
+              dependentsError: dependentsState.error,
               onRetry: () => ref
                   .read(clientMembershipsStateProvider(clientId).notifier)
                   .fetchMemberships(),
+              onRetryDependents: () => ref
+                  .read(clientDependentsStateProvider(clientId).notifier)
+                  .fetchDependents(),
               onMembershipInfo: (m) => _showMembershipNote(context, m),
             ),
             ClientBillingTab(

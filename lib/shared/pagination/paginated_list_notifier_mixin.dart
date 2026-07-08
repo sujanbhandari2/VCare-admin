@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/shared/models/loadable_list_item.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
@@ -26,8 +28,13 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
   }
 
   Future<EitherResponseOrException<PaginatedResult<T>>> fetchPage(
-    PaginatedListRequest request,
-  );
+    PaginatedListRequest request, {
+    bool forceRefresh = false,
+  });
+
+  /// Override to control cache bypass on [loadInitial] when [forceRefresh] is
+  /// not passed explicitly (e.g. read [networkFetchSessionProvider]).
+  bool resolveForceRefresh() => false;
 
   PaginatedListRequest buildRequest({required int page}) {
     return PaginatedListRequest(
@@ -37,14 +44,25 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
     );
   }
 
-  Future<void> loadInitial({Map<String, dynamic>? extras}) async {
+  Future<void> loadInitial({
+    Map<String, dynamic>? extras,
+    bool? forceRefresh,
+  }) async {
     final generation = ++_requestGeneration;
+    final shouldForceRefresh = forceRefresh ?? resolveForceRefresh();
 
     if (mounted) {
       state = state.loading(extras: extras ?? state.extras);
     }
 
-    final response = await fetchPage(buildRequest(page: 1));
+    if (shouldForceRefresh && state.items.isEmpty) {
+      unawaited(_warmFromCache(generation, extras));
+    }
+
+    final response = await fetchPage(
+      buildRequest(page: 1),
+      forceRefresh: shouldForceRefresh,
+    );
 
     response.when(
       failure: (error) {
@@ -66,9 +84,38 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
     );
   }
 
+  Future<void> _warmFromCache(
+    int generation,
+    Map<String, dynamic>? extras,
+  ) async {
+    final response = await fetchPage(
+      buildRequest(page: 1),
+      forceRefresh: false,
+    );
+
+    if (!mounted || generation != _requestGeneration) {
+      return;
+    }
+
+    response.when(
+      failure: (_) {},
+      success: (result) {
+        if (!mounted || generation != _requestGeneration) {
+          return;
+        }
+        _currentPage = result.pagination.page;
+        state = state.success(
+          items: result.items,
+          total: result.pagination.total,
+        );
+        state = state.loading(extras: extras ?? state.extras);
+      },
+    );
+  }
+
   Future<void> refresh({Map<String, dynamic>? extras}) async {
     _currentPage = 0;
-    await loadInitial(extras: extras);
+    await loadInitial(extras: extras, forceRefresh: true);
   }
 
   Future<void> search(String query) async {

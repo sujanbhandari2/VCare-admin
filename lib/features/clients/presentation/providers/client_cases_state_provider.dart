@@ -15,7 +15,6 @@ part 'client_cases_state_provider.g.dart';
 class ClientCasesState extends _$ClientCasesState
     with PaginatedListNotifierMixin<ClientCase> {
   late final String _clientId;
-  bool _forceRefreshNextFetch = false;
 
   @override
   LoadableListState<ClientCase> build(String clientId) {
@@ -30,12 +29,13 @@ class ClientCasesState extends _$ClientCasesState
   int get pageSize => 10;
 
   @override
-  Future<EitherResponseOrException<PaginatedResult<ClientCase>>> fetchPage(
-    PaginatedListRequest request,
-  ) {
-    final forceRefresh = _forceRefreshNextFetch;
-    _forceRefreshNextFetch = false;
+  bool resolveForceRefresh() => true;
 
+  @override
+  Future<EitherResponseOrException<PaginatedResult<ClientCase>>> fetchPage(
+    PaginatedListRequest request, {
+    bool forceRefresh = false,
+  }) {
     return ref.read(clientRepositoryProvider).fetchCases(
       _clientId,
       request,
@@ -64,8 +64,7 @@ class ClientCasesState extends _$ClientCasesState
         onCompleted?.call(false, error.userMessage);
       },
       success: (_) async {
-        _forceRefreshNextFetch = true;
-        await loadInitial();
+        await refresh();
         onCompleted?.call(true, null);
       },
     );

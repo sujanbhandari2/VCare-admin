@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/documents/domain/entities/agent_file.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_repository_provider.dart';
+import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_notifier_mixin.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
@@ -20,9 +21,16 @@ class DocumentsListState extends _$DocumentsListState
   bool get mounted => ref.mounted;
 
   @override
+  bool resolveForceRefresh() => ref.read(networkFetchSessionProvider);
+
+  @override
   Future<EitherResponseOrException<PaginatedResult<AgentFile>>> fetchPage(
-    PaginatedListRequest request,
-  ) {
-    return ref.read(documentsRepositoryProvider).fetchFiles(request);
+    PaginatedListRequest request, {
+    bool forceRefresh = false,
+  }) {
+    return ref.read(documentsRepositoryProvider).fetchFiles(
+      request,
+      forceRefresh: forceRefresh,
+    );
   }
 }

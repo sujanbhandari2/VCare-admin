@@ -29,6 +29,9 @@ class ClientMembershipsTab extends StatelessWidget {
     this.isLoading = false,
     this.error,
     this.onRetry,
+    this.isLoadingDependents = false,
+    this.dependentsError,
+    this.onRetryDependents,
   });
 
   final List<ClientMembership> memberships;
@@ -37,6 +40,9 @@ class ClientMembershipsTab extends StatelessWidget {
   final bool isLoading;
   final String? error;
   final VoidCallback? onRetry;
+  final bool isLoadingDependents;
+  final String? dependentsError;
+  final VoidCallback? onRetryDependents;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +84,14 @@ class ClientMembershipsTab extends StatelessWidget {
           ),
         const SizedBox(height: 24),
         ClientDetailSectionHeading('Dependents'),
-        if (dependents.isEmpty)
+        if (isLoadingDependents && dependents.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (dependentsError != null && dependents.isEmpty)
+          _TabErrorState(message: dependentsError, onRetry: onRetryDependents)
+        else if (dependents.isEmpty)
           const VcareEmptyStateCard(
             icon: LucideIcons.users,
             title: 'No dependents on file',
