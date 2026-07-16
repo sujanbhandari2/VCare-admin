@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Matches vcareapp [ChatDateSeparator].
 class AvaDateChip extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 class HomeStatusBadge extends StatelessWidget {
   const HomeStatusBadge({

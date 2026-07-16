@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 /// Image Type to decide How to load the image
 ///
@@ -182,32 +182,24 @@ class _ImageViewerState extends State<ImageViewer>
                         ),
                   ),
                 )
-              : CachedNetworkImage(
+              : VCareCachedImage(
                   imageUrl: widget.imagePathOrUrl,
                   height: context.mediaQuery.size.height,
                   width: context.mediaQuery.size.width,
                   fit: BoxFit.contain,
-                  progressIndicatorBuilder: (ctx, url, progress) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: progress.progress,
-                      ),
-                    );
-                  },
-                  errorWidget: (ctx, url, err) {
-                    return SizedBox(
-                      height: context.mediaQuery.size.height,
-                      width: context.mediaQuery.size.width,
-                      child:
-                          widget.errorWidget ??
-                          const Center(
-                            child: Icon(
-                              Icons.image_not_supported_outlined,
-                              color: Colors.white,
-                            ),
+                  showLoadingIndicator: true,
+                  errorWidget: SizedBox(
+                    height: context.mediaQuery.size.height,
+                    width: context.mediaQuery.size.width,
+                    child:
+                        widget.errorWidget ??
+                        const Center(
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.white,
                           ),
-                    );
-                  },
+                        ),
+                  ),
                 ),
         ),
       ),

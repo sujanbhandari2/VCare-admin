@@ -5,16 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_footer.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_progress.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_step_attachments.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_step_category.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_new_step_description.dart';
-import 'package:flutter_template/features/cases/utils/request_new_utils.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_footer.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_progress.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_step_attachments.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_step_category.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_new_step_description.dart';
+import 'package:vcare_admin/features/cases/utils/request_new_utils.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class RequestNewScreen extends StatefulWidget {
   const RequestNewScreen({super.key, this.initialPrompt});
@@ -167,9 +168,10 @@ class _RequestNewScreenState extends State<RequestNewScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    context.showVcareToast(
+      title: message,
+      variant: VcareToastVariant.destructive,
+    );
   }
 
   void _goNext() {
@@ -205,10 +207,10 @@ class _RequestNewScreenState extends State<RequestNewScreen> {
 
   void _submit() {
     if (_selectedType.isEmpty) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Request submitted. Your advocate will respond soon.'),
-      ),
+    context.showVcareToast(
+      title: 'Request submitted',
+      description: 'Your advocate will respond soon.',
+      variant: VcareToastVariant.success,
     );
     context.goNamed(AppRouter.requests.toPathName);
   }

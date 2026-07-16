@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
-import 'package:flutter_template/features/profile/presentation/providers/local_profile_repository_provider.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_repository_provider.dart';
 
 part 'local_profile_state_provider.g.dart';
 
@@ -37,6 +37,26 @@ class LocalProfileStateNotifier extends _$LocalProfileStateNotifier {
 
   Future<void> updateAddress(ProfileAddress? address) async {
     final updated = state.copyWith(
+      address: address,
+      clearAddress: address == null,
+    );
+    await save(updated);
+  }
+
+  Future<void> updateProfile({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String dob,
+    String? photoUrl,
+    ProfileAddress? address,
+  }) async {
+    final updated = state.copyWith(
+      fullName: fullName,
+      email: email,
+      phone: phone,
+      dob: dob,
+      photoUrl: photoUrl,
       address: address,
       clearAddress: address == null,
     );

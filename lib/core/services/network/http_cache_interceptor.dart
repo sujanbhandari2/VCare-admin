@@ -4,10 +4,11 @@ import 'package:clock/clock.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import 'package:flutter_template/shared/utils/logger.dart';
-import 'package:flutter_template/core/services/storage/storage_service.dart';
-import 'package:flutter_template/core/services/network/models/cache_response.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/services/network/models/cache_response.dart';
+import 'package:vcare_admin/core/services/network/session_expiry_handler.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 
 /// Dio Interceptor used to cache HTTP responses in local storage
 class CacheInterceptor extends Interceptor {
@@ -31,6 +32,15 @@ class CacheInterceptor extends Interceptor {
     ❌ Url: ${err.requestOptions.uri}
     ❌ Response Errors: ${err.response?.data}
     """);
+
+    // Do not swallow auth-session failures — later interceptors must force logout.
+    final isSessionExpiry =
+        SessionExpiryHandler.expiredMessageFromBody(err.response?.data) !=
+            null ||
+        SessionExpiryHandler.normalizedExpiredMessage(err.error) != null;
+    if (isSessionExpiry) {
+      return handler.next(err);
+    }
 
     // For 4xx/5xx errors, we want to pass through the error response
     if (err.response?.statusCode != null && err.response!.statusCode! >= 400) {

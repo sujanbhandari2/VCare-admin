@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/utils/request_new_utils.dart';
-import 'package:flutter_template/features/vcare_sync/data/vcare_catalog.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/utils/request_new_utils.dart';
+import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
 
 class RequestNewStepCategory extends StatelessWidget {
   const RequestNewStepCategory({

@@ -1,4 +1,4 @@
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 /// Seed requests — parity with vcareapp `requests-store.ts` `seed`.
 class RequestsMockData {

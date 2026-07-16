@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/shared/widgets/common_image.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/user_profile_avatar.dart';
 
-class HomePageHeader extends StatelessWidget {
+class HomePageHeader extends ConsumerWidget {
   const HomePageHeader({
     super.key,
     required this.profile,
     required this.unreadCount,
+    this.greetingLabel = 'Welcome back',
     this.onProfileTap,
     this.onNotificationsTap,
     this.onSettingsTap,
@@ -19,34 +21,42 @@ class HomePageHeader extends StatelessWidget {
 
   final HomeProfile profile;
   final int unreadCount;
+  final String greetingLabel;
   final VoidCallback? onProfileTap;
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onSettingsTap;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final vcare = context.vcare;
     final avatarSize = compact ? 40.0 : 56.0;
 
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
+    return Padding(
       padding: EdgeInsets.fromLTRB(20, compact ? 8 : 16, 20, compact ? 8 : 16),
       child: Row(
         children: [
           GestureDetector(
             onTap: onProfileTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
+            child: SizedBox(
               width: avatarSize,
               height: avatarSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: vcare.border),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  UserProfileAvatar(
+                    name: profile.fullName,
+                    size: avatarSize,
+                    circular: true,
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: vcare.border),
+                    ),
+                  ),
+                ],
               ),
-              clipBehavior: Clip.antiAlias,
-              child: _ProfileAvatar(photoSource: profile.photoAsset),
             ),
           ),
           const SizedBox(width: 12),
@@ -61,7 +71,9 @@ class HomePageHeader extends StatelessWidget {
                   child: compact
                       ? const SizedBox.shrink()
                       : Text(
-                          'Welcome back',
+                          greetingLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 14,
                             color: vcare.mutedForeground,
@@ -70,13 +82,16 @@ class HomePageHeader extends StatelessWidget {
                         ),
                 ),
                 AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 250),
+                  duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut,
                   style:
                       (compact
                               ? Theme.of(context).textTheme.titleMedium
                               : Theme.of(context).textTheme.headlineMedium)
-                          ?.copyWith(height: 1.1) ??
+                          ?.copyWith(
+                            fontSize: compact ? 16 : 20,
+                            height: 1.1,
+                          ) ??
                       const TextStyle(),
                   child: Text(
                     profile.fullName,
@@ -97,21 +112,6 @@ class HomePageHeader extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({required this.photoSource});
-
-  final String photoSource;
-
-  @override
-  Widget build(BuildContext context) {
-    if (photoSource.startsWith('assets/')) {
-      return Image.asset(photoSource, fit: BoxFit.cover);
-    }
-
-    return CommonImage(assetsOrUrlOrPath: photoSource, fit: BoxFit.cover);
   }
 }
 

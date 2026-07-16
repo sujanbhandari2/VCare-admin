@@ -1,13 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_provider.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_session_scope.dart';
+import 'package:vcare_admin/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/features/main_wrapper/domain/enums/nav_item.dart';
-import 'package:flutter_template/features/main_wrapper/presentation/widgets/vcare_bottom_navigation.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/features/main_wrapper/presentation/widgets/vcare_bottom_navigation.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
+import 'package:vcare_admin/shared/navigation/tab_data_refresh_coordinator.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 import '../../../inapp_update/domain/entities/remote_config_app_update_info.dart';
 import '../../../inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
@@ -35,12 +44,32 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
   NavItem get _currentNavItem =>
       NavItem.fromBranchIndex(widget.shell.currentIndex);
 
+  bool _appliesShellBottomInset(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
+      return false;
+    }
+    return _showNavBar;
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(remoteConfigAppUpdateStateProvider.notifier).checkForUpdate();
+      if (ref.read(userLoggedInStateProvider)) {
+        unawaited(_bootstrapAuthenticatedSession());
+      }
     });
+  }
+
+  Future<void> _bootstrapAuthenticatedSession() async {
+    await ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true);
+    if (!mounted) return;
+    try {
+      await ref.read(healthMessengerSessionProvider.notifier).ensureStarted();
+    } catch (_) {
+      // Bootstrap error is stored on session state for Live Chat UI.
+    }
   }
 
   @override
@@ -60,7 +89,19 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
             : Brightness.dark,
       ),
       child: Scaffold(
-        body: widget.shell,
+        body: HealthMessengerSessionScope(
+          child: VCareMobileShellScope(
+            appliesBottomContentInset: _appliesShellBottomInset(context),
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: _appliesShellBottomInset(context)
+                    ? vcareMobileBottomNavContentPadding(context)
+                    : 0,
+              ),
+              child: widget.shell,
+            ),
+          ),
+        ),
         extendBody: true,
         bottomNavigationBar: AnimatedSize(
           duration: const Duration(milliseconds: 175),
@@ -72,6 +113,7 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
                       NavItem.branchIndexFor(item),
                       initialLocation: item == _currentNavItem,
                     );
+                    unawaited(refreshTabData(ref, item));
                   },
                 )
               : const SizedBox.shrink(),

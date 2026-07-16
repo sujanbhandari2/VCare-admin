@@ -1,4 +1,5 @@
-enum CareTeamRole { advocate, agent, provider, employer, insurance }
+import 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
+export 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
 
 enum RequestStatus { newRequest, inReview, actionNeeded, resolved }
 
@@ -17,6 +18,7 @@ class HomeMember {
     required this.dobLabel,
     this.groupNumber = 'GRP-22841',
     this.effectiveDate = 'Jan 1, 2026',
+    this.referralUrl,
   });
 
   final String fullName;
@@ -28,57 +30,19 @@ class HomeMember {
   final String dobLabel;
   final String groupNumber;
   final String effectiveDate;
+  final String? referralUrl;
 }
 
 class HomeProfile {
-  const HomeProfile({required this.fullName, required this.photoAsset});
-
-  final String fullName;
-  final String photoAsset;
-}
-
-class CareTeamMember {
-  const CareTeamMember({
-    required this.id,
-    required this.name,
-    required this.role,
-    this.photoAsset,
+  const HomeProfile({
+    required this.fullName,
     this.photoUrl,
-    this.logoText,
-    this.bio,
-    this.email,
-    this.phone,
-    this.website,
+    this.photoCacheKey,
   });
 
-  final String id;
-  final String name;
-  final CareTeamRole role;
-  final String? photoAsset;
+  final String fullName;
   final String? photoUrl;
-  final String? logoText;
-  final String? bio;
-  final String? email;
-  final String? phone;
-  final String? website;
-
-  String get roleLabel {
-    switch (role) {
-      case CareTeamRole.advocate:
-        return 'Advocate';
-      case CareTeamRole.agent:
-        return 'Agent';
-      case CareTeamRole.provider:
-        return 'Provider';
-      case CareTeamRole.employer:
-        return 'Employer';
-      case CareTeamRole.insurance:
-        return 'Insurance';
-    }
-  }
-
-  bool get isOrg =>
-      role == CareTeamRole.employer || role == CareTeamRole.insurance;
+  final String? photoCacheKey;
 }
 
 class Provider {
@@ -200,6 +164,7 @@ class SavedProviderItem {
     this.medicareNpi,
     this.phone,
     this.inNetwork = true,
+    this.providerSubtitle,
   });
 
   final String key;
@@ -212,6 +177,7 @@ class SavedProviderItem {
   final String? medicareNpi;
   final String? phone;
   final bool inNetwork;
+  final String? providerSubtitle;
 }
 
 class ActivityItem {

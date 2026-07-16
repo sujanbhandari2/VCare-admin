@@ -1,6 +1,6 @@
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
-import 'package:flutter_template/core/database/core/base_schema.dart';
-import 'package:flutter_template/core/database/tables/users/users_table.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/core/database/core/base_schema.dart';
+import 'package:vcare_admin/core/database/tables/users/users_table.dart';
 
 class UserSchema extends BaseSchema<UserProfile> {
   UserSchema({
@@ -57,10 +57,10 @@ class UserSchema extends BaseSchema<UserProfile> {
 
   @override
   UserProfile get toModel => UserProfile(
-        id: id,
-        firstName: firstName,
-        lastName: lastName,
-        username: username,
-        email: email,
-      );
+    id: id,
+    firstName: firstName,
+    lastName: lastName,
+    username: username,
+    email: email,
+  );
 }

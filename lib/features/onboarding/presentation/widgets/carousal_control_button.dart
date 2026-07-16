@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/shared/widgets/app_button.dart';
+import 'package:vcare_admin/shared/widgets/app_button.dart';
 
-import 'package:flutter_template/features/onboarding/domain/enums/onboarding_item.dart';
-import 'package:flutter_template/features/onboarding/presentation/providers/active_onboarding_item_provider.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/onboarding/domain/enums/onboarding_item.dart';
+import 'package:vcare_admin/features/onboarding/presentation/providers/active_onboarding_item_provider.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class CarousalControlButton extends ConsumerWidget {
   final void Function(OnboardingItem item)? onClick;

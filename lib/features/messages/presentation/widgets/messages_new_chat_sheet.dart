@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/care_avatar.dart';
-import 'package:flutter_template/features/messages/presentation/providers/message_groups_provider.dart';
-import 'package:flutter_template/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart';
+import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
+import 'package:vcare_admin/features/home/utils/care_team_utils.dart';
+import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 
-class MessagesNewChatSheet extends StatefulWidget {
+class MessagesNewChatSheet extends ConsumerStatefulWidget {
   const MessagesNewChatSheet({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -25,10 +26,11 @@ class MessagesNewChatSheet extends StatefulWidget {
   }
 
   @override
-  State<MessagesNewChatSheet> createState() => _MessagesNewChatSheetState();
+  ConsumerState<MessagesNewChatSheet> createState() =>
+      _MessagesNewChatSheetState();
 }
 
-class _MessagesNewChatSheetState extends State<MessagesNewChatSheet> {
+class _MessagesNewChatSheetState extends ConsumerState<MessagesNewChatSheet> {
   final _queryController = TextEditingController();
 
   @override
@@ -54,12 +56,13 @@ class _MessagesNewChatSheetState extends State<MessagesNewChatSheet> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final careTeam = ref.watch(careTeamStateProvider).members;
     final query = _queryController.text.trim().toLowerCase();
-    final suggested = HomeMockData.careTeam
+    final suggested = careTeam
         .where((member) => !isCareTeamOrgRole(member.role))
         .where((member) => _matches(member, query))
         .toList();
-    final organizations = HomeMockData.careTeam
+    final organizations = careTeam
         .where((member) => isCareTeamOrgRole(member.role))
         .where((member) => _matches(member, query))
         .toList();
@@ -131,7 +134,7 @@ class _MessagesNewChatSheetState extends State<MessagesNewChatSheet> {
                       for (final member in suggested)
                         _ChatPickRow(
                           member: member,
-                          online: ShellMockData.messageThreads().any(
+                          online: ShellMockData.messageThreads(careTeam: careTeam).any(
                             (thread) =>
                                 thread.contact.id == member.id &&
                                 thread.isOnline,

@@ -2,37 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/features/auth/presentation/pages/forgot_password_screen.dart';
-import 'package:flutter_template/features/auth/presentation/pages/vcare_login_screen.dart';
-import 'package:flutter_template/features/auth/presentation/pages/register_screen.dart';
-import 'package:flutter_template/features/ava/presentation/pages/ava_screen.dart';
-import 'package:flutter_template/features/cases/presentation/pages/cases_screen.dart';
-import 'package:flutter_template/features/clients/presentation/pages/client_detail_screen.dart';
-import 'package:flutter_template/features/clients/presentation/pages/clients_screen.dart';
-import 'package:flutter_template/features/find_care/presentation/pages/find_care_category_screen.dart';
-import 'package:flutter_template/features/find_care/presentation/pages/find_care_screen.dart';
-import 'package:flutter_template/features/find_care/presentation/pages/provider_detail_screen.dart';
-import 'package:flutter_template/features/home/presentation/pages/card_edit_screen.dart';
-import 'package:flutter_template/features/home/presentation/pages/care_team_detail_screen.dart';
-import 'package:flutter_template/features/home/presentation/pages/care_team_screen.dart';
-import 'package:flutter_template/features/home/presentation/pages/home_activity_screen.dart';
-import 'package:flutter_template/features/home/presentation/pages/home_screen.dart';
-import 'package:flutter_template/features/home/presentation/pages/id_card_screen.dart';
-import 'package:flutter_template/features/cases/presentation/pages/request_detail_screen.dart';
-import 'package:flutter_template/features/cases/presentation/pages/request_new_screen.dart';
-import 'package:flutter_template/features/loadable_list_demo/presentation/pages/loadable_list_demo_screen.dart';
-import 'package:flutter_template/features/messages/presentation/pages/messages_screen.dart';
-import 'package:flutter_template/features/profile/presentation/pages/profile_edit_screen.dart';
-import 'package:flutter_template/features/profile/presentation/pages/profile_screen.dart';
-import 'package:flutter_template/features/main_wrapper/presentation/pages/main_wrapper_screen.dart';
-import 'package:flutter_template/features/settings/presentation/pages/dynamic_theme_settings_screen.dart';
-import 'package:flutter_template/features/settings/presentation/pages/languages_settings_screen.dart';
-import 'package:flutter_template/features/settings/presentation/pages/settings_screen.dart';
-import 'package:flutter_template/features/splash/presentation/pages/vcare_splash_screen.dart';
-import 'package:flutter_template/features/find_care/presentation/pages/saved_providers_screen.dart';
-import 'package:flutter_template/features/onboarding/presentation/pages/onboarding_screen.dart';
-import 'package:flutter_template/features/vcare_sync/presentation/pages/vcare_parity_screens.dart'
-    hide FindCareCategoryScreen;
+import 'package:vcare_admin/features/auth/presentation/pages/forgot_password_screen.dart';
+import 'package:vcare_admin/features/auth/presentation/pages/vcare_login_screen.dart';
+import 'package:vcare_admin/features/auth/presentation/pages/register_screen.dart';
+// AVA tab disabled — restore when AVA returns to the bottom nav.
+// import 'package:vcare_admin/features/ava/presentation/pages/ava_screen.dart';
+import 'package:vcare_admin/features/cases/presentation/pages/cases_screen.dart';
+import 'package:vcare_admin/features/clients/presentation/pages/client_detail_screen.dart';
+import 'package:vcare_admin/features/clients/presentation/pages/clients_screen.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/find_care_category_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/find_care_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/find_care_search_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_detail_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_lookup_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/provider_detail_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/card_edit_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/care_team_detail_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/care_team_edit_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/care_team_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/home_activity_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/home_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/id_card_screen.dart';
+import 'package:vcare_admin/features/cases/presentation/pages/request_detail_screen.dart';
+import 'package:vcare_admin/features/cases/presentation/pages/request_new_screen.dart';
+import 'package:vcare_admin/features/commission/presentation/pages/commission_detail_screen.dart';
+import 'package:vcare_admin/features/loadable_list_demo/presentation/pages/loadable_list_demo_screen.dart';
+import 'package:vcare_admin/features/messages/presentation/pages/live_chat_screen.dart';
+import 'package:vcare_admin/features/profile/presentation/pages/family_member_edit_screen.dart';
+import 'package:vcare_admin/features/profile/presentation/pages/profile_edit_screen.dart';
+import 'package:vcare_admin/features/profile/presentation/pages/profile_screen.dart';
+import 'package:vcare_admin/features/main_wrapper/presentation/pages/main_wrapper_screen.dart';
+import 'package:vcare_admin/features/settings/presentation/pages/dynamic_theme_settings_screen.dart';
+import 'package:vcare_admin/features/settings/presentation/pages/languages_settings_screen.dart';
+import 'package:vcare_admin/features/settings/presentation/pages/settings_screen.dart';
+import 'package:vcare_admin/features/splash/presentation/pages/vcare_splash_screen.dart';
+import 'package:vcare_admin/features/find_care/presentation/pages/saved_providers_screen.dart';
+import 'package:vcare_admin/features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'package:vcare_admin/features/notifications/presentation/pages/notifications_screen.dart';
+import 'package:vcare_admin/features/documents/presentation/pages/documents_screen.dart';
+import 'package:vcare_admin/features/vcare_sync/presentation/pages/vcare_parity_screens.dart'
+    hide CareTeamEditScreen, FindCareCategoryScreen, NotificationsScreen;
 
 import '../../features/auth/presentation/providers/user_logged_in_state_provider.dart';
 
@@ -77,6 +87,7 @@ class AppRouter {
   static const careTeam = "/care-team";
   static const careTeamDetail = "/care-team/:id";
   static const activity = "/activity";
+  static const commissions = "/commissions";
   static const savedProviders = "/profile/saved-providers";
   static const idCardNew = "/id-card/new";
   static const idCardEdit = "/id-card/:id";
@@ -90,6 +101,7 @@ class AppRouter {
   static const careTeamEditName = "care-team-edit";
   static const careTeamDetailName = "care-team-detail";
   static const activityName = "activity";
+  static const commissionsName = "commissions";
   static const savedProvidersName = "saved-providers";
   static const clientsName = "clients";
   static const clientDetailName = "client-detail";
@@ -223,7 +235,9 @@ class AppRouter {
                     pageBuilder: (_, state) => _pageBuilder(
                       state: state,
                       transitionType: TransitionType.slide,
-                      child: const FindCareSearchScreen(),
+                      child: FindCareSearchScreen(
+                        initialQuery: state.uri.queryParameters['q'],
+                      ),
                     ),
                   ),
                   GoRoute(
@@ -247,13 +261,35 @@ class AppRouter {
                   GoRoute(
                     path: 'provider/medicare/:npi',
                     name: medicareProviderDetailName,
-                    pageBuilder: (_, state) => _pageBuilder(
-                      state: state,
-                      transitionType: TransitionType.slide,
-                      child: MedicareProviderDetailScreen(
-                        npi: state.pathParameters['npi'] ?? '',
-                      ),
-                    ),
+                    pageBuilder: (_, state) {
+                      final extra = state.extra;
+                      MedicareProviderLookupRow? passedRow;
+                      Map<String, String>? passedRaw;
+                      if (extra is Map) {
+                        final row = extra['row'];
+                        final raw = extra['raw'];
+                        if (row is MedicareProviderLookupRow) {
+                          passedRow = row;
+                        }
+                        if (raw is Map) {
+                          passedRaw = raw.map(
+                            (key, value) => MapEntry(
+                              key.toString(),
+                              value.toString(),
+                            ),
+                          );
+                        }
+                      }
+                      return _pageBuilder(
+                        state: state,
+                        transitionType: TransitionType.slide,
+                        child: MedicareProviderDetailScreen(
+                          npi: state.pathParameters['npi'] ?? '',
+                          passedRow: passedRow,
+                          passedRaw: passedRaw,
+                        ),
+                      );
+                    },
                   ),
                   GoRoute(
                     path: 'provider/:id',
@@ -370,62 +406,13 @@ class AppRouter {
                     ),
                   ),
                   GoRoute(
-                    path: 'profile',
-                    name: toName(profile),
+                    path: 'commissions',
+                    name: commissionsName,
                     pageBuilder: (_, state) => _pageBuilder(
                       state: state,
                       transitionType: TransitionType.slide,
-                      child: const ProfileScreen(),
+                      child: const CommissionDetailScreen(),
                     ),
-                    routes: [
-                      GoRoute(
-                        path: 'edit',
-                        name: profileEditName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const ProfileEditScreen(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'address',
-                        name: profileAddressName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const ProfileEditScreen(addressOnly: true),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'documents',
-                        name: documentsName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const DocumentsScreen(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'family/new',
-                        name: familyMemberNewName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const FamilyMemberEditScreen(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'family/:id',
-                        name: familyMemberEditName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: FamilyMemberEditScreen(
-                            memberId: state.pathParameters['id'],
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                   GoRoute(
                     path: 'notifications',
@@ -502,7 +489,7 @@ class AppRouter {
                 path: messages,
                 name: toName(messages),
                 pageBuilder: (_, state) =>
-                    _pageBuilder(state: state, child: const MessagesScreen()),
+                    _pageBuilder(state: state, child: const LiveChatScreen()),
                 routes: [
                   GoRoute(
                     path: 'care-team/:id',
@@ -546,13 +533,73 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: ava,
-                name: toName(ava),
+                path: profile,
+                name: toName(profile),
                 pageBuilder: (_, state) =>
-                    _pageBuilder(state: state, child: const AvaScreen()),
+                    _pageBuilder(state: state, child: const ProfileScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: profileEditName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const ProfileEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'address',
+                    name: profileAddressName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const ProfileEditScreen(addressOnly: true),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'documents',
+                    name: documentsName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const DocumentsScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'family/new',
+                    name: familyMemberNewName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const FamilyMemberEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'family/:id',
+                    name: familyMemberEditName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: FamilyMemberEditScreen(
+                        memberId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+          // AVA tab disabled — restore when AVA returns to the bottom nav.
+          // StatefulShellBranch(
+          //   routes: [
+          //     GoRoute(
+          //       path: ava,
+          //       name: toName(ava),
+          //       pageBuilder: (_, state) =>
+          //           _pageBuilder(state: state, child: const AvaScreen()),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
       GoRoute(

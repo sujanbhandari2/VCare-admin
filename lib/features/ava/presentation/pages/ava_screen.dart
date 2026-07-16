@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/features/ava/data/ava_mock_data.dart';
-import 'package:flutter_template/features/ava/domain/entities/ava_message.dart';
-import 'package:flutter_template/features/ava/presentation/providers/ava_state_provider.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_composer.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_message_list.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/ava/data/ava_mock_data.dart';
+import 'package:vcare_admin/features/ava/domain/entities/ava_message.dart';
+import 'package:vcare_admin/features/ava/presentation/providers/ava_state_provider.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_composer.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_message_list.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_page_header.dart';
 
 /// AVA chat screen — parity with vcareapp [/ava] + [AvaChatPanel].
 class AvaScreen extends ConsumerStatefulWidget {
@@ -72,6 +72,9 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
     ref.read(avaStateProvider.notifier).deleteMessage(id);
   }
 
+  Future<void> _onRefresh() =>
+      ref.read(avaStateProvider.notifier).refreshMessages();
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(avaStateProvider);
@@ -87,13 +90,13 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const AvaPageHeader(),
-            Expanded(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AvaPageHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
               child: AvaMessageList(
                 scrollController: _scrollController,
                 messages: messages,
@@ -105,15 +108,15 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
                     context.pushNamed(AppRouter.requestNewName),
               ),
             ),
-            AvaComposer(
-              controller: _composer,
-              editingId: state.editingId,
-              canSend: _composer.text.trim().isNotEmpty,
-              onSend: () => _send(),
-              onCancelEdit: _cancelEdit,
-            ),
-          ],
-        ),
+          ),
+          AvaComposer(
+            controller: _composer,
+            editingId: state.editingId,
+            canSend: _composer.text.trim().isNotEmpty,
+            onSend: () => _send(),
+            onCancelEdit: _cancelEdit,
+          ),
+        ],
       ),
     );
   }

@@ -1,7 +1,8 @@
 {
   "app_name": "VCare client",
   "app_name_dev": "VCare client - Dev",
-  "app_name_staging": "VCare client - Staging",
+  "app_name_qa": "VCare client - QA",
+  "app_name_uat": "VCare client - UAT",
   "tab_home": "घर",
   "tab_map": "नक्सा",
   "tab_profile": "प्रोफाइल",

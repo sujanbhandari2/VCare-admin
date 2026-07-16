@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/find_care/data/find_care_mock_data.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/provider_favorites_provider.dart';
-import 'package:flutter_template/features/find_care/presentation/widgets/provider_detail_info_row.dart';
-import 'package:flutter_template/features/home/data/home_models.dart'
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/provider_detail_info_row.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart'
     as home_models;
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// Layout tokens from vcareapp `ProviderDetailBody` (`px-5`, `space-y-5`, etc.).
 abstract final class ProviderDetailLayout {
@@ -69,11 +71,11 @@ class ProviderDetailScreen extends ConsumerWidget {
             child: VcarePageHeader(title: 'Provider', showBack: true),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               ProviderDetailLayout.horizontalPadding,
               0,
               ProviderDetailLayout.horizontalPadding,
-              40,
+              context.mobileShellBottomContentPadding,
             ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
@@ -84,17 +86,13 @@ class ProviderDetailScreen extends ConsumerWidget {
                     final saved = ref
                         .read(providerFavoritesProvider.notifier)
                         .toggle(provider.id);
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            saved
-                                ? 'Provider saved: ${provider.name}'
-                                : 'Provider removed: ${provider.name}',
-                          ),
-                        ),
-                      );
+                    context.showVcareToast(
+                      title: saved ? 'Provider saved' : 'Provider removed',
+                      description: provider.name,
+                      variant: saved
+                          ? VcareToastVariant.success
+                          : VcareToastVariant.info,
+                    );
                   },
                 ),
                 const SizedBox(height: ProviderDetailLayout.sectionGap),
@@ -121,9 +119,11 @@ class ProviderDetailScreen extends ConsumerWidget {
     final digits = phone.replaceAll(RegExp(r'\D'), '');
     final launched = await launchUrlString('tel:$digits');
     if (!launched && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not call $phone')));
+      context.showVcareToast(
+        title: 'Could not call',
+        description: phone,
+        variant: VcareToastVariant.destructive,
+      );
     }
   }
 
@@ -136,8 +136,9 @@ class ProviderDetailScreen extends ConsumerWidget {
       'https://www.google.com/maps/search/?api=1&query=$query',
     );
     if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open directions.')),
+      context.showVcareToast(
+        title: 'Could not open directions.',
+        variant: VcareToastVariant.destructive,
       );
     }
   }
@@ -221,12 +222,11 @@ class _ProviderHeroCard extends StatelessWidget {
               minimumSize: const Size(40, 40),
             ),
             icon: Icon(
-              LucideIcons.heart,
+              isFavorite ? Icons.favorite : Icons.favorite_border,
               size: 20,
               color: isFavorite
                   ? VCareColors.destructive
                   : vcare.mutedForeground,
-              fill: isFavorite ? 1.0 : 0.0,
             ),
           ),
         ],

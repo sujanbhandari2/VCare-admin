@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_activity_builder.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_section_header.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_activity_status_chip.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_section_header.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_activity_status_chip.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
 
 class HomeRecentActivitySection extends StatelessWidget {
   const HomeRecentActivitySection({
@@ -23,28 +24,34 @@ class HomeRecentActivitySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HomeSectionHeader(
           title: 'To do list',
-          seeAllLabel: 'See all',
+          seeAllLabel: items.isNotEmpty ? 'See all' : null,
           onSeeAll: onSeeAll,
         ),
-        Column(
-          children: [
-            for (final item in items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _ActivityCard(
-                  item: item,
-                  onTap: () => onItemTap?.call(item),
+        if (items.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.listChecks,
+            title: 'No tasks yet',
+            description:
+                'Action items and updates will appear here when something needs your attention.',
+          )
+        else
+          Column(
+            children: [
+              for (final item in items)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _ActivityCard(
+                    item: item,
+                    onTap: () => onItemTap?.call(item),
+                  ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }
@@ -95,12 +102,12 @@ class _ActivityRow extends StatelessWidget {
             (item.photoUrl != null || item.photoAsset != null))
           ClipOval(
             child: item.photoUrl != null
-                ? CachedNetworkImage(
+                ? VCareCachedImage(
                     imageUrl: item.photoUrl!,
                     width: 40,
                     height: 40,
                     fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => _IconTile(
+                    errorWidget: _IconTile(
                       icon: LucideIcons.user,
                       background: vcare.muted,
                       foreground: vcare.mutedForeground,

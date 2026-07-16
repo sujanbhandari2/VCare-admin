@@ -36,7 +36,9 @@ class FcmDeviceAddedOrUpdatedResponseModel {
     );
   }
 
-  factory FcmDeviceAddedOrUpdatedResponseModel.fromJson(Map<String, dynamic> json){
+  factory FcmDeviceAddedOrUpdatedResponseModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return FcmDeviceAddedOrUpdatedResponseModel(
       id: json["id"],
       name: json["name"],
@@ -59,7 +61,7 @@ class FcmDeviceAddedOrUpdatedResponseModel {
   };
 
   @override
-  String toString(){
+  String toString() {
     return "$id, $name, $registrationId, $deviceId, $active, $dateCreated, $type, ";
   }
 }

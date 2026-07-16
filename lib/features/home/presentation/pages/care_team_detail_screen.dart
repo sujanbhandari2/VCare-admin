@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/care_avatar.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart';
+import 'package:vcare_admin/features/home/utils/care_team_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
-class CareTeamDetailScreen extends StatefulWidget {
+class CareTeamDetailScreen extends ConsumerStatefulWidget {
   const CareTeamDetailScreen({super.key, required this.memberId});
 
   final String memberId;
 
   @override
-  State<CareTeamDetailScreen> createState() => _CareTeamDetailScreenState();
+  ConsumerState<CareTeamDetailScreen> createState() =>
+      _CareTeamDetailScreenState();
 }
 
-class _CareTeamDetailScreenState extends State<CareTeamDetailScreen> {
+class _CareTeamDetailScreenState extends ConsumerState<CareTeamDetailScreen> {
   final TextEditingController _composer = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late List<ChatMessage> _messages;
@@ -30,7 +39,6 @@ class _CareTeamDetailScreenState extends State<CareTeamDetailScreen> {
     _messages = List.from(
       HomeMockData.messagesByContact[widget.memberId] ?? [],
     );
-    // Sorting by date just in case, though mock is sorted.
     _messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
@@ -113,8 +121,9 @@ class _CareTeamDetailScreenState extends State<CareTeamDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final team = ref.watch(careTeamStateProvider).members;
     CareTeamMember? member;
-    for (final entry in HomeMockData.careTeam) {
+    for (final entry in team) {
       if (entry.id == widget.memberId) {
         member = entry;
         break;
@@ -122,19 +131,36 @@ class _CareTeamDetailScreenState extends State<CareTeamDetailScreen> {
     }
 
     if (member == null) {
-      return const Scaffold(body: Center(child: Text('Contact not found')));
+      return Scaffold(
+        body: Column(
+          children: [
+            const VcareStickyPageHeader(title: 'Not found', showBack: true),
+            const Expanded(
+              child: Center(child: Text('Contact not found')),
+            ),
+          ],
+        ),
+      );
     }
 
     final isOrg = member.isOrg;
+    final canEdit = !isCareTeamSystemContact(member.id);
 
     return Scaffold(
       body: Column(
         children: [
-          VcarePageHeader(title: member.name, showBack: true),
+          VcareStickyPageHeader(
+            title: member.name,
+            showBack: true,
+          ),
           Expanded(
             child: Column(
               children: [
-                _DetailProfileCard(member: member, isOrg: isOrg),
+                _DetailProfileCard(
+                  member: member,
+                  isOrg: isOrg,
+                  canEdit: canEdit,
+                ),
                 Expanded(
                   child: isOrg
                       ? _OrgInfoBody(member: member)
@@ -163,75 +189,130 @@ class _CareTeamDetailScreenState extends State<CareTeamDetailScreen> {
 }
 
 class _DetailProfileCard extends StatelessWidget {
-  const _DetailProfileCard({required this.member, required this.isOrg});
+  const _DetailProfileCard({
+    required this.member,
+    required this.isOrg,
+    required this.canEdit,
+  });
 
   final CareTeamMember member;
   final bool isOrg;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: vcare.muted.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          children: [
-            CareAvatar(member: member, size: 56),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    member.roleLabel.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: VCareColors.secondary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    member.bio ?? '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: vcare.mutedForeground,
-                      height: 1.3,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: vcare.muted.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 8),
-            Row(
+            child: Row(
               children: [
-                _CircularButton(
-                  icon: LucideIcons.phone,
-                  color: VCareColors.primary,
-                  onTap: () {},
-                ),
-                if (!isOrg) ...[
-                  const SizedBox(width: 6),
-                  _CircularButton(
-                    icon: LucideIcons.mail,
-                    color: Colors.white,
-                    iconColor: vcare.mutedForeground,
-                    onTap: () {},
-                    showBorder: true,
+                CareAvatar(member: member, size: 56),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.roleLabel.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                          color: vcare.accent,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        member.bio ?? '',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: vcare.mutedForeground,
+                          height: 1.3,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    if (member.phone != null)
+                      _CircularButton(
+                        icon: LucideIcons.phone,
+                        color: VCareColors.primary,
+                        onTap: () => launchUrlString('tel:${member.phone}'),
+                      ),
+                    if (!isOrg && member.email != null) ...[
+                      const SizedBox(width: 6),
+                      _CircularButton(
+                        icon: LucideIcons.mail,
+                        color: Colors.white,
+                        iconColor: vcare.mutedForeground,
+                        onTap: () => launchUrlString('mailto:${member.email}'),
+                        showBorder: true,
+                      ),
+                    ],
+                    if (canEdit) ...[
+                      const SizedBox(width: 6),
+                      _CircularButton(
+                        icon: LucideIcons.pencil,
+                        color: Colors.white,
+                        iconColor: vcare.mutedForeground,
+                        onTap: () => context.pushNamed(
+                          AppRouter.careTeamEditName,
+                          pathParameters: {'id': member.id},
+                        ),
+                        showBorder: true,
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
+          ),
+          if (!isOrg && member.website != null) ...[
+            const SizedBox(height: 12),
+            Material(
+              color: vcare.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: vcare.border),
+              ),
+              child: InkWell(
+                onTap: () => launchUrlString(member.website!),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(LucideIcons.globe, size: 16, color: VCareColors.foreground),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Visit website',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -309,16 +390,16 @@ class _MessageList extends StatelessWidget {
 
     return ListView.builder(
       controller: scrollController,
-      reverse: true, // Start from bottom
+      reverse: true,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       itemCount: messages.length,
       itemBuilder: (context, index) {
         final m = messages[index];
         final isMe = m.sender == 'me';
 
-        bool showDate = true;
+        var showDate = true;
         if (index < messages.length - 1) {
-          final next = messages[index + 1]; // next is older in reverse list
+          final next = messages[index + 1];
           showDate =
               m.createdAt.day != next.createdAt.day ||
               m.createdAt.month != next.createdAt.month;
@@ -480,13 +561,12 @@ class _SmallCareAvatar extends StatelessWidget {
     } else if (member.photoUrl != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          member.photoUrl!,
+        child: VCareCachedImage(
+          imageUrl: member.photoUrl!,
           width: 28,
           height: 28,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              _DefaultAvatar(vcare: vcare, name: member.name),
+          errorWidget: _DefaultAvatar(vcare: vcare, name: member.name),
         ),
       );
     }
@@ -538,10 +618,14 @@ class _ChatComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 8, 20, bottom + 12),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        8,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
       ),
@@ -619,7 +703,7 @@ class _ChatComposer extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Material(
-                  color: VCareColors.primary.withValues(alpha: 0.4),
+                  color: VCareColors.primary,
                   shape: const CircleBorder(),
                   child: InkWell(
                     onTap: onSend,
@@ -652,12 +736,50 @@ class _OrgInfoBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final rows = <MapEntry<String, String>>[
-      if (member.phone != null) MapEntry('Phone', member.phone!),
-      if (member.email != null) MapEntry('Email', member.email!),
-      if (member.role == CareTeamRole.insurance)
-        const MapEntry('Policy #', 'alex.rivera@example.com'),
-      const MapEntry('Group #', 'GRP-22841'),
+    final rows = <_OrgInfoEntry>[
+      if (member.phone != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.phone,
+          label: 'Phone',
+          value: member.phone!,
+        ),
+      if (member.email != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.mail,
+          label: 'Email',
+          value: member.email!,
+        ),
+      if (member.website != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.globe,
+          label: 'Website',
+          value: member.website!,
+          onTap: () => launchUrlString(member.website!),
+        ),
+      if (member.address != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.mapPin,
+          label: 'Address',
+          value: member.address!,
+        ),
+      if (member.hours != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.clock,
+          label: 'Hours',
+          value: member.hours!,
+        ),
+      if (member.policyNumber != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.fileText,
+          label: 'Policy #',
+          value: member.policyNumber!,
+        ),
+      if (member.groupNumber != null)
+        _OrgInfoEntry(
+          icon: LucideIcons.fileText,
+          label: 'Group #',
+          value: member.groupNumber!,
+        ),
     ];
 
     return ListView(
@@ -666,15 +788,15 @@ class _OrgInfoBody extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: vcare.card,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: vcare.border),
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               for (var i = 0; i < rows.length; i++)
                 _OrgInfoRow(
-                  label: rows[i].key,
-                  value: rows[i].value,
+                  entry: rows[i],
                   showDivider: i < rows.length - 1,
                 ),
             ],
@@ -685,47 +807,77 @@ class _OrgInfoBody extends StatelessWidget {
   }
 }
 
-class _OrgInfoRow extends StatelessWidget {
-  const _OrgInfoRow({
+class _OrgInfoEntry {
+  const _OrgInfoEntry({
+    required this.icon,
     required this.label,
     required this.value,
-    required this.showDivider,
+    this.onTap,
   });
 
+  final IconData icon;
   final String label;
   final String value;
+  final VoidCallback? onTap;
+}
+
+class _OrgInfoRow extends StatelessWidget {
+  const _OrgInfoRow({required this.entry, required this.showDivider});
+
+  final _OrgInfoEntry entry;
   final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+
+    final content = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(entry.icon, size: 16, color: vcare.mutedForeground),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.label.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                    fontWeight: FontWeight.w600,
+                    color: vcare.mutedForeground,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  entry.value,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return DecoratedBox(
       decoration: BoxDecoration(
         border: showDivider
             ? Border(bottom: BorderSide(color: vcare.border))
             : null,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10,
-              letterSpacing: 0.8,
-              fontWeight: FontWeight.w700,
-              color: vcare.mutedForeground,
+      child: entry.onTap == null
+          ? content
+          : Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: entry.onTap,
+                child: content,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Status chip colors aligned with vcareapp `HomeActivityRow.statusChipClass`.
 class HomeActivityStatusChip extends StatelessWidget {

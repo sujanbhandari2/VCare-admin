@@ -1,7 +1,7 @@
-import 'package:flutter_template/core/config/env/env_keys.dart';
-import 'package:flutter_template/core/config/env/env.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/config/flavor/flavor.dart';
+import 'package:vcare_admin/core/config/env/env_keys.dart';
+import 'package:vcare_admin/core/config/env/env.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/flavor.dart';
 
 class DevelopmentConfiguration extends Configuration {
   /// Private internal constructor
@@ -22,5 +22,5 @@ class DevelopmentConfiguration extends Configuration {
   Flavor get flavor => .dev;
 
   @override
-  String get apiBaseUrl => baseUrl;
+  String get apiBaseUrl => apiBaseUrlV1;
 }

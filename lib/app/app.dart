@@ -4,14 +4,14 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/app_theme.dart';
-import 'package:flutter_template/core/styles/text_scale_provider.dart';
-import 'package:flutter_template/core/styles/theme_appearance_provider.dart';
-import 'package:flutter_template/core/styles/theme_mode_provider.dart';
-import 'package:flutter_template/features/inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
-import 'package:flutter_template/l10n/app_localizations.dart';
-import 'package:flutter_template/l10n/l10n.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/app_theme.dart';
+import 'package:vcare_admin/core/styles/text_scale_provider.dart';
+import 'package:vcare_admin/core/styles/theme_appearance_provider.dart';
+import 'package:vcare_admin/core/styles/theme_mode_provider.dart';
+import 'package:vcare_admin/features/inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
+import 'package:vcare_admin/l10n/app_localizations.dart';
+import 'package:vcare_admin/l10n/l10n.dart';
 
 import '../core/services/firebase/firebase_remote_config_service.dart';
 

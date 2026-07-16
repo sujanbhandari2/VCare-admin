@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.itheamc.flutter_template"
+    namespace = "com.vcare.admin"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -18,19 +18,25 @@ android {
     productFlavors {
         create("dev") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client - Dev")
+            resValue("string", "app_name", "VCare Admin - Dev")
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
         }
-        create("staging") {
+        create("qa") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client - Staging")
-            applicationIdSuffix = ".staging"
-            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "VCare Admin - QA")
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+        }
+        create("uat") {
+            dimension = "flavor"
+            resValue("string", "app_name", "VCare Admin - UAT")
+            applicationIdSuffix = ".uat"
+            versionNameSuffix = "-uat"
         }
         create("prod") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client")
+            resValue("string", "app_name", "VCare Admin")
         }
     }
 
@@ -48,7 +54,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.itheamc.flutter_template"
+        applicationId = "com.vcare.admin"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

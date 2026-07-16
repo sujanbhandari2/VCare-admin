@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter_template/features/loadable_list_demo/domain/models/demo_list_item.dart';
+import 'package:vcare_admin/features/loadable_list_demo/domain/models/demo_list_item.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../shared/state/loadable_list_state.dart';
@@ -12,19 +12,17 @@ part 'loadable_list_demo_state_provider.g.dart';
 class LoadableListDemoState extends _$LoadableListDemoState {
   static const int _pageSize = 20;
 
-  final List<DemoListItem> _allItems = List<DemoListItem>.generate(87, (index) => DemoListItem.value(index + 1));
+  final List<DemoListItem> _allItems = List<DemoListItem>.generate(
+    87,
+    (index) => DemoListItem.value(index + 1),
+  );
 
   int _currentPage = 0;
-  bool _simulateEmpty = false;
   bool _failNextInitial = false;
   bool _failNextLoadMore = false;
 
   @override
   LoadableListState<DemoListItem> build() => LoadableListState<DemoListItem>();
-
-  void setSimulateEmpty(bool value) {
-    _simulateEmpty = value;
-  }
 
   void failNextInitialLoad() {
     _failNextInitial = true;
@@ -42,12 +40,6 @@ class LoadableListDemoState extends _$LoadableListDemoState {
     if (_failNextInitial) {
       _failNextInitial = false;
       state = state.failure('Simulated initial load failure');
-      return;
-    }
-
-    if (_simulateEmpty) {
-      _currentPage = 0;
-      state = state.success(items: const [], total: _allItems.length);
       return;
     }
 
@@ -87,8 +79,6 @@ class LoadableListDemoState extends _$LoadableListDemoState {
     final nextItems = _allItems.sublist(start, end);
     _currentPage += 1;
 
-    state = state.appendSuccess(
-      appendedItems: nextItems,
-    );
+    state = state.appendSuccess(appendedItems: nextItems);
   }
 }

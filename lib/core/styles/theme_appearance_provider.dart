@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
-import 'package:flutter_template/core/styles/app_colors.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/core/styles/app_colors.dart';
 
 enum AppColorSchemeStyle {
   tonalSpot(DynamicSchemeVariant.tonalSpot),

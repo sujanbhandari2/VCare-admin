@@ -1,18 +1,18 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
-import 'package:flutter_template/features/profile/utils/profile_utils.dart';
-import 'package:flutter_template/shared/widgets/common_image.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/user_profile_avatar.dart';
+import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 
 /// Parity with vcareapp ProfileSummaryCard.
-class ProfileSummaryCard extends StatelessWidget {
+class ProfileSummaryCard extends ConsumerWidget {
   const ProfileSummaryCard({
     super.key,
     required this.profile,
@@ -25,12 +25,15 @@ class ProfileSummaryCard extends StatelessWidget {
   final VoidCallback? onAddressTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final vcare = context.vcare;
     final address = profile.address;
     final dobLabel = profile.dob.isEmpty
         ? 'Add date of birth'
         : formatProfileDob(profile.dob);
+    final phoneLabel = profile.phone.isEmpty
+        ? ''
+        : AuthPhoneFormatter.formatInternationalDisplay(profile.phone);
 
     return Material(
       color: vcare.card,
@@ -48,7 +51,10 @@ class ProfileSummaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _ProfileAvatar(photoUrl: profile.photoUrl),
+                  UserProfileAvatar(
+                    name: profile.fullName,
+                    size: 64,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -100,48 +106,13 @@ class ProfileSummaryCard extends StatelessWidget {
               const SizedBox(height: 6),
               _DetailRow(icon: LucideIcons.mail, label: profile.email),
               const SizedBox(height: 6),
-              _DetailRow(icon: LucideIcons.phone, label: profile.phone),
+              _DetailRow(icon: LucideIcons.phone, label: phoneLabel),
               const SizedBox(height: 6),
               _AddressDetailRow(address: address, onAddressTap: onAddressTap),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({this.photoUrl});
-
-  final String? photoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final fallback = HomeMockData.member.photoAsset;
-    final source = photoUrl ?? fallback;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: source.startsWith('assets/')
-          ? CommonImage(
-              assetsOrUrlOrPath: source,
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-            )
-          : Image.file(
-              File(source),
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => CommonImage(
-                assetsOrUrlOrPath: fallback,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-              ),
-            ),
     );
   }
 }

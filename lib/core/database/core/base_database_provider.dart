@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-import 'package:flutter_template/shared/utils/logger.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 
 /// An abstract class that provides base functionality for SQLite database access.
 ///

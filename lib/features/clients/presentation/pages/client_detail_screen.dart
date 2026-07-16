@@ -1,39 +1,123 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/clients/data/clients_mock_data.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_tab_bar.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_tabs.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_details_drawer.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_status_chip.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_dependents_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_detail_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_documents_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_memberships_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_transactions_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tab_bar.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tabs.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_details_drawer.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_document_preview_dialog.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_transaction_detail_sheet.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// Client detail — parity with vcareapp [ClientDetailPage].
-class ClientDetailScreen extends StatefulWidget {
+class ClientDetailScreen extends ConsumerStatefulWidget {
   const ClientDetailScreen({super.key, required this.clientId});
 
   final String clientId;
 
   @override
-  State<ClientDetailScreen> createState() => _ClientDetailScreenState();
+  ConsumerState<ClientDetailScreen> createState() => _ClientDetailScreenState();
 }
 
-class _ClientDetailScreenState extends State<ClientDetailScreen>
+class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final Map<String, String> _txnNotes = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadClientData());
+  }
+
+  void _loadClientData() {
+    final clientId = widget.clientId;
+
+    final detailState = ref.read(clientDetailStateProvider(clientId));
+    if (detailState.data == null && !detailState.fetching) {
+      ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail();
+    }
+
+    final membershipsState = ref.read(clientMembershipsStateProvider(clientId));
+    if (membershipsState.data == null && !membershipsState.fetching) {
+      ref
+          .read(clientMembershipsStateProvider(clientId).notifier)
+          .fetchMemberships();
+    }
+
+    final dependentsState = ref.read(clientDependentsStateProvider(clientId));
+    if (dependentsState.dependents.isEmpty && !dependentsState.fetching) {
+      ref
+          .read(clientDependentsStateProvider(clientId).notifier)
+          .fetchDependents();
+    }
+
+    final paymentMethodsState = ref.read(
+      clientPaymentMethodsStateProvider(clientId),
+    );
+    if (paymentMethodsState.methods.isEmpty && !paymentMethodsState.fetching) {
+      ref
+          .read(clientPaymentMethodsStateProvider(clientId).notifier)
+          .fetchPaymentMethods();
+    }
+
+    final transactionsState = ref.read(clientTransactionsStateProvider(clientId));
+    if (!transactionsState.operation.isLoading &&
+        transactionsState.items.isEmpty &&
+        !transactionsState.operation.hasError) {
+      ref.read(clientTransactionsStateProvider(clientId).notifier).loadInitial();
+    }
+
+    final casesState = ref.read(clientCasesStateProvider(clientId));
+    if (!casesState.operation.isLoading &&
+        casesState.items.isEmpty &&
+        !casesState.operation.hasError) {
+      ref.read(clientCasesStateProvider(clientId).notifier).loadInitial();
+    }
+
+    final documentsState = ref.read(clientDocumentsStateProvider(clientId));
+    if (!documentsState.list.operation.isLoading &&
+        documentsState.list.items.isEmpty &&
+        !documentsState.list.operation.hasError) {
+      ref.read(clientDocumentsStateProvider(clientId).notifier).loadInitial();
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    final clientId = widget.clientId;
+    await Future.wait([
+      ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail(),
+      ref
+          .read(clientMembershipsStateProvider(clientId).notifier)
+          .fetchMemberships(),
+      ref.read(clientDependentsStateProvider(clientId).notifier).fetchDependents(),
+      ref
+          .read(clientPaymentMethodsStateProvider(clientId).notifier)
+          .fetchPaymentMethods(),
+      ref.read(clientTransactionsStateProvider(clientId).notifier).refresh(),
+      ref.read(clientCasesStateProvider(clientId).notifier).refresh(),
+      ref.read(clientDocumentsStateProvider(clientId).notifier).refresh(),
+    ]);
   }
 
   @override
@@ -44,31 +128,53 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final client = ClientsMockData.getById(widget.clientId);
-    if (client == null) {
+    final clientId = widget.clientId;
+    final detailState = ref.watch(clientDetailStateProvider(clientId));
+    final membershipsState = ref.watch(
+      clientMembershipsStateProvider(clientId),
+    );
+    final dependentsState = ref.watch(clientDependentsStateProvider(clientId));
+    final paymentMethodsState = ref.watch(
+      clientPaymentMethodsStateProvider(clientId),
+    );
+    final transactionsState = ref.watch(
+      clientTransactionsStateProvider(clientId),
+    );
+    final casesState = ref.watch(clientCasesStateProvider(clientId));
+    final documentsState = ref.watch(clientDocumentsStateProvider(clientId));
+
+    final detail = detailState.data;
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
+    final vcare = context.vcare;
+
+    if (detailState.fetching && detail == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (detail == null) {
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
-              child: VcarePageHeader(title: 'Client not found', showBack: true),
-            ),
-            SliverPadding(
-              padding: EdgeInsets.all(20),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "We couldn't find that client.",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: const Text('Back to clients'),
-                    ),
-                  ],
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: VcarePinnedPageTitleDelegate(
+                safeTop: safeTop,
+                textScaleFactor: textScaleFactor,
+                hasSubtitle: false,
+                title: vcareTabPageTitle(
+                  title: 'Client not found',
+                  showBack: true,
                 ),
+              ),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: VcareErrorStatePanel(
+                title: 'Client not found',
+                message: detailState.error,
+                actionLabel: 'Back to clients',
+                onAction: () => context.pop(),
               ),
             ),
           ],
@@ -77,20 +183,35 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
     }
 
     return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: client.fullName,
-              showBack: true,
-              action: IconButton(
-                onPressed: () => ClientDetailsDrawer.show(context, client),
-                icon: const Icon(LucideIcons.info, size: 18),
-                tooltip: 'Client details',
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: NestedScrollView(
+          physics: VcareRefreshScrollView.physics,
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
+              hasSubtitle: false,
+              title: vcareTabPageTitle(
+                title: detail.fullName,
+                showBack: true,
+                action: IconButton(
+                  onPressed: () => ClientDetailsDrawer.show(context, detail),
+                  icon: const Icon(LucideIcons.info, size: 16),
+                  tooltip: 'Client details',
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(32, 32),
+                    maximumSize: const Size(32, 32),
+                    padding: EdgeInsets.zero,
+                    foregroundColor: vcare.mutedForeground,
+                  ),
+                ),
               ),
             ),
           ),
-          SliverToBoxAdapter(child: _IdentityCard(client: client)),
+          SliverToBoxAdapter(child: _IdentityCard(detail: detail)),
           SliverPersistentHeader(
             pinned: true,
             delegate: ClientDetailTabBarHeader(
@@ -102,33 +223,89 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
           controller: _tabController,
           children: [
             ClientMembershipsTab(
-              client: client,
+              memberships: membershipsState.data?.memberships ?? const [],
+              dependents: dependentsState.dependents,
+              isLoading: membershipsState.fetching,
+              error: membershipsState.error,
+              isLoadingDependents: dependentsState.fetching,
+              dependentsError: dependentsState.error,
+              onRetry: () => ref
+                  .read(clientMembershipsStateProvider(clientId).notifier)
+                  .fetchMemberships(),
+              onRetryDependents: () => ref
+                  .read(clientDependentsStateProvider(clientId).notifier)
+                  .fetchDependents(),
               onMembershipInfo: (m) => _showMembershipNote(context, m),
             ),
             ClientBillingTab(
-              client: client,
-              onTransactionTap: (t) =>
-                  _showTransactionDetails(context, t, client.fullName),
+              clientId: clientId,
+              memberships: membershipsState.data?.memberships ?? const [],
+              paymentMethods: paymentMethodsState.methods,
+              transactionsState: transactionsState,
+              isLoadingPaymentMethods: paymentMethodsState.fetching,
+              paymentMethodsError: paymentMethodsState.error,
+              onRetryPaymentMethods: () => ref
+                  .read(clientPaymentMethodsStateProvider(clientId).notifier)
+                  .fetchPaymentMethods(),
+              onRetryTransactions: () => ref
+                  .read(clientTransactionsStateProvider(clientId).notifier)
+                  .loadInitial(),
+              onLoadMoreTransactions: () => ref
+                  .read(clientTransactionsStateProvider(clientId).notifier)
+                  .loadMore(),
+              onTransactionTap: (t) => _showTransactionDetails(
+                context,
+                transaction: t,
+                clientName: detail.fullName,
+                clientEmail: detail.email,
+                dependents: dependentsState.dependents,
+              ),
             ),
-            ClientCasesTab(client: client),
-            ClientDocumentsTab(client: client),
+            ClientCasesTab(
+              clientId: clientId,
+              casesState: casesState,
+              onRetry: () => ref
+                  .read(clientCasesStateProvider(clientId).notifier)
+                  .loadInitial(),
+              onLoadMore: () => ref
+                  .read(clientCasesStateProvider(clientId).notifier)
+                  .loadMore(),
+            ),
+            ClientDocumentsTab(
+              clientId: clientId,
+              documentsState: documentsState,
+              onRetry: () => ref
+                  .read(clientDocumentsStateProvider(clientId).notifier)
+                  .loadInitial(),
+              onLoadMore: () => ref
+                  .read(clientDocumentsStateProvider(clientId).notifier)
+                  .loadMore(),
+              onDocumentAction: (file, action) =>
+                  _handleDocumentAction(context, clientId, file, action),
+            ),
           ],
         ),
       ),
+    ),
     );
   }
 
   void _showTransactionDetails(
-    BuildContext context,
-    ClientTransaction transaction,
-    String clientName,
-  ) {
-    context.showBottomSheet<void>(
-      builder: (sheetContext) => _TransactionSheet(
-        transaction: transaction,
-        clientName: clientName,
-        onClose: () => Navigator.pop(sheetContext),
-      ),
+    BuildContext context, {
+    required ClientTransaction transaction,
+    required String clientName,
+    required String clientEmail,
+    required List<ClientDependent> dependents,
+  }) {
+    ClientTransactionDetailSheet.show(
+      context,
+      clientId: widget.clientId,
+      transaction: transaction,
+      clientName: clientName,
+      clientEmail: clientEmail,
+      dependents: dependents,
+      localNote: _txnNotes[transaction.id],
+      onNoteSaved: (note) => _txnNotes[transaction.id] = note,
     );
   }
 
@@ -141,12 +318,123 @@ class _ClientDetailScreenState extends State<ClientDetailScreen>
     );
   }
 
+  Future<void> _handleDocumentAction(
+    BuildContext context,
+    String clientId,
+    ClientFile file,
+    String action,
+  ) async {
+    switch (action) {
+      case 'preview':
+        await ClientDocumentPreviewDialog.show(context, file);
+      case 'download':
+        await _downloadDocument(context, file);
+      case 'rename':
+        await _renameDocument(context, clientId, file);
+      case 'delete':
+        await _deleteDocument(context, clientId, file);
+    }
+  }
+
+  Future<void> _downloadDocument(BuildContext context, ClientFile file) async {
+    if (file.url.startsWith('data:')) {
+      if (!context.mounted) return;
+      context.showVcareToast(
+        title: 'File saved locally on this device.',
+        variant: VcareToastVariant.success,
+      );
+      return;
+    }
+
+    final launched = await launchUrlString(
+      file.url,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!context.mounted) return;
+    if (!launched) {
+      context.showVcareToast(
+        title: 'Could not open ${file.name}.',
+        variant: VcareToastVariant.destructive,
+      );
+    }
+  }
+
+  Future<void> _renameDocument(
+    BuildContext context,
+    String clientId,
+    ClientFile file,
+  ) async {
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => _RenameDocumentDialog(initialName: file.name),
+    );
+
+    final trimmed = newName?.trim();
+    if (trimmed == null || trimmed.isEmpty || trimmed == file.name) return;
+    if (!context.mounted) return;
+
+    final result = await ref
+        .read(clientDocumentsStateProvider(clientId).notifier)
+        .renameDocument(documentId: file.id, name: trimmed);
+
+    if (!context.mounted) return;
+
+    if (result.success) {
+      context.showVcareToast(
+        title: 'Renamed',
+        description: trimmed,
+        variant: VcareToastVariant.info,
+      );
+    } else {
+      context.showVcareToast(
+        title: 'Could not rename document',
+        description: result.error,
+        variant: VcareToastVariant.destructive,
+      );
+    }
+  }
+
+  Future<void> _deleteDocument(
+    BuildContext context,
+    String clientId,
+    ClientFile file,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete document?'),
+        content: Text(
+          '${file.name} will be permanently removed. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    ref
+        .read(clientDocumentsStateProvider(clientId).notifier)
+        .removeLocalFile(file.id);
+  }
 }
 
 class _IdentityCard extends StatelessWidget {
-  const _IdentityCard({required this.client});
+  const _IdentityCard({required this.detail});
 
-  final Client client;
+  final ClientDetail detail;
 
   @override
   Widget build(BuildContext context) {
@@ -168,14 +456,14 @@ class _IdentityCard extends StatelessWidget {
                 child: SizedBox(
                   width: 56,
                   height: 56,
-                  child: CachedNetworkImage(
-                    imageUrl: client.avatarUrl,
+                  child: VCareCachedImage(
+                    imageUrl: detail.avatarUrl,
                     fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => ColoredBox(
+                    errorWidget: ColoredBox(
                       color: vcare.muted,
                       child: Center(
                         child: Text(
-                          clientInitials(client.fullName),
+                          clientInitials(detail.fullName),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -198,7 +486,7 @@ class _IdentityCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      client.fullName,
+                      detail.fullName,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -207,7 +495,7 @@ class _IdentityCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      client.email,
+                      detail.email,
                       style: TextStyle(
                         fontSize: 12,
                         color: vcare.mutedForeground,
@@ -221,12 +509,12 @@ class _IdentityCard extends StatelessWidget {
               _CircleAction(
                 icon: LucideIcons.phone,
                 filled: true,
-                onTap: () => launchUrlString('tel:${client.phone}'),
+                onTap: () => launchUrlString('tel:${detail.phone}'),
               ),
               const SizedBox(width: 8),
               _CircleAction(
                 icon: LucideIcons.mail,
-                onTap: () => launchUrlString('mailto:${client.email}'),
+                onTap: () => launchUrlString('mailto:${detail.email}'),
               ),
             ],
           ),
@@ -271,112 +559,8 @@ class _CircleAction extends StatelessWidget {
   }
 }
 
-
-class _TransactionSheet extends StatelessWidget {
-  const _TransactionSheet({
-    required this.transaction,
-    required this.clientName,
-    required this.onClose,
-  });
-
-  final ClientTransaction transaction;
-  final String clientName;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Material(
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: vcare.muted,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Transaction details',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(LucideIcons.x, size: 18),
-                  ),
-                ],
-              ),
-              Text(
-                transaction.reference,
-                style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-              ),
-              const SizedBox(height: 8),
-              ClientStatusChip.transaction(transaction.status),
-              const SizedBox(height: 12),
-              Text(
-                transaction.membershipTitle,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'Billed to $clientName',
-                style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '\$${transaction.amount.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (transaction.description != null) ...[
-                const SizedBox(height: 8),
-                Text(transaction.description!),
-              ],
-              if (transaction.note != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  transaction.note!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: vcare.mutedForeground,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MembershipNoteSheet extends StatelessWidget {
-  const _MembershipNoteSheet({
-    required this.membership,
-    required this.onClose,
-  });
+  const _MembershipNoteSheet({required this.membership, required this.onClose});
 
   final ClientMembership membership;
   final VoidCallback onClose;
@@ -428,6 +612,90 @@ class _MembershipNoteSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RenameDocumentDialog extends StatefulWidget {
+  const _RenameDocumentDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_RenameDocumentDialog> createState() => _RenameDocumentDialogState();
+}
+
+class _RenameDocumentDialogState extends State<_RenameDocumentDialog> {
+  late final TextEditingController _controller;
+  late final String _extension;
+
+  @override
+  void initState() {
+    super.initState();
+    final parts = splitDocumentFileName(widget.initialName);
+    _extension = parts.extension;
+    _controller = TextEditingController(text: parts.baseName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final baseName = _controller.text.trim();
+    if (baseName.isEmpty) return;
+
+    Navigator.pop(
+      context,
+      joinDocumentFileName(baseName: baseName, extension: _extension),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return AlertDialog(
+      title: const Text('Rename document'),
+      content: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Document name'),
+              onSubmitted: (_) => _submit(),
+            ),
+          ),
+          if (_extension.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                _extension,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: vcare.mutedForeground,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

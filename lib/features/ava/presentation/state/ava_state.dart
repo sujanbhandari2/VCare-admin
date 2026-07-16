@@ -1,4 +1,4 @@
-import 'package:flutter_template/shared/state/operation_state.dart';
+import 'package:vcare_admin/shared/state/operation_state.dart';
 import '../../domain/entities/ava_message.dart';
 
 class AvaState {

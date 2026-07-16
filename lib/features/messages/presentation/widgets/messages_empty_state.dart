@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class MessagesEmptyState extends StatelessWidget {
   const MessagesEmptyState({super.key});
@@ -55,7 +55,8 @@ class MessagesEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             FilledButton(
-              onPressed: () => context.push(AppRouter.careTeam),
+              onPressed: () =>
+                  context.pushNamed(AppRouter.careTeamName),
               style: FilledButton.styleFrom(
                 backgroundColor: VCareColors.primary,
                 foregroundColor: VCareColors.primaryForeground,

@@ -29,26 +29,22 @@ class DashPainter extends CustomPainter {
       ..strokeCap = strokeCap
       ..style = PaintingStyle.stroke;
 
-    Path path = dashPath(_getRRectPath(size, radius),
-        dashArray: CircularIntervalList(dashPattern));
+    Path path = dashPath(
+      _getRRectPath(size, radius),
+      dashArray: CircularIntervalList(dashPattern),
+    );
 
     canvas.drawPath(path, paint);
   }
 
   /// Method to return the rounded rectangular path
   Path _getRRectPath(Size size, Radius radius) {
-    return Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            0,
-            0,
-            size.width,
-            size.height,
-          ),
-          radius,
-        ),
-      );
+    return Path()..addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        radius,
+      ),
+    );
   }
 
   /// Method to return the dashed path
@@ -66,7 +62,9 @@ class DashPainter extends CustomPainter {
         final double len = dashArray.next;
         if (draw) {
           dest.addPath(
-              metric.extractPath(distance, distance + len), Offset.zero);
+            metric.extractPath(distance, distance + len),
+            Offset.zero,
+          );
         }
         distance += len;
         draw = !draw;
@@ -87,12 +85,12 @@ class DashPainter extends CustomPainter {
 /// Dash offset class
 class DashOffset {
   DashOffset.percentage(double percentage)
-      : _rawVal = percentage.clamp(0.0, 1.0),
-        _dashOffsetType = _DashOffsetType.percentage;
+    : _rawVal = percentage.clamp(0.0, 1.0),
+      _dashOffsetType = _DashOffsetType.percentage;
 
   const DashOffset.absolute(double start)
-      : _rawVal = start,
-        _dashOffsetType = _DashOffsetType.absolute;
+    : _rawVal = start,
+      _dashOffsetType = _DashOffsetType.absolute;
 
   final double _rawVal;
   final _DashOffsetType _dashOffsetType;

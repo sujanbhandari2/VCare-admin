@@ -3,14 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/presentation/widgets/care_avatar.dart';
-import 'package:flutter_template/features/vcare_sync/data/vcare_catalog.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart';
+import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class FindCareCategoryScreen extends StatelessWidget {
   const FindCareCategoryScreen({super.key, required this.slug});
@@ -46,63 +47,6 @@ class FindCareCategoryScreen extends StatelessWidget {
               child: _ProviderResultCard(provider: provider),
             ),
         ],
-      ],
-    );
-  }
-}
-
-class FindCareSearchScreen extends StatefulWidget {
-  const FindCareSearchScreen({super.key});
-
-  @override
-  State<FindCareSearchScreen> createState() => _FindCareSearchScreenState();
-}
-
-class _FindCareSearchScreenState extends State<FindCareSearchScreen> {
-  final _queryController = TextEditingController();
-
-  @override
-  void dispose() {
-    _queryController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final query = _queryController.text.trim().toLowerCase();
-    final results = VCareCatalog.providers.where((provider) {
-      if (query.isEmpty) return true;
-      return provider.name.toLowerCase().contains(query) ||
-          provider.specialty.toLowerCase().contains(query) ||
-          provider.city.toLowerCase().contains(query);
-    }).toList();
-
-    return _VcareScaffold(
-      title: 'Search Providers',
-      subtitle: 'Name, specialty, facility, or city',
-      showBack: true,
-      children: [
-        _SearchBox(
-          controller: _queryController,
-          hint: 'Search providers',
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 14),
-        _SectionLabel('${results.length} results'),
-        const SizedBox(height: 10),
-        if (results.isEmpty)
-          const _EmptyPanel(
-            icon: LucideIcons.searchX,
-            title: 'No providers found',
-            subtitle:
-                'Try a specialty like Pediatrics, Therapy, or Urgent Care.',
-          )
-        else
-          for (final provider in results)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ProviderResultCard(provider: provider),
-            ),
       ],
     );
   }
@@ -272,146 +216,6 @@ class ProcedureDetailScreen extends StatelessWidget {
   }
 }
 
-class MedicareProviderLookupScreen extends StatefulWidget {
-  const MedicareProviderLookupScreen({super.key});
-
-  @override
-  State<MedicareProviderLookupScreen> createState() =>
-      _MedicareProviderLookupScreenState();
-}
-
-class _MedicareProviderLookupScreenState
-    extends State<MedicareProviderLookupScreen> {
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController(text: 'Patel');
-  String _state = 'CA';
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final shownProviders = VCareCatalog.providers.take(5).toList();
-    return _VcareScaffold(
-      title: 'Medicare Lookup',
-      subtitle: 'CMS-style provider search',
-      showBack: true,
-      children: [
-        _InfoBanner(
-          icon: LucideIcons.landmark,
-          text:
-              'Flutter parity uses the same interaction flow with local mock CMS results until the API layer is connected.',
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _TextInput(
-                controller: _firstNameController,
-                label: 'First name',
-                hint: 'Maya',
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _TextInput(
-                controller: _lastNameController,
-                label: 'Last name',
-                hint: 'Patel',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        _VcareCard(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _state,
-              isExpanded: true,
-              items: const ['CA', 'FL', 'NY', 'TX', 'WA']
-                  .map(
-                    (state) =>
-                        DropdownMenuItem(value: state, child: Text(state)),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => _state = value ?? _state),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        const _SectionLabel('Results'),
-        const SizedBox(height: 10),
-        for (final provider in shownProviders)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _ProviderResultCard(
-              provider: provider,
-              routeName: AppRouter.medicareProviderDetailName,
-              pathParameterKey: 'npi',
-              pathParameterValue: '1245${provider.id.hashCode.abs()}',
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class MedicareProviderDetailScreen extends StatelessWidget {
-  const MedicareProviderDetailScreen({super.key, required this.npi});
-
-  final String npi;
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = VCareCatalog
-        .providers[npi.hashCode.abs() % VCareCatalog.providers.length];
-    return _VcareScaffold(
-      title: 'Medicare Provider',
-      showBack: true,
-      children: [
-        _ProviderHero(provider: provider, eyebrow: 'CMS · Medicare'),
-        const SizedBox(height: 14),
-        _DetailList(
-          rows: [
-            _DetailRowData(
-              icon: LucideIcons.badgeCheck,
-              label: 'NPI',
-              value: npi,
-            ),
-            _DetailRowData(
-              icon: LucideIcons.mapPin,
-              label: 'Location',
-              value: '${provider.address} · ${provider.city}',
-            ),
-            _DetailRowData(
-              icon: LucideIcons.stethoscope,
-              label: 'Primary service',
-              value: provider.specialty,
-            ),
-            _DetailRowData(
-              icon: LucideIcons.shieldCheck,
-              label: 'Medicare',
-              value:
-                  'Participating provider information shown from lookup result',
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        _InfoBanner(
-          icon: LucideIcons.info,
-          text:
-              'CMS details are informational and should be confirmed with the provider before booking.',
-        ),
-      ],
-    );
-  }
-}
-
 class GroupChatScreen extends StatefulWidget {
   const GroupChatScreen({super.key, required this.groupId});
 
@@ -523,56 +327,6 @@ class GroupInfoScreen extends StatelessWidget {
   }
 }
 
-class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key});
-
-  @override
-  State<DocumentsScreen> createState() => _DocumentsScreenState();
-}
-
-class _DocumentsScreenState extends State<DocumentsScreen> {
-  String _filter = 'All';
-
-  @override
-  Widget build(BuildContext context) {
-    final documents = VCareCatalog.documents
-        .where((document) => _filter == 'All' || document.kind == _filter)
-        .toList();
-    return _VcareScaffold(
-      title: 'My Documents',
-      subtitle: 'Files from requests, cards, and uploads',
-      showBack: true,
-      children: [
-        Wrap(
-          spacing: 8,
-          children: ['All', 'Images', 'Voice', 'Files']
-              .map(
-                (filter) => ChoiceChip(
-                  label: Text(filter),
-                  selected: _filter == filter,
-                  onSelected: (_) => setState(() => _filter = filter),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: 14),
-        if (documents.isEmpty)
-          const _EmptyPanel(
-            icon: LucideIcons.folderOpen,
-            title: 'No documents here',
-            subtitle: 'Uploads and case attachments will appear here.',
-          )
-        else
-          for (final document in documents)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _DocumentRow(document: document),
-            ),
-      ],
-    );
-  }
-}
-
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
@@ -659,7 +413,7 @@ class NotificationsScreen extends StatelessWidget {
     if (type == 'message') {
       context.pushNamed(AppRouter.messages.toPathName);
     } else if (type == 'tip') {
-      context.pushNamed(AppRouter.ava.toPathName);
+      context.go(AppRouter.profile);
     } else {
       context.pushNamed(AppRouter.requests.toPathName);
     }
@@ -797,26 +551,6 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   }
 }
 
-class FamilyMemberEditScreen extends StatelessWidget {
-  const FamilyMemberEditScreen({super.key, this.memberId});
-
-  final String? memberId;
-
-  @override
-  Widget build(BuildContext context) {
-    return _FormScaffold(
-      title: memberId == null ? 'Add Family Member' : 'Edit Family Member',
-      subtitle: 'Manage authorized family profiles',
-      fields: const [
-        _FieldSeed(label: 'Name', value: 'Jordan Rivera'),
-        _FieldSeed(label: 'Relationship', value: 'Spouse'),
-        _FieldSeed(label: 'Gender', value: 'Prefer not to say'),
-        _FieldSeed(label: 'Date of birth', value: '1988-03-12'),
-      ],
-    );
-  }
-}
-
 class CareTeamEditScreen extends StatelessWidget {
   const CareTeamEditScreen({super.key, this.memberId});
 
@@ -886,10 +620,9 @@ class _FormScaffoldState extends State<_FormScaffold> {
       bottom: _PrimaryBottomAction(
         label: 'Save changes',
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saved locally for this Flutter flow.'),
-            ),
+          context.showVcareToast(
+            title: 'Saved locally for this Flutter flow.',
+            variant: VcareToastVariant.success,
           );
           Navigator.maybePop(context);
         },
@@ -1542,47 +1275,6 @@ class _EstimateRow extends StatelessWidget {
           Text(
             money.format(estimate),
             style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DocumentRow extends StatelessWidget {
-  const _DocumentRow({required this.document});
-
-  final VCareDocumentItem document;
-
-  @override
-  Widget build(BuildContext context) {
-    return _VcareCard(
-      child: Row(
-        children: [
-          _IconBubble(
-            icon: document.kind == 'Images'
-                ? LucideIcons.image
-                : document.kind == 'Voice'
-                ? LucideIcons.mic
-                : LucideIcons.fileText,
-            background: context.vcare.muted,
-            color: VCareColors.primary,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  document.name,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                Text(
-                  '${document.sourceLabel} · ${document.sizeLabel} · ${DateFormat.MMMd().format(document.createdAt)}',
-                  style: TextStyle(color: context.vcare.mutedForeground),
-                ),
-              ],
-            ),
           ),
         ],
       ),

@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-import 'firebase_service.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 
 /// Callback type definitions for notification events
 typedef OnTokenRefreshed = void Function(String token);
@@ -35,9 +35,9 @@ class NotificationServiceConfig {
 
   static const NotificationServiceConfig defaultConfig =
       NotificationServiceConfig(
-        channelId: 'starter_template_default_notification_id',
-        channelName: 'Default Notification Channel',
-        channelDescription: 'This channel is used for default notifications',
+        channelId: 'vcare_admin_default',
+        channelName: 'VCare Notifications',
+        channelDescription: 'Notifications for VCare Admin app',
         androidSmallIcon: '@drawable/notification_icon',
         maxRetriesForApnsToken: 5,
         retryDelayForApnsToken: Duration(seconds: 2),
@@ -47,17 +47,11 @@ class NotificationServiceConfig {
 class FirebaseNotificationService {
   FirebaseNotificationService._();
 
-  // ---------------------------
-  // Singleton Instance
-  // ---------------------------
   static final FirebaseNotificationService _instance =
       FirebaseNotificationService._();
 
   static FirebaseNotificationService get instance => _instance;
 
-  // ---------------------------
-  // Dependencies (late init)
-  // ---------------------------
   late FirebaseMessaging _messaging;
   late FlutterLocalNotificationsPlugin _localNotifications;
   late NotificationServiceConfig _config;
@@ -66,16 +60,10 @@ class FirebaseNotificationService {
 
   bool _initialized = false;
 
-  // ---------------------------
-  // Subscriptions
-  // ---------------------------
   StreamSubscription<String>? _tokenSub;
   StreamSubscription<RemoteMessage>? _messageSub;
   StreamSubscription<RemoteMessage>? _openAppSub;
 
-  // ---------------------------
-  // Initialize (MANDATORY)
-  // ---------------------------
   Future<void> initialize({
     FirebaseMessaging? messaging,
     FlutterLocalNotificationsPlugin? localNotifications,
@@ -90,8 +78,6 @@ class FirebaseNotificationService {
 
     await _setupLocalNotifications();
 
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
     _initialized = true;
   }
 
@@ -103,9 +89,6 @@ class FirebaseNotificationService {
     }
   }
 
-  // ---------------------------
-  // Setup Local Notifications
-  // ---------------------------
   Future<void> _setupLocalNotifications() async {
     try {
       _channel = AndroidNotificationChannel(
@@ -146,9 +129,6 @@ class FirebaseNotificationService {
     }
   }
 
-  // ---------------------------
-  // Permissions
-  // ---------------------------
   Future<bool> requestPermission() async {
     _ensureInitialized();
 
@@ -168,9 +148,6 @@ class FirebaseNotificationService {
     }
   }
 
-  // ---------------------------
-  // Token Handling
-  // ---------------------------
   Future<String?> getToken() async {
     _ensureInitialized();
 
@@ -180,9 +157,15 @@ class FirebaseNotificationService {
         if (apns == null) return null;
       }
 
-      return await _messaging.getToken();
+      final token = await _messaging.getToken();
+      if (token != null) {
+        Logger.logMessage('[FCM] Token: $token');
+      } else {
+        Logger.logWarning('[FCM] Token is null');
+      }
+      return token;
     } catch (e) {
-      debugPrint('Get token failed: $e');
+      Logger.logError('[FCM] Get token failed: $e');
       return null;
     }
   }
@@ -197,31 +180,13 @@ class FirebaseNotificationService {
     return null;
   }
 
-  // ---------------------------
-  // Listeners
-  // ---------------------------
-  Future<void> setupListeners({
-    OnTokenRefreshed? onTokenRefreshed,
-    OnMessageReceived? onMessage,
+  Future<void> setupOpenAppListeners({
     OnMessageOpenedApp? onOpened,
     OnNotificationTapped? onNotificationTapped,
   }) async {
     _ensureInitialized();
 
-    final token = await getToken();
-    if (token != null) {
-      onTokenRefreshed?.call(token);
-    }
-
-    _tokenSub = _messaging.onTokenRefresh.listen(
-      (token) => onTokenRefreshed?.call(token),
-    );
-
-    _messageSub = FirebaseMessaging.onMessage.listen((message) {
-      _handleForegroundMessage(message);
-      onMessage?.call(message);
-    });
-
+    await _openAppSub?.cancel();
     _openAppSub = FirebaseMessaging.onMessageOpenedApp.listen(onOpened);
 
     final initialMessage = await _messaging.getInitialMessage();
@@ -232,15 +197,53 @@ class FirebaseNotificationService {
     _onNotificationTapped = onNotificationTapped;
   }
 
+  Future<void> setupTokenAndMessageListeners({
+    OnTokenRefreshed? onTokenRefreshed,
+    OnMessageReceived? onMessage,
+  }) async {
+    _ensureInitialized();
+
+    await _tokenSub?.cancel();
+    await _messageSub?.cancel();
+
+    final token = await getToken();
+    if (token != null) {
+      onTokenRefreshed?.call(token);
+    }
+
+    _tokenSub = _messaging.onTokenRefresh.listen((token) {
+      Logger.logMessage('[FCM] Token refreshed: $token');
+      onTokenRefreshed?.call(token);
+    });
+
+    _messageSub = FirebaseMessaging.onMessage.listen((message) {
+      _handleForegroundMessage(message);
+      onMessage?.call(message);
+    });
+  }
+
+  Future<void> setupListeners({
+    OnTokenRefreshed? onTokenRefreshed,
+    OnMessageReceived? onMessage,
+    OnMessageOpenedApp? onOpened,
+    OnNotificationTapped? onNotificationTapped,
+  }) async {
+    await setupOpenAppListeners(
+      onOpened: onOpened,
+      onNotificationTapped: onNotificationTapped,
+    );
+    await setupTokenAndMessageListeners(
+      onTokenRefreshed: onTokenRefreshed,
+      onMessage: onMessage,
+    );
+  }
+
   void _handleForegroundMessage(RemoteMessage message) {
     if (!kIsWeb && Platform.isAndroid) {
       showNotification(message);
     }
   }
 
-  // ---------------------------
-  // Show Notification
-  // ---------------------------
   Future<void> showNotification(RemoteMessage message) async {
     _ensureInitialized();
 
@@ -263,29 +266,17 @@ class FirebaseNotificationService {
           ),
           iOS: const DarwinNotificationDetails(),
         ),
+        payload: message.data.isEmpty ? null : jsonEncode(message.data),
       );
     } catch (e) {
       debugPrint('Show notification failed: $e');
     }
   }
 
-  // ---------------------------
-  // Dispose
-  // ---------------------------
   Future<void> dispose() async {
     await _tokenSub?.cancel();
     await _messageSub?.cancel();
     await _openAppSub?.cancel();
-  }
-}
-
-/// Method to handle the background notification handling and display
-///
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await FirebaseService.initializeFirebase();
-  if (Platform.isAndroid) {
-    FirebaseNotificationService.instance.showNotification(message);
   }
 }
 

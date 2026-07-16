@@ -10,9 +10,7 @@ abstract class BaseSchema<T> {
   /// Creates a new instance of [BaseSchema].
   ///
   /// [id] is the optional identifier of the schema.
-  BaseSchema({
-    this.id,
-  });
+  BaseSchema({this.id});
 
   /// The identifier of the schema.
   ///
@@ -29,9 +27,7 @@ abstract class BaseSchema<T> {
   ///
   /// [id] is the optional new identifier for the schema.
   /// Returns a new instance of [BaseSchema] with the updated values.
-  BaseSchema copy({
-    int? id,
-  });
+  BaseSchema copy({int? id});
 
   /// Converts the schema instance to a JSON object.
   ///

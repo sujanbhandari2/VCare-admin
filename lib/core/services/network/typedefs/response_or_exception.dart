@@ -1,4 +1,4 @@
-import 'package:flutter_template/core/services/network/http_exception.dart';
+import 'package:vcare_admin/core/services/network/http_exception.dart';
 
 typedef EitherResponseOrException<T> = NetworkResult<T, HttpException>;
 

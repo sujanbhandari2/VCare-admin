@@ -1,5 +1,5 @@
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 
 class ProfileAddressModel {
   const ProfileAddressModel({
@@ -70,6 +70,10 @@ class LocalProfileModel {
     required this.phone,
     required this.dob,
     this.photoUrl,
+    this.photoCacheKey,
+    this.referralLink,
+    this.agencyGroupId,
+    this.agencyName,
     this.address,
   });
 
@@ -78,6 +82,10 @@ class LocalProfileModel {
   final String phone;
   final String dob;
   final String? photoUrl;
+  final String? photoCacheKey;
+  final String? referralLink;
+  final String? agencyGroupId;
+  final String? agencyName;
   final ProfileAddressModel? address;
 
   factory LocalProfileModel.fromJson(Map<String, dynamic> json) {
@@ -88,6 +96,10 @@ class LocalProfileModel {
       phone: json['phone'] as String? ?? '',
       dob: json['dob'] as String? ?? '',
       photoUrl: json['photoUrl'] as String?,
+      photoCacheKey: json['photoCacheKey'] as String?,
+      referralLink: json['referralLink'] as String?,
+      agencyGroupId: json['agencyGroupId'] as String?,
+      agencyName: json['agencyName'] as String?,
       address: rawAddress is Map
           ? ProfileAddressModel.fromJson(Map<String, dynamic>.from(rawAddress))
           : null,
@@ -101,6 +113,10 @@ class LocalProfileModel {
       'phone': phone,
       'dob': dob,
       if (photoUrl != null) 'photoUrl': photoUrl,
+      if (photoCacheKey != null) 'photoCacheKey': photoCacheKey,
+      if (referralLink != null) 'referralLink': referralLink,
+      if (agencyGroupId != null) 'agencyGroupId': agencyGroupId,
+      if (agencyName != null) 'agencyName': agencyName,
       if (address != null) 'address': address!.toJson(),
     };
   }
@@ -112,6 +128,10 @@ class LocalProfileModel {
       phone: phone,
       dob: dob,
       photoUrl: photoUrl,
+      photoCacheKey: photoCacheKey,
+      referralLink: referralLink,
+      agencyGroupId: agencyGroupId,
+      agencyName: agencyName,
       address: address?.toEntity(),
     );
   }
@@ -123,6 +143,10 @@ class LocalProfileModel {
       phone: profile.phone,
       dob: profile.dob,
       photoUrl: profile.photoUrl,
+      photoCacheKey: profile.photoCacheKey,
+      referralLink: profile.referralLink,
+      agencyGroupId: profile.agencyGroupId,
+      agencyName: profile.agencyName,
       address: profile.address == null
           ? null
           : ProfileAddressModel.fromEntity(profile.address!),

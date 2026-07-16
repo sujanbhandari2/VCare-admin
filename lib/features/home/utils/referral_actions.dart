@@ -1,49 +1,82 @@
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:flutter_template/features/home/utils/referral_utils.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/home/utils/referral_utils.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/shared/utils/qr_code_utils.dart';
+import 'package:vcare_admin/shared/utils/widget_capture_utils.dart';
 
 /// Share/copy helpers — parity with vcareapp [useReferralActions].
 class ReferralActions {
-  ReferralActions(this.profile);
+  ReferralActions(
+    this.profile, {
+    GlobalKey? cardCaptureKey,
+  }) : _cardCaptureKey = cardCaptureKey;
 
   final LocalProfile profile;
+  final GlobalKey? _cardCaptureKey;
 
   String get username => referralUsernameFromEmail(profile.email);
 
-  String get referralUrl => referralUrlFromEmail(profile.email);
-
-  String get qrImageUrl => referralQrImageUrl(referralUrl, size: 320);
+  String get referralUrl => resolveReferralUrl(
+        email: profile.email,
+        referralLink: profile.referralLink,
+      );
 
   String get shareText => '${profile.fullName} invited you to VCare';
 
   Future<void> copyReferralLink() async {
     await Clipboard.setData(ClipboardData(text: referralUrl));
-    Fluttertoast.showToast(msg: 'Referral link copied');
   }
 
-  Future<void> openQrImage() async {
+  Future<Uint8List?> captureCardBytes() async {
+    final key = _cardCaptureKey;
+    if (key == null) {
+      return null;
+    }
+    return WidgetCaptureUtils.capturePng(key);
+  }
+
+  Future<bool> downloadCardToGallery() async {
+    final bytes = await captureCardBytes();
+    if (bytes == null) {
+      return false;
+    }
+
+    return WidgetCaptureUtils.saveToGallery(
+      bytes,
+      name: 'vcare-referral-card-${DateTime.now().millisecondsSinceEpoch}',
+    );
+  }
+
+  Future<bool> shareCardImage() async {
+    final bytes = await captureCardBytes();
+    if (bytes == null) {
+      return false;
+    }
+
+    return WidgetCaptureUtils.sharePngBytes(
+      bytes,
+      fileName: 'vcare-referral-card.png',
+      shareText: shareText,
+    );
+  }
+
+  Future<bool> shareQrFallback() async {
+    return QrCodeUtils.sharePng(
+      referralUrl,
+      fileName: 'vcare-referral-qr.png',
+    );
+  }
+
+  Future<void> openShareChannel({required String url}) async {
     final launched = await launchUrlString(
-      qrImageUrl,
+      url,
       mode: LaunchMode.externalApplication,
     );
     if (!launched) {
-      Fluttertoast.showToast(msg: "Couldn't open QR image");
-    }
-  }
-
-  Future<void> shareReferralLink() async {
-    await copyReferralLink();
-  }
-
-  Future<void> openShareChannel({
-    required String url,
-  }) async {
-    final launched = await launchUrlString(url, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      Fluttertoast.showToast(msg: "Couldn't open share link");
+      throw StateError('Could not open share link');
     }
   }
 

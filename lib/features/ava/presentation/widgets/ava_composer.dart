@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/ava/presentation/widgets/ava_layout.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/ava/presentation/widgets/ava_layout.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Matches vcareapp [AvaComposer] — `px-5 pt-1 pb-0`, pill input + send.
 class AvaComposer extends StatelessWidget {
@@ -30,7 +31,7 @@ class AvaComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final bottom = MediaQuery.paddingOf(context).bottom;
+    final bottomPadding = context.mobileShellBottomContentPadding;
 
     return ColoredBox(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -39,7 +40,7 @@ class AvaComposer extends StatelessWidget {
           AvaLayout.horizontalPadding,
           8,
           AvaLayout.horizontalPadding,
-          bottom + 12,
+          bottomPadding,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

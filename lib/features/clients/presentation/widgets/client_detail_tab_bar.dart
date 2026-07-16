@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Pill tab bar — parity with vcareapp `TabsList` on [ClientDetailPage].
 class ClientDetailTabBar extends StatelessWidget {
-  const ClientDetailTabBar({
-    super.key,
-    required this.controller,
-  });
+  const ClientDetailTabBar({super.key, required this.controller});
 
   final TabController controller;
 

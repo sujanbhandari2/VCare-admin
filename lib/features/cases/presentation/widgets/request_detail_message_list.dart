@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/cases/utils/request_attachments.dart';
-import 'package:flutter_template/features/cases/utils/request_chat_date.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
+import 'package:vcare_admin/features/cases/utils/request_chat_date.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 class RequestDetailMessageList extends StatelessWidget {
   const RequestDetailMessageList({

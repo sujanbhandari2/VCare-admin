@@ -10,10 +10,7 @@ abstract class StorageService {
 
   /// Retrieves item from storage by a key
   ///
-  dynamic get(
-    String key, {
-    dynamic defaultValue,
-  });
+  dynamic get(String key, {dynamic defaultValue});
 
   /// Clears storage
   ///
@@ -26,6 +23,10 @@ abstract class StorageService {
   /// Sets an item data in storage by a key
   ///
   Future<void> set(String key, dynamic data);
+
+  /// All keys currently stored.
+  ///
+  Iterable<String> get keys;
 
   /// Terminates service
   ///

@@ -1,8 +1,8 @@
-import 'package:flutter_template/shared/utils/logger.dart';
-import 'package:flutter_template/core/database/core/base_table.dart';
-import 'package:flutter_template/core/database/core/base_database_provider.dart';
-import 'package:flutter_template/core/database/providers/users_database_provider.dart';
-import 'package:flutter_template/core/database/tables/users/user_schema.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
+import 'package:vcare_admin/core/database/core/base_table.dart';
+import 'package:vcare_admin/core/database/core/base_database_provider.dart';
+import 'package:vcare_admin/core/database/providers/users_database_provider.dart';
+import 'package:vcare_admin/core/database/tables/users/user_schema.dart';
 import 'package:sqflite/sqflite.dart';
 
 class UsersTable extends BaseTable<UserSchema> {

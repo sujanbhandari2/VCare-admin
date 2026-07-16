@@ -1,68 +1,119 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_carousel.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_detail_section_heading.dart';
-import 'package:flutter_template/features/clients/presentation/widgets/client_status_chip.dart';
-import 'package:flutter_template/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/presentation/state/client_documents_loadable_state.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_add_payment_method_sheet.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_create_case_sheet.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_carousel.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_upload_document_sheet.dart';
+import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
   const ClientMembershipsTab({
     super.key,
-    required this.client,
+    required this.memberships,
+    required this.dependents,
     required this.onMembershipInfo,
+    this.isLoading = false,
+    this.error,
+    this.onRetry,
+    this.isLoadingDependents = false,
+    this.dependentsError,
+    this.onRetryDependents,
   });
 
-  final Client client;
+  final List<ClientMembership> memberships;
+  final List<ClientDependent> dependents;
   final ValueChanged<ClientMembership> onMembershipInfo;
+  final bool isLoading;
+  final String? error;
+  final VoidCallback? onRetry;
+  final bool isLoadingDependents;
+  final String? dependentsError;
+  final VoidCallback? onRetryDependents;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading && memberships.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null && memberships.isEmpty) {
+      return _TabErrorState(message: error, onRetry: onRetry);
+    }
+
     final screenWidth = MediaQuery.sizeOf(context).width;
     final membershipWidth = math.min(screenWidth * 0.85, 320.0);
     final dependentWidth = math.min(screenWidth * 0.55, 200.0);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      physics: VcareRefreshScrollView.physics,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         ClientDetailSectionHeading('Memberships'),
-        ClientDetailCarousel(
-          height: 148,
-          itemWidth: membershipWidth,
-          itemCount: client.memberships.length,
-          itemBuilder: (context, index) {
-            final m = client.memberships[index];
-            return ClientMembershipCard(
-              membership: m,
-              onInfo: () => onMembershipInfo(m),
-            );
-          },
-        ),
+        if (memberships.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.shield,
+            title: 'No memberships on file',
+            description: 'Membership plans for this client will appear here.',
+          )
+        else
+          ClientDetailCarousel(
+            height: 148,
+            itemWidth: membershipWidth,
+            itemCount: memberships.length,
+            itemBuilder: (context, index) {
+              final m = memberships[index];
+              return ClientMembershipCard(
+                membership: m,
+                onInfo: () => onMembershipInfo(m),
+              );
+            },
+          ),
         const SizedBox(height: 24),
         ClientDetailSectionHeading('Dependents'),
-        if (client.dependents.isEmpty)
-          Text(
-            'No dependents on file.',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
-            ),
+        if (isLoadingDependents && dependents.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (dependentsError != null && dependents.isEmpty)
+          _TabErrorState(message: dependentsError, onRetry: onRetryDependents)
+        else if (dependents.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.users,
+            title: 'No dependents on file',
+            description:
+                'Dependents linked to this client\'s account will appear here.',
           )
         else
           ClientDetailCarousel(
             height: 168,
             itemWidth: dependentWidth,
-            itemCount: client.dependents.length,
+            itemCount: dependents.length,
             itemBuilder: (context, index) {
-              return ClientDependentCard(dependent: client.dependents[index]);
+              return ClientDependentCard(dependent: dependents[index]);
             },
           ),
       ],
@@ -70,24 +121,147 @@ class ClientMembershipsTab extends StatelessWidget {
   }
 }
 
-class ClientBillingTab extends StatelessWidget {
+class ClientBillingTab extends ConsumerStatefulWidget {
   const ClientBillingTab({
     super.key,
-    required this.client,
+    required this.clientId,
+    required this.memberships,
+    required this.paymentMethods,
+    required this.transactionsState,
     required this.onTransactionTap,
+    this.isLoadingPaymentMethods = false,
+    this.paymentMethodsError,
+    this.onRetryPaymentMethods,
+    this.onRetryTransactions,
+    this.onLoadMoreTransactions,
   });
 
-  final Client client;
+  final String clientId;
+  final List<ClientMembership> memberships;
+  final List<ClientPaymentMethod> paymentMethods;
+  final LoadableListState<ClientTransaction> transactionsState;
   final ValueChanged<ClientTransaction> onTransactionTap;
+  final bool isLoadingPaymentMethods;
+  final String? paymentMethodsError;
+  final VoidCallback? onRetryPaymentMethods;
+  final VoidCallback? onRetryTransactions;
+  final Future<void> Function()? onLoadMoreTransactions;
+
+  @override
+  ConsumerState<ClientBillingTab> createState() => _ClientBillingTabState();
+}
+
+class _ClientBillingTabState extends ConsumerState<ClientBillingTab> {
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final state = widget.transactionsState;
+    final shouldLoadMore =
+        widget.onLoadMoreTransactions != null &&
+        state.hasMore &&
+        state.items.isNotEmpty &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 240;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      widget.onLoadMoreTransactions!.call().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
+
+  Future<void> _setPrimary(ClientPaymentMethod method) async {
+    await ref
+        .read(clientPaymentMethodsStateProvider(widget.clientId).notifier)
+        .setPrimary(
+          paymentMethodId: method.id,
+          onCompleted: (success, error) {
+            if (!mounted) return;
+            if (success) {
+              context.showVcareToast(
+                title: 'Primary updated',
+                variant: VcareToastVariant.success,
+              );
+              return;
+            }
+            context.showVcareToast(
+              title: error ?? 'Could not update primary',
+              variant: VcareToastVariant.destructive,
+            );
+          },
+        );
+  }
+
+  Future<void> _confirmDelete(ClientPaymentMethod method) async {
+    final deleted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => _DeletePaymentMethodDialog(
+        methodLabel: method.label,
+        onDelete: () async {
+          var didSucceed = false;
+          String? errorMessage;
+
+          await ref
+              .read(clientPaymentMethodsStateProvider(widget.clientId).notifier)
+              .remove(
+                paymentMethodId: method.id,
+                onCompleted: (success, error) {
+                  didSucceed = success;
+                  errorMessage = error;
+                },
+              );
+
+          if (!didSucceed) {
+            throw errorMessage ?? 'Remove failed';
+          }
+        },
+      ),
+    );
+
+    if (!mounted || deleted != true) return;
+
+    context.showVcareToast(
+      title: 'Payment method removed',
+      variant: VcareToastVariant.destructive,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final upcoming = client.memberships
+    final upcoming = widget.memberships
         .where((m) => m.nextBillingDate != null && m.nextBillingDate != '—')
         .toList();
+    final transactions = widget.transactionsState.items;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      controller: _scrollController,
+      physics: VcareRefreshScrollView.physics,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         if (upcoming.isNotEmpty) ...[
           ClientUpcomingBillingCard(memberships: upcoming),
@@ -97,7 +271,10 @@ class ClientBillingTab extends StatelessWidget {
           'Payment Methods',
           bottomMargin: 12,
           trailing: TextButton.icon(
-            onPressed: () {},
+            onPressed: () => ClientAddPaymentMethodSheet.show(
+              context,
+              clientId: widget.clientId,
+            ),
             icon: const Icon(LucideIcons.plus, size: 14),
             label: const Text('Add'),
             style: TextButton.styleFrom(
@@ -112,38 +289,220 @@ class ClientBillingTab extends StatelessWidget {
             ),
           ),
         ),
-        for (var i = 0; i < client.paymentMethods.length; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
-          ClientPaymentMethodCard(method: client.paymentMethods[i]),
-        ],
+        if (widget.isLoadingPaymentMethods && widget.paymentMethods.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.paymentMethodsError != null &&
+            widget.paymentMethods.isEmpty)
+          _TabErrorState(
+            message: widget.paymentMethodsError,
+            onRetry: widget.onRetryPaymentMethods,
+          )
+        else if (widget.paymentMethods.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.creditCard,
+            title: 'No payment methods on file',
+            description:
+                'Saved cards and bank accounts for billing will appear here.',
+          )
+        else
+          for (var i = 0; i < widget.paymentMethods.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            ClientPaymentMethodCard(
+              method: widget.paymentMethods[i],
+              onSetPrimary: widget.paymentMethods[i].isPrimary
+                  ? null
+                  : () => _setPrimary(widget.paymentMethods[i]),
+              onDelete: () => _confirmDelete(widget.paymentMethods[i]),
+            ),
+          ],
         const SizedBox(height: 24),
         const ClientDetailSectionHeading('Transactions'),
-        for (var i = 0; i < client.transactions.length; i++) ...[
-          if (i > 0) const SizedBox(height: 8),
-          ClientTransactionRow(
-            transaction: client.transactions[i],
-            onTap: () => onTransactionTap(client.transactions[i]),
+        if (widget.transactionsState.isInitialLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.transactionsState.isInitialError)
+          _TabErrorState(
+            message: widget.transactionsState.operation.errorMessage,
+            onRetry: widget.onRetryTransactions,
+          )
+        else if (transactions.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.receipt,
+            title: 'No transactions on file',
+            description:
+                'Billing history for this client will appear here once charges are recorded.',
+          )
+        else
+          for (var i = 0; i < transactions.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            ClientTransactionRow(
+              transaction: transactions[i],
+              onTap: () => widget.onTransactionTap(transactions[i]),
+            ),
+          ],
+        if (widget.transactionsState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
           ),
-        ],
       ],
     );
   }
 }
 
-class ClientCasesTab extends StatelessWidget {
-  const ClientCasesTab({super.key, required this.client});
+class _DeletePaymentMethodDialog extends StatefulWidget {
+  const _DeletePaymentMethodDialog({
+    required this.methodLabel,
+    required this.onDelete,
+  });
 
-  final Client client;
+  final String methodLabel;
+  final Future<void> Function() onDelete;
+
+  @override
+  State<_DeletePaymentMethodDialog> createState() =>
+      _DeletePaymentMethodDialogState();
+}
+
+class _DeletePaymentMethodDialogState
+    extends State<_DeletePaymentMethodDialog> {
+  var _isDeleting = false;
+
+  Future<void> _handleDelete() async {
+    if (_isDeleting) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      await widget.onDelete();
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isDeleting = false);
+      final message = error is String ? error : 'Remove failed';
+      context.showVcareToast(
+        title: message,
+        variant: VcareToastVariant.destructive,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Remove payment method?'),
+      content: Text('${widget.methodLabel} will be removed from this client.'),
+      actions: [
+        TextButton(
+          onPressed: _isDeleting ? null : () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isDeleting ? null : _handleDelete,
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.red.withValues(alpha: 0.7),
+            disabledForegroundColor: Colors.white,
+          ),
+          child: _isDeleting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Delete'),
+        ),
+      ],
+    );
+  }
+}
+
+class ClientCasesTab extends StatefulWidget {
+  const ClientCasesTab({
+    super.key,
+    required this.clientId,
+    required this.casesState,
+    this.onRetry,
+    this.onLoadMore,
+  });
+
+  final String clientId;
+
+  final LoadableListState<ClientCase> casesState;
+  final VoidCallback? onRetry;
+  final Future<void> Function()? onLoadMore;
+
+  @override
+  State<ClientCasesTab> createState() => _ClientCasesTabState();
+}
+
+class _ClientCasesTabState extends State<ClientCasesTab> {
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final state = widget.casesState;
+    final shouldLoadMore =
+        widget.onLoadMore != null &&
+        state.hasMore &&
+        state.items.isNotEmpty &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 240;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      widget.onLoadMore!.call().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cases = widget.casesState.items;
+
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      controller: _scrollController,
+      physics: VcareRefreshScrollView.physics,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         ClientDetailSectionHeading(
           'Cases',
           trailing: TextButton.icon(
-            onPressed: () => context.pushNamed(AppRouter.requestNewName),
+            onPressed: () =>
+                ClientCreateCaseSheet.show(context, clientId: widget.clientId),
             icon: const Icon(LucideIcons.plus, size: 14),
             label: const Text('New request'),
             style: TextButton.styleFrom(
@@ -158,38 +517,120 @@ class ClientCasesTab extends StatelessWidget {
             ),
           ),
         ),
-        if (client.cases.isEmpty)
-          Text(
-            'No cases for this client.',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
-            ),
+        if (widget.casesState.isInitialLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.casesState.isInitialError)
+          _TabErrorState(
+            message: widget.casesState.operation.errorMessage,
+            onRetry: widget.onRetry,
+          )
+        else if (cases.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.inbox,
+            title: 'No cases for this client',
+            description:
+                'Requests and cases opened for this client will show up here.',
           )
         else
-          for (var i = 0; i < client.cases.length; i++) ...[
+          for (var i = 0; i < cases.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            ClientCaseCard(clientCase: client.cases[i]),
+            ClientCaseCard(clientCase: cases[i]),
           ],
+        if (widget.casesState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
 }
 
-class ClientDocumentsTab extends StatelessWidget {
-  const ClientDocumentsTab({super.key, required this.client});
+class ClientDocumentsTab extends StatefulWidget {
+  const ClientDocumentsTab({
+    super.key,
+    required this.clientId,
+    required this.documentsState,
+    this.onRetry,
+    this.onLoadMore,
+    this.onDocumentAction,
+  });
 
-  final Client client;
+  final String clientId;
+
+  final ClientDocumentsLoadableState documentsState;
+  final VoidCallback? onRetry;
+  final Future<void> Function()? onLoadMore;
+  final void Function(ClientFile file, String action)? onDocumentAction;
+
+  @override
+  State<ClientDocumentsTab> createState() => _ClientDocumentsTabState();
+}
+
+class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final state = widget.documentsState;
+    final shouldLoadMore =
+        widget.onLoadMore != null &&
+        state.hasMore &&
+        state.items.isNotEmpty &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= 240;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      widget.onLoadMore!.call().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final files = widget.documentsState.items;
+
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      controller: _scrollController,
+      physics: VcareRefreshScrollView.physics,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         ClientDetailSectionHeading(
           'Documents',
           trailing: TextButton.icon(
-            onPressed: () {},
+            onPressed: widget.documentsState.isUploading
+                ? null
+                : () => ClientUploadDocumentSheet.show(
+                    context,
+                    clientId: widget.clientId,
+                  ),
             icon: const Icon(LucideIcons.upload, size: 14),
             label: const Text('Upload'),
             style: TextButton.styleFrom(
@@ -204,19 +645,59 @@ class ClientDocumentsTab extends StatelessWidget {
             ),
           ),
         ),
-        if (client.files.isEmpty)
-          Text(
-            'No documents uploaded.',
-            style: TextStyle(
-              fontSize: 12,
-              color: context.vcare.mutedForeground,
+        if (widget.documentsState.isUploading)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Uploading document...',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: VCareColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
+          ),
+        if (widget.documentsState.isInitialLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (widget.documentsState.isInitialError)
+          _TabErrorState(
+            message: widget.documentsState.operation.errorMessage,
+            onRetry: widget.onRetry,
+          )
+        else if (files.isEmpty)
+          const VcareEmptyStateCard(
+            icon: LucideIcons.paperclip,
+            title: 'No documents uploaded',
+            description:
+                'ID cards, bills, and other client files will appear here.',
           )
         else
-          for (var i = 0; i < client.files.length; i++) ...[
+          for (var i = 0; i < files.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            ClientDocumentRow(file: client.files[i]),
+            ClientDocumentRow(
+              file: files[i],
+              onAction: widget.onDocumentAction == null
+                  ? null
+                  : (action) => widget.onDocumentAction!(files[i], action),
+            ),
           ],
+        if (widget.documentsState.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
@@ -233,9 +714,7 @@ class ClientUpcomingBillingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: VCareColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: VCareColors.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: VCareColors.primary.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -296,17 +775,23 @@ class ClientUpcomingBillingCard extends StatelessWidget {
                             const TextSpan(text: 'Next billing on '),
                             TextSpan(
                               text: formatClientDateNumeric(m.nextBillingDate!),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const TextSpan(text: ' — '),
                             TextSpan(
                               text: '\$${m.cost.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const TextSpan(text: ' for '),
                             TextSpan(
                               text: m.plan,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -335,7 +820,8 @@ class ClientMembershipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final showInfo = membership.status == ClientMembershipStatus.completed ||
+    final showInfo =
+        membership.status == ClientMembershipStatus.completed ||
         membership.status == ClientMembershipStatus.cancelled;
 
     return DecoratedBox(
@@ -456,11 +942,7 @@ class _MembershipInfoButton extends StatelessWidget {
         child: SizedBox(
           width: 24,
           height: 24,
-          child: Icon(
-            LucideIcons.info,
-            size: 14,
-            color: vcare.mutedForeground,
-          ),
+          child: Icon(LucideIcons.info, size: 14, color: vcare.mutedForeground),
         ),
       ),
     );
@@ -491,10 +973,10 @@ class ClientDependentCard extends StatelessWidget {
               child: SizedBox(
                 width: 64,
                 height: 64,
-                child: CachedNetworkImage(
+                child: VCareCachedImage(
                   imageUrl: dependent.avatarUrl,
                   fit: BoxFit.cover,
-                  errorWidget: (_, _, _) => ColoredBox(
+                  errorWidget: ColoredBox(
                     color: vcare.muted,
                     child: Center(
                       child: Text(
@@ -509,10 +991,7 @@ class ClientDependentCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               dependent.name,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -530,9 +1009,16 @@ class ClientDependentCard extends StatelessWidget {
 }
 
 class ClientPaymentMethodCard extends StatelessWidget {
-  const ClientPaymentMethodCard({super.key, required this.method});
+  const ClientPaymentMethodCard({
+    super.key,
+    required this.method,
+    this.onSetPrimary,
+    this.onDelete,
+  });
 
   final ClientPaymentMethod method;
+  final VoidCallback? onSetPrimary;
+  final VoidCallback? onDelete;
 
   IconData _iconForType() {
     switch (method.type) {
@@ -570,11 +1056,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
                 color: VCareColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                _iconForType(),
-                size: 16,
-                color: VCareColors.primary,
-              ),
+              child: Icon(_iconForType(), size: 16, color: VCareColors.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -633,6 +1115,13 @@ class ClientPaymentMethodCard extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              onSelected: (value) {
+                if (value == 'primary') {
+                  onSetPrimary?.call();
+                } else if (value == 'delete') {
+                  onDelete?.call();
+                }
+              },
               itemBuilder: (context) => [
                 if (!method.isPrimary)
                   const PopupMenuItem(
@@ -804,10 +1293,9 @@ class ClientCaseCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.7),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       Padding(
@@ -840,14 +1328,15 @@ class ClientCaseCard extends StatelessWidget {
 }
 
 class ClientDocumentRow extends StatelessWidget {
-  const ClientDocumentRow({super.key, required this.file});
+  const ClientDocumentRow({super.key, required this.file, this.onAction});
 
   final ClientFile file;
+  final void Function(String action)? onAction;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final isImage = file.mime.startsWith('image/');
+    final isImage = file.mime.startsWith('image/') && file.url.isUrl;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -866,7 +1355,18 @@ class ClientDocumentRow extends StatelessWidget {
                 height: 40,
                 color: VCareColors.primary.withValues(alpha: 0.1),
                 child: isImage
-                    ? CachedNetworkImage(imageUrl: file.url, fit: BoxFit.cover)
+                    ? VCareCachedImage(
+                        imageUrl: file.url,
+                        cacheKey: 'client-file:${file.id}',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorWidget: Icon(
+                          LucideIcons.fileText,
+                          size: 16,
+                          color: VCareColors.primary,
+                        ),
+                      )
                     : Icon(
                         LucideIcons.fileText,
                         size: 16,
@@ -900,6 +1400,7 @@ class ClientDocumentRow extends StatelessWidget {
             ),
             PopupMenuButton<String>(
               padding: EdgeInsets.zero,
+              onSelected: onAction,
               icon: Icon(
                 LucideIcons.moreVertical,
                 size: 16,
@@ -955,6 +1456,21 @@ class ClientDocumentRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TabErrorState extends StatelessWidget {
+  const _TabErrorState({required this.message, this.onRetry});
+
+  final String? message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return VcareInlineErrorCard(
+      message: message,
+      onRetry: onRetry,
     );
   }
 }

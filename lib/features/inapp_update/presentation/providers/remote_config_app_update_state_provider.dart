@@ -1,10 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-
 import '../../../../shared/utils/logger.dart';
 import '../../domain/entities/remote_config_app_update_info.dart';
 import '../states/remote_config_app_update_state.dart';
 import 'remote_config_app_update_repository_provider.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 part 'remote_config_app_update_state_provider.g.dart';
 
@@ -29,7 +29,7 @@ class RemoteConfigAppUpdateStateNotifier
       failure: (error) {
         Logger.logError(error.message);
         if (ref.mounted) {
-          state = state.failure(error.message);
+          state = state.failure(error.userMessage);
         }
         onCompleted?.call(null);
       },

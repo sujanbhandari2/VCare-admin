@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_template/core/styles/app_colors.dart';
-import 'package:flutter_template/core/styles/app_theme.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/common_icon.dart';
+import 'package:vcare_admin/core/styles/app_colors.dart';
+import 'package:vcare_admin/core/styles/app_theme.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/common_icon.dart';
 
 class SearchBox extends StatefulWidget {
   const SearchBox({
@@ -94,15 +94,11 @@ class _SearchBoxState extends State<SearchBox> {
           ),
           border: OutlineInputBorder(
             borderRadius: .circular(8.0),
-            borderSide: BorderSide(
-              color: widget.borderColor ?? AppColors.grey,
-            ),
+            borderSide: BorderSide(color: widget.borderColor ?? AppColors.grey),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: .circular(8.0),
-            borderSide: BorderSide(
-              color: widget.borderColor ?? AppColors.grey,
-            ),
+            borderSide: BorderSide(color: widget.borderColor ?? AppColors.grey),
           ),
           filled: widget.filled,
           fillColor: widget.fillColor,

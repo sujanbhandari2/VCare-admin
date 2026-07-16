@@ -22,18 +22,19 @@ class FcmDeviceCheckResponseModel {
 
   factory FcmDeviceCheckResponseModel.fromJson(Map<String, dynamic> json) {
     return FcmDeviceCheckResponseModel(
-      hasFcmToken:
-          json["has_fcm_token"] is bool ? json["has_fcm_token"] : false,
+      hasFcmToken: json["has_fcm_token"] is bool
+          ? json["has_fcm_token"]
+          : false,
       fcmDeviceId: json["fcm_device_id"],
       fcmRegistrationToken: json["fcm_registration_token"],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "has_fcm_token": hasFcmToken,
-        "fcm_device_id": fcmDeviceId,
-        "fcm_registration_token": fcmRegistrationToken,
-      };
+    "has_fcm_token": hasFcmToken,
+    "fcm_device_id": fcmDeviceId,
+    "fcm_registration_token": fcmRegistrationToken,
+  };
 
   @override
   String toString() {

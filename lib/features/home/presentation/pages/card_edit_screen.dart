@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 enum CardEditMethod { unset, camera, gallery, manual }
 
@@ -61,17 +63,19 @@ class _CardEditScreenState extends State<CardEditScreen> {
         _issuerController.text = 'Anthem BCBS';
         _memberIdController.text = 'ABC123456789';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Details extracted with AI ✨')),
+      context.showVcareToast(
+        title: 'Details extracted with AI',
+        variant: VcareToastVariant.success,
       );
     });
   }
 
   void _save() {
+    context.showVcareToast(
+      title: 'Card saved successfully',
+      variant: VcareToastVariant.success,
+    );
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Card saved successfully')));
   }
 
   @override
@@ -88,7 +92,7 @@ class _CardEditScreenState extends State<CardEditScreen> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+              padding: context.mobileShellScrollPadding,
               child: _method == CardEditMethod.unset && isNew
                   ? _MethodChooser(onSelect: (m) => setState(() => _method = m))
                   : Column(

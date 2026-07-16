@@ -1,29 +1,24 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/data/vcare_assets.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_empty_state_card.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_section_header.dart';
-import 'package:flutter_template/features/home/presentation/widgets/referral_qr_code.dart';
-import 'package:flutter_template/features/home/utils/referral_utils.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/data/vcare_assets.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_empty_state_card.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_section_header.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/referral_qr_code.dart';
+import 'package:vcare_admin/features/home/utils/referral_utils.dart';
 
 class HomeMembershipSection extends StatelessWidget {
   const HomeMembershipSection({
     super.key,
     required this.member,
     required this.hasMembership,
-    this.previewNoMembership = false,
-    this.onPreviewToggle,
     this.onTap,
   });
 
   final HomeMember member;
   final bool hasMembership;
-  final bool previewNoMembership;
-  final VoidCallback? onPreviewToggle;
   final VoidCallback? onTap;
 
   @override
@@ -33,12 +28,7 @@ class HomeMembershipSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        HomeSectionHeader(
-          title: 'My Referral',
-          showPreviewToggle: kDebugMode,
-          previewEmpty: previewNoMembership,
-          onPreviewToggle: onPreviewToggle,
-        ),
+        const HomeSectionHeader(title: 'My Referral'),
         if (hasMembership)
           _ReferralCard(
             member: member,
@@ -76,8 +66,8 @@ class _ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final referralUrl = referralUrlFromEmail(member.email);
-    final qrUrl = referralQrImageUrl(referralUrl);
+    final referralUrl =
+        member.referralUrl ?? referralUrlFromEmail(member.email);
 
     return Material(
       color: Colors.transparent,
@@ -108,96 +98,94 @@ class _ReferralCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'MY REFERRAL',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1.2,
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                  ),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'MY REFERRAL',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.2,
+                                  color: Colors.white.withValues(alpha: 0.8),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  member.fullName,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                member.fullName,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.3,
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  member.email,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                member.email,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  member.phone,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                member.phone,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
-                                const Spacer(),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'View full card details',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      LucideIcons.chevronRight,
-                                      size: 12,
+                              ),
+                              const Spacer(),
+                              Row(
+                                children: [
+                                  Text(
+                                    'View full card details',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
                                       color: Colors.white.withValues(
                                         alpha: 0.8,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Image.asset(
-                                VCareAssets.vIcon,
-                                width: 44,
-                                height: 44,
-                                fit: BoxFit.contain,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    LucideIcons.chevronRight,
+                                    size: 12,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                ],
                               ),
-                              const Spacer(),
-                              ReferralQrCode(imageUrl: qrUrl),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Image.asset(
+                              VCareAssets.vIcon,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.contain,
+                            ),
+                            const Spacer(),
+                            ReferralQrCode(data: referralUrl),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),

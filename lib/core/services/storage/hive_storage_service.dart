@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_template/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
 
 /// [StorageService] interface implementation using the Hive package
 ///
@@ -59,6 +59,10 @@ class HiveStorageService implements StorageService {
   Future<void> set(String key, dynamic data) async {
     await _hiveBox?.put(key, data);
   }
+
+  @override
+  Iterable<String> get keys =>
+      _hiveBox?.keys.map((key) => key.toString()) ?? const <String>[];
 
   @override
   Future<void> clear() async {

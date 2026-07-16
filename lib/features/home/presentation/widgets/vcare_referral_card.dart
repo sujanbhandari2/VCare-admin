@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/vcare_assets.dart';
-import 'package:flutter_template/features/home/presentation/widgets/referral_qr_code.dart';
-import 'package:flutter_template/features/home/utils/referral_actions.dart';
-import 'package:flutter_template/features/home/utils/referral_utils.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
+import 'package:vcare_admin/features/home/data/vcare_assets.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/referral_qr_code.dart';
+import 'package:vcare_admin/features/home/utils/referral_utils.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
-/// Agency label on referral card — parity with vcareapp [VCareReferralCard].
-const kReferralAgencyName = 'BlueShield National';
-
-/// Full referral card + link copy block — parity with [VCareReferralCard].
+/// Full referral card with read-only referral link.
+/// parity: vcare-agent-app-2.0/src/features/id-card/components/VCareReferralCard.tsx
 class VcareReferralCard extends StatefulWidget {
   const VcareReferralCard({
     super.key,
     required this.profile,
     this.hideInternalLabel = false,
+    this.cardCaptureKey,
+    this.onShareLink,
   });
 
   final LocalProfile profile;
   final bool hideInternalLabel;
+  final GlobalKey? cardCaptureKey;
+  final VoidCallback? onShareLink;
 
   @override
   State<VcareReferralCard> createState() => _VcareReferralCardState();
@@ -30,30 +34,44 @@ class VcareReferralCard extends StatefulWidget {
 class _VcareReferralCardState extends State<VcareReferralCard> {
   bool _copied = false;
 
+  String get _referralUrl => resolveReferralUrl(
+        email: widget.profile.email,
+        referralLink: widget.profile.referralLink,
+      );
+
+  Future<void> _copyReferral() async {
+    await Clipboard.setData(ClipboardData(text: _referralUrl));
+    if (!mounted) return;
+    setState(() => _copied = true);
+    context.showVcareToast(
+      title: 'Referral link copied',
+      variant: VcareToastVariant.success,
+    );
+    Future<void>.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final actions = ReferralActions(widget.profile);
-    final username = referralUsernameFromEmail(widget.profile.email);
-    final qrUrl = referralQrImageUrl(actions.referralUrl, size: 320);
+    final formattedPhone =
+        AuthPhoneFormatter.formatInternationalDisplay(widget.profile.phone);
+    final agencyName = widget.profile.agencyName?.trim();
+    final showAgency = widget.profile.hasAgencyGroup;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DecoratedBox(
+        RepaintBoundary(
+          key: widget.cardCaptureKey,
+          child: DecoratedBox(
           decoration: BoxDecoration(
             gradient: vcare.gradientCard,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
             child: Stack(
               clipBehavior: Clip.hardEdge,
               children: [
@@ -132,24 +150,33 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                                     height: 1.2,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '@$username',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                if (widget.profile.email.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.profile.email,
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.8),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  widget.profile.phone,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                ],
+                                if (formattedPhone.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    formattedPhone,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ),
@@ -167,7 +194,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                               ),
                               const SizedBox(height: 4),
                               ReferralQrCode(
-                                imageUrl: qrUrl,
+                                data: _referralUrl,
                                 size: 112,
                                 padding: 6,
                                 borderRadius: 12,
@@ -176,62 +203,67 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.only(top: 16),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.15),
+                      if (showAgency) ...[
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.only(top: 16),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
                             ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  LucideIcons.building2,
+                                  size: 16,
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                ),
                               ),
-                              child: Icon(
-                                LucideIcons.building2,
-                                size: 16,
-                                color: Colors.white.withValues(alpha: 0.95),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'AGENCY',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.2,
-                                      color: Colors.white.withValues(alpha: 0.7),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'AGENCY',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1.2,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    kReferralAgencyName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                    const SizedBox(height: 2),
+                                    if (agencyName != null && agencyName.isNotEmpty)
+                                      Text(
+                                        agencyName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -239,11 +271,12 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
             ),
           ),
         ),
+        ),
         const SizedBox(height: 16),
         DecoratedBox(
           decoration: BoxDecoration(
             color: vcare.card,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(VCareLayout.cardRadius2xl),
             border: Border.all(color: vcare.border),
           ),
           child: Padding(
@@ -251,12 +284,33 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Referral link',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Referral link',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (widget.onShareLink != null)
+                      TextButton.icon(
+                        onPressed: widget.onShareLink,
+                        icon: const Icon(LucideIcons.share2, size: 12),
+                        label: const Text(
+                          'Share link',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: VCareColors.primary,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -273,7 +327,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                             vertical: 10,
                           ),
                           child: Text(
-                            actions.referralUrl,
+                            _referralUrl,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -289,17 +343,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                       color: VCareColors.primary,
                       borderRadius: BorderRadius.circular(8),
                       child: InkWell(
-                        onTap: () async {
-                          await actions.copyReferralLink();
-                          if (!mounted) return;
-                          setState(() => _copied = true);
-                          Future<void>.delayed(
-                            const Duration(milliseconds: 1500),
-                            () {
-                              if (mounted) setState(() => _copied = false);
-                            },
-                          );
-                        },
+                        onTap: _copyReferral,
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -310,9 +354,7 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                _copied
-                                    ? LucideIcons.check
-                                    : LucideIcons.copy,
+                                _copied ? LucideIcons.check : LucideIcons.copy,
                                 size: 16,
                                 color: Colors.white,
                               ),

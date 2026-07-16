@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
-import 'package:flutter_template/features/find_care/presentation/providers/cms_provider_favorites_provider.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/provider_favorite_button.dart';
+import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
   const MedicareProviderResultCardWithFavorite({super.key, required this.item});
@@ -18,9 +20,9 @@ class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final vcare = context.vcare;
     final row = item.row;
-    final isFavorite = ref
-        .watch(cmsProviderFavoritesProvider)
-        .any((favorite) => favorite.npi == row.npi);
+    final savedProvidersState = ref.watch(savedProvidersStateProvider);
+    final isFavorite = savedProvidersState.isSaved(row.npi);
+    final isToggling = savedProvidersState.isToggling(row.npi);
     final name = formatMedicareProviderName(row);
 
     return Stack(
@@ -107,37 +109,22 @@ class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
         Positioned(
           top: 12,
           right: 12,
-          child: IconButton(
-            onPressed: () {
-              final saved = ref
-                  .read(cmsProviderFavoritesProvider.notifier)
-                  .toggle(item);
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      saved
-                          ? 'Provider saved: $name'
-                          : 'Provider removed: $name',
-                    ),
-                  ),
-                );
+          child: ProviderFavoriteButton(
+            isFavorite: isFavorite,
+            isToggling: isToggling,
+            onPressed: () async {
+              final saved = await ref
+                  .read(savedProvidersStateProvider.notifier)
+                  .toggleSave(item);
+              if (!context.mounted || saved == null) return;
+              context.showVcareToast(
+                title: saved ? 'Provider saved' : 'Provider removed',
+                description: name,
+                variant: saved
+                    ? VcareToastVariant.success
+                    : VcareToastVariant.info,
+              );
             },
-            tooltip: isFavorite ? 'Remove from favorites' : 'Save to favorites',
-            style: IconButton.styleFrom(
-              backgroundColor: vcare.card.withValues(alpha: 0.9),
-              side: BorderSide(color: vcare.border),
-              minimumSize: const Size(36, 36),
-            ),
-            icon: Icon(
-              LucideIcons.heart,
-              size: 18,
-              color: isFavorite
-                  ? VCareColors.destructive
-                  : vcare.mutedForeground,
-              fill: isFavorite ? 1.0 : 0.0,
-            ),
           ),
         ),
       ],

@@ -55,11 +55,15 @@ class ProfileEditFormData {
 class ProfileEditValidation {
   ProfileEditValidation._();
 
-  static const maxProfilePhotoBytes = 5 * 1024 * 1024;
+  static const maxProfilePhotoBytes = 25 * 1024 * 1024;
+
+  static String get maxProfilePhotoLabel =>
+      '${maxProfilePhotoBytes ~/ (1024 * 1024)}MB';
 
   static Map<String, String> validate(
     ProfileEditFormData form, {
     bool validatePersonalInfo = true,
+    bool validatePhone = true,
   }) {
     final errors = <String, String>{};
 
@@ -78,11 +82,13 @@ class ProfileEditValidation {
         errors['email'] = 'Email must be under 255 characters';
       }
 
-      final phone = form.phone.trim();
-      if (phone.length < 7) {
-        errors['phone'] = 'Enter a valid phone';
-      } else if (phone.length > 20) {
-        errors['phone'] = 'Phone must be under 20 characters';
+      if (validatePhone) {
+        final phone = form.phone.trim();
+        if (phone.length < 7) {
+          errors['phone'] = 'Enter a valid phone';
+        } else if (phone.length > 20) {
+          errors['phone'] = 'Phone must be under 20 characters';
+        }
       }
 
       if (form.dob.trim().isEmpty) {
@@ -90,22 +96,42 @@ class ProfileEditValidation {
       }
     }
 
-    if (form.line1.trim().length > 120) {
+    final line1 = form.line1.trim();
+    if (line1.isEmpty) {
+      errors['line1'] = 'Street address is required';
+    } else if (line1.length > 120) {
       errors['line1'] = 'Street address must be under 120 characters';
     }
+
     if (form.line2.trim().length > 120) {
       errors['line2'] = 'Apt / suite must be under 120 characters';
     }
-    if (form.city.trim().length > 80) {
+
+    final city = form.city.trim();
+    if (city.isEmpty) {
+      errors['city'] = 'City is required';
+    } else if (city.length > 80) {
       errors['city'] = 'City must be under 80 characters';
     }
-    if (form.state.trim().length > 60) {
+
+    final state = form.state.trim();
+    if (state.isEmpty) {
+      errors['state'] = 'State is required';
+    } else if (state.length > 60) {
       errors['state'] = 'State must be under 60 characters';
     }
-    if (form.postalCode.trim().length > 12) {
+
+    final postalCode = form.postalCode.trim();
+    if (postalCode.isEmpty) {
+      errors['postalCode'] = 'Postal code is required';
+    } else if (postalCode.length > 12) {
       errors['postalCode'] = 'Postal code must be under 12 characters';
     }
-    if (form.country.trim().length > 60) {
+
+    final country = form.country.trim();
+    if (country.isEmpty) {
+      errors['country'] = 'Country is required';
+    } else if (country.length > 60) {
       errors['country'] = 'Country must be under 60 characters';
     }
 

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
-import 'package:flutter_template/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 
 import '../../../../helpers/in_memory_storage_service.dart';
 
@@ -44,6 +44,16 @@ void main() {
     test('returns true when token is non-empty and userId > 0', () async {
       await storageService.set(StorageKeys.loggedInUserToken, 'token');
       await storageService.set(StorageKeys.loggedInUserId, 10);
+
+      expect(container.read(userLoggedInStateProvider), isTrue);
+    });
+
+    test('returns true when token is non-empty and profileId is set', () async {
+      await storageService.set(StorageKeys.loggedInUserToken, 'token');
+      await storageService.set(
+        StorageKeys.loggedInUserProfileId,
+        'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+      );
 
       expect(container.read(userLoggedInStateProvider), isTrue);
     });

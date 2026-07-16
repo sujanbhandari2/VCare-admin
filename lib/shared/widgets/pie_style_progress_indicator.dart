@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-import 'package:flutter_template/core/styles/app_colors.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/core/styles/app_colors.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class PieStyleProgressIndicator extends StatelessWidget {
   final double progress; // Value between 0 and 1

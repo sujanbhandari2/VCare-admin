@@ -18,7 +18,9 @@ class AppUpdateSheetAppInfoRow extends StatelessWidget {
           width: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: context.theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+            color: context.theme.colorScheme.primaryContainer.withValues(
+              alpha: 0.35,
+            ),
           ),
           child: Center(
             child: Image.asset(
@@ -36,7 +38,10 @@ class AppUpdateSheetAppInfoRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 4,
             children: [
-              Text(context.appLocalization.app_name, style: context.textTheme.titleMedium),
+              Text(
+                context.appLocalization.app_name,
+                style: context.textTheme.titleMedium,
+              ),
               Text(
                 'v${info.latestVersion ?? 'Unknown'}',
                 style: context.textTheme.bodySmall?.copyWith(

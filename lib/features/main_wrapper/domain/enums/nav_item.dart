@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
 
 /// Primary bottom navigation items (vcare [MobileShell] mobile tab order).
 enum NavItem {
-  clients(
-    path: AppRouter.clients,
-    label: 'Clients',
-    icon: LucideIcons.users,
-  ),
+  clients(path: AppRouter.clients, label: 'Clients', icon: LucideIcons.users),
   provider(
     path: AppRouter.findCare,
     label: 'Provider',
@@ -26,11 +22,13 @@ enum NavItem {
     label: 'Messages',
     icon: LucideIcons.messageCircle,
   ),
-  ava(
-    path: AppRouter.ava,
-    label: 'AVA',
-    icon: LucideIcons.sparkles,
+  profile(
+    path: AppRouter.profile,
+    label: 'Profile',
+    icon: LucideIcons.user,
   );
+  // AVA tab disabled for now — restore when AVA returns to the bottom nav.
+  // ava(path: AppRouter.ava, label: 'AVA', icon: LucideIcons.sparkles);
 
   const NavItem({
     required this.path,
@@ -44,13 +42,13 @@ enum NavItem {
   final IconData icon;
   final bool isCenter;
 
-  /// Mobile bottom bar order: Clients, Provider, Home, Messages, AVA.
+  /// Mobile bottom bar order: Clients, Provider, Home, Messages, Profile.
   static const List<NavItem> mobileTabs = [
     NavItem.clients,
     NavItem.provider,
     NavItem.home,
     NavItem.messages,
-    NavItem.ava,
+    NavItem.profile,
   ];
 
   static NavItem fromBranchIndex(int index) => mobileTabs[index];

@@ -1,112 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/care_avatar.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/care_team_empty_state.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/care_team_member_card.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
-class CareTeamScreen extends StatelessWidget {
+class CareTeamScreen extends ConsumerStatefulWidget {
   const CareTeamScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Care Team',
-              subtitle: 'Your people, one tap away.',
-              showBack: true,
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                if (index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: OutlinedButton.icon(
-                      onPressed: () =>
-                          context.pushNamed(AppRouter.careTeamNewName),
-                      icon: const Icon(LucideIcons.userPlus, size: 18),
-                      label: const Text('Add contact'),
-                    ),
-                  );
-                }
-                final member = HomeMockData.careTeam[index - 1];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _CareTeamCard(member: member),
-                );
-              }, childCount: HomeMockData.careTeam.length + 1),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  ConsumerState<CareTeamScreen> createState() => _CareTeamScreenState();
 }
 
-class _CareTeamCard extends StatelessWidget {
-  const _CareTeamCard({required this.member});
-
-  final CareTeamMember member;
+class _CareTeamScreenState extends ConsumerState<CareTeamScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!ref.read(userLoggedInStateProvider)) return;
+      if (ref.read(careTeamStateProvider).members.isNotEmpty) return;
+      ref.read(careTeamStateProvider.notifier).fetchCareTeam();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: vcare.border),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => context.pushNamed(
-          AppRouter.careTeamDetailName,
-          pathParameters: {'id': member.id},
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              CareAvatar(member: member, size: 64),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      member.roleLabel.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 0.8,
-                        color: vcare.accent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      member.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+    final careTeamState = ref.watch(careTeamStateProvider);
+    final team = careTeamState.members;
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
+
+    return Scaffold(
+      body: VcareRefreshScrollView(
+        onRefresh: () => ref.read(careTeamStateProvider.notifier).refresh(),
+        slivers: [
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
+              hasSubtitle: true,
+              title: vcareTabPageTitle(
+                title: 'Care Team',
+                subtitle: 'Your people, one tap away.',
+                showBack: true,
+                action: VcareHeaderActionButton(
+                  label: 'Add contact',
+                  onPressed: () =>
+                      context.pushNamed(AppRouter.careTeamNewName),
                 ),
               ),
-              Icon(LucideIcons.chevronRight, color: vcare.mutedForeground),
-            ],
+            ),
           ),
-        ),
+          if (careTeamState.fetching && team.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (careTeamState.hasError && team.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    careTeamState.error ?? 'Unable to load care team.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: context.mobileShellScrollPadding,
+              sliver: team.isEmpty
+                  ? const SliverToBoxAdapter(child: CareTeamEmptyState())
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: CareTeamMemberCard(member: team[index]),
+                        ),
+                        childCount: team.length,
+                      ),
+                    ),
+            ),
+        ],
       ),
     );
   }

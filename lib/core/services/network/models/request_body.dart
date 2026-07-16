@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/services/network/models/form_file.dart';
+import 'package:vcare_admin/core/services/network/models/form_file.dart';
 
 /// Canonical media types used by network request payloads.
 abstract final class RequestMediaType {

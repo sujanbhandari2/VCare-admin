@@ -1,8 +1,9 @@
-import 'package:flutter_template/core/config/flavor/configuration/development_configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration/production_configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration/staging_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/development_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/production_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/qa_configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration/uat_configuration.dart';
 
-import 'package:flutter_template/core/config/flavor/flavor.dart';
+import 'package:vcare_admin/core/config/flavor/flavor.dart';
 
 abstract class Configuration {
   /// The max allowed age duration for the http cache
@@ -52,11 +53,12 @@ abstract class Configuration {
   static Configuration of([Flavor? flavor]) {
     flavor ??= Flavor.fromEnvironment;
 
-    return flavor == .dev
-        ? DevelopmentConfiguration.instance
-        : flavor == .staging
-        ? StagingConfiguration.instance
-        : ProductionConfiguration.instance;
+    return switch (flavor) {
+      Flavor.dev => DevelopmentConfiguration.instance,
+      Flavor.qa => QaConfiguration.instance,
+      Flavor.uat => UatConfiguration.instance,
+      Flavor.prod => ProductionConfiguration.instance,
+    };
   }
 
   @override

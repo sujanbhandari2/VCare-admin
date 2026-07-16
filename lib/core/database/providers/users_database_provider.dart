@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:sqflite/sqflite.dart';
 
-import 'package:flutter_template/shared/utils/logger.dart';
-import 'package:flutter_template/core/database/core/base_database_provider.dart';
-import 'package:flutter_template/core/database/tables/users/users_table.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
+import 'package:vcare_admin/core/database/core/base_database_provider.dart';
+import 'package:vcare_admin/core/database/tables/users/users_table.dart';
 
 class UsersDatabaseProvider extends BaseDatabaseProvider {
   UsersDatabaseProvider._();

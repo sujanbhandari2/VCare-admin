@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_template/features/loadable_list_demo/domain/models/demo_list_item.dart';
+import 'package:vcare_admin/features/loadable_list_demo/domain/models/demo_list_item.dart';
 
-import 'package:flutter_template/features/loadable_list_demo/presentation/providers/loadable_list_demo_state_provider.dart';
-import 'package:flutter_template/shared/widgets/loadable_list_view.dart';
+import 'package:vcare_admin/features/loadable_list_demo/presentation/providers/loadable_list_demo_state_provider.dart';
+import 'package:vcare_admin/shared/widgets/loadable_list_view.dart';
 
 class LoadableListDemoScreen extends ConsumerStatefulWidget {
   const LoadableListDemoScreen({super.key});
@@ -15,8 +15,6 @@ class LoadableListDemoScreen extends ConsumerStatefulWidget {
 
 class _LoadableListDemoScreenState
     extends ConsumerState<LoadableListDemoScreen> {
-  bool _simulateEmpty = false;
-
   @override
   void initState() {
     super.initState();
@@ -66,19 +64,6 @@ class _LoadableListDemoScreenState
               ],
             ),
           ),
-          SwitchListTile(
-            title: const Text('Simulate Empty List'),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            value: _simulateEmpty,
-            onChanged: (value) {
-              setState(() {
-                _simulateEmpty = value;
-              });
-              ref
-                  .read(loadableListDemoStateProvider.notifier)
-                  .setSimulateEmpty(value);
-            },
-          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Align(
@@ -105,7 +90,7 @@ class _LoadableListDemoScreenState
               },
               headerBuilder: (_) => Container(
                 padding: const EdgeInsets.all(16),
-                child: const Text("This is header")
+                child: const Text("This is header"),
               ),
               headerBehavior: LoadableListHeaderBehavior.pinned,
               headerExtent: 60,

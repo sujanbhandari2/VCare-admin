@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_transaction_receipt_sheet.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 Future<void> showHomeTransactionReceiptSheet(
   BuildContext context,
@@ -246,8 +248,14 @@ class _FailedActions extends StatelessWidget {
             icon: LucideIcons.creditCard,
             label: 'Update method',
             outlined: true,
-            onTap: () =>
-                _closeWithSnack(context, 'Payment method flow coming soon.'),
+            onTap: () {
+              context.showVcareToast(
+                title: 'Update payment method',
+                description: 'Opening payment settings…',
+                variant: VcareToastVariant.info,
+              );
+              Navigator.of(context).pop();
+            },
           ),
         ),
         const SizedBox(width: 8),
@@ -256,8 +264,14 @@ class _FailedActions extends StatelessWidget {
             icon: LucideIcons.mail,
             label: 'Contact',
             outlined: true,
-            onTap: () =>
-                _closeWithSnack(context, 'Support contact flow coming soon.'),
+            onTap: () {
+              context.showVcareToast(
+                title: 'Contacting support',
+                description: "We'll be in touch shortly.",
+                variant: VcareToastVariant.info,
+              );
+              Navigator.of(context).pop();
+            },
           ),
         ),
         const SizedBox(width: 8),
@@ -265,10 +279,14 @@ class _FailedActions extends StatelessWidget {
           child: _SheetActionButton(
             icon: LucideIcons.refreshCw,
             label: 'Reprocess',
-            onTap: () => _closeWithSnack(
-              context,
-              'Reprocessing ${transaction.membership}.',
-            ),
+            onTap: () {
+              context.showVcareToast(
+                title: 'Reprocessing transaction',
+                description: transaction.invoiceNumber,
+                variant: VcareToastVariant.success,
+              );
+              Navigator.of(context).pop();
+            },
           ),
         ),
       ],
@@ -286,8 +304,25 @@ class _DownloadAction extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
-        onPressed: () =>
-            _closeWithSnack(context, 'PDF receipt download is coming soon.'),
+        onPressed: () {
+          ClientTransactionReceiptInfo(
+            id: transaction.invoiceNumber,
+            membership: transaction.membership,
+            amount: transaction.amount,
+            currency: transaction.currency,
+            status: transaction.status == 'Failed'
+                ? ClientReceiptStatus.failed
+                : transaction.status == 'Pending'
+                ? ClientReceiptStatus.pending
+                : ClientReceiptStatus.paid,
+            paidAt: transaction.paidAt.toIso8601String(),
+            periodStart: transaction.periodStart.toIso8601String(),
+            periodEnd: transaction.periodEnd.toIso8601String(),
+            payerName: transaction.payerName,
+            method: transaction.method,
+            invoiceNumber: transaction.invoiceNumber,
+          ).downloadPdf(context);
+        },
         icon: const Icon(LucideIcons.download, size: 18),
         label: const Text('Download PDF receipt'),
       ),
@@ -382,11 +417,6 @@ class _StatusPill extends StatelessWidget {
       ),
     );
   }
-}
-
-void _closeWithSnack(BuildContext context, String message) {
-  Navigator.of(context).pop();
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 String _formatMoney(HomeTransaction transaction) {

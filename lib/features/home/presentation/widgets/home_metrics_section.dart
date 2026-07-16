@@ -1,74 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Overview stat cards — parity with vcareapp [HomeMetricsSection].
-class HomeMetricsSection extends StatefulWidget {
+class HomeMetricsSection extends StatelessWidget {
   const HomeMetricsSection({
     super.key,
-    this.totalClients = '10',
-    this.totalCommission = r'$12,480',
-    this.totalSales = r'$124,800',
+    required this.hasCommission,
+    required this.totalClients,
+    required this.totalCommission,
+    required this.totalSales,
     this.onTotalClientsTap,
-    this.onCommissionTap,
+    this.onTotalCommissionTap,
+    this.onTotalSalesTap,
   });
 
+  final bool hasCommission;
   final String totalClients;
   final String totalCommission;
   final String totalSales;
   final VoidCallback? onTotalClientsTap;
-  final VoidCallback? onCommissionTap;
-
-  @override
-  State<HomeMetricsSection> createState() => _HomeMetricsSectionState();
-}
-
-class _HomeMetricsSectionState extends State<HomeMetricsSection> {
-  bool _showSales = false;
+  final VoidCallback? onTotalCommissionTap;
+  final VoidCallback? onTotalSalesTap;
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
+    final secondaryLabel =
+        hasCommission ? 'Total Commission' : 'Total Sales';
+    final secondaryValue = hasCommission ? totalCommission : totalSales;
+    final secondaryOnTap =
+        hasCommission ? onTotalCommissionTap : onTotalSalesTap;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Overview',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-            Text(
-              _showSales ? 'Sales stats' : 'Commission stats',
-              style: TextStyle(
-                fontSize: 11,
-                color: vcare.mutedForeground,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Material(
-              color: vcare.muted,
-              shape: const CircleBorder(),
-              child: InkWell(
-                onTap: () => setState(() => _showSales = !_showSales),
-                customBorder: const CircleBorder(),
-                child: SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: Icon(
-                    _showSales ? LucideIcons.eyeOff : LucideIcons.eye,
-                    size: 14,
-                    color: vcare.mutedForeground,
-                  ),
-                ),
-              ),
-            ),
-          ],
+        const Text(
+          'Overview',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
         Row(
@@ -76,25 +45,20 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
             Expanded(
               child: _MetricCard(
                 label: 'Total Clients',
-                value: widget.totalClients,
+                value: totalClients,
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0x26F59E0B),
-                    Color(0x0DF59E0B),
-                  ],
+                  colors: [Color(0x26F59E0B), Color(0x0DF59E0B)],
                 ),
-                onTap: widget.onTotalClientsTap,
+                onTap: onTotalClientsTap,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _MetricCard(
-                label: _showSales ? 'Total Sales' : 'Total Commission',
-                value: _showSales
-                    ? widget.totalSales
-                    : widget.totalCommission,
+                label: secondaryLabel,
+                value: secondaryValue,
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -103,7 +67,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
                     VCareColors.primary.withValues(alpha: 0.05),
                   ],
                 ),
-                onTap: widget.onCommissionTap,
+                onTap: secondaryOnTap,
               ),
             ),
           ],
@@ -147,10 +111,7 @@ class _MetricCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: vcare.mutedForeground,
-                ),
+                style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
               ),
               const SizedBox(height: 2),
               Text(

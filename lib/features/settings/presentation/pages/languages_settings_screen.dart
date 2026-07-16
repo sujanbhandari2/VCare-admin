@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter_template/l10n/l10n.dart';
-import 'package:flutter_template/shared/widgets/gap.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/l10n/l10n.dart';
+import 'package:vcare_admin/shared/widgets/gap.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class LanguagesSettingsScreen extends ConsumerWidget {
   const LanguagesSettingsScreen({super.key});

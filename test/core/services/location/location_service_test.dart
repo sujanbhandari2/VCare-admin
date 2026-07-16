@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_template/core/services/location/location_service.dart';
+import 'package:vcare_admin/core/services/location/location_service.dart';
 import 'package:location_platform_interface/location_platform_interface.dart';
 
 void main() {
@@ -22,29 +22,35 @@ void main() {
       LocationPlatform.instance = defaultInstance;
     });
 
-    test('returns granted without prompting when permission already exists', () async {
-      fakeLocationPlatform.serviceEnabledValue = true;
-      fakeLocationPlatform.hasPermissionValue = PermissionStatus.granted;
+    test(
+      'returns granted without prompting when permission already exists',
+      () async {
+        fakeLocationPlatform.serviceEnabledValue = true;
+        fakeLocationPlatform.hasPermissionValue = PermissionStatus.granted;
 
-      final result = await service.checkAndRequestLocationPermission();
+        final result = await service.checkAndRequestLocationPermission();
 
-      expect(result.status, LocationPermissionRequestStatus.granted);
-      expect(result.isGranted, isTrue);
-      expect(fakeLocationPlatform.requestServiceCallCount, 0);
-      expect(fakeLocationPlatform.requestPermissionCallCount, 0);
-    });
+        expect(result.status, LocationPermissionRequestStatus.granted);
+        expect(result.isGranted, isTrue);
+        expect(fakeLocationPlatform.requestServiceCallCount, 0);
+        expect(fakeLocationPlatform.requestPermissionCallCount, 0);
+      },
+    );
 
-    test('returns serviceDisabled when the service prompt is declined', () async {
-      fakeLocationPlatform.serviceEnabledValue = false;
-      fakeLocationPlatform.requestServiceValue = false;
+    test(
+      'returns serviceDisabled when the service prompt is declined',
+      () async {
+        fakeLocationPlatform.serviceEnabledValue = false;
+        fakeLocationPlatform.requestServiceValue = false;
 
-      final result = await service.checkAndRequestLocationPermission();
+        final result = await service.checkAndRequestLocationPermission();
 
-      expect(result.status, LocationPermissionRequestStatus.serviceDisabled);
-      expect(result.requiresLocationService, isTrue);
-      expect(fakeLocationPlatform.requestServiceCallCount, 1);
-      expect(fakeLocationPlatform.requestPermissionCallCount, 0);
-    });
+        expect(result.status, LocationPermissionRequestStatus.serviceDisabled);
+        expect(result.requiresLocationService, isTrue);
+        expect(fakeLocationPlatform.requestServiceCallCount, 1);
+        expect(fakeLocationPlatform.requestPermissionCallCount, 0);
+      },
+    );
 
     test('returns permissionDeniedForever without requesting again', () async {
       fakeLocationPlatform.serviceEnabledValue = true;
@@ -95,7 +101,9 @@ void main() {
 
     test('returns error when the platform throws', () async {
       fakeLocationPlatform.serviceEnabledValue = true;
-      fakeLocationPlatform.hasPermissionError = StateError('permission check failed');
+      fakeLocationPlatform.hasPermissionError = StateError(
+        'permission check failed',
+      );
 
       final result = await service.checkAndRequestLocationPermission();
 

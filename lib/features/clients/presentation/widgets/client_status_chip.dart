@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 
 class ClientStatusChip extends StatelessWidget {
   const ClientStatusChip({super.key, required this.label, this.tone});
@@ -21,10 +21,7 @@ class ClientStatusChip extends StatelessWidget {
   }
 
   factory ClientStatusChip.caseStatus(ClientCaseStatus status) {
-    return ClientStatusChip(
-      label: _caseLabel(status),
-      tone: _caseTone(status),
-    );
+    return ClientStatusChip(label: _caseLabel(status), tone: _caseTone(status));
   }
 
   factory ClientStatusChip.billing(ClientBillingStatus status) {
@@ -70,6 +67,8 @@ class ClientStatusChip extends StatelessWidget {
         return 'Failed';
       case ClientTransactionStatus.onHold:
         return 'On Hold';
+      case ClientTransactionStatus.pending:
+        return 'Pending';
     }
   }
 
@@ -80,6 +79,8 @@ class ClientStatusChip extends StatelessWidget {
       case ClientTransactionStatus.failed:
         return ClientChipTone.destructive;
       case ClientTransactionStatus.onHold:
+        return ClientChipTone.warning;
+      case ClientTransactionStatus.pending:
         return ClientChipTone.warning;
     }
   }

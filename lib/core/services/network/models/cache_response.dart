@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:clock/clock.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
 
 /// Model for the response returned from HTTP Cache.
 ///

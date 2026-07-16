@@ -5,11 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/auth/presentation/providers/user_logged_in_state_provider.dart';
-import 'package:flutter_template/features/home/data/vcare_assets.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/home/data/vcare_assets.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class VcareSplashScreen extends ConsumerStatefulWidget {
   const VcareSplashScreen({super.key});
@@ -75,11 +75,8 @@ class _VcareSplashScreenState extends ConsumerState<VcareSplashScreen> {
                   VCareAssets.logo,
                   height: 48,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Image.asset(
-                    VCareAssets.member,
-                    width: 56,
-                    height: 56,
-                  ),
+                  errorBuilder: (_, __, ___) =>
+                      Image.asset(VCareAssets.member, width: 56, height: 56),
                 ),
                 const SizedBox(height: 24),
                 const SizedBox(

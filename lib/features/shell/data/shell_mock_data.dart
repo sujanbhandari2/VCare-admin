@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/features/home/data/home_activity_builder.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
 
 class ProviderCategoryItem {
   const ProviderCategoryItem({
@@ -101,28 +101,39 @@ class ShellMockData {
     return h.abs();
   }
 
-  static List<MessageThreadItem> messageThreads() {
-    return HomeMockData.careTeam.map((c) {
-      final msgs = HomeMockData.messagesByContact[c.id] ?? [];
-      final last = msgs.isNotEmpty ? msgs.last : null;
-      final h = _hashId(c.id);
-      return MessageThreadItem(
-        contact: c,
-        lastBody: last?.body,
-        lastAt: last?.createdAt,
-        isOnline: h % 2 == 0,
-        unreadCount: h % 7 == 0 ? (h % 25) + 1 : 0,
-      );
-    }).where((t) => t.lastBody != null).toList();
+  static List<MessageThreadItem> messageThreads({
+    required List<CareTeamMember> careTeam,
+  }) {
+    return careTeam
+        .map((c) {
+          final msgs = HomeMockData.messagesByContact[c.id] ?? [];
+          final last = msgs.isNotEmpty ? msgs.last : null;
+          final h = _hashId(c.id);
+          return MessageThreadItem(
+            contact: c,
+            lastBody: last?.body,
+            lastAt: last?.createdAt,
+            isOnline: h % 2 == 0,
+            unreadCount: h % 7 == 0 ? (h % 25) + 1 : 0,
+          );
+        })
+        .where((t) => t.lastBody != null)
+        .toList();
   }
 
-  static List<MessageGroupItem> messageGroups() {
-    final ct = HomeMockData.careTeam;
+  static List<MessageGroupItem> messageGroups({
+    required List<CareTeamMember> careTeam,
+  }) {
+    if (careTeam.isEmpty) {
+      return const [];
+    }
+
+    final members = careTeam.take(4).toList();
     return [
       MessageGroupItem(
         id: 'group-1',
         name: 'Alex Care Team',
-        members: [ct[0], ct[1], ct[4], ct[5]],
+        members: members,
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
         lastBody: 'Welcome to your care group!',
         lastAt: DateTime.now().subtract(const Duration(hours: 4)),

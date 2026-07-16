@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/data/home_activity_builder.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 class HomeActivityScreen extends StatelessWidget {
   const HomeActivityScreen({super.key});
@@ -24,7 +24,7 @@ class HomeActivityScreen extends StatelessWidget {
             child: VcarePageHeader(title: 'Recent Activity', showBack: true),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final item = items[index];

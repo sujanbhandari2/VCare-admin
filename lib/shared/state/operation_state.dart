@@ -8,20 +8,20 @@ class OperationState<T> {
   });
 
   const OperationState.idle()
-      : status = OperationStatus.idle,
-        data = null,
-        errorMessage = null;
+    : status = OperationStatus.idle,
+      data = null,
+      errorMessage = null;
 
   const OperationState.loading({this.data})
-      : status = OperationStatus.loading,
-        errorMessage = null;
+    : status = OperationStatus.loading,
+      errorMessage = null;
 
   const OperationState.success(this.data)
-      : status = OperationStatus.success,
-        errorMessage = null;
+    : status = OperationStatus.success,
+      errorMessage = null;
 
   const OperationState.failure(this.errorMessage, {this.data})
-      : status = OperationStatus.failure;
+    : status = OperationStatus.failure;
 
   final OperationStatus status;
   final T? data;

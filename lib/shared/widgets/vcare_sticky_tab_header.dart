@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 /// Pinned page title that stays below the status bar — parity with web
 /// [PageHeader] `safe-top sticky top-0`.
@@ -12,15 +12,19 @@ class VcarePinnedPageTitleDelegate extends SliverPersistentHeaderDelegate {
     required this.title,
     this.hasSubtitle = true,
     this.showBottomBorder = false,
+    this.textScaleFactor = 1.0,
   });
 
   final double safeTop;
   final Widget title;
   final bool hasSubtitle;
   final bool showBottomBorder;
+  final double textScaleFactor;
 
-  double get _contentHeight =>
-      VcarePageHeaderLayout.contentHeight(hasSubtitle: hasSubtitle);
+  double get _contentHeight => VcarePageHeaderLayout.contentHeight(
+    hasSubtitle: hasSubtitle,
+    textScaleFactor: textScaleFactor,
+  );
 
   @override
   double get minExtent => safeTop + _contentHeight;
@@ -54,11 +58,15 @@ class VcarePinnedPageTitleDelegate extends SliverPersistentHeaderDelegate {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(height: safeTop),
               SizedBox(
                 height: _contentHeight,
-                child: Align(alignment: Alignment.topCenter, child: title),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: title,
+                ),
               ),
             ],
           ),
@@ -72,7 +80,8 @@ class VcarePinnedPageTitleDelegate extends SliverPersistentHeaderDelegate {
     return safeTop != oldDelegate.safeTop ||
         title != oldDelegate.title ||
         hasSubtitle != oldDelegate.hasSubtitle ||
-        showBottomBorder != oldDelegate.showBottomBorder;
+        showBottomBorder != oldDelegate.showBottomBorder ||
+        textScaleFactor != oldDelegate.textScaleFactor;
   }
 }
 

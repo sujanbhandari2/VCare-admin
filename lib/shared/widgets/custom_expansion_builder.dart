@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 /// Type Def for Custom Expansion Widget Builder
-typedef ExpansionWidgetBuilder = Widget Function(
-  BuildContext context,
-  Animation<double> animation,
-  bool expanded,
-  VoidCallback onToggle,
-);
+typedef ExpansionWidgetBuilder =
+    Widget Function(
+      BuildContext context,
+      Animation<double> animation,
+      bool expanded,
+      VoidCallback onToggle,
+    );
 
 /// Custom Expansion Builder
 class CustomExpansionBuilder extends StatefulWidget {

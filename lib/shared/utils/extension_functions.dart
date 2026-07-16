@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/config/flavor/configuration_provider.dart';
-import 'package:flutter_template/l10n/l10n.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/configuration_provider.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/l10n/l10n.dart';
 
-import 'package:flutter_template/l10n/app_localizations.dart';
-import 'package:flutter_template/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/l10n/app_localizations.dart';
+import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 
 /// BuildContext Extension functions
 extension BuildContextExt on BuildContext {
@@ -22,6 +25,24 @@ extension BuildContextExt on BuildContext {
   double get height => MediaQuery.sizeOf(this).height;
 
   EdgeInsets get padding => MediaQuery.paddingOf(this);
+
+  /// Bottom padding so scroll/content ends above the mobile shell nav pill.
+  ///
+  /// Returns 0 when [MainWrapperScreen] already applied shell bottom inset.
+  double get mobileShellBottomContentPadding {
+    if (VCareMobileShellScope.appliesBottomInsetOf(this)) {
+      return 0;
+    }
+    return vcareMobileBottomNavContentPadding(this);
+  }
+
+  /// Standard shell scroll padding (20 L/R + dynamic bottom above nav).
+  EdgeInsets get mobileShellScrollPadding => EdgeInsets.fromLTRB(
+        VCareLayout.pageHorizontalPadding,
+        0,
+        VCareLayout.pageHorizontalPadding,
+        mobileShellBottomContentPadding,
+      );
 
   bool get isRtl => Directionality.of(this) == TextDirection.rtl;
 
@@ -56,24 +77,22 @@ extension BuildContextExt on BuildContext {
     bool isDismissible = true,
     bool enableDrag = true,
     bool useSafeArea = false,
-  }) =>
-      showModalBottomSheet<T>(
-        context: this,
-        builder: builder,
-        backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
-        shape: shape ??
-            const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(24.0),
-              ),
-            ),
-        barrierColor: theme.dividerColor.withValues(alpha: 0.2),
-        isScrollControlled: isScrollControlled,
-        useRootNavigator: useRootNavigator,
-        isDismissible: isDismissible,
-        enableDrag: enableDrag,
-        useSafeArea: useSafeArea,
-      );
+  }) => showModalBottomSheet<T>(
+    context: this,
+    builder: builder,
+    backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
+    shape:
+        shape ??
+        const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+        ),
+    barrierColor: theme.dividerColor.withValues(alpha: 0.2),
+    isScrollControlled: isScrollControlled,
+    useRootNavigator: useRootNavigator,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
+    useSafeArea: useSafeArea,
+  );
 }
 
 /// Extension functions on String
@@ -123,8 +142,11 @@ extension StringExt on String {
   /// To convert num char in devanagari
   String fromLocale(Locale locale) {
     return characters
-        .map((e) =>
-            locale.languageCode == L10n.ne.languageCode ? _toDevanagari(e) : e)
+        .map(
+          (e) => locale.languageCode == L10n.ne.languageCode
+              ? _toDevanagari(e)
+              : e,
+        )
         .join();
   }
 
@@ -187,7 +209,8 @@ extension StringExt on String {
     // A basic regex to check for common file path patterns.
     // This is a simplified version and might need adjustments based on your specific needs.
     final filePathRegex = RegExp(
-        r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*([A-Za-z0-9_\-\.]+\.[A-Za-z0-9]+)?$');
+      r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*([A-Za-z0-9_\-\.]+\.[A-Za-z0-9]+)?$',
+    );
 
     return filePathRegex.hasMatch(this);
   }
@@ -202,8 +225,9 @@ extension StringExt on String {
     }
 
     // A regex to check for common directory path patterns.
-    final directoryPathRegex =
-        RegExp(r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*$');
+    final directoryPathRegex = RegExp(
+      r'^(/|([A-Za-z]:\\))?([A-Za-z0-9_\-\.]+/)*$',
+    );
 
     return directoryPathRegex.hasMatch(this);
   }
@@ -359,22 +383,16 @@ extension StringExt on String {
         spans.add(
           TextSpan(
             text: text,
-            style: textStyle4Matched ??
-                const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+            style:
+                textStyle4Matched ??
+                const TextStyle(fontWeight: FontWeight.bold),
           ),
         );
         return text;
       },
       onNonMatch: (s) {
         // Add normal text for non-matches
-        spans.add(
-          TextSpan(
-            text: s,
-            style: textStyle4NonMatched,
-          ),
-        );
+        spans.add(TextSpan(text: s, style: textStyle4NonMatched));
         return s;
       },
     );
@@ -402,10 +420,12 @@ extension StringExt on String {
 extension IntExt on int? {
   /// To convert num char in devanagari
   String fromLocale(Locale locale) {
-    return toString()
-        .characters
-        .map((e) =>
-            locale.languageCode == L10n.ne.languageCode ? _toDevanagari(e) : e)
+    return toString().characters
+        .map(
+          (e) => locale.languageCode == L10n.ne.languageCode
+              ? _toDevanagari(e)
+              : e,
+        )
         .join();
   }
 

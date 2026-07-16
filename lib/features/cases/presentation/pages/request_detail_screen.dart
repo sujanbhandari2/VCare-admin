@@ -3,18 +3,19 @@ import 'dart:convert';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_template/features/cases/data/pending_attachment.dart';
-import 'package:flutter_template/features/cases/data/request_file_item.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_detail_composer.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_detail_header.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_detail_message_list.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_detail_preview_dialog.dart';
-import 'package:flutter_template/features/cases/presentation/widgets/request_details_sheet.dart';
-import 'package:flutter_template/features/cases/utils/request_new_utils.dart';
-import 'package:flutter_template/features/cases/data/requests_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_mock_data.dart';
-import 'package:flutter_template/features/home/data/home_models.dart';
-import 'package:flutter_template/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/features/cases/data/pending_attachment.dart';
+import 'package:vcare_admin/features/cases/data/request_file_item.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_detail_composer.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_detail_header.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_detail_message_list.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_detail_preview_dialog.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/request_details_sheet.dart';
+import 'package:vcare_admin/features/cases/utils/request_new_utils.dart';
+import 'package:vcare_admin/features/cases/data/requests_mock_data.dart';
+import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class RequestDetailScreen extends StatefulWidget {
   const RequestDetailScreen({super.key, required this.requestId});
@@ -286,9 +287,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    context.showVcareToast(
+      title: message,
+      variant: VcareToastVariant.info,
+    );
   }
 
   @override

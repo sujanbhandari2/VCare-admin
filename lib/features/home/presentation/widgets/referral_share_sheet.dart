@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:flutter_template/core/styles/vcare_colors.dart';
-import 'package:flutter_template/core/styles/vcare_theme.dart';
-import 'package:flutter_template/features/home/presentation/widgets/referral_qr_code.dart';
-import 'package:flutter_template/features/home/utils/referral_actions.dart';
-import 'package:flutter_template/features/profile/domain/entities/local_profile.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/referral_qr_code.dart';
+import 'package:vcare_admin/features/home/utils/referral_actions.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 Future<void> showReferralShareSheet(
   BuildContext context, {
   required LocalProfile profile,
+  GlobalKey? cardCaptureKey,
 }) {
   return context.showBottomSheet<void>(
     isScrollControlled: true,
-    builder: (sheetContext) => _ReferralShareSheet(profile: profile),
+    builder: (sheetContext) => _ReferralShareSheet(
+      profile: profile,
+      cardCaptureKey: cardCaptureKey,
+    ),
   );
 }
 
 class _ReferralShareSheet extends StatefulWidget {
-  const _ReferralShareSheet({required this.profile});
+  const _ReferralShareSheet({
+    required this.profile,
+    this.cardCaptureKey,
+  });
 
   final LocalProfile profile;
+  final GlobalKey? cardCaptureKey;
 
   @override
   State<_ReferralShareSheet> createState() => _ReferralShareSheetState();
@@ -29,21 +38,81 @@ class _ReferralShareSheet extends StatefulWidget {
 
 class _ReferralShareSheetState extends State<_ReferralShareSheet> {
   bool _copied = false;
+  bool _isSharingCard = false;
+  bool _isDownloadingCard = false;
   late final ReferralActions _actions;
+
+  bool get _isBusy => _isSharingCard || _isDownloadingCard;
 
   @override
   void initState() {
     super.initState();
-    _actions = ReferralActions(widget.profile);
+    _actions = ReferralActions(
+      widget.profile,
+      cardCaptureKey: widget.cardCaptureKey,
+    );
   }
 
   Future<void> _copyLink() async {
     await _actions.copyReferralLink();
     if (!mounted) return;
+    context.showVcareToast(
+      title: 'Referral link copied',
+      variant: VcareToastVariant.success,
+    );
     setState(() => _copied = true);
     Future<void>.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) setState(() => _copied = false);
     });
+  }
+
+  Future<void> _shareCard() async {
+    if (_isBusy) return;
+
+    setState(() => _isSharingCard = true);
+    try {
+      final shared = await _actions.shareCardImage();
+      if (!mounted) return;
+
+      if (!shared) {
+        context.showVcareToast(
+          title: "Couldn't share referral card",
+          variant: VcareToastVariant.destructive,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSharingCard = false);
+      }
+    }
+  }
+
+  Future<void> _downloadCard() async {
+    if (_isBusy) return;
+
+    setState(() => _isDownloadingCard = true);
+    try {
+      final saved = await _actions.downloadCardToGallery();
+      if (!mounted) return;
+
+      if (saved) {
+        context.showVcareToast(
+          title: 'Referral card saved',
+          description: 'Saved to your gallery',
+          variant: VcareToastVariant.success,
+        );
+      } else {
+        context.showVcareToast(
+          title: "Couldn't save referral card",
+          description: 'Check photo library permissions and try again',
+          variant: VcareToastVariant.destructive,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDownloadingCard = false);
+      }
+    }
   }
 
   @override
@@ -65,10 +134,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                 const Expanded(
                   child: Text(
                     'Share your referral',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                 ),
                 IconButton(
@@ -85,7 +151,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
               children: [
                 Center(
                   child: ReferralQrCode(
-                    imageUrl: _actions.qrImageUrl,
+                    data: _actions.referralUrl,
                     size: 160,
                     padding: 8,
                     borderRadius: 16,
@@ -139,10 +205,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _CopyButton(
-                              copied: _copied,
-                              onPressed: _copyLink,
-                            ),
+                            _CopyButton(copied: _copied, onPressed: _copyLink),
                           ],
                         ),
                       ],
@@ -163,15 +226,28 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                 _ShareChannelGrid(
                   actions: _actions,
                   shareText: shareText,
+                  onShareError: () {
+                    if (!mounted) return;
+                    context.showVcareToast(
+                      title: "Couldn't open share link",
+                      variant: VcareToastVariant.destructive,
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _actions.shareReferralLink(),
-                        icon: const Icon(LucideIcons.share2, size: 16),
-                        label: const Text('More'),
+                        onPressed: _isBusy ? null : _shareCard,
+                        icon: _isSharingCard
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(LucideIcons.share2, size: 16),
+                        label: Text(_isSharingCard ? 'Sharing...' : 'Share card'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 44),
                           shape: RoundedRectangleBorder(
@@ -183,9 +259,20 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _actions.openQrImage,
-                        icon: const Icon(LucideIcons.download, size: 16),
-                        label: const Text('Save QR'),
+                        onPressed: _isBusy ? null : _downloadCard,
+                        icon: _isDownloadingCard
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(LucideIcons.download, size: 16),
+                        label: Text(
+                          _isDownloadingCard ? 'Saving...' : 'Save card',
+                        ),
                         style: FilledButton.styleFrom(
                           backgroundColor: VCareColors.primary,
                           minimumSize: const Size(0, 44),
@@ -251,10 +338,20 @@ class _ShareChannelGrid extends StatelessWidget {
   const _ShareChannelGrid({
     required this.actions,
     required this.shareText,
+    required this.onShareError,
   });
 
   final ReferralActions actions;
   final String shareText;
+  final VoidCallback onShareError;
+
+  Future<void> _openChannel(String url) async {
+    try {
+      await actions.openShareChannel(url: url);
+    } catch (_) {
+      onShareError();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,48 +360,48 @@ class _ShareChannelGrid extends StatelessWidget {
         label: 'WhatsApp',
         icon: LucideIcons.messageCircle,
         color: const Color(0xFF25D366),
-        onTap: () => actions.openShareChannel(
-          url: ReferralActions.whatsAppUrl(actions.referralUrl, shareText),
+        onTap: () => _openChannel(
+          ReferralActions.whatsAppUrl(actions.referralUrl, shareText),
         ),
       ),
       _ShareChannel(
         label: 'Facebook',
         icon: LucideIcons.facebook,
         color: const Color(0xFF1877F2),
-        onTap: () => actions.openShareChannel(
-          url: ReferralActions.facebookUrl(actions.referralUrl),
+        onTap: () => _openChannel(
+          ReferralActions.facebookUrl(actions.referralUrl),
         ),
       ),
       _ShareChannel(
         label: 'X',
         icon: LucideIcons.twitter,
         color: Theme.of(context).colorScheme.onSurface,
-        onTap: () => actions.openShareChannel(
-          url: ReferralActions.twitterUrl(actions.referralUrl, shareText),
+        onTap: () => _openChannel(
+          ReferralActions.twitterUrl(actions.referralUrl, shareText),
         ),
       ),
       _ShareChannel(
         label: 'LinkedIn',
         icon: LucideIcons.linkedin,
         color: const Color(0xFF0A66C2),
-        onTap: () => actions.openShareChannel(
-          url: ReferralActions.linkedInUrl(actions.referralUrl),
+        onTap: () => _openChannel(
+          ReferralActions.linkedInUrl(actions.referralUrl),
         ),
       ),
       _ShareChannel(
         label: 'Telegram',
         icon: LucideIcons.send,
         color: const Color(0xFF229ED9),
-        onTap: () => actions.openShareChannel(
-          url: ReferralActions.telegramUrl(actions.referralUrl, shareText),
+        onTap: () => _openChannel(
+          ReferralActions.telegramUrl(actions.referralUrl, shareText),
         ),
       ),
       _ShareChannel(
         label: 'Email',
         icon: LucideIcons.mail,
         color: Theme.of(context).colorScheme.onSurface,
-        onTap: () => actions.openShareChannel(
-          url: ReferralActions.emailUrl(actions.referralUrl, shareText),
+        onTap: () => _openChannel(
+          ReferralActions.emailUrl(actions.referralUrl, shareText),
         ),
       ),
     ];

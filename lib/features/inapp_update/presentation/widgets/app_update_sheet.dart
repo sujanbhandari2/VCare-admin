@@ -67,9 +67,7 @@ class AppUpdateSheet extends StatelessWidget {
                 const SizedBox(height: 24),
                 AppUpdateSheetAppInfoRow(info: info),
                 const SizedBox(height: 24),
-                Flexible(
-                  child: AppUpdateSheetReleaseNotesTile(info: info),
-                ),
+                Flexible(child: AppUpdateSheetReleaseNotesTile(info: info)),
                 AppUpdateSheetUpdateActionButtons(info: info),
               ],
             ),

@@ -1,6 +1,6 @@
-import 'package:flutter_template/features/profile/data/models/user_profile_model.dart'
+import 'package:vcare_admin/features/profile/data/models/user_profile_model.dart'
     as model;
-import 'package:flutter_template/features/profile/domain/entities/user_profile.dart';
+import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 
 extension UserProfileMapper on model.UserProfileModel {
   UserProfile toEntity() {

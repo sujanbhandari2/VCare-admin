@@ -1,4 +1,5 @@
-import 'home_mock_data.dart';
+// TODO: Re-enable when todo list API is available.
+// import 'home_mock_data.dart';
 import 'home_models.dart';
 
 const _statusLabels = {
@@ -96,11 +97,15 @@ List<ActivityItem> buildRecentActivity({
   return activity.take(3).toList();
 }
 
-List<ActivityItem> defaultRecentActivity() => buildRecentActivity(
-  requests: HomeMockData.requests(),
-  careTeam: HomeMockData.careTeam,
-  messagesByContact: HomeMockData.messagesByContact,
-);
+List<ActivityItem> defaultRecentActivity() {
+  // TODO: Re-enable when todo list API is available.
+  // return buildRecentActivity(
+  //   requests: HomeMockData.requests(),
+  //   careTeam: HomeMockData.careTeam,
+  //   messagesByContact: HomeMockData.messagesByContact,
+  // );
+  return const [];
+}
 
 ActivityItem _failedTransaction() {
   final when = DateTime.now().subtract(const Duration(minutes: 30));

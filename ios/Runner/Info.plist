@@ -27,13 +27,17 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Need camera access to capture an image for generating app color scheme.</string>
+	<string>Need camera access to take photos for chat attachments and app preferences.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Need for location related service</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Need for location related service.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Need microphone access to send voice messages in chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Need photo library access to choose an image for generating app color scheme.</string>
+	<string>Need photo library access to share images in chat and choose preference images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Need permission to save your referral card to your photo gallery.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

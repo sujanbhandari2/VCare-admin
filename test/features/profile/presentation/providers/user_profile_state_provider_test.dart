@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_template/core/services/network/http_exception.dart';
-import 'package:flutter_template/features/profile/presentation/providers/user_profile_repository_provider.dart';
-import 'package:flutter_template/features/profile/presentation/providers/user_profile_state_provider.dart';
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/core/services/network/http_exception.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/user_profile_repository_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 
 import '../../../../fixtures/repositories/fake_user_profile_repository.dart';
 
@@ -41,7 +41,10 @@ void main() {
 
     test('fetch failure stores error', () async {
       repository.fetchResult = Failure(
-        HttpException(message: 'Unable to fetch profile'),
+        HttpException(
+          message: 'Unable to fetch profile',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container

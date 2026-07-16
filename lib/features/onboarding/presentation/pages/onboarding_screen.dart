@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/features/onboarding/domain/enums/onboarding_item.dart';
-import 'package:flutter_template/features/onboarding/presentation/providers/active_onboarding_item_provider.dart';
-import 'package:flutter_template/features/onboarding/presentation/widgets/carousal_indicator.dart';
-import 'package:flutter_template/features/onboarding/presentation/widgets/carousal_control_button.dart';
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/core/services/storage/storage_keys.dart';
-import 'package:flutter_template/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/onboarding/domain/enums/onboarding_item.dart';
+import 'package:vcare_admin/features/onboarding/presentation/providers/active_onboarding_item_provider.dart';
+import 'package:vcare_admin/features/onboarding/presentation/widgets/carousal_indicator.dart';
+import 'package:vcare_admin/features/onboarding/presentation/widgets/carousal_control_button.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/services/storage/storage_keys.dart';
+import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -42,10 +42,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   ///
   void _listenCarousalController() {
     // Getting index of the visible item
-    final index = (OnboardingItem.values.last.index *
-            (_carousalController.offset /
-                _carousalController.position.maxScrollExtent))
-        .round();
+    final index =
+        (OnboardingItem.values.last.index *
+                (_carousalController.offset /
+                    _carousalController.position.maxScrollExtent))
+            .round();
 
     // If index is not within the valid length
     // return from here
@@ -62,7 +63,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   /// Method to animate to the given position
   ///
   Future<void> _animateToIndex(int index) async {
-    final offset = (index * _carousalController.position.maxScrollExtent) /
+    final offset =
+        (index * _carousalController.position.maxScrollExtent) /
         OnboardingItem.values.last.index;
 
     await _carousalController.animateTo(
@@ -90,9 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 onPressed: () {
                   context.pushNamed(AppRouter.languages.toPathName);
                 },
-                icon: const Icon(
-                  Icons.translate,
-                ),
+                icon: const Icon(Icons.translate),
               ),
             ),
           ),
@@ -102,8 +102,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               itemExtent: context.width,
               shrinkExtent: context.width,
               itemSnapping: true,
-              overlayColor:
-                  WidgetStateColor.resolveWith((states) => Colors.transparent),
+              overlayColor: WidgetStateColor.resolveWith(
+                (states) => Colors.transparent,
+              ),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
               ),
@@ -163,10 +164,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _handleOnButtonClick(OnboardingItem item) {
     if (item.isEnd) {
       // Set already onboarded to true
-      ref.read(storageServiceProvider).set(
-            StorageKeys.alreadyOnboarded,
-            true,
-          );
+      ref.read(storageServiceProvider).set(StorageKeys.alreadyOnboarded, true);
 
       // Navigate to login screen
       context.goNamed(AppRouter.login.toPathName);

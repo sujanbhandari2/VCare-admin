@@ -1,0 +1,13 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import 'package:vcare_admin/core/services/network/api_client_provider.dart';
+import 'package:vcare_admin/features/care_team/data/repositories/care_team_repository_impl.dart';
+import 'package:vcare_admin/features/care_team/domain/repositories/care_team_repository.dart';
+
+part 'care_team_repository_provider.g.dart';
+
+@Riverpod(keepAlive: true)
+CareTeamRepository careTeamRepository(Ref ref) {
+  final apiClient = ref.read(apiClientProvider);
+  return CareTeamRepositoryImpl(apiClient);
+}

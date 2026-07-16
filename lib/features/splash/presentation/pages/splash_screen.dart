@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:flutter_template/features/onboarding/presentation/providers/is_already_onboarded_provider.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/onboarding/presentation/providers/is_already_onboarded_provider.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});

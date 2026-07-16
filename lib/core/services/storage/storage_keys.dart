@@ -2,6 +2,7 @@ class StorageKeys {
   static const String loggedInUserToken = 'token';
   static const String loggedInUserRefreshToken = 'refresh-token';
   static const String loggedInUserId = 'logged_in_user_id';
+  static const String loggedInUserUuid = 'logged_in_user_uuid';
   static const String loggedInUserProfileId = 'logged_in_user_profile_id';
   static const String loggedInUserEmail = 'logged_in_user_email';
   static const String loggedInUserUsername = 'logged_in_user_username';
@@ -26,4 +27,7 @@ class StorageKeys {
   static const String lastSyncedFcmToken = 'last_synced_fcm_token';
   static const String lastSyncedFcmUserId = 'last_synced_fcm_user_id';
   static const String localProfile = 'vcare.profile.v2';
+  static const String referralSlug = 'vcare.referralSlug';
+  static const String findCareSearchLocation = 'vcare.search-location.v2';
+  static const String findCareMockProviderFavorites = 'vcare:favorites:providers';
 }

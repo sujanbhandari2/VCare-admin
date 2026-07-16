@@ -1,4 +1,3 @@
-
 import '../models/loadable_list_item.dart';
 import 'operation_state.dart';
 
@@ -29,18 +28,24 @@ class LoadableListState<T extends LoadableListItem> {
 
   bool get isInitialLoading => operation.isLoading && items.isEmpty;
 
+  bool get isRefreshing => operation.isLoading && items.isNotEmpty;
+
   bool get isInitialError => operation.hasError && items.isEmpty;
 
   bool get isEmpty =>
       !isInitialLoading &&
-          !isInitialError &&
-          !operation.hasError &&
-          items.isEmpty;
+      !isInitialError &&
+      !operation.hasError &&
+      items.isEmpty;
 
   LoadableListState<T> loading({Map<String, dynamic>? extras}) =>
       LoadableListState<T>(
         operation: OperationState<List<T>>.loading(data: items),
-      ).._extras = extras;
+        isLoadingMore: false,
+        loadMoreErrorMessage: null,
+      )
+        .._extras = extras ?? this.extras
+        .._total = _total;
 
   LoadableListState<T> success({required List<T> items, required int total}) =>
       LoadableListState<T>(operation: OperationState<List<T>>.success(items))
@@ -49,8 +54,8 @@ class LoadableListState<T extends LoadableListItem> {
 
   LoadableListState<T> failure(String? message) =>
       LoadableListState<T>(
-        operation: OperationState<List<T>>.failure(message, data: items),
-      )
+          operation: OperationState<List<T>>.failure(message, data: items),
+        )
         .._extras = extras
         .._total = totalItems;
 
@@ -61,15 +66,16 @@ class LoadableListState<T extends LoadableListItem> {
 
   LoadableListState<T> appendSuccess({
     required List<T> appendedItems,
+    int? total,
   }) =>
       LoadableListState<T>(
-        operation: OperationState<List<T>>.success(<T>[
-          ...items,
-          ...appendedItems,
-        ]),
-      )
+          operation: OperationState<List<T>>.success(<T>[
+            ...items,
+            ...appendedItems,
+          ]),
+        )
         .._extras = extras
-        .._total = totalItems;
+        .._total = total ?? totalItems;
 
   LoadableListState<T> appendFailure(String? message) =>
       LoadableListState<T>(operation: operation, loadMoreErrorMessage: message)

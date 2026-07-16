@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_template/core/styles/app_colors.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/core/styles/app_colors.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
-import 'package:flutter_template/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 
 /// BottomNavigation
 ///
@@ -38,22 +38,17 @@ class BottomNavigation extends StatelessWidget {
       showSelectedLabels: true,
       showUnselectedLabels: false,
       type: .fixed,
-      items: items
-          .map(
-            (item) => _buildItem(item, context: context),
-          )
-          .toList(),
-      onTap: (index) => onSelect(
-        index,
-        NavItem.values[index],
-      ),
+      items: items.map((item) => _buildItem(item, context: context)).toList(),
+      onTap: (index) => onSelect(index, NavItem.values[index]),
       currentIndex: currentNavItem.index,
     );
   }
 
   /// Helper function to convert nav item to bottom navigation bar item
-  BottomNavigationBarItem _buildItem(NavItem item,
-      {required BuildContext context}) {
+  BottomNavigationBarItem _buildItem(
+    NavItem item, {
+    required BuildContext context,
+  }) {
     return item.toBottomNavigationBarItem(context);
   }
 }

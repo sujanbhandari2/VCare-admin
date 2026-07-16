@@ -2,22 +2,32 @@ import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import 'package:flutter_template/core/services/network/models/form_file.dart';
-import 'package:flutter_template/core/services/network/models/request_body.dart';
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
-import 'package:flutter_template/app/router/app_router.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
-import 'package:flutter_template/shared/utils/logger.dart';
-import 'package:flutter_template/core/services/network/http_exception.dart';
-import 'package:flutter_template/core/services/network/http_response_validator.dart';
-import 'package:flutter_template/core/services/network/api_client.dart';
-import 'package:flutter_template/core/config/api_endpoints.dart';
-import 'package:flutter_template/features/auth/data/mappers/auth_mappers.dart';
-import 'package:flutter_template/features/auth/domain/entities/forgot_password_response.dart';
-import 'package:flutter_template/features/auth/domain/entities/auth_session.dart';
-import 'package:flutter_template/features/auth/domain/entities/register_response.dart';
-import 'package:flutter_template/features/auth/domain/repositories/auth_repository.dart';
+import 'package:vcare_admin/core/services/network/models/form_file.dart';
+import 'package:vcare_admin/core/services/network/models/request_body.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
+import 'package:vcare_admin/core/services/network/http_exception.dart';
+import 'package:vcare_admin/core/services/network/http_response_validator.dart';
+import 'package:vcare_admin/core/services/network/api_client.dart';
+import 'package:vcare_admin/core/config/api_endpoints.dart';
+import 'package:vcare_admin/features/auth/data/auth_api_headers.dart';
+import 'package:vcare_admin/features/auth/data/mappers/auth_mappers.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
+import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
 
+import '../models/auth_pre_auth_user_model.dart';
+import '../models/auth_login_result_model.dart';
+import '../models/auth_identify_result_model.dart';
+import '../models/auth_setup_account_result_model.dart';
+import '../models/auth_verify_otp_result_model.dart';
 import '../models/forgot_password_response_model.dart';
 import '../models/login_response_model.dart';
 import '../models/register_response_model.dart';
@@ -28,6 +38,147 @@ class AuthRepositoryImpl extends AuthRepository {
 
   /// Constructor
   AuthRepositoryImpl(this.apiClient);
+
+  @override
+  Future<EitherResponseOrException<AuthIdentifyResult>> identify({
+    required String identifier,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authIdentify,
+        JsonRequestBody({'identifier': identifier}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AuthIdentifyResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> requestOtp({
+    required String identifier,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authRequestOtp,
+        JsonRequestBody({'identifier': identifier}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      ResponseValidator.ensureValid(response);
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthVerifyOtpResult>> verifyOtp({
+    required String identifier,
+    required String otp,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authVerifyOtp,
+        JsonRequestBody({'identifier': identifier, 'otp': otp}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) {
+          if (data is Map<String, dynamic>) {
+            return AuthVerifyOtpResultModel.fromJson(data);
+          }
+          return AuthVerifyOtpResultModel();
+        },
+        dataValidator: (data) => data == null || data is Map,
+      );
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthPreAuthUser>> getPreAuthUser({
+    required String registrationToken,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.get(
+        ApiEndpoints.authPreAuthUser,
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: {
+          ...AuthApiHeaders.agent,
+          'x-pre-auth-session-token': registrationToken,
+        },
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AuthPreAuthUserModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthSetupAccountResult>> setupAccount({
+    required String registrationToken,
+    required String firstName,
+    String? middleName,
+    required String lastName,
+    required String password,
+    required String dob,
+    required String zipCode,
+    required String email,
+    required String phone,
+    String tenantSlug = 'default',
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authSetupAccount,
+        JsonRequestBody({
+          'firstName': firstName,
+          if (middleName != null && middleName.trim().isNotEmpty)
+            'middleName': middleName.trim(),
+          'lastName': lastName,
+          'password': password,
+          'dob': dob,
+          'zipCode': zipCode,
+          'email': email,
+          'phone': phone,
+          'tenantSlug': tenantSlug,
+        }),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: {
+          ...AuthApiHeaders.agent,
+          'x-pre-auth-session-token': registrationToken,
+        },
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AuthSetupAccountResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+      return model.toEntity();
+    });
+  }
 
   /// Method to login
   ///
@@ -42,13 +193,15 @@ class AuthRepositoryImpl extends AuthRepository {
         JsonRequestBody(payloads),
         cancelToken: cancelToken,
         isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
       );
 
-      final loginResponseModel = ResponseValidator.parse(
+      final loginResultModel = ResponseValidator.parse(
         response,
-        (data) => LoginResponseModel.fromJson(data),
+        (data) => AuthLoginResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
       );
-      return loginResponseModel.toEntity();
+      return loginResultModel.toEntity();
     });
   }
 

@@ -1,5 +1,5 @@
-import 'package:flutter_template/shared/models/loadable_list_item.dart';
-import 'package:flutter_template/shared/state/loadable_list_state.dart';
+import 'package:vcare_admin/shared/models/loadable_list_item.dart';
+import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class ListItem extends LoadableListItem {
@@ -10,6 +10,9 @@ class ListItem extends LoadableListItem {
   }
 
   final int v;
+
+  @override
+  String toString() => v.toString();
 
   @override
   bool operator ==(Object other) =>
@@ -46,6 +49,21 @@ void main() {
       expect(failure.operation.hasError, isTrue);
       expect(failure.operation.errorMessage, 'failed');
       expect(failure.items, [ListItem.value(1), ListItem.value(2)]);
+    });
+
+    test('loading preserves total and exposes isRefreshing', () {
+      final state = LoadableListState<ListItem>().success(
+        items: [ListItem.value(1)],
+        total: 1,
+      );
+
+      final refreshing = state.loading();
+
+      expect(refreshing.isRefreshing, isTrue);
+      expect(refreshing.isInitialLoading, isFalse);
+      expect(refreshing.hasMore, isFalse);
+      expect(refreshing.totalItems, 1);
+      expect(refreshing.items, [ListItem.value(1)]);
     });
 
     test('append helpers merge items and preserve pagination flags', () {

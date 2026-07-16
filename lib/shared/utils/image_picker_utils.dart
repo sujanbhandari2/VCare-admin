@@ -14,17 +14,15 @@ class ImagePickerUtils {
   /// Method to pick the image from gallery
   ///
   static Future<XFile?> fromGallery() async {
-    return await _pick(
-      ImageSource.gallery,
-    );
+    return await _pick(ImageSource.gallery);
   }
 
   /// Private method to pick the images
   ///
   static Future<XFile?> _pick(
-      ImageSource source, {
-        CameraDevice preferredCameraDevice = CameraDevice.rear,
-      }) async {
+    ImageSource source, {
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+  }) async {
     try {
       return await ImagePicker().pickImage(
         source: source,

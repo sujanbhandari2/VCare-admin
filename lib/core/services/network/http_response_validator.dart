@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_template/core/services/network/http_exception.dart';
+import 'package:vcare_admin/core/services/network/http_exception.dart';
 
 /// A utility class to validate HTTP responses.
 class ResponseValidator {

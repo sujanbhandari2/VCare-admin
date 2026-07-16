@@ -1,11 +1,55 @@
 import 'package:dio/dio.dart';
 
-import 'package:flutter_template/core/services/network/typedefs/response_or_exception.dart';
-import 'package:flutter_template/features/auth/domain/entities/forgot_password_response.dart';
-import 'package:flutter_template/features/auth/domain/entities/auth_session.dart';
-import 'package:flutter_template/features/auth/domain/entities/register_response.dart';
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 
 abstract class AuthRepository {
+  /// Identifies a user by phone or email before OTP login.
+  Future<EitherResponseOrException<AuthIdentifyResult>> identify({
+    required String identifier,
+    CancelToken? cancelToken,
+  });
+
+  /// Sends an OTP to the given identifier.
+  Future<EitherResponseOrException<void>> requestOtp({
+    required String identifier,
+    CancelToken? cancelToken,
+  });
+
+  /// Verifies an OTP for the given identifier.
+  Future<EitherResponseOrException<AuthVerifyOtpResult>> verifyOtp({
+    required String identifier,
+    required String otp,
+    CancelToken? cancelToken,
+  });
+
+  /// Fetches pre-auth user profile for onboard form prefill.
+  Future<EitherResponseOrException<AuthPreAuthUser>> getPreAuthUser({
+    required String registrationToken,
+    CancelToken? cancelToken,
+  });
+
+  /// Completes account setup after OTP verification for new users.
+  Future<EitherResponseOrException<AuthSetupAccountResult>> setupAccount({
+    required String registrationToken,
+    required String firstName,
+    String? middleName,
+    required String lastName,
+    required String password,
+    required String dob,
+    required String zipCode,
+    required String email,
+    required String phone,
+    String tenantSlug = 'default',
+    CancelToken? cancelToken,
+  });
+
   /// Method to login
   ///
   Future<EitherResponseOrException<AuthSession>> login({

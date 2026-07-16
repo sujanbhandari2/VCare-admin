@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_template/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 enum OnboardingItem {
   item1(
@@ -43,10 +43,10 @@ enum OnboardingItem {
     return this == item1
         ? context.appLocalization.item1
         : this == item2
-            ? context.appLocalization.item2
-            : this == item3
-                ? context.appLocalization.item3
-                : context.appLocalization.item4;
+        ? context.appLocalization.item2
+        : this == item3
+        ? context.appLocalization.item3
+        : context.appLocalization.item4;
   }
 
   /// Method to get the localized description
@@ -56,9 +56,9 @@ enum OnboardingItem {
     return this == item1
         ? context.appLocalization.item1_description
         : this == item2
-            ? context.appLocalization.item2_description
-            : this == item3
-                ? context.appLocalization.item3_description
-                : context.appLocalization.item4_description;
+        ? context.appLocalization.item2_description
+        : this == item3
+        ? context.appLocalization.item3_description
+        : context.appLocalization.item4_description;
   }
 }

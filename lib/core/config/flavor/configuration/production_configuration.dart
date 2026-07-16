@@ -1,7 +1,7 @@
-import 'package:flutter_template/core/config/env/env.dart';
-import 'package:flutter_template/core/config/env/env_keys.dart';
-import 'package:flutter_template/core/config/flavor/configuration.dart';
-import 'package:flutter_template/core/config/flavor/flavor.dart';
+import 'package:vcare_admin/core/config/env/env.dart';
+import 'package:vcare_admin/core/config/env/env_keys.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/config/flavor/flavor.dart';
 
 class ProductionConfiguration extends Configuration {
   /// Private internal constructor
@@ -10,8 +10,8 @@ class ProductionConfiguration extends Configuration {
     : super(
         maxCacheAge: const Duration(days: 45),
         dioCacheForceRefreshKey: 'dio_cache_force_refresh_key',
-    hiveBoxName: Env.instance.valueOf(EnvKeys.storageBoxName) ?? '',
-    baseUrl: Env.instance.valueOf(EnvKeys.baseUrl) ?? '',
+        hiveBoxName: Env.instance.valueOf(EnvKeys.storageBoxName) ?? '',
+        baseUrl: Env.instance.valueOf(EnvKeys.baseUrl) ?? '',
       );
 
   /// Singleton instance of this class
@@ -19,7 +19,7 @@ class ProductionConfiguration extends Configuration {
   static final ProductionConfiguration instance = ._internal();
 
   @override
-  Flavor get flavor => .production;
+  Flavor get flavor => Flavor.prod;
 
   @override
   String get apiBaseUrl => apiBaseUrlV1;
