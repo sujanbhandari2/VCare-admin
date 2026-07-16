@@ -29,6 +29,45 @@ class AuthPhoneFormatter {
     return digits;
   }
 
+  /// Formats national digits for display in phone input fields.
+  static String formatNationalDisplay(
+    String input,
+    AuthPhoneCountry country,
+  ) {
+    final digits = input.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) {
+      return '';
+    }
+
+    return switch (country) {
+      AuthPhoneCountry.usa || AuthPhoneCountry.canada =>
+        _formatNorthAmerica(digits),
+      AuthPhoneCountry.nepal => _formatNepal(digits),
+    };
+  }
+
+  static String _formatNorthAmerica(String digits) {
+    if (digits.length <= 3) {
+      return '($digits';
+    }
+    if (digits.length <= 6) {
+      return '(${digits.substring(0, 3)}) ${digits.substring(3)}';
+    }
+    return '(${digits.substring(0, 3)}) '
+        '${digits.substring(3, 6)}-${digits.substring(6)}';
+  }
+
+  static String _formatNepal(String digits) {
+    if (digits.length <= 3) {
+      return digits;
+    }
+    if (digits.length <= 6) {
+      return '${digits.substring(0, 3)}-${digits.substring(3)}';
+    }
+    return '${digits.substring(0, 3)}-${digits.substring(3, 6)}-'
+        '${digits.substring(6)}';
+  }
+
   /// Infers country from API-style digits when pre-filling phone fields.
   static AuthPhoneCountry detectCountry(
     String phone, {
@@ -44,6 +83,19 @@ class AuthPhoneFormatter {
       return AuthPhoneCountry.usa;
     }
     return fallback;
+  }
+
+  /// Formats a stored phone value for display with country code, e.g. +1 (555) 123-4567.
+  static String formatInternationalDisplay(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '';
+
+    final country = detectCountry(phone);
+    final national = toDisplayDigits(phone, fallback: country);
+    if (national.isEmpty) return '';
+
+    final formattedNational = formatNationalDisplay(national, country);
+    return '${country.dialCodeDisplay} $formattedNational';
   }
 
   @Deprecated('Use toApiDigits for API payloads without + prefix')

@@ -24,6 +24,10 @@ abstract class StorageService {
   ///
   Future<void> set(String key, dynamic data);
 
+  /// All keys currently stored.
+  ///
+  Iterable<String> get keys;
+
   /// Terminates service
   ///
   Future<void> close();

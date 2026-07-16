@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class CommonIcon extends StatelessWidget {
   const CommonIcon({super.key, this.icon, this.size = 24.0, this.color});
@@ -27,12 +27,12 @@ class CommonIcon extends StatelessWidget {
                                   ? ColorFilter.mode(color!, BlendMode.srcIn)
                                   : null,
                             )
-                          : CachedNetworkImage(
+                          : VCareCachedImage(
                               imageUrl: icon,
                               width: size,
                               height: size,
-                              errorWidget: (_, err, trace) => const SizedBox(),
                               color: color,
+                              errorWidget: const SizedBox(),
                             )
                     : (icon as String).contains("assets")
                     ? (icon as String).endsWith(".svg")

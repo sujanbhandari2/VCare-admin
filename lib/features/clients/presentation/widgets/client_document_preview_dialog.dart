@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class ClientDocumentPreviewDialog extends StatelessWidget {
   const ClientDocumentPreviewDialog({super.key, required this.file});
@@ -107,10 +107,12 @@ class _ImagePreview extends StatelessWidget {
                 base64Decode(file.url.split(',').last),
                 fit: BoxFit.contain,
               )
-            : CachedNetworkImage(
+            : VCareCachedImage(
                 imageUrl: file.url,
+                cacheKey: 'client-file:${file.id}',
                 fit: BoxFit.contain,
-                errorWidget: (_, __, ___) => const Icon(LucideIcons.imageOff),
+                showLoadingIndicator: true,
+                errorWidget: const Icon(LucideIcons.imageOff),
               ),
       ),
     );

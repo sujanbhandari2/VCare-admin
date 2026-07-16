@@ -13,6 +13,7 @@ import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_lo
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class FindCareScreen extends ConsumerStatefulWidget {
   const FindCareScreen({super.key});
@@ -78,6 +79,7 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
     return Scaffold(
       body: VcareRefreshScrollView(
         onRefresh: _onRefresh,
+        padForMobileBottomNav: true,
         slivers: [
           SliverPersistentHeader(
             pinned: true,
@@ -92,7 +94,7 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(
@@ -104,12 +106,10 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
                     final updated = ref.read(findCareSearchLocationProvider);
                     _locationController.text = updated.displayLabel;
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Search area updated: ${updated.displayLabel}',
-                        ),
-                      ),
+                    context.showVcareToast(
+                      title: 'Search area updated',
+                      description: updated.displayLabel,
+                      variant: VcareToastVariant.info,
                     );
                   },
                   actions: Column(

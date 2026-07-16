@@ -61,6 +61,10 @@ class HiveStorageService implements StorageService {
   }
 
   @override
+  Iterable<String> get keys =>
+      _hiveBox?.keys.map((key) => key.toString()) ?? const <String>[];
+
+  @override
   Future<void> clear() async {
     await _hiveBox?.clear();
   }

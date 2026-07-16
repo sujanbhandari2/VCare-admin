@@ -10,6 +10,9 @@ extension AgentFileModelMapper on AgentFileModel {
       id: id,
       name: name?.trim().isNotEmpty == true ? name!.trim() : 'Untitled',
       url: resolveDocumentUrl(url ?? '', hostBaseUrl),
+      previewLink: previewLink?.trim().isNotEmpty == true
+          ? resolveDocumentUrl(previewLink!, hostBaseUrl)
+          : null,
       createdAt: parsedCreatedAt,
       userId: userId,
       tenantId: tenantId,

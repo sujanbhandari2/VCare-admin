@@ -6,6 +6,7 @@ class AgentFile implements LoadableListItem {
     required this.name,
     required this.url,
     required this.createdAt,
+    this.previewLink,
     this.userId,
     this.tenantId,
     this.note,
@@ -20,6 +21,7 @@ class AgentFile implements LoadableListItem {
   final String name;
   final String url;
   final DateTime createdAt;
+  final String? previewLink;
   final String? userId;
   final String? tenantId;
   final String? note;

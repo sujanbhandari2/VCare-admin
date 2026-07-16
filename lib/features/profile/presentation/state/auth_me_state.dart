@@ -3,16 +3,21 @@ import 'package:vcare_admin/shared/state/operation_state.dart';
 
 class AuthMeState {
   const AuthMeState({
-    this.operation = const OperationState<AuthMe>.idle(),
+    this.fetchOperation = const OperationState<AuthMe>.idle(),
+    this.updateOperation = const OperationState<void>.idle(),
     this.data,
   });
 
-  final OperationState<AuthMe> operation;
+  final OperationState<AuthMe> fetchOperation;
+  final OperationState<void> updateOperation;
   final AuthMe? data;
 
-  bool get fetching => operation.isLoading;
+  bool get fetching => fetchOperation.isLoading;
 
-  String? get error => operation.errorMessage;
+  bool get updating => updateOperation.isLoading;
+
+  String? get error =>
+      updateOperation.errorMessage ?? fetchOperation.errorMessage;
 
   AuthMeUser? get user => data?.user;
 
@@ -20,18 +25,42 @@ class AuthMeState {
 
   String? get firstName => user?.firstName;
 
+  /// Backward-compatible alias used by existing callers.
+  OperationState<AuthMe> get operation => fetchOperation;
+
   AuthMeState loading() => AuthMeState(
-        operation: OperationState.loading(data: data),
+        fetchOperation: OperationState.loading(data: data),
+        updateOperation: updateOperation,
         data: data,
       );
 
   AuthMeState success(AuthMe authMe) => AuthMeState(
-        operation: OperationState.success(authMe),
+        fetchOperation: OperationState.success(authMe),
+        updateOperation: updateOperation,
         data: authMe,
       );
 
   AuthMeState failure(String? message) => AuthMeState(
-        operation: OperationState.failure(message, data: data),
+        fetchOperation: OperationState.failure(message, data: data),
+        updateOperation: updateOperation,
+        data: data,
+      );
+
+  AuthMeState updatingInProgress() => AuthMeState(
+        fetchOperation: fetchOperation,
+        updateOperation: const OperationState.loading(),
+        data: data,
+      );
+
+  AuthMeState updateSuccess() => AuthMeState(
+        fetchOperation: fetchOperation,
+        updateOperation: const OperationState.success(null),
+        data: data,
+      );
+
+  AuthMeState updateFailure(String? message) => AuthMeState(
+        fetchOperation: fetchOperation,
+        updateOperation: OperationState.failure(message),
         data: data,
       );
 }

@@ -15,6 +15,7 @@ import 'package:vcare_admin/features/cases/data/requests_mock_data.dart';
 import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class RequestDetailScreen extends StatefulWidget {
   const RequestDetailScreen({super.key, required this.requestId});
@@ -286,9 +287,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    context.showVcareToast(
+      title: message,
+      variant: VcareToastVariant.info,
+    );
   }
 
   @override

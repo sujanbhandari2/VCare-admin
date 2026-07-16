@@ -16,6 +16,7 @@ class HomeSavedProvidersSection extends StatelessWidget {
     this.onFindCare,
     this.onProviderTap,
     this.onRemove,
+    this.isRemoving,
   });
 
   final List<SavedProviderItem> providers;
@@ -23,6 +24,7 @@ class HomeSavedProvidersSection extends StatelessWidget {
   final VoidCallback? onFindCare;
   final void Function(SavedProviderItem item)? onProviderTap;
   final void Function(SavedProviderItem item)? onRemove;
+  final bool Function(SavedProviderItem item)? isRemoving;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +60,7 @@ class HomeSavedProvidersSection extends StatelessWidget {
                 item: p,
                 onTap: () => onProviderTap?.call(p),
                 onRemove: () => onRemove?.call(p),
+                isRemoving: isRemoving?.call(p) ?? false,
               );
             },
           ),

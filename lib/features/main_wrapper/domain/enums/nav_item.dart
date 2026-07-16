@@ -22,7 +22,13 @@ enum NavItem {
     label: 'Messages',
     icon: LucideIcons.messageCircle,
   ),
-  ava(path: AppRouter.ava, label: 'AVA', icon: LucideIcons.sparkles);
+  profile(
+    path: AppRouter.profile,
+    label: 'Profile',
+    icon: LucideIcons.user,
+  );
+  // AVA tab disabled for now — restore when AVA returns to the bottom nav.
+  // ava(path: AppRouter.ava, label: 'AVA', icon: LucideIcons.sparkles);
 
   const NavItem({
     required this.path,
@@ -36,13 +42,13 @@ enum NavItem {
   final IconData icon;
   final bool isCenter;
 
-  /// Mobile bottom bar order: Clients, Provider, Home, Messages, AVA.
+  /// Mobile bottom bar order: Clients, Provider, Home, Messages, Profile.
   static const List<NavItem> mobileTabs = [
     NavItem.clients,
     NavItem.provider,
     NavItem.home,
     NavItem.messages,
-    NavItem.ava,
+    NavItem.profile,
   ];
 
   static NavItem fromBranchIndex(int index) => mobileTabs[index];

@@ -56,7 +56,11 @@ void main() {
 
     test('checkFcmDeviceStatus updates state on failure', () async {
       repository.checkResult = Failure(
-        HttpException(title: 'Error', message: 'Check failed'),
+        HttpException(
+          title: 'Error',
+          message: 'Check failed',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container

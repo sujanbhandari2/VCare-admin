@@ -291,7 +291,7 @@ class LoginBrandHeader extends StatelessWidget {
   }
 }
 
-class LoginTextField extends StatelessWidget {
+class LoginTextField extends StatefulWidget {
   const LoginTextField({
     super.key,
     required this.controller,
@@ -306,6 +306,7 @@ class LoginTextField extends StatelessWidget {
     this.autofocus = false,
     this.focusNode,
     this.hasError = false,
+    this.enabled = true,
     this.onChanged,
   });
 
@@ -321,37 +322,64 @@ class LoginTextField extends StatelessWidget {
   final bool autofocus;
   final FocusNode? focusNode;
   final bool hasError;
+  final bool enabled;
   final ValueChanged<String>? onChanged;
+
+  @override
+  State<LoginTextField> createState() => _LoginTextFieldState();
+}
+
+class _LoginTextFieldState extends State<LoginTextField> {
+  bool _obscured = true;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final borderColor = hasError ? VCareColors.destructive : vcare.border;
-    final focusedBorderColor = hasError
+    final borderColor =
+        widget.hasError ? VCareColors.destructive : vcare.border;
+    final focusedBorderColor = widget.hasError
         ? VCareColors.destructive
         : VCareColors.primary.withValues(alpha: 0.4);
 
     return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      inputFormatters: inputFormatters,
-      textAlign: textAlign,
-      textCapitalization: textCapitalization,
-      autocorrect: autocorrect,
-      autofocus: autofocus,
-      onChanged: onChanged,
-      style: const TextStyle(fontWeight: FontWeight.w500),
+      controller: widget.controller,
+      focusNode: widget.focusNode,
+      enabled: widget.enabled,
+      keyboardType: widget.keyboardType,
+      obscureText: widget.obscureText ? _obscured : false,
+      inputFormatters: widget.inputFormatters,
+      textAlign: widget.textAlign,
+      textCapitalization: widget.textCapitalization,
+      autocorrect: widget.autocorrect,
+      autofocus: widget.autofocus,
+      onChanged: widget.enabled ? widget.onChanged : null,
+      style: TextStyle(
+        fontWeight: FontWeight.w500,
+        color: widget.enabled ? null : vcare.mutedForeground,
+      ),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: widget.hint,
         hintStyle: TextStyle(
           color: vcare.mutedForeground.withValues(alpha: 0.6),
         ),
-        prefixIcon: prefix,
+        prefixIcon: widget.prefix,
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                onPressed: widget.enabled
+                    ? () => setState(() => _obscured = !_obscured)
+                    : null,
+                icon: Icon(
+                  _obscured ? LucideIcons.eyeOff : LucideIcons.eye,
+                  size: 16,
+                  color: vcare.mutedForeground,
+                ),
+              )
+            : null,
         filled: true,
-        fillColor: vcare.muted.withValues(alpha: 0.5),
+        fillColor: widget.enabled
+            ? vcare.muted.withValues(alpha: 0.5)
+            : vcare.muted.withValues(alpha: 0.85),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
@@ -363,6 +391,12 @@ class LoginTextField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: borderColor),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: vcare.border.withValues(alpha: 0.7),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

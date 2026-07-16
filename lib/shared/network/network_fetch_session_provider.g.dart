@@ -48,7 +48,7 @@ final class NetworkFetchSessionProvider
 }
 
 String _$networkFetchSessionHash() =>
-    r'9b3ea08f5aafd0c4a80e13234cef3f85be21cc94';
+    r'1016ab32267744434e63e1cf28138dceb437a8e3';
 
 /// Tracks whether list screens should bypass HTTP cache on their first load
 /// after a cold app start. Set to [false] once bootstrap fetches complete.

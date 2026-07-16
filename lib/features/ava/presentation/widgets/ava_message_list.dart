@@ -38,7 +38,7 @@ class AvaMessageList extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AvaLayout.horizontalPadding,
             AvaLayout.listTopPadding,
             AvaLayout.horizontalPadding,

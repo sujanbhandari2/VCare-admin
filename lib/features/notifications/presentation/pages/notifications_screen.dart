@@ -25,7 +25,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationInboxStateProvider.notifier).fetchInbox();
+      // TODO: Re-enable when notifications API is available.
+      // ref.read(notificationInboxStateProvider.notifier).fetchInbox();
     });
   }
 
@@ -35,8 +36,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(notificationInboxStateProvider.notifier).refresh(),
+        onRefresh: () async {
+          // TODO: Re-enable when notifications API is available.
+          // await ref.read(notificationInboxStateProvider.notifier).refresh();
+        },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -64,9 +67,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   title: 'Could not load notifications',
                   message: inboxState.error,
                   actionLabel: context.appLocalization.retry,
-                  onAction: () => ref
-                      .read(notificationInboxStateProvider.notifier)
-                      .fetchInbox(),
+                  onAction: () {
+                    // TODO: Re-enable when notifications API is available.
+                    // ref.read(notificationInboxStateProvider.notifier).fetchInbox();
+                  },
                 ),
               )
             else if (inboxState.items.isEmpty)
@@ -80,7 +84,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                padding: context.mobileShellScrollPadding,
                 sliver: SliverList.separated(
                   itemCount: inboxState.items.length,
                   separatorBuilder: (context, index) =>
@@ -113,7 +117,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'message':
         context.pushNamed(AppRouter.messages.toPathName);
       case 'tip':
-        context.pushNamed(AppRouter.ava.toPathName);
+        context.go(AppRouter.profile);
       default:
         context.pushNamed(AppRouter.requests.toPathName);
     }

@@ -48,7 +48,11 @@ void main() {
 
     test('fetchStats sets failure on error', () async {
       repository.fetchResult = Failure(
-        HttpException(title: 'Error', message: 'Stats failed'),
+        HttpException(
+          title: 'Error',
+          message: 'Stats failed',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container

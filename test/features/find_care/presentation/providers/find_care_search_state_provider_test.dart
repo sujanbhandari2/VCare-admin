@@ -52,7 +52,11 @@ void main() {
 
     test('runSearch sets error on failure', () async {
       repository.searchDirectoryResult = Failure(
-        HttpException(title: 'Error', message: 'CMS directory error'),
+        HttpException(
+          title: 'Error',
+          message: 'CMS directory error',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       container

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_method_request.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
 import 'package:vcare_admin/shared/network/stale_while_revalidate.dart';
@@ -54,6 +55,8 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
   ClientPaymentMethodsStateData build(String clientId) =>
       const ClientPaymentMethodsStateData();
 
+  String get _clientId => clientId;
+
   Future<void> fetchPaymentMethods({
     bool forceRefresh = true,
     CancelToken? cancelToken,
@@ -71,7 +74,7 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
       fetch: ({required bool forceRefresh}) => ref
           .read(clientRepositoryProvider)
           .fetchPaymentMethods(
-            clientId,
+            _clientId,
             cancelToken: cancelToken,
             forceRefresh: forceRefresh,
           ),
@@ -93,6 +96,69 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
             }
           },
         );
+      },
+    );
+  }
+
+  Future<void> addPaymentMethod({
+    required AddClientPaymentMethodRequest request,
+    void Function(bool success, String? error)? onCompleted,
+  }) async {
+    final response = await ref
+        .read(clientRepositoryProvider)
+        .addPaymentMethod(clientId: _clientId, request: request);
+
+    await response.when(
+      failure: (error) async {
+        onCompleted?.call(false, error.userMessage);
+      },
+      success: (_) async {
+        await fetchPaymentMethods();
+        onCompleted?.call(true, null);
+      },
+    );
+  }
+
+  Future<void> setPrimary({
+    required String paymentMethodId,
+    void Function(bool success, String? error)? onCompleted,
+  }) async {
+    final response = await ref
+        .read(clientRepositoryProvider)
+        .setPrimaryPaymentMethod(
+          clientId: _clientId,
+          paymentMethodId: paymentMethodId,
+        );
+
+    await response.when(
+      failure: (error) async {
+        onCompleted?.call(false, error.userMessage);
+      },
+      success: (_) async {
+        await fetchPaymentMethods();
+        onCompleted?.call(true, null);
+      },
+    );
+  }
+
+  Future<void> remove({
+    required String paymentMethodId,
+    void Function(bool success, String? error)? onCompleted,
+  }) async {
+    final response = await ref
+        .read(clientRepositoryProvider)
+        .removePaymentMethod(
+          clientId: _clientId,
+          paymentMethodId: paymentMethodId,
+        );
+
+    await response.when(
+      failure: (error) async {
+        onCompleted?.call(false, error.userMessage);
+      },
+      success: (_) async {
+        await fetchPaymentMethods();
+        onCompleted?.call(true, null);
       },
     );
   }

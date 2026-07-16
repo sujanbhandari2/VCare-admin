@@ -55,7 +55,8 @@ class MessagesEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             FilledButton(
-              onPressed: () => context.push(AppRouter.careTeam),
+              onPressed: () =>
+                  context.pushNamed(AppRouter.careTeamName),
               style: FilledButton.styleFrom(
                 backgroundColor: VCareColors.primary,
                 foregroundColor: VCareColors.primaryForeground,

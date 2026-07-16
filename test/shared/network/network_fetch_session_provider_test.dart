@@ -20,5 +20,15 @@ void main() {
 
       expect(container.read(networkFetchSessionProvider), isFalse);
     });
+
+    test('resetSession re-enables fresh fetch for list screens', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(networkFetchSessionProvider.notifier).markSessionHydrated();
+      container.read(networkFetchSessionProvider.notifier).resetSession();
+
+      expect(container.read(networkFetchSessionProvider), isTrue);
+    });
   });
 }

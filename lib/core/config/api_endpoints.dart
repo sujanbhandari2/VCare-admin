@@ -33,8 +33,6 @@ class ApiEndpoints {
   static String agentClient(String id) => "agents/clients/$id";
   static String agentClientMemberships(String id) =>
       "agents/clients/$id/memberships";
-  static String agentClientPaymentMethods(String id) =>
-      "agents/clients/$id/payment-methods";
   static String agentClientTransactions(String id) =>
       "agents/clients/$id/transactions";
   static String agentClientCases(String id) => "agents/clients/$id/cases";
@@ -42,9 +40,29 @@ class ApiEndpoints {
       "agents/clients/$id/documents";
   static String clientDependents(String id) => "clients/$id/dependents";
 
+  /// Billing payment methods (matches web `clientBillingApiPaths`).
+  static String clientPaymentMethods(String id) =>
+      "clients/$id/payment-methods";
+  static String clientPaymentMethod(String clientId, String paymentMethodId) =>
+      "clients/$clientId/payment-methods/$paymentMethodId";
+  static String clientPaymentMethodSetPrimary(
+    String clientId,
+    String paymentMethodId,
+  ) => "clients/$clientId/payment-methods/$paymentMethodId/set-primary";
+
+  static String transactionCharge(String id) => "transactions/$id/charge";
+
   static const String files = "files";
-  static String file(String id) => "files/$id";
+  static String file(String id) => "files/$id/";
 
   static const String providersSave = "providers/save";
   static String providerSaveById(String providerId) => "providers/save/$providerId";
+
+  static const String familyMembers = "family-members/";
+  static String familyMember(String id) => "family-members/$id";
+
+  static const String careTeam = "care-team/";
+  static String careTeamMember(String id) => "care-team/$id";
+
+  static const String usersAssociated = "users/associated";
 }

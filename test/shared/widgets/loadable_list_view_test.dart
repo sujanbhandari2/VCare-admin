@@ -2,9 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vcare_admin/core/styles/app_theme.dart';
+import 'package:vcare_admin/l10n/app_localizations.dart';
 import 'package:vcare_admin/shared/widgets/loadable_list_view.dart';
 
 import '../../core/state/loadable_list_state_test.dart';
+
+Widget _wrap(Widget child) {
+  return MaterialApp(
+    theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: child),
+  );
+}
 
 void main() {
   group('LoadableListView', () {
@@ -12,14 +23,12 @@ void main() {
       final state = LoadableListState<ListItem>().loading();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoadableListView<ListItem>(
-              state: state,
-              headerBuilder: (_) =>
-                  const Text('Header Loading', key: ValueKey('header_loading')),
-              itemBuilder: (_, item, index) => Text('$item'),
-            ),
+        _wrap(
+          LoadableListView<ListItem>(
+            state: state,
+            headerBuilder: (_) =>
+                const Text('Header Loading', key: ValueKey('header_loading')),
+            itemBuilder: (_, item, index) => Text('$item'),
           ),
         ),
       );
@@ -32,12 +41,10 @@ void main() {
       final state = LoadableListState<ListItem>().loading();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoadableListView<ListItem>(
-              state: state,
-              itemBuilder: (_, item, index) => Text('$item'),
-            ),
+        _wrap(
+          LoadableListView<ListItem>(
+            state: state,
+            itemBuilder: (_, item, index) => Text('$item'),
           ),
         ),
       );
@@ -51,19 +58,18 @@ void main() {
       final state = LoadableListState<ListItem>().failure('Load failed');
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoadableListView<ListItem>(
-              state: state,
-              itemBuilder: (_, item, index) => Text('$item'),
-              onRefresh: () async {},
-            ),
+        _wrap(
+          LoadableListView<ListItem>(
+            state: state,
+            itemBuilder: (_, item, index) => Text('$item'),
+            onRefresh: () async {},
           ),
         ),
       );
 
+      expect(find.text('Something went wrong'), findsOneWidget);
       expect(find.text('Load failed'), findsOneWidget);
-      expect(find.text('Try again'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
     });
 
     testWidgets('triggers onLoadMore when scrolled near end', (tester) async {
@@ -74,19 +80,17 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              height: 320,
-              child: LoadableListView<ListItem>(
-                state: state,
-                loadMoreTriggerThreshold: 10000,
-                onLoadMore: () async {
-                  loadMoreCalled += 1;
-                },
-                itemBuilder: (_, item, index) =>
-                    SizedBox(height: 48, child: Text('Item $item')),
-              ),
+        _wrap(
+          SizedBox(
+            height: 320,
+            child: LoadableListView<ListItem>(
+              state: state,
+              loadMoreTriggerThreshold: 10000,
+              onLoadMore: () async {
+                loadMoreCalled += 1;
+              },
+              itemBuilder: (_, item, index) =>
+                  SizedBox(height: 48, child: Text('Item $item')),
             ),
           ),
         ),
@@ -107,17 +111,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoadableListView<ListItem>(
-              state: state,
-              headerBuilder: (context) =>
-                  const Text('Header A', key: ValueKey('header_a')),
-              footerBuilder: (context) =>
-                  const Text('Footer A', key: ValueKey('footer_a')),
-              itemBuilder: (_, item, index) =>
-                  Text('Item $item', key: ValueKey('item_$item')),
-            ),
+        _wrap(
+          LoadableListView<ListItem>(
+            state: state,
+            headerBuilder: (context) =>
+                const Text('Header A', key: ValueKey('header_a')),
+            footerBuilder: (context) =>
+                const Text('Footer A', key: ValueKey('footer_a')),
+            itemBuilder: (_, item, index) =>
+                Text('Item $item', key: ValueKey('item_$item')),
           ),
         ),
       );
@@ -152,14 +154,12 @@ void main() {
           .appendFailure('Load more failed');
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoadableListView<ListItem>(
-              state: state,
-              onLoadMore: () async {},
-              itemBuilder: (_, item, index) =>
-                  SizedBox(height: 48, child: Text('Item $item')),
-            ),
+        _wrap(
+          LoadableListView<ListItem>(
+            state: state,
+            onLoadMore: () async {},
+            itemBuilder: (_, item, index) =>
+                SizedBox(height: 48, child: Text('Item $item')),
           ),
         ),
       );

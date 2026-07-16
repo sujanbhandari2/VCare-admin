@@ -121,7 +121,7 @@ class _CommissionDetailScreenState extends ConsumerState<CommissionDetailScreen>
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (showEmptyState)

@@ -14,11 +14,13 @@ class HomeSavedProviderCard extends StatelessWidget {
     required this.item,
     this.onTap,
     this.onRemove,
+    this.isRemoving = false,
   });
 
   final SavedProviderItem item;
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
+  final bool isRemoving;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +115,10 @@ class HomeSavedProviderCard extends StatelessWidget {
           Positioned(
             top: 8,
             right: 8,
-            child: SavedProviderRemoveButton(onTap: onRemove!),
+            child: SavedProviderRemoveButton(
+              onTap: onRemove,
+              isRemoving: isRemoving,
+            ),
           ),
       ],
     );
@@ -128,12 +133,14 @@ class SavedProviderListCard extends StatelessWidget {
     required this.onTap,
     required this.onRemove,
     this.onCall,
+    this.isRemoving = false,
   });
 
   final SavedProviderItem item;
   final VoidCallback onTap;
   final VoidCallback onRemove;
   final VoidCallback? onCall;
+  final bool isRemoving;
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +264,7 @@ class SavedProviderListCard extends StatelessWidget {
           right: 12,
           child: SavedProviderRemoveButton(
             onTap: onRemove,
+            isRemoving: isRemoving,
             size: 36,
             iconSize: 18,
           ),
@@ -266,16 +274,18 @@ class SavedProviderListCard extends StatelessWidget {
   }
 }
 
-/// Heart remove control — web `fill-destructive` on frosted circle button.
+/// Heart remove control — filled destructive heart on frosted circle button.
 class SavedProviderRemoveButton extends StatelessWidget {
   const SavedProviderRemoveButton({
     super.key,
     required this.onTap,
+    this.isRemoving = false,
     this.size = 28,
     this.iconSize = 14,
   });
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isRemoving;
   final double size;
   final double iconSize;
 
@@ -291,16 +301,26 @@ class SavedProviderRemoveButton extends StatelessWidget {
           color: background.withValues(alpha: 0.8),
           shape: CircleBorder(side: BorderSide(color: vcare.border)),
           child: InkWell(
-            onTap: onTap,
+            onTap: isRemoving ? null : onTap,
             customBorder: const CircleBorder(),
             child: SizedBox(
               width: size,
               height: size,
-              child: Icon(
-                LucideIcons.heart,
-                size: iconSize,
-                color: VCareColors.destructive,
-                fill: 1,
+              child: Center(
+                child: isRemoving
+                    ? SizedBox(
+                        width: iconSize,
+                        height: iconSize,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: VCareColors.destructive,
+                        ),
+                      )
+                    : Icon(
+                        Icons.favorite,
+                        size: iconSize,
+                        color: VCareColors.destructive,
+                      ),
               ),
             ),
           ),

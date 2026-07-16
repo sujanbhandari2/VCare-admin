@@ -7,6 +7,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class ClientCreateCaseSheet extends ConsumerStatefulWidget {
   const ClientCreateCaseSheet({super.key, required this.clientId});
@@ -50,7 +51,6 @@ class _ClientCreateCaseSheetState extends ConsumerState<ClientCreateCaseSheet> {
     if (title.isEmpty) return;
 
     final description = _descriptionController.text.trim();
-    final messenger = ScaffoldMessenger.of(context);
 
     setState(() => _isSubmitting = true);
 
@@ -63,16 +63,18 @@ class _ClientCreateCaseSheetState extends ConsumerState<ClientCreateCaseSheet> {
             if (!mounted) return;
 
             if (success) {
-              context.pop();
-              messenger.showSnackBar(
-                const SnackBar(content: Text('Request created.')),
+              context.showVcareToast(
+                title: 'Request created.',
+                variant: VcareToastVariant.success,
               );
+              context.pop();
               return;
             }
 
             setState(() => _isSubmitting = false);
-            messenger.showSnackBar(
-              SnackBar(content: Text(error ?? 'Unable to create request.')),
+            context.showVcareToast(
+              title: error ?? 'Unable to create request.',
+              variant: VcareToastVariant.destructive,
             );
           },
         );

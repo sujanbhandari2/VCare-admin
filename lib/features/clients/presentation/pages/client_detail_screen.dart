@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,9 +19,10 @@ import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tabs.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_details_drawer.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_document_preview_dialog.dart';
-import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_transaction_detail_sheet.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
@@ -41,6 +41,7 @@ class ClientDetailScreen extends ConsumerStatefulWidget {
 class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final Map<String, String> _txnNotes = {};
 
   @override
   void initState() {
@@ -51,17 +52,55 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
 
   void _loadClientData() {
     final clientId = widget.clientId;
-    ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail();
-    ref
-        .read(clientMembershipsStateProvider(clientId).notifier)
-        .fetchMemberships();
-    ref.read(clientDependentsStateProvider(clientId).notifier).fetchDependents();
-    ref
-        .read(clientPaymentMethodsStateProvider(clientId).notifier)
-        .fetchPaymentMethods();
-    ref.read(clientTransactionsStateProvider(clientId).notifier).loadInitial();
-    ref.read(clientCasesStateProvider(clientId).notifier).loadInitial();
-    ref.read(clientDocumentsStateProvider(clientId).notifier).loadInitial();
+
+    final detailState = ref.read(clientDetailStateProvider(clientId));
+    if (detailState.data == null && !detailState.fetching) {
+      ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail();
+    }
+
+    final membershipsState = ref.read(clientMembershipsStateProvider(clientId));
+    if (membershipsState.data == null && !membershipsState.fetching) {
+      ref
+          .read(clientMembershipsStateProvider(clientId).notifier)
+          .fetchMemberships();
+    }
+
+    final dependentsState = ref.read(clientDependentsStateProvider(clientId));
+    if (dependentsState.dependents.isEmpty && !dependentsState.fetching) {
+      ref
+          .read(clientDependentsStateProvider(clientId).notifier)
+          .fetchDependents();
+    }
+
+    final paymentMethodsState = ref.read(
+      clientPaymentMethodsStateProvider(clientId),
+    );
+    if (paymentMethodsState.methods.isEmpty && !paymentMethodsState.fetching) {
+      ref
+          .read(clientPaymentMethodsStateProvider(clientId).notifier)
+          .fetchPaymentMethods();
+    }
+
+    final transactionsState = ref.read(clientTransactionsStateProvider(clientId));
+    if (!transactionsState.operation.isLoading &&
+        transactionsState.items.isEmpty &&
+        !transactionsState.operation.hasError) {
+      ref.read(clientTransactionsStateProvider(clientId).notifier).loadInitial();
+    }
+
+    final casesState = ref.read(clientCasesStateProvider(clientId));
+    if (!casesState.operation.isLoading &&
+        casesState.items.isEmpty &&
+        !casesState.operation.hasError) {
+      ref.read(clientCasesStateProvider(clientId).notifier).loadInitial();
+    }
+
+    final documentsState = ref.read(clientDocumentsStateProvider(clientId));
+    if (!documentsState.list.operation.isLoading &&
+        documentsState.list.items.isEmpty &&
+        !documentsState.list.operation.hasError) {
+      ref.read(clientDocumentsStateProvider(clientId).notifier).loadInitial();
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -199,6 +238,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
               onMembershipInfo: (m) => _showMembershipNote(context, m),
             ),
             ClientBillingTab(
+              clientId: clientId,
               memberships: membershipsState.data?.memberships ?? const [],
               paymentMethods: paymentMethodsState.methods,
               transactionsState: transactionsState,
@@ -213,8 +253,13 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
               onLoadMoreTransactions: () => ref
                   .read(clientTransactionsStateProvider(clientId).notifier)
                   .loadMore(),
-              onTransactionTap: (t) =>
-                  _showTransactionDetails(context, t, detail.fullName),
+              onTransactionTap: (t) => _showTransactionDetails(
+                context,
+                transaction: t,
+                clientName: detail.fullName,
+                clientEmail: detail.email,
+                dependents: dependentsState.dependents,
+              ),
             ),
             ClientCasesTab(
               clientId: clientId,
@@ -246,16 +291,21 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
   }
 
   void _showTransactionDetails(
-    BuildContext context,
-    ClientTransaction transaction,
-    String clientName,
-  ) {
-    context.showBottomSheet<void>(
-      builder: (sheetContext) => _TransactionSheet(
-        transaction: transaction,
-        clientName: clientName,
-        onClose: () => Navigator.pop(sheetContext),
-      ),
+    BuildContext context, {
+    required ClientTransaction transaction,
+    required String clientName,
+    required String clientEmail,
+    required List<ClientDependent> dependents,
+  }) {
+    ClientTransactionDetailSheet.show(
+      context,
+      clientId: widget.clientId,
+      transaction: transaction,
+      clientName: clientName,
+      clientEmail: clientEmail,
+      dependents: dependents,
+      localNote: _txnNotes[transaction.id],
+      onNoteSaved: (note) => _txnNotes[transaction.id] = note,
     );
   }
 
@@ -289,8 +339,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
   Future<void> _downloadDocument(BuildContext context, ClientFile file) async {
     if (file.url.startsWith('data:')) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File saved locally on this device.')),
+      context.showVcareToast(
+        title: 'File saved locally on this device.',
+        variant: VcareToastVariant.success,
       );
       return;
     }
@@ -301,9 +352,10 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     );
     if (!context.mounted) return;
     if (!launched) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not open ${file.name}.')));
+      context.showVcareToast(
+        title: 'Could not open ${file.name}.',
+        variant: VcareToastVariant.destructive,
+      );
     }
   }
 
@@ -404,10 +456,10 @@ class _IdentityCard extends StatelessWidget {
                 child: SizedBox(
                   width: 56,
                   height: 56,
-                  child: CachedNetworkImage(
+                  child: VCareCachedImage(
                     imageUrl: detail.avatarUrl,
                     fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => ColoredBox(
+                    errorWidget: ColoredBox(
                       color: vcare.muted,
                       child: Center(
                         child: Text(
@@ -500,103 +552,6 @@ class _CircleAction extends StatelessWidget {
             icon,
             size: 16,
             color: filled ? Colors.white : vcare.mutedForeground,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TransactionSheet extends StatelessWidget {
-  const _TransactionSheet({
-    required this.transaction,
-    required this.clientName,
-    required this.onClose,
-  });
-
-  final ClientTransaction transaction;
-  final String clientName;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Material(
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: vcare.muted,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Transaction details',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(LucideIcons.x, size: 18),
-                  ),
-                ],
-              ),
-              Text(
-                transaction.reference,
-                style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-              ),
-              const SizedBox(height: 8),
-              ClientStatusChip.transaction(transaction.status),
-              const SizedBox(height: 12),
-              Text(
-                transaction.membershipTitle,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'Billed to $clientName',
-                style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '\$${transaction.amount.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (transaction.description != null) ...[
-                const SizedBox(height: 8),
-                Text(transaction.description!),
-              ],
-              if (transaction.note != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  transaction.note!,
-                  style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-                ),
-              ],
-            ],
           ),
         ),
       ),

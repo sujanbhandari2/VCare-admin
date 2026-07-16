@@ -23,6 +23,7 @@ class AuthSetupAccountStateNotifier extends _$AuthSetupAccountStateNotifier {
   Future<void> setupAccount({
     required String registrationToken,
     required String firstName,
+    String? middleName,
     required String lastName,
     required String password,
     required String dob,
@@ -47,6 +48,7 @@ class AuthSetupAccountStateNotifier extends _$AuthSetupAccountStateNotifier {
     final response = await ref.read(authRepositoryProvider).setupAccount(
           registrationToken: registrationToken,
           firstName: firstName,
+          middleName: middleName,
           lastName: lastName,
           password: password,
           dob: dob,

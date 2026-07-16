@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
@@ -50,10 +48,6 @@ class ClientDocumentsState extends _$ClientDocumentsState {
       state = state.copyWithList(state.list.loading());
     }
 
-    if (forceRefresh && state.list.items.isEmpty) {
-      unawaited(_warmFromCache(generation));
-    }
-
     final response = await _fetchPage(
       _buildRequest(page: 1),
       forceRefresh: forceRefresh,
@@ -79,34 +73,6 @@ class ClientDocumentsState extends _$ClientDocumentsState {
             ),
           );
         }
-      },
-    );
-  }
-
-  Future<void> _warmFromCache(int generation) async {
-    final response = await _fetchPage(
-      _buildRequest(page: 1),
-      forceRefresh: false,
-    );
-
-    if (!ref.mounted || generation != _generation) {
-      return;
-    }
-
-    response.when(
-      failure: (_) {},
-      success: (result) {
-        if (!ref.mounted || generation != _generation) {
-          return;
-        }
-        _currentPage = result.pagination.page;
-        state = state.copyWithList(
-          state.list.success(
-            items: result.items,
-            total: result.pagination.total,
-          ),
-        );
-        state = state.copyWithList(state.list.loading());
       },
     );
   }

@@ -7,7 +7,9 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
+import 'package:vcare_admin/features/profile/data/mappers/family_member_mapper.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/family_members_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_family_section.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_settings_nav.dart';
@@ -15,6 +17,7 @@ import 'package:vcare_admin/features/profile/presentation/widgets/profile_sign_o
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_summary_card.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -28,15 +31,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((timestamp) {
-      _fetchUserProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onRefresh();
     });
   }
 
-  Future<void> _fetchUserProfile() async {
-    if (mounted) {
-      ref.read(authMeStateProvider.notifier).fetchMe();
+  Future<void> _onRefresh() async {
+    if (!mounted) {
+      return;
     }
+
+    await Future.wait([
+      ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
+      ref.read(familyMembersStateProvider.notifier).fetchFamilyMembers(),
+    ]);
   }
 
   Future<void> _signOut() async {
@@ -49,17 +57,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(authMeStateProvider);
     final profile = ref.watch(localProfileStateProvider);
+    final familyState = ref.watch(familyMembersStateProvider);
+    final family =
+        familyState.members.map((member) => member.toProfileFamilyMember()).toList();
 
     return Scaffold(
-      body: CustomScrollView(
+      body: VcareRefreshScrollView(
+        onRefresh: _onRefresh,
         slivers: [
           const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'Profile', showBack: true),
+            child: VcarePageHeader(title: 'Profile', showBack: false),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 ProfileSummaryCard(
@@ -70,7 +81,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 ProfileFamilySection(
-                  family: profileFamilySeed,
+                  family: family,
+                  fetching: familyState.fetching,
+                  error: familyState.error,
                   onAdd: () => context.pushNamed(AppRouter.familyMemberNewName),
                   onMemberTap: (id) => context.pushNamed(
                     AppRouter.familyMemberEditName,

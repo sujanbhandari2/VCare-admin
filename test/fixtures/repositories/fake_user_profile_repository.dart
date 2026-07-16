@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 import 'package:vcare_admin/features/profile/domain/repositories/user_profile_repository.dart';
 
@@ -17,15 +18,15 @@ class FakeUserProfileRepository implements UserProfileRepository {
   EitherResponseOrException<AuthMe> fetchMeResult = Success(
     RepositoryFixtures.authMe(),
   );
+  EitherResponseOrException<String> uploadProfilePhotoResult = const Success(
+    'uploaded-file-id',
+  );
+  EitherResponseOrException<void> updateMeResult = const Success(null);
 
   int? lastFetchedProfileId;
   int? lastUpdatedProfileId;
-
-  @override
-  String get path => '/profiles/';
-
-  @override
-  String get path4ProfileUpdate => '/profiles/';
+  String? lastUploadedFileName;
+  String? lastUpdateMeProfileId;
 
   @override
   Future<EitherResponseOrException<AuthMe>> fetchMe({
@@ -33,6 +34,34 @@ class FakeUserProfileRepository implements UserProfileRepository {
     CancelToken? cancelToken,
   }) async {
     return fetchMeResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<String>> uploadProfilePhoto({
+    required List<int> bytes,
+    required String fileName,
+    CancelToken? cancelToken,
+  }) async {
+    lastUploadedFileName = fileName;
+    return uploadProfilePhotoResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> updateMe({
+    required String firstName,
+    String? middleName,
+    required String lastName,
+    required String email,
+    required String phone,
+    required String dateOfBirth,
+    String? gender,
+    String? profileId,
+    bool? allowTextNotification,
+    ProfileAddress? address,
+    CancelToken? cancelToken,
+  }) async {
+    lastUpdateMeProfileId = profileId;
+    return updateMeResult;
   }
 
   @override

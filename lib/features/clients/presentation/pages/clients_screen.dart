@@ -105,6 +105,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       body: VcareRefreshScrollView(
         controller: _scrollController,
         onRefresh: _onRefresh,
+        padForMobileBottomNav: true,
         slivers: [
           SliverPersistentHeader(
             pinned: true,
@@ -151,7 +152,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
             const SliverToBoxAdapter(child: ClientsEmptyState())
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList.separated(
                 itemCount: clients.length + (listState.isLoadingMore ? 1 : 0),
                 separatorBuilder: (_, _) => const SizedBox(height: 12),

@@ -12,6 +12,7 @@ import 'package:vcare_admin/shared/utils/field_validator.dart';
 import 'package:vcare_admin/features/auth/domain/enums/gender.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/register_request_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -381,7 +382,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             payloads: payloads,
             medias: medias,
             onCompleted: (response) {
-              if (response?.success == true) {}
+              if (!mounted) return;
+              if (response?.success == true) {
+                context.showVcareToast(
+                  title: response?.message ?? 'Registration successful',
+                  variant: VcareToastVariant.success,
+                );
+                return;
+              }
+
+              final error = ref.read(registerRequestStateProvider).error;
+              if (error != null && error.isNotEmpty) {
+                context.showVcareToast(
+                  title: error,
+                  variant: VcareToastVariant.destructive,
+                );
+              }
             },
           );
     }

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -8,17 +7,21 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
-import 'package:vcare_admin/features/documents/presentation/widgets/documents_preview_dialog.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class DocumentsDocRow extends StatelessWidget {
   const DocumentsDocRow({
     super.key,
     required this.item,
+    this.isDeleting = false,
+    this.onOpen,
     this.onDelete,
   });
 
   final DocumentItem item;
+  final bool isDeleting;
+  final VoidCallback? onOpen;
   final VoidCallback? onDelete;
 
   @override
@@ -55,7 +58,7 @@ class DocumentsDocRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       Text(
@@ -72,9 +75,9 @@ class DocumentsDocRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (item.kind == DocumentKind.image && item.dataUrl.isNotEmpty)
+                if (item.canOpen && onOpen != null)
                   TextButton(
-                    onPressed: () => DocumentsPreviewDialog.show(context, item),
+                    onPressed: onOpen,
                     style: TextButton.styleFrom(
                       foregroundColor: VCareColors.primary,
                       padding: const EdgeInsets.symmetric(
@@ -90,17 +93,29 @@ class DocumentsDocRow extends StatelessWidget {
                     ),
                     child: const Text('Open'),
                   ),
-                if (onDelete != null)
+                if (item.isDeletable && onDelete != null)
                   IconButton(
-                    onPressed: onDelete,
-                    icon: Icon(
-                      LucideIcons.trash2,
-                      size: 16,
-                      color: vcare.mutedForeground,
-                    ),
+                    onPressed: isDeleting ? null : onDelete,
+                    tooltip: 'Delete',
+                    icon: isDeleting
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: vcare.mutedForeground,
+                            ),
+                          )
+                        : Icon(
+                            LucideIcons.trash2,
+                            size: 16,
+                            color: vcare.mutedForeground,
+                          ),
                     style: IconButton.styleFrom(
                       minimumSize: const Size(32, 32),
+                      maximumSize: const Size(32, 32),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: const CircleBorder(),
                     ),
                   ),
               ],
@@ -125,7 +140,8 @@ class _DocumentThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final isImage = item.kind == DocumentKind.image && item.dataUrl.isNotEmpty;
+    final isImage =
+        item.kind == DocumentKind.image && item.imagePreviewUrl.isNotEmpty;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -134,20 +150,26 @@ class _DocumentThumbnail extends StatelessWidget {
         height: 56,
         color: vcare.muted,
         alignment: Alignment.center,
-        child: isImage ? _ImageThumbnail(dataUrl: item.dataUrl) : _KindIcon(item: item),
+        child: isImage
+            ? _ImageThumbnail(
+                imageUrl: item.imagePreviewUrl,
+                cacheKey: 'document:${item.id}',
+              )
+            : _KindIcon(item: item),
       ),
     );
   }
 }
 
 class _ImageThumbnail extends StatelessWidget {
-  const _ImageThumbnail({required this.dataUrl});
+  const _ImageThumbnail({required this.imageUrl, this.cacheKey});
 
-  final String dataUrl;
+  final String imageUrl;
+  final String? cacheKey;
 
   @override
   Widget build(BuildContext context) {
-    if (dataUrl.startsWith('data:image/svg')) {
+    if (imageUrl.startsWith('data:image/svg')) {
       return Icon(
         LucideIcons.image,
         size: 20,
@@ -155,13 +177,14 @@ class _ImageThumbnail extends StatelessWidget {
       );
     }
 
-    if (isDocumentNetworkUrl(dataUrl)) {
-      return CachedNetworkImage(
-        imageUrl: dataUrl,
+    if (isDocumentNetworkUrl(imageUrl)) {
+      return VCareCachedImage(
+        imageUrl: imageUrl,
+        cacheKey: cacheKey,
         width: 56,
         height: 56,
         fit: BoxFit.cover,
-        errorWidget: (_, __, ___) => Icon(
+        errorWidget: Icon(
           LucideIcons.image,
           size: 20,
           color: context.vcare.mutedForeground,
@@ -170,13 +193,14 @@ class _ImageThumbnail extends StatelessWidget {
     }
 
     try {
-      final payload = dataUrl.contains(',') ? dataUrl.split(',').last : dataUrl;
+      final payload =
+          imageUrl.contains(',') ? imageUrl.split(',').last : imageUrl;
       return Image.memory(
         base64Decode(payload),
         width: 56,
         height: 56,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Icon(
+        errorBuilder: (_, _, _) => Icon(
           LucideIcons.image,
           size: 20,
           color: context.vcare.mutedForeground,
@@ -275,7 +299,7 @@ class _AudioPreview extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: context.vcare.muted.withValues(alpha: 0.5),
+        color: context.vcare.muted.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -294,10 +318,6 @@ class _AudioPreview extends StatelessWidget {
                 color: context.vcare.mutedForeground,
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('Play'),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 class AuthPreAuthUserModel {
   const AuthPreAuthUserModel({
     this.firstName,
+    this.middleName,
     this.lastName,
     this.dob,
     this.zipCode,
@@ -9,6 +10,7 @@ class AuthPreAuthUserModel {
   });
 
   final String? firstName;
+  final String? middleName;
   final String? lastName;
   final String? dob;
   final String? zipCode;
@@ -18,6 +20,7 @@ class AuthPreAuthUserModel {
   factory AuthPreAuthUserModel.fromJson(Map<String, dynamic> json) {
     return AuthPreAuthUserModel(
       firstName: _nonEmptyString(json['firstName']),
+      middleName: _nonEmptyString(json['middleName']),
       lastName: _nonEmptyString(json['lastName']),
       dob: _nonEmptyString(json['dob']),
       zipCode: _nonEmptyString(json['zipCode']),

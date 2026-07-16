@@ -34,19 +34,141 @@ class AuthMeModel {
   }
 }
 
-class AuthMeAgentProfileModel {
-  const AuthMeAgentProfileModel({
-    this.profilePreviewLink,
-    this.referralLink,
+class AuthMeAddressModel {
+  const AuthMeAddressModel({
+    this.addressLine1,
+    this.addressLine2,
+    this.city,
+    this.state,
+    this.country,
+    this.postalCode,
   });
 
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? postalCode;
+
+  factory AuthMeAddressModel.fromJson(Map<String, dynamic> json) {
+    return AuthMeAddressModel(
+      addressLine1: json['addressLine1'] as String?,
+      addressLine2: json['addressLine2'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      country: json['country'] as String?,
+      postalCode: json['postalCode'] as String?,
+    );
+  }
+}
+
+class AuthMeAgencyGroupModel {
+  const AuthMeAgencyGroupModel({
+    this.id,
+    this.name,
+  });
+
+  final String? id;
+  final String? name;
+
+  factory AuthMeAgencyGroupModel.fromJson(Map<String, dynamic> json) {
+    return AuthMeAgencyGroupModel(
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+    );
+  }
+}
+
+class AuthMeProfileFileModel {
+  const AuthMeProfileFileModel({
+    this.id,
+    this.name,
+    this.url,
+  });
+
+  final String? id;
+  final String? name;
+  final String? url;
+
+  factory AuthMeProfileFileModel.fromJson(Map<String, dynamic> json) {
+    return AuthMeProfileFileModel(
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+      url: json['url'] as String?,
+    );
+  }
+}
+
+class AuthMeAgentProfileModel {
+  const AuthMeAgentProfileModel({
+    this.id,
+    this.userId,
+    this.email,
+    this.firstName,
+    this.middleName,
+    this.lastName,
+    this.dateOfBirth,
+    this.gender,
+    this.phoneNumber,
+    this.profileId,
+    this.profileFile,
+    this.profilePreviewLink,
+    this.referralLink,
+    this.agentCode,
+    this.clientCode,
+    this.agencyGroup,
+    this.status,
+    this.address,
+  });
+
+  final String? id;
+  final String? userId;
+  final String? email;
+  final String? firstName;
+  final String? middleName;
+  final String? lastName;
+  final String? dateOfBirth;
+  final String? gender;
+  final String? phoneNumber;
+  final String? profileId;
+  final AuthMeProfileFileModel? profileFile;
   final String? profilePreviewLink;
   final String? referralLink;
+  final String? agentCode;
+  final String? clientCode;
+  final AuthMeAgencyGroupModel? agencyGroup;
+  final String? status;
+  final AuthMeAddressModel? address;
 
   factory AuthMeAgentProfileModel.fromJson(Map<String, dynamic> json) {
+    final addressRaw = json['address'];
+    final agencyGroupRaw = json['agencyGroup'];
+    final profileFileRaw = json['profileFile'];
+
     return AuthMeAgentProfileModel(
-      profilePreviewLink: json['profilePreviewLink'] as String?,
-      referralLink: json['referralLink'] as String?,
+      id: json['id'] as String?,
+      userId: json['userId'] as String?,
+      email: json['email'] as String?,
+      firstName: json['firstName'] as String?,
+      middleName: json['middleName'] as String?,
+      lastName: json['lastName'] as String?,
+      dateOfBirth: json['dateOfBirth'] as String?,
+      gender: json['gender'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
+      profileId: json['profileId'] as String?,
+      profileFile: profileFileRaw is Map<String, dynamic>
+          ? AuthMeProfileFileModel.fromJson(profileFileRaw)
+          : null,
+      profilePreviewLink: _optionalString(json['profilePreviewLink']),
+      referralLink: _optionalString(json['referralLink']),
+      agentCode: json['agentCode'] as String?,
+      clientCode: json['clientCode'] as String?,
+      agencyGroup: _parseAgencyGroup(agencyGroupRaw),
+      status: json['status'] as String?,
+      address: addressRaw is Map<String, dynamic>
+          ? AuthMeAddressModel.fromJson(addressRaw)
+          : null,
     );
   }
 }
@@ -62,8 +184,8 @@ class AuthMeClientProfileModel {
 
   factory AuthMeClientProfileModel.fromJson(Map<String, dynamic> json) {
     return AuthMeClientProfileModel(
-      profilePreviewLink: json['profilePreviewLink'] as String?,
-      referralLink: json['referralLink'] as String?,
+      profilePreviewLink: _optionalString(json['profilePreviewLink']),
+      referralLink: _optionalString(json['referralLink']),
     );
   }
 }
@@ -86,6 +208,8 @@ class AuthMeUserModel {
     this.userType,
     this.createdAt,
     this.updatedAt,
+    this.agencyGroupId,
+    this.agencyGroupName,
     this.currentTenant,
     this.currentRoles = const [],
     this.tenantAssociations = const [],
@@ -107,6 +231,8 @@ class AuthMeUserModel {
   final String? userType;
   final String? createdAt;
   final String? updatedAt;
+  final String? agencyGroupId;
+  final String? agencyGroupName;
   final AuthMeTenantModel? currentTenant;
   final List<String> currentRoles;
   final List<AuthMeTenantAssociationModel> tenantAssociations;
@@ -127,12 +253,14 @@ class AuthMeUserModel {
       phoneNumber: json['phoneNumber'] as String?,
       emailVerifiedAt: json['emailVerifiedAt'] as String?,
       status: json['status'] as String?,
-      profileImage: json['profileImage'] as String?,
-      profilePreviewLink: json['profilePreviewLink'] as String?,
+      profileImage: _optionalString(json['profileImage']),
+      profilePreviewLink: _optionalString(json['profilePreviewLink']),
       mfaEnabled: json['mfaEnabled'] as bool?,
       userType: json['userType'] as String?,
       createdAt: json['createdAt'] as String?,
       updatedAt: json['updatedAt'] as String?,
+      agencyGroupId: _optionalString(json['agencyGroupId']),
+      agencyGroupName: _optionalString(json['agencyGroupName']),
       currentTenant: currentTenantRaw is Map<String, dynamic>
           ? AuthMeTenantModel.fromJson(currentTenantRaw)
           : null,
@@ -209,4 +337,27 @@ class AuthMeTenantAssociationModel {
       ssoUserId: json['ssoUserId'] as String?,
     );
   }
+}
+
+String? _optionalString(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+
+  final trimmed = value.toString().trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
+/// Accepts either a nested `{ id, name }` object or a bare agency group id string.
+AuthMeAgencyGroupModel? _parseAgencyGroup(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    return AuthMeAgencyGroupModel.fromJson(value);
+  }
+
+  final id = _optionalString(value);
+  if (id == null) {
+    return null;
+  }
+
+  return AuthMeAgencyGroupModel(id: id);
 }

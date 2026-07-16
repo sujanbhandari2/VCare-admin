@@ -12,11 +12,59 @@ extension AuthMeMapper on model.AuthMeModel {
   }
 }
 
+extension AuthMeAddressMapper on model.AuthMeAddressModel {
+  AuthMeAddress toEntity() {
+    return AuthMeAddress(
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      city: city,
+      state: state,
+      country: country,
+      postalCode: postalCode,
+    );
+  }
+}
+
+extension AuthMeAgencyGroupMapper on model.AuthMeAgencyGroupModel {
+  AuthMeAgencyGroup toEntity() {
+    return AuthMeAgencyGroup(
+      id: id,
+      name: name,
+    );
+  }
+}
+
+extension AuthMeProfileFileMapper on model.AuthMeProfileFileModel {
+  AuthMeProfileFile toEntity() {
+    return AuthMeProfileFile(
+      id: id,
+      name: name,
+      url: url,
+    );
+  }
+}
+
 extension AuthMeAgentProfileMapper on model.AuthMeAgentProfileModel {
   AuthMeAgentProfile toEntity() {
     return AuthMeAgentProfile(
+      id: id,
+      userId: userId,
+      email: email,
+      firstName: firstName,
+      middleName: middleName,
+      lastName: lastName,
+      dateOfBirth: dateOfBirth,
+      gender: gender,
+      phoneNumber: phoneNumber,
+      profileId: profileId,
+      profileFile: profileFile?.toEntity(),
       profilePreviewLink: profilePreviewLink,
       referralLink: referralLink,
+      agentCode: agentCode,
+      clientCode: clientCode,
+      agencyGroup: agencyGroup?.toEntity(),
+      status: status,
+      address: address?.toEntity(),
     );
   }
 }
@@ -49,6 +97,8 @@ extension AuthMeUserMapper on model.AuthMeUserModel {
       userType: userType,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      agencyGroupId: agencyGroupId,
+      agencyGroupName: agencyGroupName,
       currentTenant: currentTenant?.toEntity(),
       currentRoles: currentRoles,
       tenantAssociations:

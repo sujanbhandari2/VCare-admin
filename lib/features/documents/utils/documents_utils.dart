@@ -52,6 +52,14 @@ String resolveDocumentUrl(String url, String hostBaseUrl) {
   return '${root}api/$path';
 }
 
+String? _nonEmptyDocumentUrl(String? url) {
+  final trimmed = url?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return null;
+  }
+  return trimmed;
+}
+
 DocumentItem documentItemFromAgentFile(AgentFile file) {
   final kind = documentKindOf(file.url, file.name);
   final source = _sourceFromCategory(file.category);
@@ -61,6 +69,7 @@ DocumentItem documentItemFromAgentFile(AgentFile file) {
     id: file.id,
     name: file.name,
     dataUrl: file.url,
+    previewUrl: _nonEmptyDocumentUrl(file.previewLink),
     size: 0,
     kind: kind,
     source: source,
@@ -80,6 +89,7 @@ DocumentSource _sourceFromCategory(String? category) {
   final normalized = category?.trim().toUpperCase();
   if (normalized == 'CLIENT') return DocumentSource.request;
   if (normalized == 'CARD') return DocumentSource.card;
+  if (normalized == 'DEAL') return DocumentSource.upload;
   return DocumentSource.upload;
 }
 
@@ -96,6 +106,34 @@ bool _hasImageExtension(String value) {
     r'\.(png|jpe?g|gif|webp|heic|bmp)$',
     caseSensitive: false,
   ).hasMatch(value.trim());
+}
+
+String todayIsoDate() {
+  return DateTime.now().toIso8601String().split('T').first;
+}
+
+String mimeTypeFromFileName(String? fileName) {
+  final name = fileName?.trim().toLowerCase();
+  if (name == null || name.isEmpty) return 'application/octet-stream';
+
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.gif')) return 'image/gif';
+  if (name.endsWith('.webp')) return 'image/webp';
+  if (name.endsWith('.bmp')) return 'image/bmp';
+  if (name.endsWith('.svg')) return 'image/svg+xml';
+  if (name.endsWith('.pdf')) return 'application/pdf';
+  if (name.endsWith('.doc')) return 'application/msword';
+  if (name.endsWith('.docx')) {
+    return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  }
+  if (name.endsWith('.txt')) return 'text/plain';
+  if (name.endsWith('.mp3')) return 'audio/mpeg';
+  if (name.endsWith('.wav')) return 'audio/wav';
+  if (name.endsWith('.m4a')) return 'audio/mp4';
+  if (name.endsWith('.webm')) return 'audio/webm';
+  if (name.endsWith('.ogg')) return 'audio/ogg';
+  return 'application/octet-stream';
 }
 
 String formatDocumentDate(DateTime date) {

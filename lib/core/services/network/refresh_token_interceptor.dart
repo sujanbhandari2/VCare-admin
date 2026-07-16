@@ -1,24 +1,29 @@
 import 'package:dio/dio.dart';
-import 'package:go_router/go_router.dart';
-import 'package:vcare_admin/app/router/app_router.dart';
+
 import 'package:vcare_admin/core/config/api_endpoints.dart';
 import 'package:vcare_admin/core/config/flavor/configuration.dart';
+import 'package:vcare_admin/core/services/network/session_expiry_handler.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
-import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Interceptor that handles 401 Unauthorized errors by attempting to refresh the JWT token.
 /// Also auto-refreshes the token if the last refresh was more than or equal to 2 hours ago.
+///
+/// Session-expiry logout for "Session not found" / "Invalid token" is primarily handled by
+/// [ApiResponseInterceptor] via [SessionExpiryHandler]; this interceptor keeps an error-path
+/// backup and clears the session when token refresh fails.
 class RefreshTokenInterceptor extends Interceptor {
   RefreshTokenInterceptor({
     required this.config,
     required this.storageService,
     required this.dio,
+    required this.sessionExpiryHandler,
   });
 
   final Configuration config;
   final StorageService storageService;
   final Dio dio;
+  final SessionExpiryHandler sessionExpiryHandler;
 
   @override
   void onRequest(
@@ -47,6 +52,16 @@ class RefreshTokenInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    final apiMessage =
+        (err.response?.data is Map
+            ? (err.response!.data as Map)['message']
+            : null) ??
+        err.error;
+    if (SessionExpiryHandler.normalizedExpiredMessage(apiMessage) != null) {
+      await sessionExpiryHandler.handleFromApiMessage(apiMessage);
+      return handler.reject(err);
+    }
+
     if (err.response?.statusCode == 401) {
       final newAccessToken = await _refreshToken();
 
@@ -76,7 +91,7 @@ class RefreshTokenInterceptor extends Interceptor {
         ?.toString();
 
     if (refreshToken == null || refreshToken.isEmpty) {
-      await _clearSession();
+      await sessionExpiryHandler.clearSession();
       return null;
     }
 
@@ -105,7 +120,7 @@ class RefreshTokenInterceptor extends Interceptor {
             tokenData['refreshToken'] ?? tokenData['refresh_token'];
 
         if (newAccessToken == null || newRefreshToken == null) {
-          await _clearSession();
+          await sessionExpiryHandler.clearSession();
           return null;
         }
 
@@ -123,58 +138,12 @@ class RefreshTokenInterceptor extends Interceptor {
       }
 
       // If refresh fails (e.g., invalid refresh token), clear session
-      await _clearSession();
+      await sessionExpiryHandler.clearSession();
       return null;
     } catch (e) {
       // If refresh fails (e.g., refresh token expired), clear session
-      await _clearSession();
+      await sessionExpiryHandler.clearSession();
       return null;
     }
-  }
-
-  Future<void> _deregisterFcmDeviceBestEffort() async {
-    final accessToken =
-        storageService.get(StorageKeys.loggedInUserToken)?.toString() ?? '';
-    if (accessToken.trim().isEmpty) return;
-
-    try {
-      final logoutDio = Dio(
-        BaseOptions(
-          baseUrl: config.apiBaseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
-      );
-
-      await logoutDio.delete(ApiEndpoints.fcmDevice);
-    } catch (_) {}
-  }
-
-  Future<void> _clearSession() async {
-    await _deregisterFcmDeviceBestEffort();
-
-    final sessionKeys = [
-      StorageKeys.loggedInUserToken,
-      StorageKeys.loggedInUserRefreshToken,
-      StorageKeys.loggedInUserId,
-      StorageKeys.loggedInUserProfileId,
-      StorageKeys.loggedInUserEmail,
-      StorageKeys.loggedInUserUsername,
-      StorageKeys.tokenRefreshedDate,
-      StorageKeys.lastSyncedFcmToken,
-      StorageKeys.lastSyncedFcmUserId,
-    ];
-
-    for (final key in sessionKeys) {
-      await storageService.remove(key);
-    }
-
-    // Try to navigate to the login screen
-    try {
-      AppRouter.rootNavigatorKey.currentContext?.goNamed(
-        AppRouter.login.toPathName,
-      );
-    } catch (_) {}
   }
 }

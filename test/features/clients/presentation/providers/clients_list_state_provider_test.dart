@@ -56,6 +56,15 @@ void main() {
       expect(repository.lastClientsForceRefresh, isFalse);
     });
 
+    test('loadInitial forces network refresh after session reset', () async {
+      container.read(networkFetchSessionProvider.notifier).markSessionHydrated();
+      container.read(networkFetchSessionProvider.notifier).resetSession();
+
+      await container.read(clientsListStateProvider.notifier).loadInitial();
+
+      expect(repository.lastClientsForceRefresh, isTrue);
+    });
+
     test('search passes query to repository request', () async {
       await container.read(clientsListStateProvider.notifier).search('Aspen');
 

@@ -9,6 +9,7 @@ import 'package:vcare_admin/features/find_care/presentation/providers/find_care_
 import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_category_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
@@ -111,7 +112,7 @@ class _FindCareCategoryScreenState extends ConsumerState<FindCareCategoryScreen>
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(

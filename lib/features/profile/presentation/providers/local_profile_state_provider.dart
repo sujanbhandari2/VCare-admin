@@ -42,4 +42,24 @@ class LocalProfileStateNotifier extends _$LocalProfileStateNotifier {
     );
     await save(updated);
   }
+
+  Future<void> updateProfile({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String dob,
+    String? photoUrl,
+    ProfileAddress? address,
+  }) async {
+    final updated = state.copyWith(
+      fullName: fullName,
+      email: email,
+      phone: phone,
+      dob: dob,
+      photoUrl: photoUrl,
+      address: address,
+      clearAddress: address == null,
+    );
+    await save(updated);
+  }
 }

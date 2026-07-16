@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 
+/// Presentation model for a family member row in the profile section.
 class ProfileFamilyMember {
   const ProfileFamilyMember({
     required this.id,
     required this.name,
     required this.relationship,
     required this.dob,
+    this.gender,
     this.photoUrl,
   });
 
@@ -17,30 +19,9 @@ class ProfileFamilyMember {
   final String name;
   final String relationship;
   final String dob;
+  final String? gender;
   final String? photoUrl;
 }
-
-/// Seed data parity with vcareapp mock-data dependents.
-const profileFamilySeed = <ProfileFamilyMember>[
-  ProfileFamilyMember(
-    id: 'd1',
-    name: 'Jordan Rivera',
-    relationship: 'Spouse',
-    dob: '1988-03-12',
-  ),
-  ProfileFamilyMember(
-    id: 'd2',
-    name: 'Maya Rivera',
-    relationship: 'Child',
-    dob: '2015-09-21',
-  ),
-  ProfileFamilyMember(
-    id: 'd3',
-    name: 'Leo Rivera',
-    relationship: 'Child',
-    dob: '2018-06-04',
-  ),
-];
 
 /// Parity with vcareapp ProfileFamilySection.
 class ProfileFamilySection extends StatelessWidget {
@@ -49,11 +30,15 @@ class ProfileFamilySection extends StatelessWidget {
     required this.family,
     required this.onAdd,
     required this.onMemberTap,
+    this.fetching = false,
+    this.error,
   });
 
   final List<ProfileFamilyMember> family;
   final VoidCallback onAdd;
   final ValueChanged<String> onMemberTap;
+  final bool fetching;
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +81,15 @@ class ProfileFamilySection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        if (error != null && error!.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              error!,
+              style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            ),
+          ),
+        ],
         Material(
           color: vcare.card,
           shape: RoundedRectangleBorder(
@@ -103,7 +97,12 @@ class ProfileFamilySection extends StatelessWidget {
             side: BorderSide(color: vcare.border),
           ),
           clipBehavior: Clip.antiAlias,
-          child: family.isEmpty
+          child: fetching && family.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : family.isEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -148,7 +147,6 @@ class _FamilyMemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final initials = profileInitials(member.name);
 
     return Column(
       children: [
@@ -159,22 +157,15 @@ class _FamilyMemberRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: vcare.muted,
-                  child: initials.isEmpty
-                      ? Icon(
-                          LucideIcons.user,
-                          size: 16,
-                          color: vcare.mutedForeground,
-                        )
-                      : Text(
-                          initials,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                ProfileAvatar(
+                  name: member.name,
+                  photoUrl: member.photoUrl,
+                  photoCacheKey: 'family-member:${member.id}',
+                  size: 40,
+                  circular: true,
+                  initialsFontSize: 14,
+                  emptyIconSize: 16,
+                  initialsColor: VCareColors.foreground.withValues(alpha: 0.8),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -187,7 +178,7 @@ class _FamilyMemberRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       Text(

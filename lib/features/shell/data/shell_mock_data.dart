@@ -101,8 +101,10 @@ class ShellMockData {
     return h.abs();
   }
 
-  static List<MessageThreadItem> messageThreads() {
-    return HomeMockData.careTeam
+  static List<MessageThreadItem> messageThreads({
+    required List<CareTeamMember> careTeam,
+  }) {
+    return careTeam
         .map((c) {
           final msgs = HomeMockData.messagesByContact[c.id] ?? [];
           final last = msgs.isNotEmpty ? msgs.last : null;
@@ -119,13 +121,19 @@ class ShellMockData {
         .toList();
   }
 
-  static List<MessageGroupItem> messageGroups() {
-    final ct = HomeMockData.careTeam;
+  static List<MessageGroupItem> messageGroups({
+    required List<CareTeamMember> careTeam,
+  }) {
+    if (careTeam.isEmpty) {
+      return const [];
+    }
+
+    final members = careTeam.take(4).toList();
     return [
       MessageGroupItem(
         id: 'group-1',
         name: 'Alex Care Team',
-        members: [ct[0], ct[1], ct[4], ct[5]],
+        members: members,
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
         lastBody: 'Welcome to your care group!',
         lastAt: DateTime.now().subtract(const Duration(hours: 4)),

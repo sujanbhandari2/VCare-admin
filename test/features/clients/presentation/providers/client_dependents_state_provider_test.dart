@@ -71,5 +71,31 @@ void main() {
 
       expect(repository.lastDependentsForceRefresh, isTrue);
     });
+
+    test('fetchDependents clears loading for empty dependents', () async {
+      repository.fetchDependentsResult = Success(
+        PaginatedResult(
+          items: const [],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      await container
+          .read(clientDependentsStateProvider('client-1').notifier)
+          .fetchDependents();
+
+      final state = container.read(clientDependentsStateProvider('client-1'));
+
+      expect(state.fetching, isFalse);
+      expect(state.dependents, isEmpty);
+      expect(state.isInitialLoading, isFalse);
+    });
   });
 }

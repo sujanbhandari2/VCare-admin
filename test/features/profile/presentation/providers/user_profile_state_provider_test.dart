@@ -41,7 +41,10 @@ void main() {
 
     test('fetch failure stores error', () async {
       repository.fetchResult = Failure(
-        HttpException(message: 'Unable to fetch profile'),
+        HttpException(
+          message: 'Unable to fetch profile',
+          errorType: HttpErrorType.client,
+        ),
       );
 
       await container

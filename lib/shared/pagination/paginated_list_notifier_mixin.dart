@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/shared/models/loadable_list_item.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
@@ -55,10 +53,6 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
       state = state.loading(extras: extras ?? state.extras);
     }
 
-    if (shouldForceRefresh && state.items.isEmpty) {
-      unawaited(_warmFromCache(generation, extras));
-    }
-
     final response = await fetchPage(
       buildRequest(page: 1),
       forceRefresh: shouldForceRefresh,
@@ -80,35 +74,6 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
           items: result.items,
           total: result.pagination.total,
         );
-      },
-    );
-  }
-
-  Future<void> _warmFromCache(
-    int generation,
-    Map<String, dynamic>? extras,
-  ) async {
-    final response = await fetchPage(
-      buildRequest(page: 1),
-      forceRefresh: false,
-    );
-
-    if (!mounted || generation != _requestGeneration) {
-      return;
-    }
-
-    response.when(
-      failure: (_) {},
-      success: (result) {
-        if (!mounted || generation != _requestGeneration) {
-          return;
-        }
-        _currentPage = result.pagination.page;
-        state = state.success(
-          items: result.items,
-          total: result.pagination.total,
-        );
-        state = state.loading(extras: extras ?? state.extras);
       },
     );
   }

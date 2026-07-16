@@ -1,3 +1,5 @@
+import 'package:vcare_admin/core/services/image/stable_image_cache_key.dart';
+
 /// Current authenticated user profile returned by `GET auth/me`.
 class AuthMe {
   const AuthMe({
@@ -32,6 +34,30 @@ class AuthMe {
     return null;
   }
 
+  /// Stable cache key for [profilePhotoUrl], which may be a rotating signed URL.
+  String? get profilePhotoCacheKey {
+    return stableImageCacheKey(
+      prefix: 'profile-photo',
+      entityId: user.id ?? agentProfile?.profileId ?? agentProfile?.userId,
+      storagePath: _profileStoragePath,
+      imageUrl: profilePhotoUrl,
+    );
+  }
+
+  String? get _profileStoragePath {
+    final userImage = user.profileImage?.trim();
+    if (userImage != null && userImage.isNotEmpty) {
+      return userImage;
+    }
+
+    final agentFileUrl = agentProfile?.profileFile?.url?.trim();
+    if (agentFileUrl != null && agentFileUrl.isNotEmpty) {
+      return agentFileUrl;
+    }
+
+    return null;
+  }
+
   /// Server-provided referral link from agent or client profile payloads.
   String? get referralLink {
     final agentLink = agentProfile?.referralLink?.trim();
@@ -48,15 +74,98 @@ class AuthMe {
   }
 }
 
+/// Postal address nested under auth/me agent or client profile payloads.
+class AuthMeAddress {
+  const AuthMeAddress({
+    this.addressLine1,
+    this.addressLine2,
+    this.city,
+    this.state,
+    this.country,
+    this.postalCode,
+  });
+
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? postalCode;
+}
+
+/// Agency group nested under auth/me agent profile payloads.
+class AuthMeAgencyGroup {
+  const AuthMeAgencyGroup({
+    this.id,
+    this.name,
+  });
+
+  final String? id;
+  final String? name;
+}
+
+/// File metadata nested under auth/me agent profile payloads.
+class AuthMeProfileFile {
+  const AuthMeProfileFile({
+    this.id,
+    this.name,
+    this.url,
+  });
+
+  final String? id;
+  final String? name;
+  final String? url;
+}
+
 /// Agent-specific profile payload nested under auth/me for agent users.
 class AuthMeAgentProfile {
   const AuthMeAgentProfile({
+    this.id,
+    this.userId,
+    this.email,
+    this.firstName,
+    this.middleName,
+    this.lastName,
+    this.dateOfBirth,
+    this.gender,
+    this.phoneNumber,
+    this.profileId,
+    this.profileFile,
     this.profilePreviewLink,
     this.referralLink,
+    this.agentCode,
+    this.clientCode,
+    this.agencyGroup,
+    this.status,
+    this.address,
   });
 
+  final String? id;
+  final String? userId;
+  final String? email;
+  final String? firstName;
+  final String? middleName;
+  final String? lastName;
+  final String? dateOfBirth;
+  final String? gender;
+  final String? phoneNumber;
+  final String? profileId;
+  final AuthMeProfileFile? profileFile;
   final String? profilePreviewLink;
   final String? referralLink;
+  final String? agentCode;
+  final String? clientCode;
+  final AuthMeAgencyGroup? agencyGroup;
+  final String? status;
+  final AuthMeAddress? address;
+
+  String get displayName {
+    final parts = [firstName, middleName, lastName]
+        .where((part) => part != null && part.trim().isNotEmpty)
+        .map((part) => part!.trim())
+        .toList();
+    return parts.join(' ');
+  }
 }
 
 /// Client-specific profile payload nested under auth/me for client users.
@@ -89,6 +198,8 @@ class AuthMeUser {
     this.userType,
     this.createdAt,
     this.updatedAt,
+    this.agencyGroupId,
+    this.agencyGroupName,
     this.currentTenant,
     this.currentRoles = const [],
     this.tenantAssociations = const [],
@@ -110,6 +221,8 @@ class AuthMeUser {
   final String? userType;
   final String? createdAt;
   final String? updatedAt;
+  final String? agencyGroupId;
+  final String? agencyGroupName;
   final AuthMeTenant? currentTenant;
   final List<String> currentRoles;
   final List<AuthMeTenantAssociation> tenantAssociations;

@@ -94,5 +94,10 @@ abstract final class VCareLayout {
   static const bottomNavMaxWidth = 480.0;
   static const bottomNavHomeFabSize = 52.0;
   static const bottomNavPillRadius = 26.0;
+  static const mobileBottomNavContentGap = 4.0;
+  /// Scroll/content bottom clearance above the floating nav on Android phones.
+  static const mobileBottomNavContentPaddingAndroid = 90.0;
+  /// Scroll/content bottom clearance above the floating nav on iPhones.
+  static const mobileBottomNavContentPaddingIos = 105.0;
   static const mobileBreakpoint = 768.0;
 }

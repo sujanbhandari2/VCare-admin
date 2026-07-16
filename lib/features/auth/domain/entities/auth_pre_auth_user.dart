@@ -1,6 +1,7 @@
 class AuthPreAuthUser {
   const AuthPreAuthUser({
     this.firstName,
+    this.middleName,
     this.lastName,
     this.dob,
     this.zipCode,
@@ -9,6 +10,7 @@ class AuthPreAuthUser {
   });
 
   final String? firstName;
+  final String? middleName;
   final String? lastName;
   final String? dob;
   final String? zipCode;

@@ -28,4 +28,7 @@ class InMemoryStorageService implements StorageService {
   Future<void> set(String key, dynamic data) async {
     _store[key] = data;
   }
+
+  @override
+  Iterable<String> get keys => _store.keys;
 }

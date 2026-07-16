@@ -15,8 +15,6 @@ class LoadableListDemoScreen extends ConsumerStatefulWidget {
 
 class _LoadableListDemoScreenState
     extends ConsumerState<LoadableListDemoScreen> {
-  bool _simulateEmpty = false;
-
   @override
   void initState() {
     super.initState();
@@ -65,19 +63,6 @@ class _LoadableListDemoScreenState
                 ),
               ],
             ),
-          ),
-          SwitchListTile(
-            title: const Text('Simulate Empty List'),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            value: _simulateEmpty,
-            onChanged: (value) {
-              setState(() {
-                _simulateEmpty = value;
-              });
-              ref
-                  .read(loadableListDemoStateProvider.notifier)
-                  .setSimulateEmpty(value);
-            },
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

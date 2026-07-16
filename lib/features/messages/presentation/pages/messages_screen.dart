@@ -9,6 +9,7 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart';
+import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/message_groups_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_chat_sheet.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_group_sheet.dart';
@@ -29,7 +30,6 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
   bool _scrolled = false;
-  bool _previewEmpty = false;
   bool _searchFocused = false;
 
   @override
@@ -63,30 +63,31 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final allThreads = ShellMockData.messageThreads();
+    final careTeam = ref.watch(careTeamStateProvider).members;
+    final allThreads = ShellMockData.messageThreads(careTeam: careTeam);
     final allGroups = ref.watch(messageGroupsProvider);
 
     final query = _searchController.text.trim().toLowerCase();
 
-    final filteredThreads = _previewEmpty
-        ? <MessageThreadItem>[]
-        : (query.isEmpty
-              ? allThreads
-              : allThreads.where((t) {
-                  return t.contact.name.toLowerCase().contains(query) ||
-                      (t.lastBody ?? '').toLowerCase().contains(query);
-                }).toList());
+    final filteredThreads = query.isEmpty
+        ? allThreads
+        : allThreads.where((t) {
+            return t.contact.name.toLowerCase().contains(query) ||
+                (t.lastBody ?? '').toLowerCase().contains(query);
+          }).toList();
 
-    final filteredGroups = _previewEmpty
-        ? <MessageGroupItem>[]
-        : (query.isEmpty
-              ? allGroups
-              : allGroups.where((g) {
-                  return g.name.toLowerCase().contains(query) ||
-                      g.members.any(
-                        (m) => m.name.toLowerCase().contains(query),
-                      );
-                }).toList());
+    final filteredGroups = query.isEmpty
+        ? allGroups
+        : allGroups.where((g) {
+            return g.name.toLowerCase().contains(query) ||
+                g.members.any((m) => m.name.toLowerCase().contains(query));
+          }).toList();
+
+    final isTrulyEmpty =
+        query.isEmpty && allThreads.isEmpty && allGroups.isEmpty;
+    final isSearchEmpty = query.isNotEmpty &&
+        filteredThreads.isEmpty &&
+        filteredGroups.isEmpty;
 
     final safeTop = MediaQuery.paddingOf(context).top;
     final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
@@ -95,6 +96,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
       body: VcareRefreshScrollView(
         controller: _scrollController,
         onRefresh: _onRefresh,
+        padForMobileBottomNav: true,
         slivers: [
           SliverPersistentHeader(
             pinned: true,
@@ -135,32 +137,21 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               placeholder: 'Search messages, people or groups',
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: () =>
-                      setState(() => _previewEmpty = !_previewEmpty),
-                  icon: Icon(
-                    _previewEmpty ? LucideIcons.eye : LucideIcons.eyeOff,
-                    size: 18,
-                    color: vcare.mutedForeground.withValues(alpha: 0.4),
-                  ),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
-            ),
-          ),
-          if (filteredThreads.isEmpty && filteredGroups.isEmpty)
+          if (isTrulyEmpty)
             const SliverPadding(
               padding: EdgeInsets.only(top: 20),
               sliver: SliverToBoxAdapter(child: MessagesEmptyState()),
             )
+          else if (isSearchEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: _MessagesSearchEmptyState(query: query),
+              ),
+            )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   for (final group in filteredGroups)
@@ -176,6 +167,48 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                 ]),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessagesSearchEmptyState extends StatelessWidget {
+  const _MessagesSearchEmptyState({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: vcare.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: vcare.border),
+      ),
+      child: Column(
+        children: [
+          Icon(LucideIcons.search, size: 32, color: vcare.mutedForeground),
+          const SizedBox(height: 8),
+          const Text(
+            'No messages found',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'We couldn\'t find any messages matching "$query". '
+            'Try a different name or keyword.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: vcare.mutedForeground,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );

@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:vcare_admin/features/auth/presentation/pages/forgot_password_screen.dart';
 import 'package:vcare_admin/features/auth/presentation/pages/vcare_login_screen.dart';
 import 'package:vcare_admin/features/auth/presentation/pages/register_screen.dart';
-import 'package:vcare_admin/features/ava/presentation/pages/ava_screen.dart';
+// AVA tab disabled — restore when AVA returns to the bottom nav.
+// import 'package:vcare_admin/features/ava/presentation/pages/ava_screen.dart';
 import 'package:vcare_admin/features/cases/presentation/pages/cases_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/client_detail_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/clients_screen.dart';
@@ -18,6 +19,7 @@ import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provi
 import 'package:vcare_admin/features/find_care/presentation/pages/provider_detail_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/card_edit_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/care_team_detail_screen.dart';
+import 'package:vcare_admin/features/home/presentation/pages/care_team_edit_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/care_team_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/home_activity_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/home_screen.dart';
@@ -26,7 +28,8 @@ import 'package:vcare_admin/features/cases/presentation/pages/request_detail_scr
 import 'package:vcare_admin/features/cases/presentation/pages/request_new_screen.dart';
 import 'package:vcare_admin/features/commission/presentation/pages/commission_detail_screen.dart';
 import 'package:vcare_admin/features/loadable_list_demo/presentation/pages/loadable_list_demo_screen.dart';
-import 'package:vcare_admin/features/messages/presentation/pages/messages_screen.dart';
+import 'package:vcare_admin/features/messages/presentation/pages/live_chat_screen.dart';
+import 'package:vcare_admin/features/profile/presentation/pages/family_member_edit_screen.dart';
 import 'package:vcare_admin/features/profile/presentation/pages/profile_edit_screen.dart';
 import 'package:vcare_admin/features/profile/presentation/pages/profile_screen.dart';
 import 'package:vcare_admin/features/main_wrapper/presentation/pages/main_wrapper_screen.dart';
@@ -39,7 +42,7 @@ import 'package:vcare_admin/features/onboarding/presentation/pages/onboarding_sc
 import 'package:vcare_admin/features/notifications/presentation/pages/notifications_screen.dart';
 import 'package:vcare_admin/features/documents/presentation/pages/documents_screen.dart';
 import 'package:vcare_admin/features/vcare_sync/presentation/pages/vcare_parity_screens.dart'
-    hide FindCareCategoryScreen, NotificationsScreen;
+    hide CareTeamEditScreen, FindCareCategoryScreen, NotificationsScreen;
 
 import '../../features/auth/presentation/providers/user_logged_in_state_provider.dart';
 
@@ -412,64 +415,6 @@ class AppRouter {
                     ),
                   ),
                   GoRoute(
-                    path: 'profile',
-                    name: toName(profile),
-                    pageBuilder: (_, state) => _pageBuilder(
-                      state: state,
-                      transitionType: TransitionType.slide,
-                      child: const ProfileScreen(),
-                    ),
-                    routes: [
-                      GoRoute(
-                        path: 'edit',
-                        name: profileEditName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const ProfileEditScreen(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'address',
-                        name: profileAddressName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const ProfileEditScreen(addressOnly: true),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'documents',
-                        name: documentsName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const DocumentsScreen(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'family/new',
-                        name: familyMemberNewName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: const FamilyMemberEditScreen(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'family/:id',
-                        name: familyMemberEditName,
-                        pageBuilder: (_, state) => _pageBuilder(
-                          state: state,
-                          transitionType: TransitionType.slide,
-                          child: FamilyMemberEditScreen(
-                            memberId: state.pathParameters['id'],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
                     path: 'notifications',
                     name: notificationsName,
                     pageBuilder: (_, state) => _pageBuilder(
@@ -544,7 +489,7 @@ class AppRouter {
                 path: messages,
                 name: toName(messages),
                 pageBuilder: (_, state) =>
-                    _pageBuilder(state: state, child: const MessagesScreen()),
+                    _pageBuilder(state: state, child: const LiveChatScreen()),
                 routes: [
                   GoRoute(
                     path: 'care-team/:id',
@@ -588,13 +533,73 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: ava,
-                name: toName(ava),
+                path: profile,
+                name: toName(profile),
                 pageBuilder: (_, state) =>
-                    _pageBuilder(state: state, child: const AvaScreen()),
+                    _pageBuilder(state: state, child: const ProfileScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: profileEditName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const ProfileEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'address',
+                    name: profileAddressName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const ProfileEditScreen(addressOnly: true),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'documents',
+                    name: documentsName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const DocumentsScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'family/new',
+                    name: familyMemberNewName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const FamilyMemberEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'family/:id',
+                    name: familyMemberEditName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: FamilyMemberEditScreen(
+                        memberId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+          // AVA tab disabled — restore when AVA returns to the bottom nav.
+          // StatefulShellBranch(
+          //   routes: [
+          //     GoRoute(
+          //       path: ava,
+          //       name: toName(ava),
+          //       pageBuilder: (_, state) =>
+          //           _pageBuilder(state: state, child: const AvaScreen()),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
       GoRoute(

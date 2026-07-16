@@ -8,6 +8,8 @@ import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 
+import '../../../../shared/utils/network_error_message.dart';
+
 part 'client_transactions_state_provider.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -37,6 +39,25 @@ class ClientTransactionsState extends _$ClientTransactionsState
       _clientId,
       request,
       forceRefresh: forceRefresh,
+    );
+  }
+
+  Future<void> reprocessCharge({
+    required String transactionId,
+    void Function(bool success, String? error)? onCompleted,
+  }) async {
+    final response = await ref
+        .read(clientRepositoryProvider)
+        .chargeTransaction(transactionId: transactionId);
+
+    await response.when(
+      failure: (error) async {
+        onCompleted?.call(false, error.userMessage);
+      },
+      success: (_) async {
+        await refresh();
+        onCompleted?.call(true, null);
+      },
     );
   }
 }

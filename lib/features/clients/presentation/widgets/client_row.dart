@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class ClientRow extends StatelessWidget {
   const ClientRow({super.key, required this.client, this.onTap});
@@ -34,10 +34,10 @@ class ClientRow extends StatelessWidget {
                 child: SizedBox(
                   width: 40,
                   height: 40,
-                  child: CachedNetworkImage(
+                  child: VCareCachedImage(
                     imageUrl: client.avatarUrl,
                     fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => ColoredBox(
+                    errorWidget: ColoredBox(
                       color: vcare.muted,
                       child: Center(
                         child: Text(

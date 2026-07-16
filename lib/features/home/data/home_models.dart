@@ -1,4 +1,5 @@
-enum CareTeamRole { advocate, agent, provider, employer, insurance }
+import 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
+export 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
 
 enum RequestStatus { newRequest, inReview, actionNeeded, resolved }
 
@@ -33,54 +34,15 @@ class HomeMember {
 }
 
 class HomeProfile {
-  const HomeProfile({required this.fullName, this.photoUrl});
+  const HomeProfile({
+    required this.fullName,
+    this.photoUrl,
+    this.photoCacheKey,
+  });
 
   final String fullName;
   final String? photoUrl;
-}
-
-class CareTeamMember {
-  const CareTeamMember({
-    required this.id,
-    required this.name,
-    required this.role,
-    this.photoAsset,
-    this.photoUrl,
-    this.logoText,
-    this.bio,
-    this.email,
-    this.phone,
-    this.website,
-  });
-
-  final String id;
-  final String name;
-  final CareTeamRole role;
-  final String? photoAsset;
-  final String? photoUrl;
-  final String? logoText;
-  final String? bio;
-  final String? email;
-  final String? phone;
-  final String? website;
-
-  String get roleLabel {
-    switch (role) {
-      case CareTeamRole.advocate:
-        return 'Advocate';
-      case CareTeamRole.agent:
-        return 'Agent';
-      case CareTeamRole.provider:
-        return 'Provider';
-      case CareTeamRole.employer:
-        return 'Employer';
-      case CareTeamRole.insurance:
-        return 'Insurance';
-    }
-  }
-
-  bool get isOrg =>
-      role == CareTeamRole.employer || role == CareTeamRole.insurance;
+  final String? photoCacheKey;
 }
 
 class Provider {

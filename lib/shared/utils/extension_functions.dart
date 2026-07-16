@@ -3,10 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/core/config/flavor/configuration.dart';
 import 'package:vcare_admin/core/config/flavor/configuration_provider.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/l10n/l10n.dart';
 
 import 'package:vcare_admin/l10n/app_localizations.dart';
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 
 /// BuildContext Extension functions
 extension BuildContextExt on BuildContext {
@@ -22,6 +25,24 @@ extension BuildContextExt on BuildContext {
   double get height => MediaQuery.sizeOf(this).height;
 
   EdgeInsets get padding => MediaQuery.paddingOf(this);
+
+  /// Bottom padding so scroll/content ends above the mobile shell nav pill.
+  ///
+  /// Returns 0 when [MainWrapperScreen] already applied shell bottom inset.
+  double get mobileShellBottomContentPadding {
+    if (VCareMobileShellScope.appliesBottomInsetOf(this)) {
+      return 0;
+    }
+    return vcareMobileBottomNavContentPadding(this);
+  }
+
+  /// Standard shell scroll padding (20 L/R + dynamic bottom above nav).
+  EdgeInsets get mobileShellScrollPadding => EdgeInsets.fromLTRB(
+        VCareLayout.pageHorizontalPadding,
+        0,
+        VCareLayout.pageHorizontalPadding,
+        mobileShellBottomContentPadding,
+      );
 
   bool get isRtl => Directionality.of(this) == TextDirection.rtl;
 

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
 import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/user_profile_avatar.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
-import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 
 /// Parity with vcareapp ProfileSummaryCard.
-class ProfileSummaryCard extends StatelessWidget {
+class ProfileSummaryCard extends ConsumerWidget {
   const ProfileSummaryCard({
     super.key,
     required this.profile,
@@ -23,12 +25,15 @@ class ProfileSummaryCard extends StatelessWidget {
   final VoidCallback? onAddressTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final vcare = context.vcare;
     final address = profile.address;
     final dobLabel = profile.dob.isEmpty
         ? 'Add date of birth'
         : formatProfileDob(profile.dob);
+    final phoneLabel = profile.phone.isEmpty
+        ? ''
+        : AuthPhoneFormatter.formatInternationalDisplay(profile.phone);
 
     return Material(
       color: vcare.card,
@@ -46,9 +51,8 @@ class ProfileSummaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  ProfileAvatar(
+                  UserProfileAvatar(
                     name: profile.fullName,
-                    photoUrl: profile.photoUrl,
                     size: 64,
                   ),
                   const SizedBox(width: 16),
@@ -102,7 +106,7 @@ class ProfileSummaryCard extends StatelessWidget {
               const SizedBox(height: 6),
               _DetailRow(icon: LucideIcons.mail, label: profile.email),
               const SizedBox(height: 6),
-              _DetailRow(icon: LucideIcons.phone, label: profile.phone),
+              _DetailRow(icon: LucideIcons.phone, label: phoneLabel),
               const SizedBox(height: 6),
               _AddressDetailRow(address: address, onAddressTap: onAddressTap),
             ],

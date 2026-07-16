@@ -10,4 +10,6 @@ class NetworkFetchSession extends _$NetworkFetchSession {
   bool build() => true;
 
   void markSessionHydrated() => state = false;
+
+  void resetSession() => state = true;
 }

@@ -11,6 +11,7 @@ import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart'
 import 'package:vcare_admin/features/vcare_sync/data/vcare_catalog.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class FindCareCategoryScreen extends StatelessWidget {
   const FindCareCategoryScreen({super.key, required this.slug});
@@ -412,7 +413,7 @@ class NotificationsScreen extends StatelessWidget {
     if (type == 'message') {
       context.pushNamed(AppRouter.messages.toPathName);
     } else if (type == 'tip') {
-      context.pushNamed(AppRouter.ava.toPathName);
+      context.go(AppRouter.profile);
     } else {
       context.pushNamed(AppRouter.requests.toPathName);
     }
@@ -550,26 +551,6 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   }
 }
 
-class FamilyMemberEditScreen extends StatelessWidget {
-  const FamilyMemberEditScreen({super.key, this.memberId});
-
-  final String? memberId;
-
-  @override
-  Widget build(BuildContext context) {
-    return _FormScaffold(
-      title: memberId == null ? 'Add Family Member' : 'Edit Family Member',
-      subtitle: 'Manage authorized family profiles',
-      fields: const [
-        _FieldSeed(label: 'Name', value: 'Jordan Rivera'),
-        _FieldSeed(label: 'Relationship', value: 'Spouse'),
-        _FieldSeed(label: 'Gender', value: 'Prefer not to say'),
-        _FieldSeed(label: 'Date of birth', value: '1988-03-12'),
-      ],
-    );
-  }
-}
-
 class CareTeamEditScreen extends StatelessWidget {
   const CareTeamEditScreen({super.key, this.memberId});
 
@@ -639,10 +620,9 @@ class _FormScaffoldState extends State<_FormScaffold> {
       bottom: _PrimaryBottomAction(
         label: 'Save changes',
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saved locally for this Flutter flow.'),
-            ),
+          context.showVcareToast(
+            title: 'Saved locally for this Flutter flow.',
+            variant: VcareToastVariant.success,
           );
           Navigator.maybePop(context);
         },

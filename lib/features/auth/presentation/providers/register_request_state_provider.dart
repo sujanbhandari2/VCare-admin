@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
@@ -57,11 +56,6 @@ class RegisterRequestStateNotifier extends _$RegisterRequestStateNotifier {
 
         // Trigger on completed callback
         onCompleted?.call(null);
-
-        // Showing toast message in case of error
-        if (error.userMessage.isNotEmpty) {
-          Fluttertoast.showToast(msg: error.userMessage);
-        }
       },
       success: (result) {
         if (ref.mounted) {

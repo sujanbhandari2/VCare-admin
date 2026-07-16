@@ -3,7 +3,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
+import 'package:vcare_admin/features/home/utils/care_team_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class CareAvatar extends StatelessWidget {
   const CareAvatar({
@@ -30,13 +32,13 @@ class CareAvatar extends StatelessWidget {
         height: size,
         fit: BoxFit.cover,
       );
-    } else if (member.photoUrl != null) {
-      image = Image.network(
-        member.photoUrl!,
+    } else if (member.photoUrl != null && member.photoUrl!.trim().isNotEmpty) {
+      image = VCareCachedImage(
+        imageUrl: member.photoUrl!,
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+        errorWidget: const SizedBox.shrink(),
       );
     }
 
@@ -64,7 +66,16 @@ class CareAvatar extends StatelessWidget {
                 color: fg,
               ),
             )
-          : Icon(LucideIcons.building2, size: size * 0.4, color: fg),
+          : !member.isOrg
+              ? Text(
+                  careTeamInitials(member.name),
+                  style: TextStyle(
+                    fontSize: size * 0.32,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                  ),
+                )
+              : Icon(LucideIcons.building2, size: size * 0.4, color: fg),
     );
   }
 }

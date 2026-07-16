@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -10,19 +11,28 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/domain/auth_national_phone_input_formatter.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_validator.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_phone_country.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_phone_country_selector.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/utils/profile_edit_validation.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
-import 'package:vcare_admin/shared/widgets/common_image.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
+import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key, this.addressOnly = false});
 
+  /// Kept for route parity with vcareapp `/profile/address` — same full form.
   final bool addressOnly;
 
   @override
@@ -42,7 +52,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   String _dob = '';
   String? _photoUrl;
+  String? _photoCacheKey;
+  AuthPhoneCountry _phoneCountry = AuthPhoneCountry.usa;
   Map<String, String> _errors = {};
+  bool _loading = true;
+  bool _submitting = false;
 
   @override
   void initState() {
@@ -57,28 +71,58 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _postalCodeController = TextEditingController();
     _countryController = TextEditingController(text: 'United States');
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadFromProfile());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadProfileData());
   }
 
-  void _loadFromProfile() {
-    final profile = ref.read(localProfileStateProvider);
-    _applyProfile(profile);
+  Future<void> _loadProfileData() async {
+    await ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true);
+    if (!mounted) {
+      return;
+    }
+
+    _applyProfile(ref.read(localProfileStateProvider));
+    setState(() => _loading = false);
   }
 
   void _applyProfile(LocalProfile profile) {
     final address = profile.address;
+    final phoneCountry = AuthPhoneFormatter.detectCountry(profile.phone);
+    final displayDigits = AuthPhoneFormatter.toDisplayDigits(
+      profile.phone,
+      fallback: phoneCountry,
+    );
     setState(() {
       _fullNameController.text = profile.fullName;
       _emailController.text = profile.email;
-      _phoneController.text = profile.phone;
-      _dob = profile.dob;
+      _phoneCountry = phoneCountry;
+      _phoneController.text = AuthPhoneFormatter.formatNationalDisplay(
+        displayDigits,
+        phoneCountry,
+      );
+      _dob = profileDobToIso(profile.dob);
       _photoUrl = profile.photoUrl;
+      _photoCacheKey = profile.photoCacheKey;
       _line1Controller.text = address?.line1 ?? '';
       _line2Controller.text = address?.line2 ?? '';
       _cityController.text = address?.city ?? '';
       _stateController.text = address?.state ?? '';
       _postalCodeController.text = address?.postalCode ?? '';
       _countryController.text = address?.country ?? 'United States';
+    });
+  }
+
+  void _onPhoneCountryChanged(AuthPhoneCountry country) {
+    setState(() {
+      _phoneCountry = country;
+      _errors = Map<String, String>.from(_errors)..remove('phone');
+      final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+      final limited = digits.length > country.nationalLength
+          ? digits.substring(0, country.nationalLength)
+          : digits;
+      _phoneController.text = AuthPhoneFormatter.formatNationalDisplay(
+        limited,
+        country,
+      );
     });
   }
 
@@ -121,35 +165,59 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final form = _currentForm();
     final errors = ProfileEditValidation.validate(
       form,
-      validatePersonalInfo: !widget.addressOnly,
+      validatePhone: false,
     );
+    final phoneError = AuthPhoneValidator.validate(
+      _phoneController.text,
+      country: _phoneCountry,
+      context: context,
+    );
+    if (phoneError != null) {
+      errors['phone'] = phoneError;
+    }
     if (errors.isNotEmpty) {
       setState(() => _errors = errors);
       return;
     }
 
-    setState(() => _errors = {});
+    setState(() {
+      _errors = {};
+      _submitting = true;
+    });
 
-    final notifier = ref.read(localProfileStateProvider.notifier);
-    if (widget.addressOnly) {
-      await notifier.updateAddress(_addressFromForm(form));
-    } else {
-      await notifier.updatePersonalInfo(
-        fullName: form.fullName.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        dob: form.dob.trim(),
-        photoUrl: _photoUrl,
-      );
-    }
+    final phoneForApi = AuthPhoneFormatter.toApiDigits(
+      _phoneCountry.dialCode,
+      _phoneController.text,
+    );
+
+    final updated = await ref.read(authMeStateProvider.notifier).updateMe(
+          fullName: form.fullName.trim(),
+          email: form.email.trim(),
+          phone: phoneForApi,
+          dateOfBirth: form.dob.trim(),
+          photoUrl: _photoUrl,
+          address: _addressFromForm(form),
+        );
 
     if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Profile updated')));
+    if (!updated) {
+      final error = ref.read(authMeStateProvider).error;
+      setState(() => _submitting = false);
+      context.showVcareToast(
+        title: error ?? 'Failed to update profile.',
+        variant: VcareToastVariant.destructive,
+      );
+      return;
+    }
+
+    setState(() => _submitting = false);
+    context.showVcareToast(
+      title: 'Profile updated',
+      variant: VcareToastVariant.success,
+    );
     context.pop();
   }
 
@@ -173,15 +241,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Image too large. Please choose an image under 5MB.'),
-        ),
+      context.showVcareToast(
+        title: 'Image too large',
+        description:
+            'Please choose an image under ${ProfileEditValidation.maxProfilePhotoLabel}.',
+        variant: VcareToastVariant.warning,
       );
       return;
     }
 
-    setState(() => _photoUrl = pickedFile.path);
+    setState(() {
+      _photoUrl = pickedFile.path;
+      _photoCacheKey = null;
+    });
   }
 
   Future<void> _pickDob() async {
@@ -210,8 +282,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Address cleared. Save to apply.')),
+    context.showVcareToast(
+      title: 'Address cleared',
+      description: 'Save to apply.',
+      variant: VcareToastVariant.info,
     );
   }
 
@@ -232,93 +306,115 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final savedAddress = ref.watch(localProfileStateProvider).address;
-    final parsedDob = parseProfileDob(_dob);
-    final dobLabel = parsedDob == null
-        ? 'Select date of birth'
-        : DateFormat('MMM d, yyyy').format(parsedDob);
+    final dobLabel = _dob.isEmpty ? '' : formatProfileDob(_dob);
 
     return Scaffold(
       body: Column(
         children: [
           VcarePageHeader(
-            title: widget.addressOnly ? 'Address' : 'Edit profile',
-            subtitle: widget.addressOnly
-                ? 'Where VCare should send care updates'
-                : 'Keep your personal information current',
+            title: 'Edit profile',
             showBack: true,
             action: TextButton(
-              onPressed: _submit,
-              child: const Text(
-                'Save',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              onPressed: (_loading || _submitting) ? null : _submit,
+              style: TextButton.styleFrom(
+                foregroundColor: VCareColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text(
+                      'Save',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+              padding: context.mobileShellScrollPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!widget.addressOnly) ...[
-                    const SizedBox(height: 4),
-                    Center(
-                      child: _PhotoSection(
-                        photoUrl: _photoUrl,
-                        initials: profileInitials(_fullNameController.text),
-                        onChangePhoto: _pickPhoto,
-                      ),
+                  const SizedBox(height: 4),
+                  Center(
+                    child: _PhotoSection(
+                      photoUrl: _photoUrl,
+                      photoCacheKey: _photoCacheKey,
+                      fullName: _fullNameController.text,
+                      onChangePhoto: _pickPhoto,
                     ),
-                    const SizedBox(height: 24),
-                    const _SectionHeading('Personal info'),
-                    const SizedBox(height: 12),
-                    _ProfileField(
-                      label: 'Full name',
-                      controller: _fullNameController,
-                      errorText: _errors['fullName'],
-                      maxLength: 80,
-                      onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionHeading('Personal info'),
+                  const SizedBox(height: 16),
+                  _ProfileField(
+                    label: 'Full name',
+                    controller: _fullNameController,
+                    errorText: _errors['fullName'],
+                    maxLength: 80,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _DateField(
+                    label: 'Date of birth',
+                    value: dobLabel,
+                    placeholder: 'MM/DD/YYYY',
+                    errorText: _errors['dob'],
+                    onTap: _pickDob,
+                  ),
+                  const SizedBox(height: 16),
+                  _ProfileField(
+                    label: 'Email',
+                    controller: _emailController,
+                    errorText: _errors['email'],
+                    keyboardType: TextInputType.emailAddress,
+                    maxLength: 255,
+                  ),
+                  const SizedBox(height: 16),
+                  _ProfileField(
+                    label: 'Phone',
+                    controller: _phoneController,
+                    errorText: _errors['phone'],
+                    keyboardType: TextInputType.phone,
+                    hint: _phoneCountry.hint,
+                    inputFormatters: [
+                      AuthNationalPhoneInputFormatter(_phoneCountry),
+                    ],
+                    prefix: LoginPhoneCountrySelector(
+                      selected: _phoneCountry,
+                      onChanged: _onPhoneCountryChanged,
                     ),
-                    const SizedBox(height: 12),
-                    _DateField(
-                      label: 'Date of birth',
-                      value: dobLabel,
-                      errorText: _errors['dob'],
-                      onTap: _pickDob,
-                    ),
-                    const SizedBox(height: 12),
-                    _ProfileField(
-                      label: 'Email',
-                      controller: _emailController,
-                      errorText: _errors['email'],
-                      keyboardType: TextInputType.emailAddress,
-                      maxLength: 255,
-                    ),
-                    const SizedBox(height: 12),
-                    _ProfileField(
-                      label: 'Phone',
-                      controller: _phoneController,
-                      errorText: _errors['phone'],
-                      keyboardType: TextInputType.phone,
-                      maxLength: 20,
-                    ),
-                  ],
-                  if (!widget.addressOnly) const SizedBox(height: 24),
-                  if (widget.addressOnly) ...[
-                    const _SectionHeading('Home address'),
-                    const SizedBox(height: 12),
-                    _AddressFields(
-                      line1Controller: _line1Controller,
-                      line2Controller: _line2Controller,
-                      cityController: _cityController,
-                      stateController: _stateController,
-                      postalCodeController: _postalCodeController,
-                      countryController: _countryController,
-                      errors: _errors,
-                      savedAddress: savedAddress,
-                      onClear: _showClearAddressDialog,
-                    ),
-                  ],
+                    onChanged: (_) {
+                      if (_errors.containsKey('phone')) {
+                        setState(
+                          () => _errors =
+                              Map<String, String>.from(_errors)..remove('phone'),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  _AddressSectionHeader(
+                    savedAddress: savedAddress,
+                    onClear: _showClearAddressDialog,
+                  ),
+                  const SizedBox(height: 16),
+                  _AddressFields(
+                    line1Controller: _line1Controller,
+                    line2Controller: _line2Controller,
+                    cityController: _cityController,
+                    stateController: _stateController,
+                    postalCodeController: _postalCodeController,
+                    countryController: _countryController,
+                    errors: _errors,
+                  ),
                 ],
               ),
             ),
@@ -346,7 +442,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: VCareColors.destructive,
             ),
-            child: const Text('Clear'),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(LucideIcons.trash2, size: 16),
+                SizedBox(width: 8),
+                Text('Clear'),
+              ],
+            ),
           ),
         ],
       ),
@@ -354,6 +457,53 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     if (confirmed == true) {
       _removeAddress();
     }
+  }
+}
+
+class _AddressSectionHeader extends StatelessWidget {
+  const _AddressSectionHeader({
+    required this.savedAddress,
+    required this.onClear,
+  });
+
+  final ProfileAddress? savedAddress;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return Row(
+      children: [
+        Icon(LucideIcons.mapPin, size: 14, color: VCareColors.primary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            'HOME ADDRESS',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: vcare.mutedForeground,
+            ),
+          ),
+        ),
+        if (savedAddress != null)
+          TextButton(
+            onPressed: onClear,
+            style: TextButton.styleFrom(
+              foregroundColor: VCareColors.destructive,
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Clear',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -366,8 +516,6 @@ class _AddressFields extends StatelessWidget {
     required this.postalCodeController,
     required this.countryController,
     required this.errors,
-    required this.savedAddress,
-    required this.onClear,
   });
 
   final TextEditingController line1Controller;
@@ -377,8 +525,6 @@ class _AddressFields extends StatelessWidget {
   final TextEditingController postalCodeController;
   final TextEditingController countryController;
   final Map<String, String> errors;
-  final ProfileAddress? savedAddress;
-  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -386,23 +532,6 @@ class _AddressFields extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (savedAddress != null)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onClear,
-              style: TextButton.styleFrom(
-                foregroundColor: VCareColors.destructive,
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: const Text(
-                'Clear',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
         _ProfileField(
           label: 'Street address',
           controller: line1Controller,
@@ -410,7 +539,7 @@ class _AddressFields extends StatelessWidget {
           maxLength: 120,
           errorText: errors['line1'],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _ProfileField(
           label: 'Apt, suite, etc. (optional)',
           controller: line2Controller,
@@ -418,7 +547,7 @@ class _AddressFields extends StatelessWidget {
           maxLength: 120,
           errorText: errors['line2'],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -442,7 +571,7 @@ class _AddressFields extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -479,12 +608,14 @@ class _AddressFields extends StatelessWidget {
 class _PhotoSection extends StatelessWidget {
   const _PhotoSection({
     required this.photoUrl,
-    required this.initials,
+    this.photoCacheKey,
+    required this.fullName,
     required this.onChangePhoto,
   });
 
   final String? photoUrl;
-  final String initials;
+  final String? photoCacheKey;
+  final String fullName;
   final VoidCallback onChangePhoto;
 
   @override
@@ -496,24 +627,18 @@ class _PhotoSection extends StatelessWidget {
         Container(
           width: 96,
           height: 96,
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: vcare.muted,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: vcare.border),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: photoUrl == null
-              ? Center(
-                  child: Text(
-                    initials.isEmpty ? '?' : initials,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: vcare.mutedForeground,
-                    ),
-                  ),
-                )
-              : _ProfilePhoto(photoUrl: photoUrl!),
+          child: ProfileAvatar(
+            name: fullName,
+            photoUrl: photoUrl,
+            photoCacheKey: photoCacheKey,
+            size: 96,
+            borderRadius: 24,
+          ),
         ),
         Positioned(
           right: -4,
@@ -538,25 +663,6 @@ class _PhotoSection extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _ProfilePhoto extends StatelessWidget {
-  const _ProfilePhoto({required this.photoUrl});
-
-  final String photoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    if (photoUrl.startsWith('assets/')) {
-      return CommonImage(
-        assetsOrUrlOrPath: photoUrl,
-        fit: BoxFit.cover,
-        width: 96,
-        height: 96,
-      );
-    }
-    return Image.file(File(photoUrl), fit: BoxFit.cover, width: 96, height: 96);
   }
 }
 
@@ -587,6 +693,8 @@ class _ProfileField extends StatelessWidget {
     this.errorText,
     this.keyboardType,
     this.maxLength,
+    this.inputFormatters,
+    this.prefix,
     this.onChanged,
   });
 
@@ -596,6 +704,8 @@ class _ProfileField extends StatelessWidget {
   final String? errorText;
   final TextInputType? keyboardType;
   final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final Widget? prefix;
   final ValueChanged<String>? onChanged;
 
   @override
@@ -608,11 +718,12 @@ class _ProfileField extends StatelessWidget {
           label,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
           maxLength: maxLength,
+          inputFormatters: inputFormatters,
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
@@ -621,7 +732,14 @@ class _ProfileField extends StatelessWidget {
             filled: true,
             fillColor: vcare.card,
             isDense: true,
-            contentPadding: const EdgeInsets.all(14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            prefixIcon: prefix,
+            prefixIconConstraints: prefix == null
+                ? null
+                : const BoxConstraints(minWidth: 0, minHeight: 0),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: vcare.border),
@@ -642,12 +760,14 @@ class _DateField extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
+    this.placeholder,
     this.errorText,
   });
 
   final String label;
   final String value;
   final VoidCallback onTap;
+  final String? placeholder;
   final String? errorText;
 
   @override
@@ -660,7 +780,7 @@ class _DateField extends StatelessWidget {
           label,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
@@ -669,7 +789,10 @@ class _DateField extends StatelessWidget {
               errorText: errorText,
               filled: true,
               fillColor: vcare.card,
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
               suffixIcon: Icon(
                 LucideIcons.calendar,
                 size: 16,
@@ -684,7 +807,12 @@ class _DateField extends StatelessWidget {
                 borderSide: BorderSide(color: vcare.border),
               ),
             ),
-            child: Text(value),
+            child: Text(
+              value.isEmpty ? (placeholder ?? '') : value,
+              style: TextStyle(
+                color: value.isEmpty ? vcare.mutedForeground : null,
+              ),
+            ),
           ),
         ),
       ],

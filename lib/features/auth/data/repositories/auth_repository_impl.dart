@@ -138,6 +138,7 @@ class AuthRepositoryImpl extends AuthRepository {
   Future<EitherResponseOrException<AuthSetupAccountResult>> setupAccount({
     required String registrationToken,
     required String firstName,
+    String? middleName,
     required String lastName,
     required String password,
     required String dob,
@@ -152,6 +153,8 @@ class AuthRepositoryImpl extends AuthRepository {
         ApiEndpoints.authSetupAccount,
         JsonRequestBody({
           'firstName': firstName,
+          if (middleName != null && middleName.trim().isNotEmpty)
+            'middleName': middleName.trim(),
           'lastName': lastName,
           'password': password,
           'dob': dob,

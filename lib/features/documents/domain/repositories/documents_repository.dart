@@ -11,4 +11,17 @@ abstract class DocumentsRepository {
     CancelToken? cancelToken,
     bool forceRefresh = false,
   });
+
+  Future<EitherResponseOrException<void>> uploadDocument({
+    required String fileName,
+    required List<int> bytes,
+    String? note,
+    String? date,
+    CancelToken? cancelToken,
+  });
+
+  Future<EitherResponseOrException<void>> deleteDocument({
+    required String documentId,
+    CancelToken? cancelToken,
+  });
 }

@@ -28,7 +28,8 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
 
     ref.listen<int?>(loggedInUserIdProvider, (previous, next) {
       if (next != null && next != previous) {
-        syncFcmTokenNow(userId: next);
+        // TODO: Re-enable when FCM device APIs are available.
+        // syncFcmTokenNow(userId: next);
       }
     });
 
@@ -46,17 +47,18 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
 
       await _notificationService.setupTokenAndMessageListeners(
         onTokenRefreshed: (token) {
-          _syncFcmToken(
-            token: token,
-            userId: ref.read(loggedInUserIdProvider),
-          );
+          // TODO: Re-enable when FCM device APIs are available.
+          // _syncFcmToken(
+          //   token: token,
+          //   userId: ref.read(loggedInUserIdProvider),
+          // );
         },
       );
 
-      final userId = ref.read(loggedInUserIdProvider);
-      if (userId != null) {
-        await syncFcmTokenNow(userId: userId);
-      }
+      // final userId = ref.read(loggedInUserIdProvider);
+      // if (userId != null) {
+      //   await syncFcmTokenNow(userId: userId);
+      // }
     } catch (error) {
       Logger.logError("[FcmNotificationInit] => $error");
     }
@@ -90,37 +92,38 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
       return;
     }
 
-    final payloads = <String, dynamic>{
-      'fcmToken': token.trim(),
-      'fcmPlatform': Platform.isIOS ? 'IOS' : 'ANDROID',
-    };
+    // final payloads = <String, dynamic>{
+    //   'fcmToken': token.trim(),
+    //   'fcmPlatform': Platform.isIOS ? 'IOS' : 'ANDROID',
+    // };
 
-    final checkResponse = await ref
-        .read(notificationRepositoryProvider)
-        .checkFcmDeviceStatus();
-
-    await checkResponse.when(
-      failure: (_) async {
-        await _registerOrUpdateToken(
-          token: token,
-          userId: userId,
-          useUpdate: false,
-          payloads: payloads,
-        );
-      },
-      success: (status) async {
-        final shouldUpdate = status.hasFcmToken &&
-            status.fcmRegistrationToken != null &&
-            status.fcmRegistrationToken != token;
-
-        await _registerOrUpdateToken(
-          token: token,
-          userId: userId,
-          useUpdate: status.hasFcmToken || shouldUpdate,
-          payloads: payloads,
-        );
-      },
-    );
+    // TODO: Re-enable when FCM device APIs are available.
+    // final checkResponse = await ref
+    //     .read(notificationRepositoryProvider)
+    //     .checkFcmDeviceStatus();
+    //
+    // await checkResponse.when(
+    //   failure: (_) async {
+    //     await _registerOrUpdateToken(
+    //       token: token,
+    //       userId: userId,
+    //       useUpdate: false,
+    //       payloads: payloads,
+    //     );
+    //   },
+    //   success: (status) async {
+    //     final shouldUpdate = status.hasFcmToken &&
+    //         status.fcmRegistrationToken != null &&
+    //         status.fcmRegistrationToken != token;
+    //
+    //     await _registerOrUpdateToken(
+    //       token: token,
+    //       userId: userId,
+    //       useUpdate: status.hasFcmToken || shouldUpdate,
+    //       payloads: payloads,
+    //     );
+    //   },
+    // );
   }
 
   Future<void> _registerOrUpdateToken({

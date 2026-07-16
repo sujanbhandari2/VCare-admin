@@ -10,13 +10,13 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:intl/intl.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
 import 'package:vcare_admin/features/auth/domain/auth_identifier_normalizer.dart';
 import 'package:vcare_admin/features/auth/domain/auth_login_navigation_policy.dart';
+import 'package:vcare_admin/features/auth/domain/auth_national_phone_input_formatter.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_validator.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_phone_country.dart';
@@ -30,12 +30,15 @@ import 'package:vcare_admin/features/auth/presentation/providers/login_request_s
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/login_flow_state.dart';
+import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_forgot_steps.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_phone_country_selector.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/field_validator.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 enum _LoginMethod { phone, email }
 
@@ -74,6 +77,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   final _dobController = TextEditingController();
   final _zipController = TextEditingController();
   final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _onboardDobController = TextEditingController();
   final _onboardEmailController = TextEditingController();
@@ -107,6 +111,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _dobController.dispose();
     _zipController.dispose();
     _firstNameController.dispose();
+    _middleNameController.dispose();
     _lastNameController.dispose();
     _onboardDobController.dispose();
     _onboardEmailController.dispose();
@@ -161,12 +166,13 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     }
 
     if (!mounted) return;
+    ref.read(networkFetchSessionProvider.notifier).resetSession();
     context.goNamed(AppRouter.home.toPathName);
   }
 
   Future<void> _pickOnboardDob() async {
     final initial = _onboardDobController.text.isNotEmpty
-        ? DateTime.tryParse(_onboardDobController.text)
+        ? parseProfileDob(_onboardDobController.text)
         : null;
     final picked = await showDatePicker(
       context: context,
@@ -178,7 +184,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       return;
     }
     setState(
-      () => _onboardDobController.text = DateFormat('yyyy-MM-dd').format(picked),
+      () => _onboardDobController.text = formatProfileDob(
+        '${picked.year}-${picked.month.toString().padLeft(2, '0')}-'
+        '${picked.day.toString().padLeft(2, '0')}',
+      ),
     );
     _clearOnboardError('dob');
   }
@@ -400,11 +409,14 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     if (user.firstName != null) {
       _firstNameController.text = user.firstName!;
     }
+    if (user.middleName != null) {
+      _middleNameController.text = user.middleName!;
+    }
     if (user.lastName != null) {
       _lastNameController.text = user.lastName!;
     }
     if (user.dob != null) {
-      _onboardDobController.text = user.dob!;
+      _onboardDobController.text = formatProfileDob(user.dob!);
     }
     if (user.zipCode != null) {
       _zipController.text = user.zipCode!;
@@ -414,9 +426,13 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _onboardEmailController.text = user.email!;
     } else if (_method == _LoginMethod.email && user.phone != null) {
       _phoneCountry = AuthPhoneFormatter.detectCountry(user.phone!);
-      _onboardPhoneController.text = AuthPhoneFormatter.toDisplayDigits(
+      final displayDigits = AuthPhoneFormatter.toDisplayDigits(
         user.phone!,
         fallback: _phoneCountry,
+      );
+      _onboardPhoneController.text = AuthPhoneFormatter.formatNationalDisplay(
+        displayDigits,
+        _phoneCountry,
       );
     }
   }
@@ -432,10 +448,13 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       }
       final onboardDigits =
           _onboardPhoneController.text.replaceAll(RegExp(r'\D'), '');
-      if (onboardDigits.length > country.nationalLength) {
-        _onboardPhoneController.text =
-            onboardDigits.substring(0, country.nationalLength);
-      }
+      final limitedOnboardDigits = onboardDigits.length > country.nationalLength
+          ? onboardDigits.substring(0, country.nationalLength)
+          : onboardDigits;
+      _onboardPhoneController.text = AuthPhoneFormatter.formatNationalDisplay(
+        limitedOnboardDigits,
+        country,
+      );
     });
   }
 
@@ -548,9 +567,12 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   }
 
   Future<void> _finishSocial(String provider) async {
-    setState(() => _loadingKey = provider);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    await _finishSignIn();
+    final label = provider == 'apple' ? 'Apple' : 'Google';
+    if (!mounted) return;
+    context.showVcareToast(
+      title: '$label sign-in is coming soon.',
+      variant: VcareToastVariant.info,
+    );
   }
 
   void _goBack() {
@@ -637,6 +659,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           onSuccess: (_) {
             if (!mounted) return;
             ref.invalidate(userLoggedInStateProvider);
+            ref.read(networkFetchSessionProvider.notifier).resetSession();
             ref.read(authMeStateProvider.notifier).fetchMe();
             context.goNamed(AppRouter.home.toPathName);
           },
@@ -700,9 +723,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     await ref.read(authSetupAccountStateProvider.notifier).setupAccount(
           registrationToken: registrationToken,
           firstName: _firstNameController.text.trim(),
+          middleName: _middleNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
           password: _passwordController.text,
-          dob: _onboardDobController.text.trim(),
+          dob: profileDobToIso(_onboardDobController.text.trim()),
           zipCode: _zipController.text.trim(),
           email: email,
           phone: phone,
@@ -728,8 +752,11 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 450));
     final name =
         _selectedClient?.fullName ??
-        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
-            .trim();
+        [
+          _firstNameController.text.trim(),
+          _middleNameController.text.trim(),
+          _lastNameController.text.trim(),
+        ].where((part) => part.isNotEmpty).join(' ');
     await _finishSignIn(name: name.isEmpty ? null : name, email: _identifier);
   }
 
@@ -1241,13 +1268,20 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         ),
         const SizedBox(height: 12),
         LoginFieldGroup(
+          field: LoginTextField(
+            controller: _middleNameController,
+            hint: context.appLocalization.middle_name,
+          ),
+        ),
+        const SizedBox(height: 12),
+        LoginFieldGroup(
           errorText: _onboardErrors['dob'],
           field: GestureDetector(
             onTap: _loadingKey != null ? null : _pickOnboardDob,
             child: AbsorbPointer(
               child: LoginTextField(
                 controller: _onboardDobController,
-                hint: 'Select date of birth',
+                hint: 'MM/DD/YYYY',
                 hasError: _onboardErrors.containsKey('dob'),
                 prefix: Padding(
                   padding: const EdgeInsets.only(left: 16),
@@ -1284,8 +1318,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               controller: _onboardEmailController,
               keyboardType: TextInputType.emailAddress,
               hint: 'Email address',
+              enabled: false,
               hasError: _onboardErrors.containsKey('email'),
-              onChanged: (_) => _clearOnboardError('email'),
               prefix: Padding(
                 padding: const EdgeInsets.only(left: 16),
                 child: Icon(
@@ -1305,8 +1339,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               hint: _phoneCountry.hint,
               hasError: _onboardErrors.containsKey('phone'),
               inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(_phoneCountry.nationalLength),
+                AuthNationalPhoneInputFormatter(_phoneCountry),
               ],
               onChanged: (_) => _clearOnboardError('phone'),
               prefix: LoginPhoneCountrySelector(

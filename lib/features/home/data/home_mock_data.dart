@@ -53,6 +53,9 @@ class HomeMockData {
       email: 'benefits@northwind.com',
       phone: '(415) 555-0120',
       website: 'https://benefits.northwind.com',
+      address: '200 Market St, San Francisco, CA 94105',
+      hours: 'Mon–Fri, 8am–5pm PT',
+      groupNumber: 'GRP-22841',
     ),
     CareTeamMember(
       id: 'ct5',
@@ -64,6 +67,9 @@ class HomeMockData {
       email: 'members@blueshieldnational.com',
       phone: '1-800-555-0199',
       website: 'https://blueshieldnational.com/members',
+      hours: '24/7 member support',
+      policyNumber: 'VC-8472-1903',
+      groupNumber: 'GRP-22841',
     ),
     CareTeamMember(
       id: 'ct6',

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -8,6 +7,7 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class DocumentsPreviewDialog extends StatelessWidget {
   const DocumentsPreviewDialog({super.key, required this.item});
@@ -21,11 +21,15 @@ class DocumentsPreviewDialog extends StatelessWidget {
     );
   }
 
-  bool get _isImage => isDocumentImage(item.dataUrl, item.name);
+  bool get _isImage =>
+      isDocumentImage(item.imagePreviewUrl, item.name) ||
+      isDocumentImage(item.dataUrl, item.name);
 
-  bool get _isPdf => isDocumentPdf(item.dataUrl, item.name);
+  bool get _isPdf =>
+      isDocumentPdf(item.dataUrl, item.name) ||
+      isDocumentPdf(item.imagePreviewUrl, item.name);
 
-  bool get _isDataUrl => item.dataUrl.startsWith('data:');
+  bool get _isDataUrl => item.imagePreviewUrl.startsWith('data:');
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +76,8 @@ class DocumentsPreviewDialog extends StatelessWidget {
               ),
               child: _isImage
                   ? _ImagePreview(
-                      dataUrl: item.dataUrl,
+                      imageUrl: item.imagePreviewUrl,
+                      cacheKey: 'document:${item.id}',
                       isDataUrl: _isDataUrl,
                     )
                   : _isPdf
@@ -87,10 +92,15 @@ class DocumentsPreviewDialog extends StatelessWidget {
 }
 
 class _ImagePreview extends StatelessWidget {
-  const _ImagePreview({required this.dataUrl, required this.isDataUrl});
+  const _ImagePreview({
+    required this.imageUrl,
+    required this.isDataUrl,
+    this.cacheKey,
+  });
 
-  final String dataUrl;
+  final String imageUrl;
   final bool isDataUrl;
+  final String? cacheKey;
 
   @override
   Widget build(BuildContext context) {
@@ -100,16 +110,18 @@ class _ImagePreview extends StatelessWidget {
       child: InteractiveViewer(
         child: isDataUrl
             ? Image.memory(
-                base64Decode(dataUrl.split(',').last),
+                base64Decode(imageUrl.split(',').last),
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (_, _, _) =>
                     const Icon(LucideIcons.imageOff, size: 32),
               )
-            : CachedNetworkImage(
-                imageUrl: dataUrl,
+            : VCareCachedImage(
+                imageUrl: imageUrl,
+                cacheKey: cacheKey,
                 fit: BoxFit.contain,
-                errorWidget: (_, __, ___) =>
-                    const Icon(LucideIcons.imageOff, size: 32),
+                showLoadingIndicator: true,
+                fadeInDuration: Duration.zero,
+                errorWidget: const Icon(LucideIcons.imageOff, size: 32),
               ),
       ),
     );

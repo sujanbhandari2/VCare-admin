@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
-import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
+import 'package:vcare_admin/features/profile/presentation/widgets/user_profile_avatar.dart';
 
-class HomePageHeader extends StatelessWidget {
+class HomePageHeader extends ConsumerWidget {
   const HomePageHeader({
     super.key,
     required this.profile,
@@ -27,7 +28,7 @@ class HomePageHeader extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final vcare = context.vcare;
     final avatarSize = compact ? 40.0 : 56.0;
 
@@ -37,21 +38,24 @@ class HomePageHeader extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onProfileTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
+            child: SizedBox(
               width: avatarSize,
               height: avatarSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: vcare.border),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: ProfileAvatar(
-                name: profile.fullName,
-                photoUrl: profile.photoUrl,
-                size: avatarSize,
-                circular: true,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  UserProfileAvatar(
+                    name: profile.fullName,
+                    size: avatarSize,
+                    circular: true,
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: vcare.border),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

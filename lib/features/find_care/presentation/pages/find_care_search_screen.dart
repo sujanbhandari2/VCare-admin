@@ -13,6 +13,7 @@ import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_pro
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class FindCareSearchScreen extends ConsumerStatefulWidget {
   const FindCareSearchScreen({super.key, this.initialQuery});
@@ -54,10 +55,10 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
     final success = await notifier.runSearch(loadMore: loadMore);
     if (!mounted || loadMore) return;
     if (!success && _queryController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a name (last name or full name, e.g. Jane Doe).'),
-        ),
+      context.showVcareToast(
+        title: 'Enter a name',
+        description: 'Last name or full name, e.g. Jane Doe.',
+        variant: VcareToastVariant.warning,
       );
     }
   }
@@ -96,7 +97,7 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(
@@ -108,12 +109,10 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
                     final updated = ref.read(findCareSearchLocationProvider);
                     _locationController.text = updated.displayLabel;
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Search area updated: ${updated.displayLabel}',
-                        ),
-                      ),
+                    context.showVcareToast(
+                      title: 'Search area updated',
+                      description: updated.displayLabel,
+                      variant: VcareToastVariant.info,
                     );
                   },
                   actions: Column(

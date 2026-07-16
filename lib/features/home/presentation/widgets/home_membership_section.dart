@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -15,15 +14,11 @@ class HomeMembershipSection extends StatelessWidget {
     super.key,
     required this.member,
     required this.hasMembership,
-    this.previewNoMembership = false,
-    this.onPreviewToggle,
     this.onTap,
   });
 
   final HomeMember member;
   final bool hasMembership;
-  final bool previewNoMembership;
-  final VoidCallback? onPreviewToggle;
   final VoidCallback? onTap;
 
   @override
@@ -33,12 +28,7 @@ class HomeMembershipSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        HomeSectionHeader(
-          title: 'My Referral',
-          showPreviewToggle: kDebugMode,
-          previewEmpty: previewNoMembership,
-          onPreviewToggle: onPreviewToggle,
-        ),
+        const HomeSectionHeader(title: 'My Referral'),
         if (hasMembership)
           _ReferralCard(
             member: member,

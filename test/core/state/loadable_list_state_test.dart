@@ -12,6 +12,9 @@ class ListItem extends LoadableListItem {
   final int v;
 
   @override
+  String toString() => v.toString();
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ListItem && runtimeType == other.runtimeType && v == other.v;

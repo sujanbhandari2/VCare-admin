@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 class CommonImage extends StatelessWidget {
   const CommonImage({
@@ -49,12 +49,12 @@ class CommonImage extends StatelessWidget {
                   height: height,
                   fit: fit,
                 )
-              : CachedNetworkImage(
+              : VCareCachedImage(
                   imageUrl: assetsOrUrlOrPath,
                   width: width,
                   height: height,
-                  errorWidget: (_, err, trace) => const SizedBox(),
                   fit: fit,
+                  errorWidget: const SizedBox(),
                 )
         : assetsOrUrlOrPath.contains("assets")
         ? assetsOrUrlOrPath.endsWith(".svg")

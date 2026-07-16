@@ -39,6 +39,7 @@ abstract class AuthRepository {
   Future<EitherResponseOrException<AuthSetupAccountResult>> setupAccount({
     required String registrationToken,
     required String firstName,
+    String? middleName,
     required String lastName,
     required String password,
     required String dob,

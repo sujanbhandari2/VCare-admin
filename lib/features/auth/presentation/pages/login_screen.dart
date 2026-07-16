@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/shared/widgets/common_circular_icon_button.dart';
@@ -15,6 +14,8 @@ import 'package:vcare_admin/features/auth/domain/enums/login_request_type.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/login_request_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -241,8 +242,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _handleOnLoginSuccess();
           },
           onError: (error) {
-            Fluttertoast.showToast(
-              msg: error ?? context.appLocalization.something_went_wrong,
+            context.showVcareToast(
+              title: error ?? context.appLocalization.something_went_wrong,
+              variant: VcareToastVariant.destructive,
             );
           },
           type: type,
@@ -252,6 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _handleOnLoginSuccess() {
     //invalidates the current state and works from start
     ref.invalidate(userLoggedInStateProvider);
+    ref.read(networkFetchSessionProvider.notifier).resetSession();
 
     //fetching profile
     ref.read(authMeStateProvider.notifier).fetchMe();

@@ -96,6 +96,7 @@ extension AuthPreAuthUserMapper on model.AuthPreAuthUserModel {
   AuthPreAuthUser toEntity() {
     return AuthPreAuthUser(
       firstName: firstName,
+      middleName: middleName,
       lastName: lastName,
       dob: dob,
       zipCode: zipCode,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
@@ -10,6 +9,7 @@ import 'package:vcare_admin/features/cases/presentation/widgets/cases_request_ca
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 
 class CasesScreen extends StatefulWidget {
   const CasesScreen({super.key});
@@ -19,14 +19,17 @@ class CasesScreen extends StatefulWidget {
 }
 
 class _CasesScreenState extends State<CasesScreen> {
-  bool _previewEmpty = false;
+  Future<void> _onRefresh() async {
+    if (mounted) {
+      setState(() {});
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+  }
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final requests = _previewEmpty
-        ? <CareRequest>[]
-        : ShellMockData.allRequests();
+    final requests = ShellMockData.allRequests();
     final open = requests
         .where((r) => r.status != RequestStatus.resolved)
         .toList();
@@ -35,7 +38,9 @@ class _CasesScreenState extends State<CasesScreen> {
         .toList();
 
     return Scaffold(
-      body: CustomScrollView(
+      body: VcareRefreshScrollView(
+        onRefresh: _onRefresh,
+        padForMobileBottomNav: true,
         slivers: [
           SliverToBoxAdapter(
             child: VcarePageHeader(
@@ -47,17 +52,9 @@ class _CasesScreenState extends State<CasesScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _PreviewToggle(
-                    previewEmpty: _previewEmpty,
-                    onToggle: () =>
-                        setState(() => _previewEmpty = !_previewEmpty),
-                  ),
-                ),
                 if (requests.isEmpty)
                   const CasesEmptyState()
                 else ...[
@@ -89,35 +86,6 @@ class _CasesScreenState extends State<CasesScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PreviewToggle extends StatelessWidget {
-  const _PreviewToggle({required this.previewEmpty, required this.onToggle});
-
-  final bool previewEmpty;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Material(
-      color: vcare.muted,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onToggle,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: Icon(
-            previewEmpty ? LucideIcons.eye : LucideIcons.eyeOff,
-            size: 12,
-            color: vcare.mutedForeground,
-          ),
-        ),
       ),
     );
   }

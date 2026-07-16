@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_method_request.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
@@ -67,10 +68,35 @@ class FakeClientRepository implements ClientRepository {
   EitherResponseOrException<List<ClientPaymentMethod>>
   fetchPaymentMethodsResult = Success(const []);
 
+  EitherResponseOrException<ClientPaymentMethod> addPaymentMethodResult =
+      Success(
+        const ClientPaymentMethod(
+          id: 'pm-new',
+          type: ClientPaymentMethodType.cash,
+          label: 'Cash',
+        ),
+      );
+
+  EitherResponseOrException<ClientPaymentMethod> setPrimaryPaymentMethodResult =
+      Success(
+        const ClientPaymentMethod(
+          id: 'pm-1',
+          type: ClientPaymentMethodType.cash,
+          label: 'Cash',
+          isPrimary: true,
+        ),
+      );
+
+  EitherResponseOrException<void> removePaymentMethodResult = const Success(
+    null,
+  );
+
   EitherResponseOrException<PaginatedResult<ClientTransaction>>
   fetchTransactionsResult = Success(
     PaginatedResult(items: const [], pagination: PaginationMeta.empty),
   );
+
+  EitherResponseOrException<void> chargeTransactionResult = const Success(null);
 
   EitherResponseOrException<PaginatedResult<ClientCase>> fetchCasesResult =
       Success(
@@ -129,6 +155,7 @@ class FakeClientRepository implements ClientRepository {
   PaginatedListRequest? lastDependentsRequest;
   bool? lastPaymentMethodsForceRefresh;
   bool? lastTransactionsForceRefresh;
+  String? lastChargeTransactionId;
 
   @override
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
@@ -222,6 +249,37 @@ class FakeClientRepository implements ClientRepository {
   }
 
   @override
+  Future<EitherResponseOrException<ClientPaymentMethod>> addPaymentMethod({
+    required String clientId,
+    required AddClientPaymentMethodRequest request,
+    CancelToken? cancelToken,
+  }) async {
+    lastClientId = clientId;
+    return addPaymentMethodResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<ClientPaymentMethod>>
+  setPrimaryPaymentMethod({
+    required String clientId,
+    required String paymentMethodId,
+    CancelToken? cancelToken,
+  }) async {
+    lastClientId = clientId;
+    return setPrimaryPaymentMethodResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> removePaymentMethod({
+    required String clientId,
+    required String paymentMethodId,
+    CancelToken? cancelToken,
+  }) async {
+    lastClientId = clientId;
+    return removePaymentMethodResult;
+  }
+
+  @override
   Future<EitherResponseOrException<PaginatedResult<ClientTransaction>>>
   fetchTransactions(
     String clientId,
@@ -233,6 +291,15 @@ class FakeClientRepository implements ClientRepository {
     lastTransactionsRequest = request;
     lastTransactionsForceRefresh = forceRefresh;
     return fetchTransactionsResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> chargeTransaction({
+    required String transactionId,
+    CancelToken? cancelToken,
+  }) async {
+    lastChargeTransactionId = transactionId;
+    return chargeTransactionResult;
   }
 
   @override

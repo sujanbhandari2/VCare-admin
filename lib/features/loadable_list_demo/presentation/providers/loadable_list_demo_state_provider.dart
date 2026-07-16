@@ -18,16 +18,11 @@ class LoadableListDemoState extends _$LoadableListDemoState {
   );
 
   int _currentPage = 0;
-  bool _simulateEmpty = false;
   bool _failNextInitial = false;
   bool _failNextLoadMore = false;
 
   @override
   LoadableListState<DemoListItem> build() => LoadableListState<DemoListItem>();
-
-  void setSimulateEmpty(bool value) {
-    _simulateEmpty = value;
-  }
 
   void failNextInitialLoad() {
     _failNextInitial = true;
@@ -45,12 +40,6 @@ class LoadableListDemoState extends _$LoadableListDemoState {
     if (_failNextInitial) {
       _failNextInitial = false;
       state = state.failure('Simulated initial load failure');
-      return;
-    }
-
-    if (_simulateEmpty) {
-      _currentPage = 0;
-      state = state.success(items: const [], total: _allItems.length);
       return;
     }
 

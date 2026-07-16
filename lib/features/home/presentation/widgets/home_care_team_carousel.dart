@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -14,33 +13,26 @@ class HomeCareTeamCarousel extends StatelessWidget {
   const HomeCareTeamCarousel({
     super.key,
     required this.careTeam,
-    this.previewEmpty = false,
-    this.onPreviewToggle,
     this.onSeeAll,
     this.onMemberTap,
   });
 
   final List<CareTeamMember> careTeam;
-  final bool previewEmpty;
-  final VoidCallback? onPreviewToggle;
   final VoidCallback? onSeeAll;
   final void Function(CareTeamMember member)? onMemberTap;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final team = previewEmpty ? <CareTeamMember>[] : careTeam.take(4).toList();
+    final team = careTeam.take(4).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HomeSectionHeader(
           title: 'Your Care Team',
-          seeAllLabel: team.isNotEmpty ? 'See all' : null,
+          seeAllLabel: careTeam.isNotEmpty ? 'See all' : null,
           onSeeAll: onSeeAll,
-          showPreviewToggle: kDebugMode,
-          previewEmpty: previewEmpty,
-          onPreviewToggle: onPreviewToggle,
         ),
         if (team.isEmpty)
           HomeEmptyStateCard(

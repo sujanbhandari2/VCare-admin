@@ -9,8 +9,11 @@ import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/medicare_provider_detail_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_detail_services_section.dart';
+import 'package:vcare_admin/features/find_care/presentation/widgets/provider_favorite_button.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class MedicareProviderDetailScreen extends ConsumerStatefulWidget {
   const MedicareProviderDetailScreen({
@@ -124,7 +127,7 @@ class _MedicareProviderDetailScreenState
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _HeroCard(
@@ -142,17 +145,13 @@ class _MedicareProviderDetailScreenState
                           ),
                         );
                     if (!context.mounted || saved == null) return;
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            saved
-                                ? 'Provider saved: $name'
-                                : 'Provider removed: $name',
-                          ),
-                        ),
-                      );
+                    context.showVcareToast(
+                      title: saved ? 'Provider saved' : 'Provider removed',
+                      description: name,
+                      variant: saved
+                          ? VcareToastVariant.success
+                          : VcareToastVariant.info,
+                    );
                   },
                 ),
                 const SizedBox(height: 12),
@@ -264,19 +263,12 @@ class _HeroCard extends StatelessWidget {
         Positioned(
           top: 12,
           right: 12,
-          child: IconButton(
-            onPressed: isToggling ? null : onToggleFavorite,
-            style: IconButton.styleFrom(
-              backgroundColor: vcare.card.withValues(alpha: 0.9),
-              side: BorderSide(color: vcare.border),
-            ),
-            icon: Icon(
-              LucideIcons.heart,
-              color: isFavorite
-                  ? VCareColors.destructive
-                  : vcare.mutedForeground,
-              fill: isFavorite ? 1.0 : 0.0,
-            ),
+          child: ProviderFavoriteButton(
+            isFavorite: isFavorite,
+            isToggling: isToggling,
+            onPressed: onToggleFavorite,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
           ),
         ),
       ],

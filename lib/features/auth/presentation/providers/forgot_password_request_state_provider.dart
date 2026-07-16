@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
@@ -56,20 +55,10 @@ class ForgotPasswordRequestStateNotifier
 
         // Trigger on completed callback
         onCompleted?.call(false);
-
-        // Showing toast message in case of error
-        if (error.userMessage.isNotEmpty) {
-          Fluttertoast.showToast(msg: error.userMessage);
-        }
       },
       success: (result) {
         if (ref.mounted) {
           state = state.success(result);
-        }
-
-        // Showing toast message in case of success
-        if (result.message != null) {
-          Fluttertoast.showToast(msg: result.message!);
         }
 
         // Trigger on completed callback

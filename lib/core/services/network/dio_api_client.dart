@@ -7,6 +7,7 @@ import 'package:vcare_admin/core/services/network/http_cache_interceptor.dart';
 import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/models/request_body.dart';
 import 'package:vcare_admin/core/services/network/refresh_token_interceptor.dart';
+import 'package:vcare_admin/core/services/network/session_expiry_handler.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
 
@@ -20,12 +21,18 @@ class DioApiClient implements ApiClient {
   }) {
     dio = dioOverride ?? Dio(baseOptions);
 
-    // Add interceptor to handle base response structure (success/message/data)
-    dio.interceptors.add(ApiResponseInterceptor());
+    final sessionExpiryHandler = SessionExpiryHandler(
+      storageService: storageService,
+      apiBaseUrl: config.apiBaseUrl,
+    );
+
+    // Runs first on the response path so session expiry is handled before
+    // CacheInterceptor can swallow 4xx errors.
+    dio.interceptors.add(
+      ApiResponseInterceptor(sessionExpiryHandler: sessionExpiryHandler),
+    );
 
     if (enableCaching) {
-      // CacheInterceptor is added after _ApiInterceptor so it receives the full response
-      // in its onResponse before it gets unwrapped by _ApiInterceptor.
       dio.interceptors.add(CacheInterceptor(config, storageService));
     }
 
@@ -34,6 +41,7 @@ class DioApiClient implements ApiClient {
         config: config,
         storageService: storageService,
         dio: dio,
+        sessionExpiryHandler: sessionExpiryHandler,
       ),
     );
   }

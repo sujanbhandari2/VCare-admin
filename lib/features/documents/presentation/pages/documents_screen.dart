@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_filter.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
-import 'package:vcare_admin/features/documents/presentation/providers/document_uploads_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_doc_row.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_empty_state.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_filters.dart';
+import 'package:vcare_admin/features/documents/presentation/widgets/documents_preview_dialog.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_upload_actions.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
@@ -18,6 +19,7 @@ import 'package:vcare_admin/shared/utils/network_error_message.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class DocumentsScreen extends ConsumerStatefulWidget {
   const DocumentsScreen({super.key});
@@ -34,6 +36,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   final _scrollController = ScrollController();
   DocumentFilter _filter = DocumentFilter.all;
   bool _isLoadMoreRequested = false;
+  String? _deletingDocumentId;
 
   @override
   void initState() {
@@ -79,15 +82,91 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 
   List<DocumentItem> _allItems() {
-    final uploads = ref.watch(documentUploadsStateProvider);
-    final apiItems = ref
+    return ref
         .watch(documentsListStateProvider)
         .items
         .map(documentItemFromAgentFile)
         .toList();
+  }
 
-    return [...uploads, ...apiItems]
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  Future<void> _openDocument(DocumentItem item) async {
+    if (!item.canOpen) return;
+
+    if (item.kind == DocumentKind.image ||
+        item.imagePreviewUrl.startsWith('data:') ||
+        isDocumentPdf(item.imagePreviewUrl, item.name) ||
+        isDocumentPdf(item.dataUrl, item.name)) {
+      await DocumentsPreviewDialog.show(context, item);
+      return;
+    }
+
+    final openUrl = item.dataUrl.trim().isNotEmpty
+        ? item.dataUrl
+        : item.imagePreviewUrl;
+
+    final launched = await launchUrlString(
+      openUrl,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!mounted) return;
+    if (!launched) {
+      context.showVcareToast(
+        title: 'Could not open document',
+        description: item.name,
+        variant: VcareToastVariant.destructive,
+      );
+    }
+  }
+
+  Future<void> _deleteDocument(DocumentItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete document?'),
+        content: Text(
+          '${item.name} will be permanently removed. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deletingDocumentId = item.id);
+
+    final result = await ref
+        .read(documentsListStateProvider.notifier)
+        .deleteDocument(documentId: item.id);
+
+    if (!mounted) return;
+
+    setState(() => _deletingDocumentId = null);
+
+    if (result.success) {
+      context.showVcareToast(
+        title: 'Document deleted',
+        variant: VcareToastVariant.success,
+      );
+    } else {
+      context.showVcareToast(
+        title: 'Could not delete document',
+        description: result.error,
+        variant: VcareToastVariant.destructive,
+      );
+    }
   }
 
   @override
@@ -105,6 +184,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       body: VcareRefreshScrollView(
         onRefresh: _onRefresh,
         controller: _scrollController,
+        padForMobileBottomNav: true,
         slivers: [
           const SliverToBoxAdapter(
             child: VcarePageHeader(
@@ -115,12 +195,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              _horizontalPadding,
-              0,
-              _horizontalPadding,
-              40,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: _horizontalPadding),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Row(
@@ -191,10 +266,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                     if (i > 0) const SizedBox(height: 8),
                     DocumentsDocRow(
                       item: filtered[i],
+                      isDeleting: _deletingDocumentId == filtered[i].id,
+                      onOpen: filtered[i].canOpen
+                          ? () => _openDocument(filtered[i])
+                          : null,
                       onDelete: filtered[i].isDeletable
-                          ? () => ref
-                                .read(documentUploadsStateProvider.notifier)
-                                .removeUpload(filtered[i].uploadId!)
+                          ? () => _deleteDocument(filtered[i])
                           : null,
                     ),
                   ],

@@ -1,14 +1,18 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/config/api_endpoints.dart';
-import 'package:vcare_admin/core/services/network/http_response_validator.dart';
 import 'package:vcare_admin/core/services/network/api_client.dart';
+import 'package:vcare_admin/core/services/network/http_exception.dart';
+import 'package:vcare_admin/core/services/network/http_response_validator.dart';
 import 'package:vcare_admin/core/services/network/models/form_file.dart';
 import 'package:vcare_admin/core/services/network/models/request_body.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/documents/data/models/agent_file_model.dart';
 import 'package:vcare_admin/features/profile/data/mappers/auth_me_mapper.dart';
+import 'package:vcare_admin/features/profile/data/mappers/auth_me_update_mapper.dart';
 import 'package:vcare_admin/features/profile/data/mappers/user_profile_mapper.dart';
 import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
+import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 import 'package:vcare_admin/features/profile/domain/repositories/user_profile_repository.dart';
 
@@ -43,6 +47,104 @@ class UserProfileRepositoryImpl extends UserProfileRepository {
         dataValidator: (data) => data is Map && data['user'] is Map,
       );
       return authMeModel.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<String>> uploadProfilePhoto({
+    required List<int> bytes,
+    required String fileName,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.files,
+        MultipartFormData(
+          files: [
+            FormFile.fromBytes(
+              fieldName: 'files',
+              bytes: bytes,
+              fileName: fileName,
+            ),
+          ],
+        ),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      final fileId = ResponseValidator.parse(
+        response,
+        (data) {
+          if (data is! List || data.isEmpty) {
+            return '';
+          }
+
+          for (final entry in data) {
+            if (entry is! Map) continue;
+            final model = AgentFileModel.fromJson(
+              Map<String, dynamic>.from(entry),
+            );
+            if (model.id.trim().isNotEmpty) {
+              return model.id.trim();
+            }
+          }
+
+          return '';
+        },
+        dataValidator: (data) => data is List,
+      );
+
+      if (fileId.isEmpty) {
+        throw HttpException(
+          title: 'Invalid Response',
+          message: 'Uploaded file id was missing from the response.',
+          statusCode: response.statusCode,
+          requestMethod: response.requestOptions.method,
+          requestUri: response.requestOptions.uri,
+          responseData: response.data,
+        );
+      }
+
+      return fileId;
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> updateMe({
+    required String firstName,
+    String? middleName,
+    required String lastName,
+    required String email,
+    required String phone,
+    required String dateOfBirth,
+    String? gender,
+    String? profileId,
+    bool? allowTextNotification,
+    ProfileAddress? address,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.patch(
+        ApiEndpoints.authMe,
+        JsonRequestBody(
+          toUpdateMePayload(
+            firstName: firstName,
+            middleName: middleName,
+            lastName: lastName,
+            email: email,
+            phone: phone,
+            dateOfBirth: dateOfBirth,
+            gender: gender,
+            profileId: profileId,
+            allowTextNotification: allowTextNotification,
+            address: address,
+          ),
+        ),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      ResponseValidator.ensureValid(response);
     });
   }
 

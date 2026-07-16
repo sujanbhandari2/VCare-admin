@@ -259,26 +259,6 @@ class LoginForgotVerifyStep extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: VCareColors.destructive),
             ),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
-                children: [
-                  const TextSpan(text: 'Demo code: '),
-                  TextSpan(
-                    text: VcareMockLookup.demoOtp,
-                    style: TextStyle(
-                      color: VCareColors.foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              textAlign: TextAlign.center,
-            ),
           ),
         Padding(
           padding: const EdgeInsets.only(top: 16),

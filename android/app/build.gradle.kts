@@ -18,25 +18,25 @@ android {
     productFlavors {
         create("dev") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client - Dev")
+            resValue("string", "app_name", "VCare Admin - Dev")
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
         }
         create("qa") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client - QA")
+            resValue("string", "app_name", "VCare Admin - QA")
             applicationIdSuffix = ".qa"
             versionNameSuffix = "-qa"
         }
         create("uat") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client - UAT")
+            resValue("string", "app_name", "VCare Admin - UAT")
             applicationIdSuffix = ".uat"
             versionNameSuffix = "-uat"
         }
         create("prod") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare client")
+            resValue("string", "app_name", "VCare Admin")
         }
     }
 

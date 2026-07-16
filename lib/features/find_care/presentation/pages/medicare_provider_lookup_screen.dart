@@ -7,6 +7,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/medicare_provider_lookup_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
@@ -55,7 +56,7 @@ class _MedicareProviderLookupScreenState
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Text.rich(

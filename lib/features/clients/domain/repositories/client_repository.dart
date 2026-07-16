@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_method_request.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
@@ -43,12 +44,36 @@ abstract class ClientRepository {
     bool forceRefresh = false,
   });
 
+  Future<EitherResponseOrException<ClientPaymentMethod>> addPaymentMethod({
+    required String clientId,
+    required AddClientPaymentMethodRequest request,
+    CancelToken? cancelToken,
+  });
+
+  Future<EitherResponseOrException<ClientPaymentMethod>>
+  setPrimaryPaymentMethod({
+    required String clientId,
+    required String paymentMethodId,
+    CancelToken? cancelToken,
+  });
+
+  Future<EitherResponseOrException<void>> removePaymentMethod({
+    required String clientId,
+    required String paymentMethodId,
+    CancelToken? cancelToken,
+  });
+
   Future<EitherResponseOrException<PaginatedResult<ClientTransaction>>>
   fetchTransactions(
     String clientId,
     PaginatedListRequest request, {
     CancelToken? cancelToken,
     bool forceRefresh = false,
+  });
+
+  Future<EitherResponseOrException<void>> chargeTransaction({
+    required String transactionId,
+    CancelToken? cancelToken,
   });
 
   Future<EitherResponseOrException<PaginatedResult<ClientCase>>> fetchCases(

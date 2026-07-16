@@ -21,6 +21,7 @@ import 'package:vcare_admin/features/clients/data/models/client_list_item_model.
 import 'package:vcare_admin/features/clients/data/models/client_membership_model.dart';
 import 'package:vcare_admin/features/clients/data/models/client_payment_method_model.dart';
 import 'package:vcare_admin/features/clients/data/models/client_transaction_model.dart';
+import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_method_request.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
@@ -148,7 +149,7 @@ class ClientRepositoryImpl implements ClientRepository {
   }) {
     return safeNetworkCall(() async {
       final response = await apiClient.get(
-        ApiEndpoints.agentClientPaymentMethods(clientId),
+        ApiEndpoints.clientPaymentMethods(clientId),
         isAuthenticated: true,
         cancelToken: cancelToken,
         forceRefresh: forceRefresh,
@@ -161,12 +162,82 @@ class ClientRepositoryImpl implements ClientRepository {
             .map(
               (item) => ClientPaymentMethodModel.fromJson(
                 Map<String, dynamic>.from(item),
-              ).toEntity(),
+              ),
             )
-            .toList();
+            .toActiveEntities();
       }, dataValidator: (data) => data is List);
 
       return methods;
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<ClientPaymentMethod>> addPaymentMethod({
+    required String clientId,
+    required AddClientPaymentMethodRequest request,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.clientPaymentMethods(clientId),
+        JsonRequestBody(request.toJson()),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => ClientPaymentMethodModel.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        ),
+        dataValidator: (data) => data is Map && data['id'] != null,
+      );
+
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<ClientPaymentMethod>>
+  setPrimaryPaymentMethod({
+    required String clientId,
+    required String paymentMethodId,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.patch(
+        ApiEndpoints.clientPaymentMethodSetPrimary(clientId, paymentMethodId),
+        const EmptyRequestBody(),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => ClientPaymentMethodModel.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        ),
+        dataValidator: (data) => data is Map && data['id'] != null,
+      );
+
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> removePaymentMethod({
+    required String clientId,
+    required String paymentMethodId,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.delete(
+        ApiEndpoints.clientPaymentMethod(clientId, paymentMethodId),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      ResponseValidator.ensureValid(response);
     });
   }
 
@@ -195,6 +266,23 @@ class ClientRepositoryImpl implements ClientRepository {
       );
 
       return parsed;
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> chargeTransaction({
+    required String transactionId,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.transactionCharge(transactionId),
+        const EmptyRequestBody(),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      ResponseValidator.ensureValid(response);
     });
   }
 
@@ -242,6 +330,7 @@ class ClientRepositoryImpl implements ClientRepository {
         JsonRequestBody({
           'title': title,
           'description': description,
+          'status': 'REQUESTED',
         }),
         isAuthenticated: true,
         cancelToken: cancelToken,

@@ -12,6 +12,7 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_saved_provid
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class SavedProvidersScreen extends ConsumerStatefulWidget {
   const SavedProvidersScreen({super.key});
@@ -45,7 +46,7 @@ class _SavedProvidersScreenState extends ConsumerState<SavedProvidersScreen> {
             child: VcarePageHeader(title: 'Saved Providers', showBack: true),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (savedProvidersState.fetching && providers.isEmpty)
@@ -66,6 +67,8 @@ class _SavedProvidersScreenState extends ConsumerState<SavedProvidersScreen> {
                         item: item,
                         onTap: () => _openProvider(context, item),
                         onRemove: () => _removeProvider(context, item),
+                        isRemoving: item.medicareNpi != null &&
+                            savedProvidersState.isToggling(item.medicareNpi!),
                         onCall: item.phone == null
                             ? null
                             : () => _launchTel(context, item.phone!),
@@ -101,18 +104,22 @@ class _SavedProvidersScreenState extends ConsumerState<SavedProvidersScreen> {
         .removeByNpi(npi);
     if (!context.mounted || !removed) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('Provider removed: ${item.name}')));
+    context.showVcareToast(
+      title: 'Provider removed',
+      description: item.name,
+      variant: VcareToastVariant.info,
+    );
   }
 
   Future<void> _launchTel(BuildContext context, String phone) async {
     final digits = phone.replaceAll(RegExp(r'\D'), '');
     final launched = await launchUrlString('tel:$digits');
     if (!launched && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not call $phone')));
+      context.showVcareToast(
+        title: 'Could not call',
+        description: phone,
+        variant: VcareToastVariant.destructive,
+      );
     }
   }
 }

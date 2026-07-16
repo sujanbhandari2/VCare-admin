@@ -1,13 +1,15 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/state/client_documents_loadable_state.dart';
+import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_add_payment_method_sheet.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_create_case_sheet.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_carousel.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
@@ -15,10 +17,12 @@ import 'package:vcare_admin/features/clients/presentation/widgets/client_status_
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/state/loadable_list_state.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_upload_document_sheet.dart';
 import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
   const ClientMembershipsTab({
@@ -60,7 +64,12 @@ class ClientMembershipsTab extends StatelessWidget {
 
     return ListView(
       physics: VcareRefreshScrollView.physics,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         ClientDetailSectionHeading('Memberships'),
         if (memberships.isEmpty)
@@ -112,9 +121,10 @@ class ClientMembershipsTab extends StatelessWidget {
   }
 }
 
-class ClientBillingTab extends StatefulWidget {
+class ClientBillingTab extends ConsumerStatefulWidget {
   const ClientBillingTab({
     super.key,
+    required this.clientId,
     required this.memberships,
     required this.paymentMethods,
     required this.transactionsState,
@@ -126,6 +136,7 @@ class ClientBillingTab extends StatefulWidget {
     this.onLoadMoreTransactions,
   });
 
+  final String clientId;
   final List<ClientMembership> memberships;
   final List<ClientPaymentMethod> paymentMethods;
   final LoadableListState<ClientTransaction> transactionsState;
@@ -137,10 +148,10 @@ class ClientBillingTab extends StatefulWidget {
   final Future<void> Function()? onLoadMoreTransactions;
 
   @override
-  State<ClientBillingTab> createState() => _ClientBillingTabState();
+  ConsumerState<ClientBillingTab> createState() => _ClientBillingTabState();
 }
 
-class _ClientBillingTabState extends State<ClientBillingTab> {
+class _ClientBillingTabState extends ConsumerState<ClientBillingTab> {
   final _scrollController = ScrollController();
   bool _isLoadMoreRequested = false;
 
@@ -178,6 +189,63 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
     }
   }
 
+  Future<void> _setPrimary(ClientPaymentMethod method) async {
+    await ref
+        .read(clientPaymentMethodsStateProvider(widget.clientId).notifier)
+        .setPrimary(
+          paymentMethodId: method.id,
+          onCompleted: (success, error) {
+            if (!mounted) return;
+            if (success) {
+              context.showVcareToast(
+                title: 'Primary updated',
+                variant: VcareToastVariant.success,
+              );
+              return;
+            }
+            context.showVcareToast(
+              title: error ?? 'Could not update primary',
+              variant: VcareToastVariant.destructive,
+            );
+          },
+        );
+  }
+
+  Future<void> _confirmDelete(ClientPaymentMethod method) async {
+    final deleted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => _DeletePaymentMethodDialog(
+        methodLabel: method.label,
+        onDelete: () async {
+          var didSucceed = false;
+          String? errorMessage;
+
+          await ref
+              .read(clientPaymentMethodsStateProvider(widget.clientId).notifier)
+              .remove(
+                paymentMethodId: method.id,
+                onCompleted: (success, error) {
+                  didSucceed = success;
+                  errorMessage = error;
+                },
+              );
+
+          if (!didSucceed) {
+            throw errorMessage ?? 'Remove failed';
+          }
+        },
+      ),
+    );
+
+    if (!mounted || deleted != true) return;
+
+    context.showVcareToast(
+      title: 'Payment method removed',
+      variant: VcareToastVariant.destructive,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final upcoming = widget.memberships
@@ -188,7 +256,12 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
     return ListView(
       controller: _scrollController,
       physics: VcareRefreshScrollView.physics,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         if (upcoming.isNotEmpty) ...[
           ClientUpcomingBillingCard(memberships: upcoming),
@@ -198,7 +271,10 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
           'Payment Methods',
           bottomMargin: 12,
           trailing: TextButton.icon(
-            onPressed: () {},
+            onPressed: () => ClientAddPaymentMethodSheet.show(
+              context,
+              clientId: widget.clientId,
+            ),
             icon: const Icon(LucideIcons.plus, size: 14),
             label: const Text('Add'),
             style: TextButton.styleFrom(
@@ -234,7 +310,13 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
         else
           for (var i = 0; i < widget.paymentMethods.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            ClientPaymentMethodCard(method: widget.paymentMethods[i]),
+            ClientPaymentMethodCard(
+              method: widget.paymentMethods[i],
+              onSetPrimary: widget.paymentMethods[i].isPrimary
+                  ? null
+                  : () => _setPrimary(widget.paymentMethods[i]),
+              onDelete: () => _confirmDelete(widget.paymentMethods[i]),
+            ),
           ],
         const SizedBox(height: 24),
         const ClientDetailSectionHeading('Transactions'),
@@ -268,6 +350,78 @@ class _ClientBillingTabState extends State<ClientBillingTab> {
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(child: CircularProgressIndicator()),
           ),
+      ],
+    );
+  }
+}
+
+class _DeletePaymentMethodDialog extends StatefulWidget {
+  const _DeletePaymentMethodDialog({
+    required this.methodLabel,
+    required this.onDelete,
+  });
+
+  final String methodLabel;
+  final Future<void> Function() onDelete;
+
+  @override
+  State<_DeletePaymentMethodDialog> createState() =>
+      _DeletePaymentMethodDialogState();
+}
+
+class _DeletePaymentMethodDialogState
+    extends State<_DeletePaymentMethodDialog> {
+  var _isDeleting = false;
+
+  Future<void> _handleDelete() async {
+    if (_isDeleting) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      await widget.onDelete();
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isDeleting = false);
+      final message = error is String ? error : 'Remove failed';
+      context.showVcareToast(
+        title: message,
+        variant: VcareToastVariant.destructive,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Remove payment method?'),
+      content: Text('${widget.methodLabel} will be removed from this client.'),
+      actions: [
+        TextButton(
+          onPressed: _isDeleting ? null : () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isDeleting ? null : _handleDelete,
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.red.withValues(alpha: 0.7),
+            disabledForegroundColor: Colors.white,
+          ),
+          child: _isDeleting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Delete'),
+        ),
       ],
     );
   }
@@ -337,7 +491,12 @@ class _ClientCasesTabState extends State<ClientCasesTab> {
     return ListView(
       controller: _scrollController,
       physics: VcareRefreshScrollView.physics,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         ClientDetailSectionHeading(
           'Cases',
@@ -456,7 +615,12 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
     return ListView(
       controller: _scrollController,
       physics: VcareRefreshScrollView.physics,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        context.mobileShellBottomContentPadding,
+      ),
       children: [
         ClientDetailSectionHeading(
           'Documents',
@@ -809,10 +973,10 @@ class ClientDependentCard extends StatelessWidget {
               child: SizedBox(
                 width: 64,
                 height: 64,
-                child: CachedNetworkImage(
+                child: VCareCachedImage(
                   imageUrl: dependent.avatarUrl,
                   fit: BoxFit.cover,
-                  errorWidget: (_, _, _) => ColoredBox(
+                  errorWidget: ColoredBox(
                     color: vcare.muted,
                     child: Center(
                       child: Text(
@@ -845,9 +1009,16 @@ class ClientDependentCard extends StatelessWidget {
 }
 
 class ClientPaymentMethodCard extends StatelessWidget {
-  const ClientPaymentMethodCard({super.key, required this.method});
+  const ClientPaymentMethodCard({
+    super.key,
+    required this.method,
+    this.onSetPrimary,
+    this.onDelete,
+  });
 
   final ClientPaymentMethod method;
+  final VoidCallback? onSetPrimary;
+  final VoidCallback? onDelete;
 
   IconData _iconForType() {
     switch (method.type) {
@@ -944,6 +1115,13 @@ class ClientPaymentMethodCard extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              onSelected: (value) {
+                if (value == 'primary') {
+                  onSetPrimary?.call();
+                } else if (value == 'delete') {
+                  onDelete?.call();
+                }
+              },
               itemBuilder: (context) => [
                 if (!method.isPrimary)
                   const PopupMenuItem(
@@ -1177,10 +1355,13 @@ class ClientDocumentRow extends StatelessWidget {
                 height: 40,
                 color: VCareColors.primary.withValues(alpha: 0.1),
                 child: isImage
-                    ? CachedNetworkImage(
+                    ? VCareCachedImage(
                         imageUrl: file.url,
+                        cacheKey: 'client-file:${file.id}',
+                        width: 40,
+                        height: 40,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => Icon(
+                        errorWidget: Icon(
                           LucideIcons.fileText,
                           size: 16,
                           color: VCareColors.primary,

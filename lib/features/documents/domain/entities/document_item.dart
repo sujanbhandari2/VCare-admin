@@ -12,6 +12,7 @@ class DocumentItem {
     required this.source,
     required this.sourceLabel,
     required this.createdAt,
+    this.previewUrl,
     this.sourceRouteName,
     this.sourceRouteParameters,
     this.uploadId,
@@ -25,10 +26,19 @@ class DocumentItem {
   final DocumentSource source;
   final String sourceLabel;
   final DateTime createdAt;
+  final String? previewUrl;
   final String? sourceRouteName;
   final Map<String, String>? sourceRouteParameters;
   final String? uploadId;
 
-  bool get isDeletable => uploadId != null;
+  bool get isDeletable => source == DocumentSource.upload;
   bool get hasSourceLink => sourceRouteName != null;
+  bool get canOpen => dataUrl.trim().isNotEmpty || previewUrl?.trim().isNotEmpty == true;
+  String get imagePreviewUrl {
+    final preview = previewUrl?.trim();
+    if (preview != null && preview.isNotEmpty) {
+      return preview;
+    }
+    return dataUrl;
+  }
 }

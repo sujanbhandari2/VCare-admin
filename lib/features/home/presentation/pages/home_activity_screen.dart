@@ -24,7 +24,7 @@ class HomeActivityScreen extends StatelessWidget {
             child: VcarePageHeader(title: 'Recent Activity', showBack: true),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final item = items[index];

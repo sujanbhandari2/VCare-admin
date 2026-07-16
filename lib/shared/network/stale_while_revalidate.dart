@@ -1,12 +1,12 @@
-import 'dart:async';
-
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 
 /// Fetches data using stale-while-revalidate semantics.
 ///
-/// When [forceNetwork] is true and [currentData] is null, a cache read
-/// (`forceRefresh: false`) runs in parallel so HTTP-cached data can appear
-/// immediately. The network fetch always runs last and its result wins.
+/// Callers should keep showing any existing [currentData] while the network
+/// request runs. The network fetch always runs last and its result wins.
+///
+/// Parallel HTTP-cache reads are not started here because they duplicate
+/// network calls on cold loads and can race with the network response.
 Future<void> fetchStaleWhileRevalidate<T>({
   required bool Function() isCurrentGeneration,
   required T? currentData,
@@ -18,18 +18,6 @@ Future<void> fetchStaleWhileRevalidate<T>({
   required void Function(T data) onStaleData,
   required void Function(EitherResponseOrException<T> result) onFinalResult,
 }) async {
-  if (forceNetwork && currentData == null) {
-    unawaited(() async {
-      final cacheResult = await fetch(forceRefresh: false);
-      if (!isCurrentGeneration()) return;
-
-      cacheResult.when(
-        failure: (_) {},
-        success: onStaleData,
-      );
-    }());
-  }
-
   final result = await fetch(forceRefresh: forceNetwork);
   if (!isCurrentGeneration()) return;
 

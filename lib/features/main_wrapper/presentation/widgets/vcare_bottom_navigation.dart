@@ -4,64 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 
-/// Mirrors vcareapp [MobileShell] mobile bottom nav metrics (Tailwind → logical px).
-const double _navOuterHorizontal = 8; // px-2
-const double _navOuterBottom = 8; // pb-2
-const double _navOuterTop = 24; // pt-6 — room for raised Home above the pill
+export 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
+
+/// Returns 0 when [MainWrapperScreen] already applied shell bottom inset.
+double vcareTabComposerBottomPadding(BuildContext context) {
+  if (VCareMobileShellScope.appliesBottomInsetOf(context)) {
+    return 0;
+  }
+  return vcareMobileBottomNavContentPadding(context);
+}
+
 const double _pillPaddingH = 4; // px-1
-const double _pillPaddingV = 6; // pt/pb-1.5
-const double _tabVerticalPadding = 4; // py-1
-const double _tabIconLabelGap = 2; // gap-0.5
 const double _sideIconWellWidth = 40; // w-10
-const double _sideIconWellHeight = 32; // h-8
-const double _tabLabelSize = 10; // text-[10px]
 const double _homeFabSize = VCareLayout.bottomNavHomeFabSize;
 const double _homeFabLift = 28; // -mt-7
 const double _homeFabRing = 4; // ring-4 (outside the 52px circle)
 const double _homeLabelGap = 6; // gap-0.5 + mt-1
 const double _homeActiveScale = 1.05;
 const double _homeFabVisualSize = _homeFabSize + _homeFabRing * 2;
-
-/// Pill height from non-center tab chrome (center Home overflows via [_homeFabLift]).
-const double _pillHeight = _pillPaddingV * 2 +
-    _tabVerticalPadding * 2 +
-    _sideIconWellHeight +
-    _tabIconLabelGap +
-    _tabLabelSize;
-
-/// Bar body = top overflow room + pill (matches nav `pt-6` + pill).
-const double _barBodyHeight = _navOuterTop + _pillHeight;
-
-/// Total height of the floating mobile bottom nav, including safe-area inset.
-double vcareMobileBottomNavHeight(BuildContext context) {
-  if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
-    return 0;
-  }
-  return _barBodyHeight +
-      _navOuterBottom +
-      MediaQuery.paddingOf(context).bottom;
-}
-
-/// Distance from the screen bottom to the top edge of the nav pill.
-double vcareMobileBottomNavBarTop(BuildContext context) {
-  if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
-    return 0;
-  }
-  return MediaQuery.paddingOf(context).bottom +
-      _navOuterBottom +
-      _pillHeight;
-}
-
-/// Bottom padding to pin content [gap] px above the nav pill.
-double vcareMobileBottomNavContentPadding(
-  BuildContext context, {
-  double gap = 10,
-}) {
-  final pillTop = vcareMobileBottomNavBarTop(context);
-  if (pillTop == 0) return 12;
-  return pillTop + gap;
-}
 
 /// Mobile bottom nav matching vcareapp [MobileShell] (Home centered, floating pill).
 class VcareBottomNavigation extends StatelessWidget {
@@ -88,10 +51,10 @@ class VcareBottomNavigation extends StatelessWidget {
       height: vcareMobileBottomNavHeight(context),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          _navOuterHorizontal,
+          VCareMobileShellInsets.navOuterHorizontal,
           0,
-          _navOuterHorizontal,
-          bottom + _navOuterBottom,
+          VCareMobileShellInsets.navOuterHorizontal,
+          bottom + VCareMobileShellInsets.navOuterBottom,
         ),
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -100,7 +63,7 @@ class VcareBottomNavigation extends StatelessWidget {
               maxWidth: VCareLayout.bottomNavMaxWidth,
             ),
             child: SizedBox(
-              height: _barBodyHeight,
+              height: VCareMobileShellInsets.barBodyHeight,
               child: Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.bottomCenter,
@@ -109,7 +72,7 @@ class VcareBottomNavigation extends StatelessWidget {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    height: _pillHeight,
+                    height: VCareMobileShellInsets.pillHeight,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(
@@ -147,8 +110,9 @@ class VcareBottomNavigation extends StatelessWidget {
                   Positioned(
                     left: _pillPaddingH,
                     right: _pillPaddingH,
-                    bottom: _pillPaddingV,
-                    top: _navOuterTop + _pillPaddingV,
+                    bottom: VCareMobileShellInsets.pillPaddingV,
+                    top: VCareMobileShellInsets.navOuterTop +
+                        VCareMobileShellInsets.pillPaddingV,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: NavItem.mobileTabs.map((item) {
@@ -210,7 +174,7 @@ class _NavTab extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              vertical: _tabVerticalPadding,
+              vertical: VCareMobileShellInsets.tabVerticalPadding,
               horizontal: 2,
             ),
             child: Column(
@@ -266,7 +230,7 @@ class _NavTab extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: _tabLabelSize,
+                    fontSize: VCareMobileShellInsets.tabLabelSize,
                     fontWeight: FontWeight.w500,
                     height: 1,
                     color: color,
@@ -284,7 +248,7 @@ class _NavTab extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          vertical: _tabVerticalPadding,
+          vertical: VCareMobileShellInsets.tabVerticalPadding,
           horizontal: 2,
         ),
         child: Column(
@@ -294,7 +258,7 @@ class _NavTab extends StatelessWidget {
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: _sideIconWellWidth,
-              height: _sideIconWellHeight,
+              height: VCareMobileShellInsets.sideIconWellHeight,
               decoration: BoxDecoration(
                 color: isActive
                     ? VCareColors.primary.withValues(alpha: 0.1)
@@ -307,13 +271,13 @@ class _NavTab extends StatelessWidget {
                 child: Icon(item.icon, size: 18, color: color),
               ),
             ),
-            const SizedBox(height: _tabIconLabelGap),
+            const SizedBox(height: VCareMobileShellInsets.tabIconLabelGap),
             Text(
               item.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: _tabLabelSize,
+                fontSize: VCareMobileShellInsets.tabLabelSize,
                 fontWeight: FontWeight.w500,
                 height: 1,
                 color: color,
