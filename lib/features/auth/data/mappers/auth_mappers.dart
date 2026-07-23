@@ -64,6 +64,7 @@ extension AuthLoginResultMapper on model.AuthLoginResultModel {
       email: session.email,
       username: session.username,
       profileId: profileId,
+      tenantId: tenantId,
     );
   }
 }
@@ -109,7 +110,10 @@ extension AuthPreAuthUserMapper on model.AuthPreAuthUserModel {
 extension AuthSetupAccountResultMapper on model.AuthSetupAccountResultModel {
   AuthSetupAccountResult toEntity() {
     return AuthSetupAccountResult(
-      session: session.toEntity(),
+      session: session.toEntity().copyWith(
+        profileId: profileId,
+        tenantId: tenantId,
+      ),
       profileId: profileId,
       menu: menu,
     );

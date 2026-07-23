@@ -5,7 +5,6 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_summary.dart';
 import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
-import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
 class CommissionSummarySection extends StatelessWidget {
@@ -27,10 +26,7 @@ class CommissionSummarySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (error != null) {
-      return VcareInlineErrorCard(
-        message: error,
-        onRetry: onRetry,
-      );
+      return VcareInlineErrorCard(message: error, onRetry: onRetry);
     }
 
     final totalSales = isLoading
@@ -39,8 +35,8 @@ class CommissionSummarySection extends StatelessWidget {
     final totalCommission = isLoading
         ? '—'
         : isAgencyGroup
-            ? 'XXX'
-            : formatAgentStatMoney(summary?.totalCommission);
+        ? 'XXX'
+        : formatAgentStatMoney(summary?.totalCommission);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -150,8 +146,8 @@ class _MetricCard extends StatelessWidget {
     final deltaColor = deltaPositive == null
         ? vcare.mutedForeground
         : deltaPositive!
-            ? VCareColors.success
-            : VCareColors.destructive;
+        ? VCareColors.success
+        : VCareColors.destructive;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -178,7 +174,9 @@ class _MetricCard extends StatelessWidget {
                 ),
                 if (deltaPositive != null)
                   Icon(
-                    deltaPositive! ? LucideIcons.trendingUp : LucideIcons.trendingDown,
+                    deltaPositive!
+                        ? LucideIcons.trendingUp
+                        : LucideIcons.trendingDown,
                     size: 16,
                     color: deltaColor,
                   ),

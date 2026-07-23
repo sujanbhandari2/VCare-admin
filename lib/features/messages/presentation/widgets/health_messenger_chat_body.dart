@@ -6,6 +6,7 @@ import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_provider.dart';
+import 'package:vcare_admin/features/messages/presentation/providers/live_chat_mobile_thread_visible_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/theme/vcare_messenger_list_style.dart';
 import 'package:vcare_admin/features/messages/presentation/theme/vcare_messenger_thread_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_thread_overrides.dart';
@@ -68,6 +69,8 @@ class _HealthMessengerChatBodyState
 
   @override
   void dispose() {
+    // Route may be torn down with the tab; ensure shell inset is restored.
+    ref.read(liveChatMobileThreadVisibleProvider.notifier).setVisible(false);
     _composerController.dispose();
     _messagesScrollController.dispose();
     _composerFocusNode.dispose();
@@ -220,15 +223,15 @@ class _HealthMessengerChatBodyState
                 mediaChatClient: session.client,
                 mediaChatAuth: session.sessionAuth,
                 mediaSenderId: chatState.currentUser?.id,
-                onMediaSendProgress: (_, __) {
+                onMediaSendProgress: (pendingMessageId, progress) {
                   notifier.setMediaUploading(true);
                 },
-                onMediaSendError: (_, __) {
+                onMediaSendError: (pendingMessageId, error) {
                   notifier.setMediaUploading(false);
                 },
                 onMediaMessageSentForConversation: (conversationId, message) {
                   notifier.setMediaUploading(false);
-                  session.inbox.bumpConversation(conversationId);
+                  notifier.upsertMediaMessage(conversationId, message);
                   _scrollToBottom();
                 },
                 onReact: notifier.reactToMessage,
@@ -246,11 +249,23 @@ class _HealthMessengerChatBodyState
                 onTypingStop: notifier.onTypingStop,
                 prepareOutgoingConversation: notifier.prepareOutgoingConversation,
                 onMobileThreadClosed: (conversationId) {
+                  ref
+                      .read(liveChatMobileThreadVisibleProvider.notifier)
+                      .setVisible(false);
                   unawaited(notifier.onMobileThreadClosed(conversationId));
                 },
                 onThreadVisibilityChanged: (visible) {
+                  // Layout inset: only flip on when the thread opens. Closing is
+                  // handled in [onMobileThreadClosed] so list-pane rebuilds that
+                  // briefly report hidden do not restore the shell gap.
+                  if (visible) {
+                    ref
+                        .read(liveChatMobileThreadVisibleProvider.notifier)
+                        .setVisible(true);
+                  }
                   unawaited(session.setThreadVisible(visible));
                 },
+                mobileThreadApplyBottomSafeArea: false,
                 searchVisibility: MessengerSearchVisibility.never,
                 conversationSearchController:
                     widget.conversationSearchController,
@@ -261,7 +276,10 @@ class _HealthMessengerChatBodyState
                     'No conversations yet. Start one from the people list.',
                 emptyUsersMessage:
                     'No users yet. Pull to refresh or check your network.',
-                userListItemBuilder: (context, data) {
+                userListItemBuilder: (
+                  BuildContext context,
+                  MessengerUserListItemData data,
+                ) {
                   final conversationId = data.conversationId;
                   return VcareMessengerConversationListItem(
                     data: data,

@@ -7,8 +7,11 @@ class AgentStats {
   });
 
   final int totalClients;
-  final String? totalSales;
-  final String? totalCommission;
+  final double? totalSales;
+  final double? totalCommission;
 
   bool get hasCommission => totalCommission != null;
+
+  /// Matches web: agency-associated agents omit commission from stats.
+  bool get isAgencyAssociated => totalCommission == null;
 }

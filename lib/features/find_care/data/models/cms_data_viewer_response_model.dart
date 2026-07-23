@@ -1,8 +1,5 @@
 class CmsDataViewerResponseModel {
-  const CmsDataViewerResponseModel({
-    required this.headers,
-    required this.data,
-  });
+  const CmsDataViewerResponseModel({required this.headers, required this.data});
 
   factory CmsDataViewerResponseModel.fromJson(Map<String, dynamic> json) {
     final meta = json['meta'];
@@ -12,12 +9,12 @@ class CmsDataViewerResponseModel {
     final rawData = json['data'];
     final data = rawData is List
         ? rawData
-            .map(
-              (row) => row is List
-                  ? row.map((cell) => cell?.toString() ?? '').toList()
-                  : <String>[],
-            )
-            .toList()
+              .map(
+                (row) => row is List
+                    ? row.map((cell) => cell?.toString() ?? '').toList()
+                    : <String>[],
+              )
+              .toList()
         : <List<String>>[];
 
     if (headers.isEmpty) {

@@ -5,7 +5,8 @@ import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/main_wrapper/presentation/widgets/vcare_bottom_navigation.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 
 /// VCare-styled conversation composer for Live Chat thread overrides.
 ///
@@ -19,12 +20,46 @@ class VcareMessengerThreadComposer extends StatelessWidget {
 
   final MessengerComposerData data;
 
+  /// Extra space above the nav pill so the input is not covered by the bar.
+  static const double _aboveNavGap = 45;
+
+  /// True when the IME is visible.
+  ///
+  /// Must read insets from the platform [View], not [MediaQuery.viewInsets]:
+  /// an ancestor [Scaffold] with `resizeToAvoidBottomInset` consumes viewInsets
+  /// for its body, so MediaQuery here reports 0 while the keyboard is open —
+  /// which previously kept applying nav clearance and floated the field up.
+  static bool _isKeyboardOpen(BuildContext context) {
+    return MediaQueryData.fromView(View.of(context)).viewInsets.bottom > 0;
+  }
+
+  /// Clears the floating nav pill when the keyboard is closed. Uses
+  /// [MediaQuery.viewPadding] because [Scaffold.extendBody] zeroes
+  /// [MediaQuery.padding] bottom in the body.
+  static double _composerBottomPadding(BuildContext context) {
+    if (_isKeyboardOpen(context)) {
+      return 0;
+    }
+    if (VCareMobileShellScope.appliesBottomInsetOf(context)) {
+      return _aboveNavGap;
+    }
+    if (isMobileBottomNavVisible(context)) {
+      return MediaQuery.viewPaddingOf(context).bottom +
+          VCareMobileShellInsets.navOuterBottom +
+          VCareMobileShellInsets.pillHeight +
+          _aboveNavGap;
+    }
+    return MediaQuery.viewPaddingOf(context).bottom + _aboveNavGap;
+  }
+
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    // Match AVA / tab composers: under MainWrapper the shell already insets
-    // above the floating nav, so this returns 0 and avoids a double lift.
-    final bottom = vcareTabComposerBottomPadding(context);
+    // When the shell still insets the tab (inbox list), keep 0 to avoid a
+    // double lift. When the conversation thread is open, MainWrapper clears
+    // that inset — pad only to the top of the nav pill so the composer sits
+    // snug above it (full content padding leaves a large empty band).
+    final bottom = _composerBottomPadding(context);
 
     return AnimatedBuilder(
       animation: data.controller,
@@ -38,8 +73,7 @@ class VcareMessengerThreadComposer extends StatelessWidget {
             !overLimit;
 
         return Container(
-          // Slight floor when shell inset is 0 so the pill isn't flush-clipped.
-          padding: EdgeInsets.fromLTRB(20, 8, 20, bottom > 0 ? bottom : 8),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, bottom),
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
           ),

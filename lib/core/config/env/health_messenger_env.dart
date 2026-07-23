@@ -22,10 +22,6 @@ class HealthMessengerEnv {
   static String get apiKey =>
       _env(EnvKeys.healthMessengerApiKey, EnvKeys.viteWidgetAccessKey);
 
-  static String get externalTenantId =>
-      Env.instance.valueOf(EnvKeys.healthMessengerExternalTenantId)?.trim() ??
-      '';
-
   static String get runtimeEnv =>
       (Env.instance.valueOf('ENV') ?? '').trim().toLowerCase();
 }

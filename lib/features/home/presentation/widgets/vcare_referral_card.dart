@@ -35,9 +35,9 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
   bool _copied = false;
 
   String get _referralUrl => resolveReferralUrl(
-        email: widget.profile.email,
-        referralLink: widget.profile.referralLink,
-      );
+    email: widget.profile.email,
+    referralLink: widget.profile.referralLink,
+  );
 
   Future<void> _copyReferral() async {
     await Clipboard.setData(ClipboardData(text: _referralUrl));
@@ -55,8 +55,9 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final formattedPhone =
-        AuthPhoneFormatter.formatInternationalDisplay(widget.profile.phone);
+    final formattedPhone = AuthPhoneFormatter.formatInternationalDisplay(
+      widget.profile.phone,
+    );
     final agencyName = widget.profile.agencyName?.trim();
     final showAgency = widget.profile.hasAgencyGroup;
 
@@ -65,212 +66,225 @@ class _VcareReferralCardState extends State<VcareReferralCard> {
       children: [
         RepaintBoundary(
           key: widget.cardCaptureKey,
-          child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: vcare.gradientCard,
-            borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
-            child: Stack(
-              clipBehavior: Clip.hardEdge,
-              children: [
-                Positioned(
-                  right: -64,
-                  top: -64,
-                  child: Container(
-                    width: 224,
-                    height: 224,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: -48,
-                  bottom: -80,
-                  child: Container(
-                    width: 192,
-                    height: 192,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.05),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.all(8),
-                            child: Image.asset(
-                              VCareAssets.vIcon,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          if (!widget.hideInternalLabel)
-                            Text(
-                              'MY REFERRAL',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.5,
-                                color: Colors.white.withValues(alpha: 0.8),
-                              ),
-                            ),
-                        ],
+          // 4px inset so save/share captures don't clip rounded edges.
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: vcare.gradientCard,
+                borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
+                child: Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    Positioned(
+                      right: -64,
+                      top: -64,
+                      child: Container(
+                        width: 224,
+                        height: 224,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
+                    ),
+                    Positioned(
+                      left: -48,
+                      bottom: -80,
+                      child: Container(
+                        width: 192,
+                        height: 192,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.profile.fullName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.3,
-                                    height: 1.2,
-                                  ),
-                                ),
-                                if (widget.profile.email.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.profile.email,
-                                    style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.8),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                                if (formattedPhone.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    formattedPhone,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            children: [
-                              Text(
-                                'SCAN TO JOIN',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.2,
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              ReferralQrCode(
-                                data: _referralUrl,
-                                size: 112,
-                                padding: 6,
-                                borderRadius: 12,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      if (showAgency) ...[
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.only(top: 16),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.15),
-                              ),
-                            ),
-                          ),
-                          child: Row(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                width: 32,
-                                height: 32,
+                                width: 56,
+                                height: 56,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(
-                                  LucideIcons.building2,
-                                  size: 16,
-                                  color: Colors.white.withValues(alpha: 0.95),
+                                padding: const EdgeInsets.all(8),
+                                child: Image.asset(
+                                  VCareAssets.vIcon,
+                                  fit: BoxFit.contain,
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              if (!widget.hideInternalLabel)
+                                Text(
+                                  'MY REFERRAL',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 1.5,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'AGENCY',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 1.2,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.7,
-                                        ),
+                                      widget.profile.fullName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.3,
+                                        height: 1.2,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    if (agencyName != null && agencyName.isNotEmpty)
+                                    if (widget.profile.email.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
                                       Text(
-                                        agencyName,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
+                                        widget.profile.email,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                    ],
+                                    if (formattedPhone.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        formattedPhone,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 16),
+                              Column(
+                                children: [
+                                  Text(
+                                    'SCAN TO JOIN',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1.2,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  ReferralQrCode(
+                                    data: _referralUrl,
+                                    size: 112,
+                                    padding: 6,
+                                    borderRadius: 12,
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                          if (showAgency) ...[
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.only(top: 16),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      LucideIcons.building2,
+                                      size: 16,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.95,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'AGENCY',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.2,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        if (agencyName != null &&
+                                            agencyName.isNotEmpty)
+                                          Text(
+                                            agencyName,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
         ),
         const SizedBox(height: 16),
         DecoratedBox(

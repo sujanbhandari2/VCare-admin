@@ -50,9 +50,7 @@ class HomeActivityStatusChip extends StatelessWidget {
   ) {
     final normalized = status.toLowerCase();
 
-    if (normalized == 'failed' ||
-        normalized == 'action needed' ||
-        normalized == 'overdue') {
+    if (normalized == 'failed' || normalized == 'overdue') {
       return (
         VCareColors.destructive.withValues(alpha: 0.1),
         VCareColors.destructive,
@@ -71,6 +69,12 @@ class HomeActivityStatusChip extends StatelessWidget {
     if (normalized == 'new') {
       const sky = Color(0xFF0369A1);
       return (const Color(0x1A0EA5E9), sky, const Color(0x800EA5E9));
+    }
+
+    // Web W-9 / agreement todos use orange-600 for "Action needed".
+    if (normalized == 'action needed') {
+      const orange = Color(0xFFEA580C);
+      return (const Color(0x0DF97316), orange, const Color(0x66F97316));
     }
 
     if (normalized == 'in review' ||

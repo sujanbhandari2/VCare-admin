@@ -130,6 +130,7 @@ class FakeClientRepository implements ClientRepository {
   String? lastUploadClientId;
   String? lastUploadFileName;
   List<int>? lastUploadBytes;
+  String? lastUploadDocumentType;
   String? lastUploadNote;
   String? lastUploadDate;
 
@@ -346,6 +347,7 @@ class FakeClientRepository implements ClientRepository {
     required String clientId,
     required String fileName,
     required List<int> bytes,
+    required String documentType,
     String? note,
     String? date,
     CancelToken? cancelToken,
@@ -353,6 +355,7 @@ class FakeClientRepository implements ClientRepository {
     lastUploadClientId = clientId;
     lastUploadFileName = fileName;
     lastUploadBytes = bytes;
+    lastUploadDocumentType = documentType;
     lastUploadNote = note;
     lastUploadDate = date;
     return uploadClientDocumentResult;

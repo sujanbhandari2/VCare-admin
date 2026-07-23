@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_provider.dart';
-import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_session_scope.dart';
+import 'package:vcare_admin/features/messages/presentation/providers/live_chat_mobile_thread_visible_provider.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -44,11 +44,22 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
   NavItem get _currentNavItem =>
       NavItem.fromBranchIndex(widget.shell.currentIndex);
 
-  bool _appliesShellBottomInset(BuildContext context) {
+  bool _appliesShellBottomInset(
+    BuildContext context, {
+    required bool liveChatThreadOpen,
+  }) {
     if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
       return false;
     }
-    return _showNavBar;
+    if (!_showNavBar) {
+      return false;
+    }
+    // Conversation thread handles its own composer clearance; keeping the
+    // shell inset would leave a large empty gap above the floating nav.
+    if (liveChatThreadOpen && _currentNavItem == NavItem.messages) {
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -80,6 +91,11 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
       }
     });
     ref.watch(fcmNotificationInitProvider);
+    final liveChatThreadOpen = ref.watch(liveChatMobileThreadVisibleProvider);
+    final appliesShellBottomInset = _appliesShellBottomInset(
+      context,
+      liveChatThreadOpen: liveChatThreadOpen,
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -89,34 +105,32 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
             : Brightness.dark,
       ),
       child: Scaffold(
-        body: HealthMessengerSessionScope(
-          child: VCareMobileShellScope(
-            appliesBottomContentInset: _appliesShellBottomInset(context),
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: _appliesShellBottomInset(context)
-                    ? vcareMobileBottomNavContentPadding(context)
-                    : 0,
-              ),
-              child: widget.shell,
+        // Do not conditionally wrap [widget.shell] — StatefulNavigationShell's
+        // GlobalKey cannot be reparented when chat session bootstrap completes.
+        body: VCareMobileShellScope(
+          appliesBottomContentInset: appliesShellBottomInset,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: appliesShellBottomInset
+                  ? vcareMobileBottomNavContentPadding(context)
+                  : 0,
             ),
+            child: widget.shell,
           ),
         ),
         extendBody: true,
-        bottomNavigationBar: AnimatedSize(
-          duration: const Duration(milliseconds: 175),
-          child: _showNavBar
-              ? VcareBottomNavigation(
-                  currentItem: _currentNavItem,
-                  onSelect: (item) {
-                    widget.shell.goBranch(
-                      NavItem.branchIndexFor(item),
-                      initialLocation: item == _currentNavItem,
-                    );
-                    unawaited(refreshTabData(ref, item));
-                  },
-                )
-              : const SizedBox.shrink(),
+        // Always mounted on mobile tab shell. Never gate on keyboard/IME/thread
+        // visibility — those caused the bar to disappear until a full restart.
+        // [VcareBottomNavigation] itself no-ops on tablet widths.
+        bottomNavigationBar: VcareBottomNavigation(
+          currentItem: _currentNavItem,
+          onSelect: (item) {
+            widget.shell.goBranch(
+              NavItem.branchIndexFor(item),
+              initialLocation: item == _currentNavItem,
+            );
+            unawaited(refreshTabData(ref, item));
+          },
         ),
       ),
     );

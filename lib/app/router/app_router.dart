@@ -10,13 +10,15 @@ import 'package:vcare_admin/features/auth/presentation/pages/register_screen.dar
 import 'package:vcare_admin/features/cases/presentation/pages/cases_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/client_detail_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/clients_screen.dart';
-import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/find_care_category_screen.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/find_care_screen.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/find_care_search_screen.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_detail_screen.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_lookup_screen.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/provider_detail_screen.dart';
+// Provider tab disabled — restore these imports with the commented Find Care
+// shell branch below.
+// import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/find_care_category_screen.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/find_care_screen.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/find_care_search_screen.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_detail_screen.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/medicare_provider_lookup_screen.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/provider_detail_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/card_edit_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/care_team_detail_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/care_team_edit_screen.dart';
@@ -29,7 +31,8 @@ import 'package:vcare_admin/features/cases/presentation/pages/request_new_screen
 import 'package:vcare_admin/features/commission/presentation/pages/commission_detail_screen.dart';
 import 'package:vcare_admin/features/loadable_list_demo/presentation/pages/loadable_list_demo_screen.dart';
 import 'package:vcare_admin/features/messages/presentation/pages/live_chat_screen.dart';
-import 'package:vcare_admin/features/profile/presentation/pages/family_member_edit_screen.dart';
+// My Family disabled — restore when family members return to Profile.
+// import 'package:vcare_admin/features/profile/presentation/pages/family_member_edit_screen.dart';
 import 'package:vcare_admin/features/profile/presentation/pages/profile_edit_screen.dart';
 import 'package:vcare_admin/features/profile/presentation/pages/profile_screen.dart';
 import 'package:vcare_admin/features/main_wrapper/presentation/pages/main_wrapper_screen.dart';
@@ -37,14 +40,13 @@ import 'package:vcare_admin/features/settings/presentation/pages/dynamic_theme_s
 import 'package:vcare_admin/features/settings/presentation/pages/languages_settings_screen.dart';
 import 'package:vcare_admin/features/settings/presentation/pages/settings_screen.dart';
 import 'package:vcare_admin/features/splash/presentation/pages/vcare_splash_screen.dart';
-import 'package:vcare_admin/features/find_care/presentation/pages/saved_providers_screen.dart';
+// import 'package:vcare_admin/features/find_care/presentation/pages/saved_providers_screen.dart';
 import 'package:vcare_admin/features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:vcare_admin/features/notifications/presentation/pages/notifications_screen.dart';
 import 'package:vcare_admin/features/documents/presentation/pages/documents_screen.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/vcare_sync/presentation/pages/vcare_parity_screens.dart'
     hide CareTeamEditScreen, FindCareCategoryScreen, NotificationsScreen;
-
-import '../../features/auth/presentation/providers/user_logged_in_state_provider.dart';
 
 class AppRouter {
   static const splash = "/splash";
@@ -72,8 +74,9 @@ class AppRouter {
   static const ava = "/ava";
   static const profile = "/profile";
   static const documents = "/profile/documents";
-  static const familyMemberNew = "/profile/family/new";
-  static const familyMemberEdit = "/profile/family/:id";
+  // My Family disabled — restore when family members return to Profile.
+  // static const familyMemberNew = "/profile/family/new";
+  // static const familyMemberEdit = "/profile/family/:id";
   static const profileEdit = "/profile/edit";
   static const profileAddress = "/profile/address";
   static const helpSupport = "/help";
@@ -102,6 +105,7 @@ class AppRouter {
   static const careTeamDetailName = "care-team-detail";
   static const activityName = "activity";
   static const commissionsName = "commissions";
+  static const homeCommissionsName = "home-commissions";
   static const savedProvidersName = "saved-providers";
   static const clientsName = "clients";
   static const clientDetailName = "client-detail";
@@ -117,8 +121,9 @@ class AppRouter {
   static const groupChatName = "group-chat";
   static const groupInfoName = "group-info";
   static const documentsName = "documents";
-  static const familyMemberNewName = "family-member-new";
-  static const familyMemberEditName = "family-member-edit";
+  // My Family disabled — restore when family members return to Profile.
+  // static const familyMemberNewName = "family-member-new";
+  // static const familyMemberEditName = "family-member-edit";
   static const profileEditName = "profile-edit";
   static const profileAddressName = "profile-address";
   static const helpSupportName = "help-support";
@@ -133,9 +138,22 @@ class AppRouter {
   /// Navigator key for root Shell Route
   static final shellNavigatorKey = GlobalKey<NavigatorState>();
 
+  /// Drives GoRouter to re-run [redirect] when the session is cleared.
+  ///
+  /// Without this, an automatic (token-expiry) logout only clears session data
+  /// but never tears down the [StatefulShellRoute]. Its internal
+  /// `StatefulNavigationShellState` GlobalKey then stays alive, and re-login
+  /// mounts a second shell that reuses the same key — throwing "Duplicate
+  /// GlobalKey" and an element lifecycle assertion.
+  ///
+  /// Only notify on logout — refreshing on login races with `goNamed(home)`.
+  static final AppRouterRefreshNotifier refreshNotifier =
+      AppRouterRefreshNotifier();
+
   static final GoRouter router = GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: splash,
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final unprotected = [splash, onboarding, login, register, forgotPassword];
 
@@ -210,6 +228,9 @@ class AppRouter {
               ),
             ],
           ),
+          // Provider tab disabled for now. Keep the complete Find Care branch
+          // here so it can be restored to this shell position later.
+          /*
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -326,6 +347,19 @@ class AppRouter {
               ),
             ],
           ),
+          */
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: commissions,
+                name: commissionsName,
+                pageBuilder: (_, state) => _pageBuilder(
+                  state: state,
+                  child: const CommissionDetailScreen(),
+                ),
+              ),
+            ],
+          ),
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -407,11 +441,11 @@ class AppRouter {
                   ),
                   GoRoute(
                     path: 'commissions',
-                    name: commissionsName,
+                    name: homeCommissionsName,
                     pageBuilder: (_, state) => _pageBuilder(
                       state: state,
                       transitionType: TransitionType.slide,
-                      child: const CommissionDetailScreen(),
+                      child: const CommissionDetailScreen(showBack: true),
                     ),
                   ),
                   GoRoute(
@@ -565,26 +599,27 @@ class AppRouter {
                       child: const DocumentsScreen(),
                     ),
                   ),
-                  GoRoute(
-                    path: 'family/new',
-                    name: familyMemberNewName,
-                    pageBuilder: (_, state) => _pageBuilder(
-                      state: state,
-                      transitionType: TransitionType.slide,
-                      child: const FamilyMemberEditScreen(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'family/:id',
-                    name: familyMemberEditName,
-                    pageBuilder: (_, state) => _pageBuilder(
-                      state: state,
-                      transitionType: TransitionType.slide,
-                      child: FamilyMemberEditScreen(
-                        memberId: state.pathParameters['id'],
-                      ),
-                    ),
-                  ),
+                  // My Family disabled — restore when family members return to Profile.
+                  // GoRoute(
+                  //   path: 'family/new',
+                  //   name: familyMemberNewName,
+                  //   pageBuilder: (_, state) => _pageBuilder(
+                  //     state: state,
+                  //     transitionType: TransitionType.slide,
+                  //     child: const FamilyMemberEditScreen(),
+                  //   ),
+                  // ),
+                  // GoRoute(
+                  //   path: 'family/:id',
+                  //   name: familyMemberEditName,
+                  //   pageBuilder: (_, state) => _pageBuilder(
+                  //     state: state,
+                  //     transitionType: TransitionType.slide,
+                  //     child: FamilyMemberEditScreen(
+                  //       memberId: state.pathParameters['id'],
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ],
@@ -689,3 +724,21 @@ class AppRouter {
 
 /// Transition type for route
 enum TransitionType { slide, scale, fade, align, none }
+
+/// Lightweight [Listenable] used as the router's `refreshListenable`.
+///
+/// Call [refresh] when the authenticated session is cleared so GoRouter
+/// re-evaluates redirects and disposes the [StatefulShellRoute].
+class AppRouterRefreshNotifier extends ChangeNotifier {
+  void refresh() {
+    if (!_disposed) notifyListeners();
+  }
+
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+}

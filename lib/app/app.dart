@@ -9,6 +9,7 @@ import 'package:vcare_admin/core/styles/app_theme.dart';
 import 'package:vcare_admin/core/styles/text_scale_provider.dart';
 import 'package:vcare_admin/core/styles/theme_appearance_provider.dart';
 import 'package:vcare_admin/core/styles/theme_mode_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
 import 'package:vcare_admin/l10n/app_localizations.dart';
 import 'package:vcare_admin/l10n/l10n.dart';
@@ -45,6 +46,16 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Tear down StatefulShellRoute on logout only. Refreshing on login races with
+    // context.goNamed(home) and remounts StatefulNavigationShell with the same
+    // GlobalKey (Duplicate GlobalKey / inactive element assertions).
+    ref.listen(userLoggedInStateProvider, (previous, next) {
+      if (previous == next) return;
+      if (previous == true && next == false) {
+        AppRouter.refreshNotifier.refresh();
+      }
+    });
+
     final locale = ref.watch(localeStateProvider);
     final themeMode = ref.watch(themeModeProvider);
     final themeAppearance = ref.watch(themeAppearanceProvider);

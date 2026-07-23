@@ -29,6 +29,18 @@ class AuthIdentityMapper {
     return '';
   }
 
+  /// Current tenant id from login / auth/me (`user.currentTenant.id`).
+  String get externalTenantId {
+    final tenantId = storage.get(
+      StorageKeys.loggedInUserTenantId,
+      defaultValue: '',
+    );
+    if (tenantId is String && tenantId.trim().isNotEmpty) {
+      return tenantId.trim();
+    }
+    return '';
+  }
+
   String get email {
     final fromStorage = storage.get(
       StorageKeys.loggedInUserEmail,

@@ -6,10 +6,17 @@ import 'package:vcare_admin/app/router/app_router.dart';
 /// Primary bottom navigation items (vcare [MobileShell] mobile tab order).
 enum NavItem {
   clients(path: AppRouter.clients, label: 'Clients', icon: LucideIcons.users),
-  provider(
-    path: AppRouter.findCare,
-    label: 'Provider',
-    icon: LucideIcons.search,
+  // Provider tab disabled for now — restore when Find Care returns to the
+  // bottom navigation.
+  // provider(
+  //   path: AppRouter.findCare,
+  //   label: 'Provider',
+  //   icon: LucideIcons.search,
+  // ),
+  commission(
+    path: AppRouter.commissions,
+    label: 'Commission',
+    icon: LucideIcons.wallet,
   ),
   home(
     path: AppRouter.home,
@@ -22,11 +29,7 @@ enum NavItem {
     label: 'Messages',
     icon: LucideIcons.messageCircle,
   ),
-  profile(
-    path: AppRouter.profile,
-    label: 'Profile',
-    icon: LucideIcons.user,
-  );
+  profile(path: AppRouter.profile, label: 'Profile', icon: LucideIcons.user);
   // AVA tab disabled for now — restore when AVA returns to the bottom nav.
   // ava(path: AppRouter.ava, label: 'AVA', icon: LucideIcons.sparkles);
 
@@ -42,10 +45,11 @@ enum NavItem {
   final IconData icon;
   final bool isCenter;
 
-  /// Mobile bottom bar order: Clients, Provider, Home, Messages, Profile.
+  /// Mobile bottom bar order: Clients, Commission, Home, Messages, Profile.
   static const List<NavItem> mobileTabs = [
     NavItem.clients,
-    NavItem.provider,
+    // NavItem.provider,
+    NavItem.commission,
     NavItem.home,
     NavItem.messages,
     NavItem.profile,

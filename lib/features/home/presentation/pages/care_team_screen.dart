@@ -52,11 +52,13 @@ class _CareTeamScreenState extends ConsumerState<CareTeamScreen> {
                 title: 'Care Team',
                 subtitle: 'Your people, one tap away.',
                 showBack: true,
-                action: VcareHeaderActionButton(
-                  label: 'Add contact',
-                  onPressed: () =>
-                      context.pushNamed(AppRouter.careTeamNewName),
-                ),
+                action: team.isNotEmpty
+                    ? VcareHeaderActionButton(
+                        label: 'Add contact',
+                        onPressed: () =>
+                            context.pushNamed(AppRouter.careTeamNewName),
+                      )
+                    : null,
               ),
             ),
           ),
@@ -78,20 +80,26 @@ class _CareTeamScreenState extends ConsumerState<CareTeamScreen> {
                 ),
               ),
             )
+          else if (team.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: context.mobileShellScrollPadding,
+                child: const Center(child: CareTeamEmptyState()),
+              ),
+            )
           else
             SliverPadding(
               padding: context.mobileShellScrollPadding,
-              sliver: team.isEmpty
-                  ? const SliverToBoxAdapter(child: CareTeamEmptyState())
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: CareTeamMemberCard(member: team[index]),
-                        ),
-                        childCount: team.length,
-                      ),
-                    ),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: CareTeamMemberCard(member: team[index]),
+                  ),
+                  childCount: team.length,
+                ),
+              ),
             ),
         ],
       ),

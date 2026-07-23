@@ -186,7 +186,10 @@ class CommissionDetailSheet extends StatelessWidget {
                     const SizedBox(height: 20),
                     const Text(
                       'Timeline',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ...timeline.map((step) => _TimelineStepRow(step: step)),
@@ -223,53 +226,53 @@ List<_TimelineStep> _buildTimeline(CommissionHistoryItem item) {
 
   return switch (item.status) {
     CommissionStatus.cancelled => [
-        _TimelineStep(
-          label: 'Processed',
-          dateLabel: processedDate,
-          state: _TimelineStepState.done,
-        ),
-        _TimelineStep(
-          label: 'Failed',
-          dateLabel: processedDate,
-          state: _TimelineStepState.failed,
-        ),
-        const _TimelineStep(
-          label: 'Paid',
-          dateLabel: 'Awaiting next step',
-          state: _TimelineStepState.pending,
-        ),
-      ],
+      _TimelineStep(
+        label: 'Processed',
+        dateLabel: processedDate,
+        state: _TimelineStepState.done,
+      ),
+      _TimelineStep(
+        label: 'Rejected',
+        dateLabel: processedDate,
+        state: _TimelineStepState.failed,
+      ),
+      const _TimelineStep(
+        label: 'Paid',
+        dateLabel: 'Awaiting next step',
+        state: _TimelineStepState.pending,
+      ),
+    ],
     CommissionStatus.pending => [
-        _TimelineStep(
-          label: 'Processed',
-          dateLabel: processedDate,
-          state: _TimelineStepState.done,
-        ),
-        const _TimelineStep(
-          label: 'Pending payout',
-          dateLabel: 'Awaiting next step',
-          state: _TimelineStepState.current,
-        ),
-      ],
+      _TimelineStep(
+        label: 'Processed',
+        dateLabel: processedDate,
+        state: _TimelineStepState.done,
+      ),
+      const _TimelineStep(
+        label: 'Pending payout',
+        dateLabel: 'Awaiting next step',
+        state: _TimelineStepState.current,
+      ),
+    ],
     CommissionStatus.paid => [
-        _TimelineStep(
-          label: 'Processed',
-          dateLabel: processedDate,
-          state: _TimelineStepState.done,
-        ),
-        _TimelineStep(
-          label: 'Paid out',
-          dateLabel: paidDate ?? processedDate,
-          state: _TimelineStepState.done,
-        ),
-      ],
+      _TimelineStep(
+        label: 'Processed',
+        dateLabel: processedDate,
+        state: _TimelineStepState.done,
+      ),
+      _TimelineStep(
+        label: 'Paid out',
+        dateLabel: paidDate ?? processedDate,
+        state: _TimelineStepState.done,
+      ),
+    ],
     CommissionStatus.unknown => [
-        _TimelineStep(
-          label: 'Processed',
-          dateLabel: processedDate,
-          state: _TimelineStepState.done,
-        ),
-      ],
+      _TimelineStep(
+        label: 'Processed',
+        dateLabel: processedDate,
+        state: _TimelineStepState.done,
+      ),
+    ],
   };
 }
 
@@ -309,10 +312,7 @@ class _TimelineStepRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   step.dateLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: vcare.mutedForeground,
-                  ),
+                  style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
                 ),
               ],
             ),
@@ -334,25 +334,21 @@ class _TimelineIcon extends StatelessWidget {
 
     final (background, foreground, icon) = switch (state) {
       _TimelineStepState.done => (
-          VCareColors.success,
-          VCareColors.successForeground,
-          LucideIcons.check,
-        ),
+        VCareColors.success,
+        VCareColors.successForeground,
+        LucideIcons.check,
+      ),
       _TimelineStepState.failed => (
-          VCareColors.destructive,
-          VCareColors.destructiveForeground,
-          LucideIcons.x,
-        ),
+        VCareColors.destructive,
+        VCareColors.destructiveForeground,
+        LucideIcons.x,
+      ),
       _TimelineStepState.current => (
-          const Color(0xFFF59E0B),
-          Colors.white,
-          LucideIcons.clock,
-        ),
-      _TimelineStepState.pending => (
-          vcare.muted,
-          vcare.mutedForeground,
-          null,
-        ),
+        const Color(0xFFF59E0B),
+        Colors.white,
+        LucideIcons.clock,
+      ),
+      _TimelineStepState.pending => (vcare.muted, vcare.mutedForeground, null),
     };
 
     return Container(
@@ -365,9 +361,7 @@ class _TimelineIcon extends StatelessWidget {
             ? Border.all(color: vcare.border, width: 2)
             : null,
       ),
-      child: icon == null
-          ? null
-          : Icon(icon, size: 14, color: foreground),
+      child: icon == null ? null : Icon(icon, size: 14, color: foreground),
     );
   }
 }

@@ -6,6 +6,7 @@ class AuthSession {
     this.email,
     this.username,
     this.profileId,
+    this.tenantId,
   });
 
   final String? refresh;
@@ -14,6 +15,7 @@ class AuthSession {
   final String? email;
   final String? username;
   final String? profileId;
+  final String? tenantId;
 
   AuthSession copyWith({
     String? refresh,
@@ -22,6 +24,7 @@ class AuthSession {
     String? email,
     String? username,
     String? profileId,
+    String? tenantId,
   }) {
     return AuthSession(
       refresh: refresh ?? this.refresh,
@@ -30,6 +33,7 @@ class AuthSession {
       email: email ?? this.email,
       username: username ?? this.username,
       profileId: profileId ?? this.profileId,
+      tenantId: tenantId ?? this.tenantId,
     );
   }
 }

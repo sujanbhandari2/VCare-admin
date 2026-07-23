@@ -67,7 +67,7 @@ class VcareLoginScreen extends ConsumerStatefulWidget {
 class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   _LoginMethod _method = _LoginMethod.phone;
   _LoginStep _step = _LoginStep.identify;
-  AuthPhoneCountry _phoneCountry = AuthPhoneCountry.usa;
+  static const _phoneCountry = AuthPhoneCountry.usa;
 
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -425,7 +425,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     if (_method == _LoginMethod.phone && user.email != null) {
       _onboardEmailController.text = user.email!;
     } else if (_method == _LoginMethod.email && user.phone != null) {
-      _phoneCountry = AuthPhoneFormatter.detectCountry(user.phone!);
       final displayDigits = AuthPhoneFormatter.toDisplayDigits(
         user.phone!,
         fallback: _phoneCountry,
@@ -435,27 +434,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         _phoneCountry,
       );
     }
-  }
-
-  void _onPhoneCountryChanged(AuthPhoneCountry country) {
-    setState(() {
-      _phoneCountry = country;
-      _error = null;
-      _onboardErrors = Map<String, String>.from(_onboardErrors)..remove('phone');
-      final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-      if (digits.length > country.nationalLength) {
-        _phoneController.text = digits.substring(0, country.nationalLength);
-      }
-      final onboardDigits =
-          _onboardPhoneController.text.replaceAll(RegExp(r'\D'), '');
-      final limitedOnboardDigits = onboardDigits.length > country.nationalLength
-          ? onboardDigits.substring(0, country.nationalLength)
-          : onboardDigits;
-      _onboardPhoneController.text = AuthPhoneFormatter.formatNationalDisplay(
-        limitedOnboardDigits,
-        country,
-      );
-    });
   }
 
   Future<void> _sendCode() async {
@@ -999,14 +977,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               hint: _phoneCountry.hint,
               hasError: _error != null,
               inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(_phoneCountry.nationalLength),
+                AuthNationalPhoneInputFormatter(_phoneCountry),
               ],
               onChanged: (_) => setState(() => _error = null),
-              prefix: LoginPhoneCountrySelector(
-                selected: _phoneCountry,
-                onChanged: _onPhoneCountryChanged,
-              ),
+              prefix: const LoginPhoneCountrySelector(),
             ),
           )
         else
@@ -1342,10 +1316,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
                 AuthNationalPhoneInputFormatter(_phoneCountry),
               ],
               onChanged: (_) => _clearOnboardError('phone'),
-              prefix: LoginPhoneCountrySelector(
-                selected: _phoneCountry,
-                onChanged: _onPhoneCountryChanged,
-              ),
+              prefix: const LoginPhoneCountrySelector(),
             ),
           ),
         const SizedBox(height: 12),

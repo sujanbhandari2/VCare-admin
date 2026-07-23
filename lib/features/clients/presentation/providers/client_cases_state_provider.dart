@@ -14,11 +14,8 @@ part 'client_cases_state_provider.g.dart';
 @Riverpod(keepAlive: true)
 class ClientCasesState extends _$ClientCasesState
     with PaginatedListNotifierMixin<ClientCase> {
-  late final String _clientId;
-
   @override
   LoadableListState<ClientCase> build(String clientId) {
-    _clientId = clientId;
     return LoadableListState<ClientCase>();
   }
 
@@ -37,7 +34,7 @@ class ClientCasesState extends _$ClientCasesState
     bool forceRefresh = false,
   }) {
     return ref.read(clientRepositoryProvider).fetchCases(
-      _clientId,
+      clientId,
       request,
       forceRefresh: forceRefresh,
     );
@@ -54,7 +51,7 @@ class ClientCasesState extends _$ClientCasesState
     if (trimmedTitle.isEmpty) return;
 
     final response = await ref.read(clientRepositoryProvider).createClientCase(
-      clientId: _clientId,
+      clientId: clientId,
       title: trimmedTitle,
       description: description.trim(),
     );

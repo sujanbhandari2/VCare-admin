@@ -31,7 +31,8 @@ class ProviderFavoriteButton extends StatelessWidget {
 
     return IconButton(
       onPressed: isToggling ? null : onPressed,
-      tooltip: tooltip ??
+      tooltip:
+          tooltip ??
           (isFavorite ? 'Remove from favorites' : 'Save to favorites'),
       style: IconButton.styleFrom(
         backgroundColor: vcare.card.withValues(alpha: 0.9),

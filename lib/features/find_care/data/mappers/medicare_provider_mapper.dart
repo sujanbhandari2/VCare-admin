@@ -2,7 +2,8 @@ import 'package:vcare_admin/features/find_care/data/models/medicare_provider_loo
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_service_line.dart';
 
-extension MedicareProviderLookupRowModelMapper on MedicareProviderLookupRowModel {
+extension MedicareProviderLookupRowModelMapper
+    on MedicareProviderLookupRowModel {
   MedicareProviderLookupRow toEntity() {
     return MedicareProviderLookupRow(
       npi: npi,

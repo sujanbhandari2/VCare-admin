@@ -9,9 +9,14 @@ import 'package:vcare_admin/shared/widgets/image_upload_field.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/auth_dropdown_field.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/field_validator.dart';
+import 'package:vcare_admin/features/auth/domain/auth_national_phone_input_formatter.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
+import 'package:vcare_admin/features/auth/domain/auth_phone_validator.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_phone_country.dart';
 import 'package:vcare_admin/features/auth/domain/enums/gender.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/register_request_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_phone_country_selector.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -132,19 +137,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       AuthTextField(
                         controller: _phoneController,
                         label: context.appLocalization.phone,
-                        hint: context.appLocalization.phone,
+                        hint: AuthPhoneCountry.usa.hint,
                         margin: const .fromLTRB(16.0, 12.0, 16.0, 0.0),
                         inputType: .phone,
                         textInputAction: .next,
+                        prefix: const LoginPhoneCountrySelector(),
+                        inputFormatters: [
+                          AuthNationalPhoneInputFormatter(AuthPhoneCountry.usa),
+                        ],
                         validator: (value) {
-                          return FieldValidator.validateMobile(
+                          return AuthPhoneValidator.validate(
                             value,
+                            country: AuthPhoneCountry.usa,
                             context: context,
                           );
                         },
                         enabled: !registerRequestState.requesting,
                         required: true,
-                        maxLength: 10,
                       ),
                       AuthTextField(
                         controller: _usernameController,
@@ -362,7 +371,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           : names.sublist(0, names.length - 1);
       payloads['last_name'] = names.length > 1 ? names.last : '';
 
-      payloads['phone'] = _phoneController.text.trim();
+      payloads['phone'] = AuthPhoneFormatter.toApiDigits(
+        AuthPhoneCountry.usa.dialCode,
+        _phoneController.text,
+      );
       if (_emailController.text.trim().isNotEmpty) {
         payloads['email'] = _emailController.text.trim().toLowerCase();
       }

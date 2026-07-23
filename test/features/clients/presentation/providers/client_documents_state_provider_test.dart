@@ -361,11 +361,13 @@ void main() {
         await notifier.uploadDocument(
           fileName: 'insurance-card.jpg',
           bytes: const [1, 2, 3],
+          documentType: 'Other',
         );
 
         expect(repository.lastUploadClientId, 'client-1');
         expect(repository.lastUploadFileName, 'insurance-card.jpg');
         expect(repository.lastUploadBytes, [1, 2, 3]);
+        expect(repository.lastUploadDocumentType, 'Other');
         expect(repository.lastUploadDate, isNotNull);
         expect(repository.lastDocumentsRequest?.page, 1);
         expect(repository.lastDocumentsForceRefresh, isTrue);
@@ -413,6 +415,7 @@ void main() {
         await notifier.uploadDocument(
           fileName: 'bill.pdf',
           bytes: const [4, 5, 6],
+          documentType: 'Contract',
         );
 
         final state = container.read(clientDocumentsStateProvider('client-1'));
@@ -456,6 +459,7 @@ void main() {
       await notifier.uploadDocument(
         fileName: 'new-doc.pdf',
         bytes: const [7, 8, 9],
+        documentType: 'Agreement',
       );
 
       final state = container.read(clientDocumentsStateProvider('client-1'));

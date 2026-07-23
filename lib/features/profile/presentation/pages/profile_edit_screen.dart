@@ -53,7 +53,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   String _dob = '';
   String? _photoUrl;
   String? _photoCacheKey;
-  AuthPhoneCountry _phoneCountry = AuthPhoneCountry.usa;
+  static const _phoneCountry = AuthPhoneCountry.usa;
   Map<String, String> _errors = {};
   bool _loading = true;
   bool _submitting = false;
@@ -86,18 +86,16 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   void _applyProfile(LocalProfile profile) {
     final address = profile.address;
-    final phoneCountry = AuthPhoneFormatter.detectCountry(profile.phone);
     final displayDigits = AuthPhoneFormatter.toDisplayDigits(
       profile.phone,
-      fallback: phoneCountry,
+      fallback: _phoneCountry,
     );
     setState(() {
       _fullNameController.text = profile.fullName;
       _emailController.text = profile.email;
-      _phoneCountry = phoneCountry;
       _phoneController.text = AuthPhoneFormatter.formatNationalDisplay(
         displayDigits,
-        phoneCountry,
+        _phoneCountry,
       );
       _dob = profileDobToIso(profile.dob);
       _photoUrl = profile.photoUrl;
@@ -108,21 +106,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       _stateController.text = address?.state ?? '';
       _postalCodeController.text = address?.postalCode ?? '';
       _countryController.text = address?.country ?? 'United States';
-    });
-  }
-
-  void _onPhoneCountryChanged(AuthPhoneCountry country) {
-    setState(() {
-      _phoneCountry = country;
-      _errors = Map<String, String>.from(_errors)..remove('phone');
-      final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-      final limited = digits.length > country.nationalLength
-          ? digits.substring(0, country.nationalLength)
-          : digits;
-      _phoneController.text = AuthPhoneFormatter.formatNationalDisplay(
-        limited,
-        country,
-      );
     });
   }
 
@@ -387,10 +370,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     inputFormatters: [
                       AuthNationalPhoneInputFormatter(_phoneCountry),
                     ],
-                    prefix: LoginPhoneCountrySelector(
-                      selected: _phoneCountry,
-                      onChanged: _onPhoneCountryChanged,
-                    ),
+                    prefix: const LoginPhoneCountrySelector(),
                     onChanged: (_) {
                       if (_errors.containsKey('phone')) {
                         setState(

@@ -81,7 +81,9 @@ class MedicareProviderDetailStateNotifier
     }
 
     final offset = reset ? 0 : state.serviceLines.length;
-    final response = await ref.read(medicareProviderRepositoryProvider).fetchServices(
+    final response = await ref
+        .read(medicareProviderRepositoryProvider)
+        .fetchServices(
           npi: state.npiDigits,
           offset: offset,
           size: cmsProviderServicesPageSize,

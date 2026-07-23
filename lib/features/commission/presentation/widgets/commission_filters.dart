@@ -57,9 +57,7 @@ class _FilterChip extends StatelessWidget {
     return Material(
       color: selected ? VCareColors.primary : vcare.card,
       shape: StadiumBorder(
-        side: BorderSide(
-          color: selected ? VCareColors.primary : vcare.border,
-        ),
+        side: BorderSide(color: selected ? VCareColors.primary : vcare.border),
       ),
       child: InkWell(
         onTap: onTap,
@@ -71,7 +69,9 @@ class _FilterChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: selected ? VCareColors.primaryForeground : vcare.mutedForeground,
+              color: selected
+                  ? VCareColors.primaryForeground
+                  : vcare.mutedForeground,
             ),
           ),
         ),

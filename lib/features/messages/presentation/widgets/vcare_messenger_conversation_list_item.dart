@@ -121,7 +121,16 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (data.hasUnread)
+                        if (data.isOpening)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        else if (data.hasUnread)
                           Container(
                             margin: const EdgeInsets.only(left: 8),
                             width: 24,

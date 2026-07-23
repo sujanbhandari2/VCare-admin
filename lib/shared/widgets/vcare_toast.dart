@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -142,29 +144,149 @@ class VcareToastContent extends StatelessWidget {
 
 extension VcareToastExt on BuildContext {
   /// Shows a VCare-styled toast at the bottom of the screen.
+  ///
+  /// Rendered in the root overlay so it stays visible above modal routes
+  /// such as bottom sheets and dialogs.
   void showVcareToast({
     required String title,
     String? description,
     VcareToastVariant variant = VcareToastVariant.defaultVariant,
-    Duration duration = const Duration(seconds: 1),
+    Duration duration = const Duration(seconds: 4),
   }) {
-    final messenger = ScaffoldMessenger.of(this);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
+    _VcareToastManager.show(
+      this,
+      title: title,
+      description: description,
+      variant: variant,
+      duration: duration,
+    );
+  }
+}
+
+/// Manages a single active toast overlay entry at a time.
+class _VcareToastManager {
+  static OverlayEntry? _entry;
+
+  static void show(
+    BuildContext context, {
+    required String title,
+    String? description,
+    required VcareToastVariant variant,
+    required Duration duration,
+  }) {
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+
+    _dismiss();
+
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _VcareToastOverlayWidget(
+        title: title,
+        description: description,
+        variant: variant,
+        duration: duration,
+        onDismissed: () {
+          if (_entry == entry) {
+            _entry = null;
+          }
+          entry.remove();
+        },
+      ),
+    );
+    _entry = entry;
+    overlay.insert(entry);
+  }
+
+  static void _dismiss() {
+    _entry?.remove();
+    _entry = null;
+  }
+}
+
+class _VcareToastOverlayWidget extends StatefulWidget {
+  const _VcareToastOverlayWidget({
+    required this.title,
+    required this.description,
+    required this.variant,
+    required this.duration,
+    required this.onDismissed,
+  });
+
+  final String title;
+  final String? description;
+  final VcareToastVariant variant;
+  final Duration duration;
+  final VoidCallback onDismissed;
+
+  @override
+  State<_VcareToastOverlayWidget> createState() =>
+      _VcareToastOverlayWidgetState();
+}
+
+class _VcareToastOverlayWidgetState extends State<_VcareToastOverlayWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+  );
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+    _timer = Timer(widget.duration, _hide);
+  }
+
+  Future<void> _hide() async {
+    _timer?.cancel();
+    if (!mounted) return;
+    await _controller.reverse();
+    if (!mounted) return;
+    widget.onDismissed();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final curved = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: SafeArea(
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          behavior: SnackBarBehavior.floating,
-          duration: duration,
-          dismissDirection: DismissDirection.down,
-          content: VcareToastContent(
-            title: title,
-            description: description,
-            variant: variant,
+          child: FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.3),
+                end: Offset.zero,
+              ).animate(curved),
+              child: Material(
+                type: MaterialType.transparency,
+                child: GestureDetector(
+                  onTap: _hide,
+                  child: VcareToastContent(
+                    title: widget.title,
+                    description: widget.description,
+                    variant: widget.variant,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-      );
+      ),
+    );
   }
 }

@@ -32,7 +32,7 @@ class DocumentsEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Photos, voice notes, and files you attach to requests or your ID card will show up here.',
+              'Files linked to your account will appear here.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

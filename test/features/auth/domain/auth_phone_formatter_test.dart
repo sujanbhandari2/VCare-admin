@@ -77,13 +77,30 @@ void main() {
         );
       });
 
-      test('formats Nepal numbers as XXX-XXX-XXXX', () {
+      test('formats Nepal numbers as XXX XXXX XXX', () {
         expect(
           AuthPhoneFormatter.formatNationalDisplay(
-            '9841234567',
+            '9804332283',
             AuthPhoneCountry.nepal,
           ),
-          '984-123-4567',
+          '980 4332 283',
+        );
+      });
+
+      test('formats partial Nepal numbers while typing', () {
+        expect(
+          AuthPhoneFormatter.formatNationalDisplay(
+            '980',
+            AuthPhoneCountry.nepal,
+          ),
+          '980',
+        );
+        expect(
+          AuthPhoneFormatter.formatNationalDisplay(
+            '9804332',
+            AuthPhoneCountry.nepal,
+          ),
+          '980 4332',
         );
       });
 
@@ -131,8 +148,8 @@ void main() {
 
       test('formats Nepal numbers with +977 prefix', () {
         expect(
-          AuthPhoneFormatter.formatInternationalDisplay('9779841234567'),
-          '+977 984-123-4567',
+          AuthPhoneFormatter.formatInternationalDisplay('9779804332283'),
+          '+977 980 4332 283',
         );
       });
 

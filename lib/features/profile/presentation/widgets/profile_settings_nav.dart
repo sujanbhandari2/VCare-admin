@@ -27,7 +27,7 @@ const profileNavItems = <ProfileNavItem>[
   ),
   ProfileNavItem(
     routeName: AppRouter.idCardName,
-    label: 'Digital ID Card',
+    label: 'My Referral',
     icon: LucideIcons.creditCard,
   ),
   ProfileNavItem(
@@ -35,26 +35,27 @@ const profileNavItems = <ProfileNavItem>[
     label: 'My Documents',
     icon: LucideIcons.folderOpen,
   ),
-  ProfileNavItem(
-    routeName: AppRouter.notificationsName,
-    label: 'Notifications',
-    icon: LucideIcons.bell,
-  ),
-  ProfileNavItem(
-    routeName: AppRouter.savedProvidersName,
-    label: 'Saved providers',
-    icon: LucideIcons.heart,
-  ),
-  ProfileNavItem(
-    routeName: AppRouter.privacySecurityName,
-    label: 'Privacy & security',
-    icon: LucideIcons.shield,
-  ),
-  ProfileNavItem(
-    routeName: AppRouter.helpSupportName,
-    label: 'Help & support',
-    icon: LucideIcons.helpCircle,
-  ),
+  // Temporarily hidden — restore when these profile destinations are enabled.
+  // ProfileNavItem(
+  //   routeName: AppRouter.notificationsName,
+  //   label: 'Notifications',
+  //   icon: LucideIcons.bell,
+  // ),
+  // ProfileNavItem(
+  //   routeName: AppRouter.savedProvidersName,
+  //   label: 'Saved providers',
+  //   icon: LucideIcons.heart,
+  // ),
+  // ProfileNavItem(
+  //   routeName: AppRouter.privacySecurityName,
+  //   label: 'Privacy & security',
+  //   icon: LucideIcons.shield,
+  // ),
+  // ProfileNavItem(
+  //   routeName: AppRouter.helpSupportName,
+  //   label: 'Help & support',
+  //   icon: LucideIcons.helpCircle,
+  // ),
 ];
 
 class ProfileSettingsNav extends StatelessWidget {

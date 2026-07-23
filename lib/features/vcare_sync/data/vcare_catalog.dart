@@ -644,7 +644,7 @@ class VCareCatalog {
     VCareDocumentItem(
       name: 'Insurance card front.jpg',
       kind: 'Images',
-      sourceLabel: 'Digital ID Card',
+      sourceLabel: 'My Referral',
       sizeLabel: '1.4 MB',
       createdAt: DateTime.parse('2026-04-28'),
     ),
@@ -673,15 +673,16 @@ class VCareCatalog {
       answer:
           'Yes. Your data is encrypted in transit and at rest. We only share with providers when you authorize us.',
     ),
-    VCareFaqItem(
-      question: 'Can I add family members to my account?',
-      answer:
-          'Yes. Go to Profile → My Family → Add family member to manage care on their behalf.',
-    ),
+    // My Family disabled — restore when family members return to Profile.
+    // VCareFaqItem(
+    //   question: 'Can I add family members to my account?',
+    //   answer:
+    //       'Yes. Go to Profile → My Family → Add family member to manage care on their behalf.',
+    // ),
     VCareFaqItem(
       question: 'How do I update my insurance card?',
       answer:
-          'Open Digital ID Card from the home screen, tap your card, then upload new front/back photos.',
+          'Open My Referral from the home screen, tap your card, then upload new front/back photos.',
     ),
   ];
 

@@ -1,16 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/documents/domain/entities/document_filter.dart';
+import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_doc_row.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_empty_state.dart';
-import 'package:vcare_admin/features/documents/presentation/widgets/documents_filters.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_preview_dialog.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_upload_actions.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
@@ -34,9 +38,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  DocumentFilter _filter = DocumentFilter.all;
   bool _isLoadMoreRequested = false;
-  String? _deletingDocumentId;
+  String? _busyDocumentId;
 
   @override
   void initState() {
@@ -89,20 +92,34 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         .toList();
   }
 
-  Future<void> _openDocument(DocumentItem item) async {
-    if (!item.canOpen) return;
+  bool _canManage(DocumentItem item) {
+    return canManageDocument(
+      currentUserId: ref
+          .read(documentsListStateProvider.notifier)
+          .resolveCurrentUserId(),
+      createdBy: item.createdBy,
+      userId: item.userId,
+    );
+  }
 
-    if (item.kind == DocumentKind.image ||
-        item.imagePreviewUrl.startsWith('data:') ||
-        isDocumentPdf(item.imagePreviewUrl, item.name) ||
-        isDocumentPdf(item.dataUrl, item.name)) {
-      await DocumentsPreviewDialog.show(context, item);
+  Future<void> _openDocument(DocumentItem item) async {
+    // Match web: open previewLink first, then fall back to url.
+    final preview = item.previewUrl?.trim() ?? '';
+    final url = item.dataUrl.trim();
+    final openUrl = preview.isNotEmpty ? preview : url;
+
+    if (openUrl.isEmpty) {
+      context.showVcareToast(
+        title: 'Preview unavailable',
+        variant: VcareToastVariant.destructive,
+      );
       return;
     }
 
-    final openUrl = item.dataUrl.trim().isNotEmpty
-        ? item.dataUrl
-        : item.imagePreviewUrl;
+    if (item.kind == DocumentKind.image || openUrl.startsWith('data:image')) {
+      await DocumentsPreviewDialog.show(context, item);
+      return;
+    }
 
     final launched = await launchUrlString(
       openUrl,
@@ -118,7 +135,116 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     }
   }
 
+  Future<void> _downloadDocument(DocumentItem item) async {
+    setState(() => _busyDocumentId = item.id);
+
+    final result = await ref
+        .read(documentsListStateProvider.notifier)
+        .downloadDocumentContent(documentId: item.id);
+
+    if (!mounted) return;
+
+    if (!result.success || result.bytes == null) {
+      setState(() => _busyDocumentId = null);
+      context.showVcareToast(
+        title: 'Could not download document',
+        description: result.error,
+        variant: VcareToastVariant.destructive,
+      );
+      return;
+    }
+
+    try {
+      final dir = await getTemporaryDirectory();
+      final safeName = item.name.trim().isEmpty ? 'document' : item.name.trim();
+      final file = File('${dir.path}/$safeName');
+      await file.writeAsBytes(result.bytes!, flush: true);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            XFile(
+              file.path,
+              name: safeName,
+              mimeType: mimeTypeFromFileName(safeName),
+            ),
+          ],
+          subject: safeName,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      context.showVcareToast(
+        title: 'Could not download document',
+        variant: VcareToastVariant.destructive,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busyDocumentId = null);
+      }
+    }
+  }
+
+  Future<void> _renameDocument(DocumentItem item) async {
+    if (!_canManage(item)) {
+      context.showVcareToast(
+        title: 'You can only rename files you uploaded',
+        variant: VcareToastVariant.destructive,
+      );
+      return;
+    }
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => _RenameDocumentDialog(initialName: item.name),
+    );
+
+    final trimmed = newName?.trim();
+    if (trimmed == null || trimmed.isEmpty || trimmed == item.name) return;
+
+    final validationError = documentRenameValidationError(trimmed);
+    if (validationError != null) {
+      if (!mounted) return;
+      context.showVcareToast(
+        title: validationError,
+        variant: VcareToastVariant.destructive,
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _busyDocumentId = item.id);
+
+    final result = await ref
+        .read(documentsListStateProvider.notifier)
+        .renameDocument(documentId: item.id, name: trimmed);
+
+    if (!mounted) return;
+    setState(() => _busyDocumentId = null);
+
+    if (result.success) {
+      context.showVcareToast(
+        title: 'Renamed to $trimmed',
+        variant: VcareToastVariant.success,
+      );
+    } else {
+      context.showVcareToast(
+        title: 'Could not rename document',
+        description: result.error,
+        variant: VcareToastVariant.destructive,
+      );
+    }
+  }
+
   Future<void> _deleteDocument(DocumentItem item) async {
+    if (!_canManage(item)) {
+      context.showVcareToast(
+        title: 'You can only delete files you uploaded',
+        variant: VcareToastVariant.destructive,
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -145,7 +271,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    setState(() => _deletingDocumentId = item.id);
+    setState(() => _busyDocumentId = item.id);
 
     final result = await ref
         .read(documentsListStateProvider.notifier)
@@ -153,7 +279,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 
     if (!mounted) return;
 
-    setState(() => _deletingDocumentId = null);
+    setState(() => _busyDocumentId = null);
 
     if (result.success) {
       context.showVcareToast(
@@ -176,7 +302,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final items = _allItems();
     final filtered = filterDocuments(
       items: items,
-      filter: _filter,
       query: _searchController.text,
     );
 
@@ -238,12 +363,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                DocumentsFilters(
-                  value: _filter,
-                  items: items,
-                  onChanged: (value) => setState(() => _filter = value),
-                ),
-                const SizedBox(height: 16),
                 if (listState.isInitialLoading && items.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 32),
@@ -266,13 +385,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                     if (i > 0) const SizedBox(height: 8),
                     DocumentsDocRow(
                       item: filtered[i],
-                      isDeleting: _deletingDocumentId == filtered[i].id,
+                      isBusy: _busyDocumentId == filtered[i].id,
+                      canManage: _canManage(filtered[i]),
                       onOpen: filtered[i].canOpen
                           ? () => _openDocument(filtered[i])
                           : null,
-                      onDelete: filtered[i].isDeletable
-                          ? () => _deleteDocument(filtered[i])
-                          : null,
+                      onDownload: () => _downloadDocument(filtered[i]),
+                      onRename: () => _renameDocument(filtered[i]),
+                      onDelete: () => _deleteDocument(filtered[i]),
                     ),
                   ],
                 if (listState.isLoadingMore)
@@ -303,6 +423,105 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RenameDocumentDialog extends StatefulWidget {
+  const _RenameDocumentDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_RenameDocumentDialog> createState() => _RenameDocumentDialogState();
+}
+
+class _RenameDocumentDialogState extends State<_RenameDocumentDialog> {
+  late final TextEditingController _controller;
+  late final String _extension;
+
+  @override
+  void initState() {
+    super.initState();
+    final parts = splitDocumentFileName(widget.initialName);
+    _extension = parts.extension;
+    _controller = TextEditingController(text: parts.baseName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Keeps the original extension locked; strips any extension typed into the name.
+  String _normalizedBaseName(String raw) {
+    var baseName = raw.trim();
+    if (baseName.isEmpty) return '';
+
+    if (_extension.isNotEmpty) {
+      final lower = baseName.toLowerCase();
+      final lockedExt = _extension.toLowerCase();
+      if (lower.endsWith(lockedExt)) {
+        baseName = baseName.substring(0, baseName.length - _extension.length);
+      } else {
+        final lastDot = baseName.lastIndexOf('.');
+        if (lastDot > 0) {
+          baseName = baseName.substring(0, lastDot);
+        }
+      }
+    }
+
+    return baseName.trim();
+  }
+
+  void _submit() {
+    final baseName = _normalizedBaseName(_controller.text);
+    if (baseName.isEmpty) return;
+
+    Navigator.pop(
+      context,
+      joinDocumentFileName(baseName: baseName, extension: _extension),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return AlertDialog(
+      title: const Text('Rename document'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        // Prevent typing a new extension into the name field.
+        inputFormatters: [
+          FilteringTextInputFormatter.deny(RegExp(r'[\\/]')),
+        ],
+        decoration: InputDecoration(
+          hintText: 'Document name',
+          suffixText: _extension.isNotEmpty ? _extension : null,
+          suffixStyle: TextStyle(
+            fontSize: 16,
+            color: vcare.mutedForeground,
+            fontWeight: FontWeight.w500,
+          ),
+          helperText: _extension.isNotEmpty
+              ? 'File extension cannot be changed'
+              : null,
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

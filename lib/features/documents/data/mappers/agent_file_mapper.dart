@@ -21,6 +21,9 @@ extension AgentFileModelMapper on AgentFileModel {
       category: category,
       categoryReferenceId: categoryReferenceId,
       subCategoryReferenceId: subCategoryReferenceId,
+      documentType: documentType?.trim().isNotEmpty == true
+          ? documentType!.trim()
+          : null,
       createdBy: createdBy,
     );
   }

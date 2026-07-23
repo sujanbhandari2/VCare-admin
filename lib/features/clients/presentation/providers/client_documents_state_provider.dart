@@ -16,13 +16,11 @@ part 'client_documents_state_provider.g.dart';
 class ClientDocumentsState extends _$ClientDocumentsState {
   static const int _pageSize = 20;
 
-  late final String _clientId;
   int _currentPage = 0;
   int _generation = 0;
 
   @override
   ClientDocumentsLoadableState build(String clientId) {
-    _clientId = clientId;
     return ClientDocumentsLoadableState();
   }
 
@@ -35,7 +33,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     bool forceRefresh = false,
   }) {
     return ref.read(clientRepositoryProvider).fetchDocuments(
-      _clientId,
+      clientId,
       request,
       forceRefresh: forceRefresh,
     );
@@ -114,6 +112,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
   Future<void> uploadDocument({
     required String fileName,
     required List<int> bytes,
+    required String documentType,
     String? note,
     void Function(bool success, String? error)? onCompleted,
   }) async {
@@ -124,9 +123,10 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     final response = await ref
         .read(clientRepositoryProvider)
         .uploadClientDocument(
-          clientId: _clientId,
+          clientId: clientId,
           fileName: fileName,
           bytes: bytes,
+          documentType: documentType,
           note: note,
           date: todayIsoDate(),
         );

@@ -9,7 +9,7 @@ Identity for chat bootstrap:
 | Field | Source |
 |-------|--------|
 | API / socket / key | `.env` via `HealthMessengerEnv` |
-| `externalTenantId` | `HEALTH_MESSENGER_EXTERNAL_TENANT_ID` + flavor prefix |
+| `externalTenantId` | `user.currentTenant.id` from login / `auth/me` (+ flavor prefix) |
 | `externalUserId` | `StorageKeys.loggedInUserUuid` (from `auth/me` / login) |
 | `email` / display name | Auth storage + optional `UserProfile` |
 | `externalUserRole` | Default `AGENT` |

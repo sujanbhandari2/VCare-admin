@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+// Notification styling temporarily unused while the bell is hidden.
+// import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/user_profile_avatar.dart';
@@ -102,11 +103,12 @@ class HomePageHeader extends ConsumerWidget {
               ],
             ),
           ),
-          _IconButton(
-            icon: LucideIcons.bell,
-            onTap: onNotificationsTap,
-            badge: unreadCount > 0,
-          ),
+          // Notifications temporarily hidden.
+          // _IconButton(
+          //   icon: LucideIcons.bell,
+          //   onTap: onNotificationsTap,
+          //   badge: unreadCount > 0,
+          // ),
           if (onSettingsTap != null)
             _IconButton(icon: LucideIcons.settings, onTap: onSettingsTap),
         ],
@@ -116,11 +118,12 @@ class HomePageHeader extends ConsumerWidget {
 }
 
 class _IconButton extends StatelessWidget {
-  const _IconButton({required this.icon, this.onTap, this.badge = false});
+  const _IconButton({required this.icon, this.onTap});
 
   final IconData icon;
   final VoidCallback? onTap;
-  final bool badge;
+  // Notification badge temporarily hidden.
+  // final bool badge;
 
   @override
   Widget build(BuildContext context) {
@@ -136,23 +139,24 @@ class _IconButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Icon(icon, size: 24),
-              if (badge)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: VCareColors.destructive,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: VCareColors.background,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
+              // Notification badge temporarily hidden.
+              // if (badge)
+              //   Positioned(
+              //     top: 8,
+              //     right: 8,
+              //     child: Container(
+              //       width: 10,
+              //       height: 10,
+              //       decoration: BoxDecoration(
+              //         color: VCareColors.destructive,
+              //         shape: BoxShape.circle,
+              //         border: Border.all(
+              //           color: VCareColors.background,
+              //           width: 2,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
         ),

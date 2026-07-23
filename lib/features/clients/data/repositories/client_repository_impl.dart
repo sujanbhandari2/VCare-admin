@@ -26,6 +26,7 @@ import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
 import 'package:vcare_admin/features/clients/domain/repositories/client_repository.dart';
+import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_response_parser.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
@@ -382,19 +383,25 @@ class ClientRepositoryImpl implements ClientRepository {
     required String clientId,
     required String fileName,
     required List<int> bytes,
+    required String documentType,
     String? note,
     String? date,
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
+      final trimmedType = documentType.trim().isEmpty
+          ? defaultDocumentTypeLabel
+          : documentType.trim();
+
       final response = await apiClient.post(
         ApiEndpoints.files,
         MultipartFormData(
           fields: {
-            'category': 'CLIENT',
+            'category': DocumentUploadCategories.client,
             'categoryReferenceId': clientId,
-            if (note != null) 'note': note,
-            if (date != null) 'date': date,
+            'documentType': trimmedType,
+            'note': ?note,
+            'date': ?date,
           },
           files: [
             FormFile.fromBytes(

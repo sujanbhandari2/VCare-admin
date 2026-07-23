@@ -7,11 +7,8 @@ String formatAgentStatCount(int? value) {
   return value.toString();
 }
 
-String formatAgentStatMoney(String? value) {
+String formatAgentStatMoney(double? value) {
   if (value == null) return _placeholder;
 
-  final parsed = double.tryParse(value);
-  if (parsed == null) return _placeholder;
-
-  return NumberFormat.simpleCurrency(decimalDigits: 0).format(parsed);
+  return NumberFormat.simpleCurrency(decimalDigits: 0).format(value);
 }

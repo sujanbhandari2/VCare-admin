@@ -37,6 +37,7 @@ void main() {
       repository.loginResult = Success(
         RepositoryFixtures.authSession(
           profileId: 'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+          tenantId: '1b4b5118-055f-44e7-9ddd-59e5e357e756',
         ),
       );
 
@@ -62,6 +63,10 @@ void main() {
       expect(
         storageService.get(StorageKeys.loggedInUserProfileId),
         'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+      );
+      expect(
+        storageService.get(StorageKeys.loggedInUserTenantId),
+        '1b4b5118-055f-44e7-9ddd-59e5e357e756',
       );
       expect(repository.lastLoginPayloads?['identifier'], 'fixture@example.com');
     });

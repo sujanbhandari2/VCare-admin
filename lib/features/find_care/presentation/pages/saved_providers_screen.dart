@@ -67,7 +67,8 @@ class _SavedProvidersScreenState extends ConsumerState<SavedProvidersScreen> {
                         item: item,
                         onTap: () => _openProvider(context, item),
                         onRemove: () => _removeProvider(context, item),
-                        isRemoving: item.medicareNpi != null &&
+                        isRemoving:
+                            item.medicareNpi != null &&
                             savedProvidersState.isToggling(item.medicareNpi!),
                         onCall: item.phone == null
                             ? null

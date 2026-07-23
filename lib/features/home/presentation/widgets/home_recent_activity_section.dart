@@ -1,38 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
-import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_section_header.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/home_activity_status_chip.dart';
-import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_list_row.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
 class HomeRecentActivitySection extends StatelessWidget {
   const HomeRecentActivitySection({
     super.key,
     required this.items,
+    this.isLoading = false,
+    this.isError = false,
+    this.errorMessage,
+    this.onRetry,
     this.onSeeAll,
     this.onItemTap,
+    this.previewLimit = 3,
   });
 
-  final List<ActivityItem> items;
+  final List<TodoItem> items;
+  final bool isLoading;
+  final bool isError;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
   final VoidCallback? onSeeAll;
-  final void Function(ActivityItem item)? onItemTap;
+  final void Function(TodoItem item)? onItemTap;
+  final int previewLimit;
 
   @override
   Widget build(BuildContext context) {
+    final previewItems = items.take(previewLimit).toList();
+    final showSeeAll = items.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HomeSectionHeader(
           title: 'To do list',
-          seeAllLabel: items.isNotEmpty ? 'See all' : null,
+          seeAllLabel: showSeeAll ? 'See all' : null,
           onSeeAll: onSeeAll,
         ),
-        if (items.isEmpty)
+        if (isLoading && items.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (isError && items.isEmpty)
+          VcareErrorStatePanel(
+            title: 'Unable to load tasks',
+            message: errorMessage,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            actionLabel: context.appLocalization.retry,
+            onAction: onRetry,
+          )
+        else if (previewItems.isEmpty)
           const VcareEmptyStateCard(
             icon: LucideIcons.listChecks,
             title: 'No tasks yet',
@@ -42,10 +66,10 @@ class HomeRecentActivitySection extends StatelessWidget {
         else
           Column(
             children: [
-              for (final item in items)
+              for (final item in previewItems)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: _ActivityCard(
+                  child: TodoListRow(
                     item: item,
                     onTap: () => onItemTap?.call(item),
                   ),
@@ -53,251 +77,6 @@ class HomeRecentActivitySection extends StatelessWidget {
             ],
           ),
       ],
-    );
-  }
-}
-
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.item, this.onTap});
-
-  final ActivityItem item;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: vcare.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: _ActivityRow(item: item, vcare: vcare),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.item, required this.vcare});
-
-  final ActivityItem item;
-  final VCareThemeExtension vcare;
-
-  @override
-  Widget build(BuildContext context) {
-    if (item.kind == ActivityKind.transaction) {
-      return _TransactionRow(item: item, vcare: vcare);
-    }
-
-    return Row(
-      children: [
-        if (item.kind == ActivityKind.message &&
-            (item.photoUrl != null || item.photoAsset != null))
-          ClipOval(
-            child: item.photoUrl != null
-                ? VCareCachedImage(
-                    imageUrl: item.photoUrl!,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorWidget: _IconTile(
-                      icon: LucideIcons.user,
-                      background: vcare.muted,
-                      foreground: vcare.mutedForeground,
-                    ),
-                  )
-                : Image.asset(
-                    item.photoAsset!,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                  ),
-          )
-        else
-          _IconTile(
-            icon: LucideIcons.inbox,
-            background: vcare.muted,
-            foreground: vcare.mutedForeground,
-          ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    formatWhen(item.when),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: vcare.mutedForeground,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  if (item.kind == ActivityKind.request &&
-                      item.statusLabel != null)
-                    HomeActivityStatusChip(label: item.statusLabel!)
-                  else if (item.kind == ActivityKind.message)
-                    const HomeActivityStatusChip(label: 'Message'),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      item.subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: vcare.mutedForeground,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TransactionRow extends StatelessWidget {
-  const _TransactionRow({required this.item, required this.vcare});
-
-  final ActivityItem item;
-  final VCareThemeExtension vcare;
-
-  @override
-  Widget build(BuildContext context) {
-    final transaction = item.transaction!;
-    final isFailed = transaction.status == 'Failed';
-    final amount = NumberFormat.simpleCurrency(
-      name: transaction.currency,
-    ).format(transaction.amount);
-
-    return Row(
-      children: [
-        _IconTile(
-          icon: isFailed ? LucideIcons.alertTriangle : LucideIcons.receipt,
-          background: isFailed
-              ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
-              : vcare.muted,
-          foreground: isFailed
-              ? Theme.of(context).colorScheme.error
-              : vcare.mutedForeground,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    amount,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: isFailed
-                          ? Theme.of(context).colorScheme.error
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  HomeActivityStatusChip(label: transaction.status),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isFailed
-                          ? item.subtitle
-                          : DateFormat(
-                              'MMM d, h:mm a',
-                            ).format(transaction.paidAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: vcare.mutedForeground,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    formatWhen(item.when),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: vcare.mutedForeground,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _IconTile extends StatelessWidget {
-  const _IconTile({
-    required this.icon,
-    required this.background,
-    required this.foreground,
-  });
-
-  final IconData icon;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Icon(icon, size: 20, color: foreground),
     );
   }
 }

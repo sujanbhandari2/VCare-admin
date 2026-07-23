@@ -12,6 +12,11 @@ void main() {
           'firstName': 'Jane',
           'lastName': 'Doe',
           'email': 'sujan@vitafyhealth.com',
+          'currentTenant': {
+            'id': '1b4b5118-055f-44e7-9ddd-59e5e357e756',
+            'slug': 'default',
+            'name': 'Default',
+          },
         },
         'tokens': {
           'accessToken': 'access-token',
@@ -27,6 +32,7 @@ void main() {
       expect(entity.email, 'sujan@vitafyhealth.com');
       expect(entity.username, 'Jane Doe');
       expect(entity.profileId, 'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a');
+      expect(entity.tenantId, '1b4b5118-055f-44e7-9ddd-59e5e357e756');
       expect(model.menu, ['files', 'activities']);
     });
   });

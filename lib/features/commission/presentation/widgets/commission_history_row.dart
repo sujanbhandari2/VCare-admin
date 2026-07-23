@@ -8,27 +8,17 @@ import 'package:vcare_admin/features/commission/domain/entities/commission_statu
 import 'package:vcare_admin/features/commission/utils/commission_utils.dart';
 
 class CommissionHistoryRow extends StatelessWidget {
-  const CommissionHistoryRow({
-    super.key,
-    required this.item,
-    this.maskAmount = false,
-    this.onTap,
-  });
+  const CommissionHistoryRow({super.key, required this.item, this.onTap});
 
   final CommissionHistoryItem item;
-  final bool maskAmount;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final title = maskAmount ? agencySaleTitle(item.id) : item.displayClientName;
-    final amount = maskAmount
-        ? formatCommissionMoney(
-            agencySaleAmount(item.commissionAmount).toStringAsFixed(2),
-          )
-        : formatCommissionMoney(item.commissionAmount, signed: true);
-    final badgeLabel = maskAmount ? 'XXX' : commissionStatusLabel(item.status);
+    final title = item.displayClientName;
+    final amount = formatCommissionMoney(item.commissionAmount, signed: true);
+    final badgeLabel = commissionStatusLabel(item.status);
 
     return Material(
       color: vcare.card,
@@ -80,10 +70,7 @@ class CommissionHistoryRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  CommissionStatusBadge(
-                    label: badgeLabel,
-                    status: maskAmount ? CommissionStatus.unknown : item.status,
-                  ),
+                  CommissionStatusBadge(label: badgeLabel, status: item.status),
                 ],
               ),
             ],
@@ -108,21 +95,21 @@ class CommissionStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (background, foreground) = switch (status) {
       CommissionStatus.paid => (
-          VCareColors.primary,
-          VCareColors.primaryForeground,
-        ),
+        VCareColors.primary,
+        VCareColors.primaryForeground,
+      ),
       CommissionStatus.pending => (
-          VCareColors.secondary,
-          VCareColors.secondaryForeground,
-        ),
+        VCareColors.secondary,
+        VCareColors.secondaryForeground,
+      ),
       CommissionStatus.cancelled => (
-          VCareColors.destructive,
-          VCareColors.destructiveForeground,
-        ),
+        VCareColors.destructive,
+        VCareColors.destructiveForeground,
+      ),
       CommissionStatus.unknown => (
-          VCareColors.muted,
-          VCareColors.mutedForeground,
-        ),
+        VCareColors.muted,
+        VCareColors.mutedForeground,
+      ),
     };
 
     return Container(
@@ -156,10 +143,7 @@ class CommissionHistoryEmptyFilter extends StatelessWidget {
       decoration: BoxDecoration(
         color: vcare.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: vcare.border,
-          style: BorderStyle.solid,
-        ),
+        border: Border.all(color: vcare.border, style: BorderStyle.solid),
       ),
       child: Text(
         'No commissions for this filter.',

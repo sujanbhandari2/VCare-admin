@@ -22,6 +22,7 @@ class CareTeamEmptyState extends StatelessWidget {
         border: Border.all(color: vcare.border),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 56,

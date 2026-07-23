@@ -7,7 +7,12 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
+import 'package:vcare_admin/features/documents/presentation/widgets/documents_type_picker_sheet.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
+import 'package:vcare_admin/features/documents/utils/documents_w9_utils.dart';
+import 'package:vcare_admin/features/home/presentation/providers/agent_stats_state_provider.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class DocumentsUploadActions extends ConsumerStatefulWidget {
@@ -22,7 +27,20 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
   static final _imagePicker = ImagePicker();
   bool _isUploading = false;
 
-  Future<({int uploaded, int failed})> _uploadFiles(List<XFile> files) async {
+  bool _resolveCanUploadW9() {
+    final statsState = ref.read(agentStatsStateProvider);
+    final profile = ref.read(localProfileStateProvider);
+    return canUploadW9Document(
+      isStatsFetching: statsState.fetching,
+      isAgencyAssociated: statsState.data?.isAgencyAssociated,
+      hasAgencyGroup: profile.hasAgencyGroup,
+    );
+  }
+
+  Future<({int uploaded, int failed})> _uploadFiles(
+    List<XFile> files, {
+    required String documentType,
+  }) async {
     var uploaded = 0;
     var failed = 0;
 
@@ -38,6 +56,7 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
         await ref.read(documentsListStateProvider.notifier).uploadDocument(
           fileName: displayName,
           bytes: bytes,
+          documentType: documentType,
           refreshList: false,
           onCompleted: (success, _) {
             if (success) {
@@ -59,12 +78,15 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
     return (uploaded: uploaded, failed: failed);
   }
 
-  Future<void> _handleFiles(List<XFile> files) async {
+  Future<void> _handleFiles(
+    List<XFile> files, {
+    required String documentType,
+  }) async {
     if (files.isEmpty || _isUploading) return;
 
     setState(() => _isUploading = true);
 
-    final result = await _uploadFiles(files);
+    final result = await _uploadFiles(files, documentType: documentType);
 
     if (!mounted) return;
 
@@ -84,11 +106,22 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
     }
   }
 
-  Future<void> _pickFiles() async {
+  Future<void> _pickFiles({required String documentType}) async {
     const acceptedTypes = <XTypeGroup>[
       XTypeGroup(
         label: 'documents',
-        extensions: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'webp'],
+        extensions: [
+          'pdf',
+          'doc',
+          'docx',
+          'txt',
+          'csv',
+          'zip',
+          'png',
+          'jpg',
+          'jpeg',
+          'webp',
+        ],
       ),
       XTypeGroup(
         label: 'audio',
@@ -101,51 +134,52 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
 
     await _handleFiles(
       files.map((file) => XFile(file.path, name: file.name)).toList(),
+      documentType: documentType,
     );
   }
 
-  Future<void> _takePhoto() async {
+  Future<void> _takePhoto({required String documentType}) async {
     if (_isUploading) return;
 
     final image = await _imagePicker.pickImage(source: ImageSource.camera);
     if (!mounted || image == null) return;
 
-    await _handleFiles([image]);
+    await _handleFiles([image], documentType: documentType);
+  }
+
+  Future<void> _startUploadFlow() async {
+    if (_isUploading) return;
+
+    final documentType = await DocumentsTypePickerSheet.show(
+      context,
+      includeW9: _resolveCanUploadW9(),
+    );
+    if (!mounted || documentType == null || documentType.trim().isEmpty) {
+      return;
+    }
+
+    final action = await context.showBottomSheet<_UploadAction>(
+      builder: (sheetContext) => _DocumentsSourceSheet(
+        onSelected: (value) => Navigator.of(sheetContext).pop(value),
+      ),
+    );
+    if (!mounted || action == null) return;
+
+    switch (action) {
+      case _UploadAction.chooseFiles:
+        await _pickFiles(documentType: documentType);
+      case _UploadAction.takePhoto:
+        await _takePhoto(documentType: documentType);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<_UploadAction>(
-      tooltip: 'Upload',
-      enabled: !_isUploading,
-      offset: const Offset(0, 44),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (action) {
-        switch (action) {
-          case _UploadAction.chooseFiles:
-            _pickFiles();
-          case _UploadAction.takePhoto:
-            _takePhoto();
-        }
-      },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: _UploadAction.chooseFiles,
-          child: _UploadMenuRow(
-            icon: LucideIcons.paperclip,
-            label: 'Choose files',
-          ),
-        ),
-        const PopupMenuItem(
-          value: _UploadAction.takePhoto,
-          child: _UploadMenuRow(
-            icon: LucideIcons.camera,
-            label: 'Take photo',
-          ),
-        ),
-      ],
-      child: Material(
-        color: VCareColors.primary,
+    return Material(
+      color: VCareColors.primary,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: _isUploading ? null : _startUploadFlow,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -186,20 +220,81 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
 
 enum _UploadAction { chooseFiles, takePhoto }
 
-class _UploadMenuRow extends StatelessWidget {
-  const _UploadMenuRow({required this.icon, required this.label});
+class _DocumentsSourceSheet extends StatelessWidget {
+  const _DocumentsSourceSheet({required this.onSelected});
 
-  final IconData icon;
-  final String label;
+  final ValueChanged<_UploadAction> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: context.vcare.mutedForeground),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 14)),
-      ],
+    final vcare = context.vcare;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset + 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: vcare.muted,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _UploadMenuRow(
+              icon: LucideIcons.paperclip,
+              label: 'Choose files',
+              onTap: () => onSelected(_UploadAction.chooseFiles),
+            ),
+            _UploadMenuRow(
+              icon: LucideIcons.camera,
+              label: 'Take photo',
+              onTap: () => onSelected(_UploadAction.takePhoto),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UploadMenuRow extends StatelessWidget {
+  const _UploadMenuRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: context.vcare.mutedForeground),
+              const SizedBox(width: 8),
+              Text(label, style: const TextStyle(fontSize: 14)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

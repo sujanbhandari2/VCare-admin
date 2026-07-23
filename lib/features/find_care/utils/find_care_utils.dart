@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
+import 'package:vcare_admin/features/find_care/domain/entities/search_location.dart';
 
 const usStateCodes = <({String code, String name})>[
   (code: 'AL', name: 'Alabama'),
@@ -101,5 +102,50 @@ String? parseSearchState(String locationText) {
   final parts = trimmed.split(',');
   if (parts.length < 2) return null;
   final state = parts.last.trim();
-  return state.length == 2 ? state.toUpperCase() : state;
+  return normalizeUsStateCode(state) ??
+      (state.length == 2 ? state.toUpperCase() : state);
+}
+
+/// Normalizes a US state name or abbreviation to a two-letter CMS state code.
+String? normalizeUsStateCode(String? raw) {
+  final trimmed = raw?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+
+  if (trimmed.length == 2) {
+    final upper = trimmed.toUpperCase();
+    for (final entry in usStateCodes) {
+      if (entry.code == upper) return entry.code;
+    }
+    return upper;
+  }
+
+  final lower = trimmed.toLowerCase();
+  for (final entry in usStateCodes) {
+    if (entry.name.toLowerCase() == lower) {
+      return entry.code;
+    }
+  }
+  return null;
+}
+
+/// Builds a [SearchLocation] city/state pair from reverse-geocode placemark fields.
+SearchLocation? searchLocationFromAddressParts({
+  String? locality,
+  String? subAdministrativeArea,
+  String? subLocality,
+  String? administrativeArea,
+}) {
+  final cityCandidates = [locality, subAdministrativeArea, subLocality];
+  String city = '';
+  for (final candidate in cityCandidates) {
+    final value = candidate?.trim() ?? '';
+    if (value.isNotEmpty) {
+      city = value;
+      break;
+    }
+  }
+
+  final state = normalizeUsStateCode(administrativeArea) ?? '';
+  if (city.isEmpty && state.isEmpty) return null;
+  return SearchLocation(city: city, state: state);
 }

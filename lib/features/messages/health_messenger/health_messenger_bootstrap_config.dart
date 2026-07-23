@@ -86,14 +86,17 @@ class HealthMessengerBootstrapConfig {
   static HealthMessengerBootstrapConfig? tryBuild({
     required StorageService storage,
     UserProfile? profile,
+    String? currentTenantId,
     String externalUserRole = defaultExternalUserRole,
   }) {
     final identity = AuthIdentityMapper(storage: storage, profile: profile);
     final apiBaseUrl = HealthMessengerEnv.apiBaseUrl;
     final socketUrl = HealthMessengerEnv.socketUrl;
     final apiKey = HealthMessengerEnv.apiKey;
-    final externalTenantId =
-        prefixedExternalTenantId(HealthMessengerEnv.externalTenantId);
+    final rawTenantId = (currentTenantId?.trim().isNotEmpty ?? false)
+        ? currentTenantId!.trim()
+        : identity.externalTenantId;
+    final externalTenantId = prefixedExternalTenantId(rawTenantId);
     final externalUserId = identity.externalUserId;
     final email = identity.email;
     final displayName = identity.displayName;
@@ -126,6 +129,7 @@ class HealthMessengerBootstrapConfig {
   static String describeValidationFailure({
     required StorageService storage,
     UserProfile? profile,
+    String? currentTenantId,
   }) {
     if (HealthMessengerEnv.apiBaseUrl.isEmpty) {
       return 'Missing VITE_API_URL or HEALTH_MESSENGER_API_BASE_URL in environment.';
@@ -136,11 +140,14 @@ class HealthMessengerBootstrapConfig {
     if (HealthMessengerEnv.apiKey.isEmpty) {
       return 'Missing VITE_WIDGET_ACCESS_KEY or HEALTH_MESSENGER_API_KEY in environment.';
     }
-    if (HealthMessengerEnv.externalTenantId.isEmpty) {
-      return 'Missing HEALTH_MESSENGER_EXTERNAL_TENANT_ID in environment.';
-    }
 
     final identity = AuthIdentityMapper(storage: storage, profile: profile);
+    final rawTenantId = (currentTenantId?.trim().isNotEmpty ?? false)
+        ? currentTenantId!.trim()
+        : identity.externalTenantId;
+    if (rawTenantId.isEmpty) {
+      return 'Current tenant id is missing from the signed-in session.';
+    }
     if (identity.externalUserId.isEmpty) {
       return 'User ID is missing from the signed-in session.';
     }

@@ -5,10 +5,7 @@ class SearchLocation {
   final String state;
 
   SearchLocation copyWith({String? city, String? state}) {
-    return SearchLocation(
-      city: city ?? this.city,
-      state: state ?? this.state,
-    );
+    return SearchLocation(city: city ?? this.city, state: state ?? this.state);
   }
 
   String get displayLabel {

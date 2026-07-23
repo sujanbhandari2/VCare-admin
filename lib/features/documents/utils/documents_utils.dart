@@ -5,6 +5,8 @@ import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
 import 'package:vcare_admin/features/documents/domain/entities/agent_file.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_filter.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
+import 'package:vcare_admin/features/documents/domain/entities/document_type_option.dart';
+import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
 
 DocumentKind documentKindOf(String dataUrl, String name) {
   if (isDocumentImage(dataUrl, name)) {
@@ -75,6 +77,9 @@ DocumentItem documentItemFromAgentFile(AgentFile file) {
     source: source,
     sourceLabel: sourceLabel,
     createdAt: file.createdAt,
+    documentType: file.documentType,
+    createdBy: file.createdBy,
+    userId: file.userId,
     sourceRouteName: source == DocumentSource.request
         ? AppRouter.clientDetailName
         : null,
@@ -89,16 +94,41 @@ DocumentSource _sourceFromCategory(String? category) {
   final normalized = category?.trim().toUpperCase();
   if (normalized == 'CLIENT') return DocumentSource.request;
   if (normalized == 'CARD') return DocumentSource.card;
-  if (normalized == 'DEAL') return DocumentSource.upload;
+  if (normalized == DocumentUploadCategories.agent || normalized == 'DEAL') {
+    return DocumentSource.upload;
+  }
   return DocumentSource.upload;
 }
 
 String _sourceLabel(AgentFile file) {
   return switch (file.category?.trim().toUpperCase()) {
     'CLIENT' => 'Client document',
-    'CARD' => 'Digital ID Card',
+    'CARD' => 'My Referral',
+    DocumentUploadCategories.agent => 'Agent document',
+    'DEAL' => 'Uploaded',
     _ => 'Uploaded',
   };
+}
+
+/// Prefer OTHER / "Other", otherwise the first option label.
+String defaultDocumentTypeLabelFrom(List<DocumentTypeOption> options) {
+  for (final option in options) {
+    if (option.key == 'OTHER' || option.label.toLowerCase() == 'other') {
+      return option.label;
+    }
+  }
+  if (options.isNotEmpty) return options.first.label;
+  return defaultDocumentTypeLabel;
+}
+
+List<DocumentTypeOption> filterDocumentTypeOptions(
+  List<DocumentTypeOption> options, {
+  required bool includeW9,
+}) {
+  if (includeW9) return options;
+  return options
+      .where((option) => option.key != documentTypeW9Key)
+      .toList(growable: false);
 }
 
 bool _hasImageExtension(String value) {
@@ -170,7 +200,7 @@ Map<DocumentFilter, int> documentFilterCounts(List<DocumentItem> items) {
 
 List<DocumentItem> filterDocuments({
   required List<DocumentItem> items,
-  required DocumentFilter filter,
+  DocumentFilter filter = DocumentFilter.all,
   required String query,
 }) {
   final normalizedQuery = query.trim().toLowerCase();
@@ -179,6 +209,54 @@ List<DocumentItem> filterDocuments({
     if (!documentMatchesFilter(item, filter)) return false;
     if (normalizedQuery.isEmpty) return true;
     return item.name.toLowerCase().contains(normalizedQuery) ||
-        item.sourceLabel.toLowerCase().contains(normalizedQuery);
+        item.sourceLabel.toLowerCase().contains(normalizedQuery) ||
+        (item.documentType?.toLowerCase().contains(normalizedQuery) ?? false);
   }).toList();
+}
+
+/// Matches web `canManageDocument`: uploader is `createdBy ?? userId`.
+bool canManageDocument({
+  required String? currentUserId,
+  required String? createdBy,
+  required String? userId,
+}) {
+  final current = currentUserId?.trim();
+  if (current == null || current.isEmpty) return false;
+  final uploader = (createdBy ?? userId)?.trim();
+  if (uploader == null || uploader.isEmpty) return false;
+  return uploader == current;
+}
+
+const _allowedRenameExtensions = <String>{
+  '.pdf',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.bmp',
+  '.tif',
+  '.tiff',
+  '.doc',
+  '.docx',
+  '.txt',
+  '.csv',
+  '.zip',
+};
+
+/// Validates rename names like web `getFileNameValidationError`.
+String? documentRenameValidationError(String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return 'Name is required';
+  if (trimmed.length > 255) return 'Name must be 255 characters or fewer';
+  final dotIndex = trimmed.lastIndexOf('.');
+  if (dotIndex <= 0) {
+    return 'Name must include a supported file extension';
+  }
+  final extension = trimmed.substring(dotIndex).toLowerCase();
+  if (!_allowedRenameExtensions.contains(extension)) {
+    return 'Name must include a supported file extension';
+  }
+  return null;
 }

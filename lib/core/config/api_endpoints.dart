@@ -29,6 +29,7 @@ class ApiEndpoints {
   static const String agentStats = "agents/stats";
   static const String agentCommissionSummary = "agents/commission-summary";
   static const String agentCommissionHistory = "agents/commission-history";
+  static const String agentSalesHistory = "agents/sales-history";
   static const String agentClients = "agents/clients";
   static String agentClient(String id) => "agents/clients/$id";
   static String agentClientMemberships(String id) =>
@@ -52,11 +53,16 @@ class ApiEndpoints {
 
   static String transactionCharge(String id) => "transactions/$id/charge";
 
+  static const String todos = "todos";
+
   static const String files = "files";
+  static const String filesDocumentTypes = "files/document-types";
   static String file(String id) => "files/$id/";
+  static String fileContent(String id) => "files/$id/content";
 
   static const String providersSave = "providers/save";
-  static String providerSaveById(String providerId) => "providers/save/$providerId";
+  static String providerSaveById(String providerId) =>
+      "providers/save/$providerId";
 
   static const String familyMembers = "family-members/";
   static String familyMember(String id) => "family-members/$id";

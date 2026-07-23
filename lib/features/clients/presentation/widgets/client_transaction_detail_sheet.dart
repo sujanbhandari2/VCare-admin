@@ -350,7 +350,7 @@ class _ClientTransactionDetailSheetState
         .read(clientTransactionsStateProvider(widget.clientId).notifier)
         .reprocessCharge(
           transactionId: widget.transaction.id,
-          onCompleted: (success, error) {
+          onCompleted: (success, _) {
             if (!mounted) return;
 
             setState(() => _reprocessing = false);
@@ -365,7 +365,7 @@ class _ClientTransactionDetailSheetState
             } else {
               context.showVcareToast(
                 title: 'Reprocess failed',
-                description: error ?? 'Unable to reprocess this transaction.',
+                description: 'Try using a different payment method.',
                 variant: VcareToastVariant.destructive,
               );
             }

@@ -49,7 +49,7 @@ class ProfileSignOutFooter extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'VCare v1.0 · Mock data',
+          'VCare v1.0',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
         ),

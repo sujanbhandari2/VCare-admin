@@ -112,6 +112,11 @@ class AuthSetupAccountStateNotifier extends _$AuthSetupAccountStateNotifier {
         result.profileId,
       );
     }
+
+    final tenantId = session.tenantId?.trim();
+    if (tenantId != null && tenantId.isNotEmpty) {
+      await storageService.set(StorageKeys.loggedInUserTenantId, tenantId);
+    }
   }
 
   void _completeRequest() {

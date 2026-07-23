@@ -10,11 +10,13 @@ class FindCareLocationBar extends StatelessWidget {
     required this.locationController,
     this.actions,
     this.onDetectLocation,
+    this.isDetecting = false,
   });
 
   final TextEditingController locationController;
   final Widget? actions;
   final VoidCallback? onDetectLocation;
+  final bool isDetecting;
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +75,23 @@ class FindCareLocationBar extends StatelessWidget {
                   color: vcare.muted,
                   shape: const CircleBorder(),
                   child: InkWell(
-                    onTap: onDetectLocation,
+                    onTap: isDetecting ? null : onDetectLocation,
                     customBorder: const CircleBorder(),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 36,
                       height: 36,
-                      child: Icon(LucideIcons.locateFixed, size: 18),
+                      child: Center(
+                        child: isDetecting
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: vcare.accent,
+                                ),
+                              )
+                            : const Icon(LucideIcons.locateFixed, size: 18),
+                      ),
                     ),
                   ),
                 ),

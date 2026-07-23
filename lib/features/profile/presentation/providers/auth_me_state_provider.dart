@@ -92,6 +92,13 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
                   email,
                 );
           }
+          final tenantId = authMe.user.currentTenant?.id?.trim();
+          if (tenantId != null && tenantId.isNotEmpty) {
+            await ref.read(storageServiceProvider).set(
+                  StorageKeys.loggedInUserTenantId,
+                  tenantId,
+                );
+          }
 
           final localProfile = localProfileFromAuthMe(authMe);
           await ref.read(localProfileStateProvider.notifier).save(localProfile);

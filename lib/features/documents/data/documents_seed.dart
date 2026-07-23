@@ -71,15 +71,15 @@ abstract final class DocumentsSeed {
         dataUrl: '',
         size: _parseSizeLabel(document.sizeLabel),
         kind: kind,
-        source: document.sourceLabel.contains('ID Card')
+        source: document.sourceLabel.contains('Referral')
             ? DocumentSource.card
             : DocumentSource.request,
         sourceLabel: document.sourceLabel,
         createdAt: document.createdAt,
-        sourceRouteName: document.sourceLabel.contains('ID Card')
+        sourceRouteName: document.sourceLabel.contains('Referral')
             ? AppRouter.idCardName
             : AppRouter.requestDetailName,
-        sourceRouteParameters: document.sourceLabel.contains('ID Card')
+        sourceRouteParameters: document.sourceLabel.contains('Referral')
             ? null
             : const {'id': 'r-001'},
       );

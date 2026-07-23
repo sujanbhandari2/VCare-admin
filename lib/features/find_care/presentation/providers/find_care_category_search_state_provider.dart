@@ -19,10 +19,7 @@ class FindCareCategorySearchStateNotifier
     state = const FindCareCategorySearchState();
   }
 
-  Future<bool> search({
-    required String slug,
-    required String keyword,
-  }) async {
+  Future<bool> search({required String slug, required String keyword}) async {
     final providerType = cmsProviderTypeContainsByCategory[slug];
     if (providerType == null) return false;
 
@@ -37,7 +34,9 @@ class FindCareCategorySearchStateNotifier
     final parsed = parseMedicareNameSearchInput(keyword);
     final location = ref.read(findCareSearchLocationProvider);
 
-    final response = await ref.read(medicareProviderRepositoryProvider).searchDirectory(
+    final response = await ref
+        .read(medicareProviderRepositoryProvider)
+        .searchDirectory(
           firstName: parsed.firstName,
           lastName: parsed.lastName,
           providerTypeContains: providerType,
@@ -77,7 +76,9 @@ class FindCareCategorySearchStateNotifier
     final parsed = parseMedicareNameSearchInput(keyword);
     final location = ref.read(findCareSearchLocationProvider);
 
-    final response = await ref.read(medicareProviderRepositoryProvider).searchDirectory(
+    final response = await ref
+        .read(medicareProviderRepositoryProvider)
+        .searchDirectory(
           firstName: parsed.firstName,
           lastName: parsed.lastName,
           providerTypeContains: providerType,

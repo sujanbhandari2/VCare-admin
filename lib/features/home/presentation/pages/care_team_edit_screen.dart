@@ -54,7 +54,7 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
   final _groupNumberController = TextEditingController();
 
   CareTeamRole _role = CareTeamRole.advocate;
-  AuthPhoneCountry _phoneCountry = AuthPhoneCountry.usa;
+  static const _phoneCountry = AuthPhoneCountry.usa;
   String? _photoUrl;
   bool _loading = true;
   bool _submitting = false;
@@ -96,20 +96,18 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
     }
 
     final rawPhone = member.phone ?? '';
-    final phoneCountry = AuthPhoneFormatter.detectCountry(rawPhone);
     final nationalDigits = AuthPhoneFormatter.toDisplayDigits(
       rawPhone,
-      fallback: phoneCountry,
+      fallback: _phoneCountry,
     );
 
     setState(() {
       _nameController.text = member.name;
       _role = member.role;
       _emailController.text = member.email ?? '';
-      _phoneCountry = phoneCountry;
       _phoneController.text = AuthPhoneFormatter.formatNationalDisplay(
         nationalDigits,
-        phoneCountry,
+        _phoneCountry,
       );
       _websiteController.text = member.website ?? '';
       _bioController.text = member.bio ?? '';
@@ -118,21 +116,6 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
       _groupNumberController.text = member.groupNumber ?? '';
       _photoUrl = member.photoUrl ?? member.photoAsset;
       _loading = false;
-    });
-  }
-
-  void _onPhoneCountryChanged(AuthPhoneCountry country) {
-    setState(() {
-      _phoneCountry = country;
-      _fieldErrors = Map<String, String>.from(_fieldErrors)..remove('phone');
-      final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-      final limited = digits.length > country.nationalLength
-          ? digits.substring(0, country.nationalLength)
-          : digits;
-      _phoneController.text = AuthPhoneFormatter.formatNationalDisplay(
-        limited,
-        country,
-      );
     });
   }
 
@@ -459,10 +442,7 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
                       context,
                       hintText: _phoneCountry.hint,
                       hasError: _fieldErrors.containsKey('phone'),
-                      prefixIcon: LoginPhoneCountrySelector(
-                        selected: _phoneCountry,
-                        onChanged: _onPhoneCountryChanged,
-                      ),
+                      prefixIcon: const LoginPhoneCountrySelector(),
                     ),
                   ),
                 ),

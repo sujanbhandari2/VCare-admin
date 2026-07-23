@@ -67,5 +67,26 @@ void main() {
       expect(parseSearchState('San Francisco, CA'), 'CA');
       expect(parseSearchState('Seattle'), isNull);
     });
+
+    test('normalizeUsStateCode maps names and abbreviations', () {
+      expect(normalizeUsStateCode('ca'), 'CA');
+      expect(normalizeUsStateCode('Texas'), 'TX');
+      expect(normalizeUsStateCode(''), isNull);
+      expect(normalizeUsStateCode(null), isNull);
+    });
+
+    test('searchLocationFromAddressParts builds city/state', () {
+      final location = searchLocationFromAddressParts(
+        locality: 'Austin',
+        administrativeArea: 'Texas',
+      );
+
+      expect(location?.city, 'Austin');
+      expect(location?.state, 'TX');
+      expect(
+        searchLocationFromAddressParts(locality: '', administrativeArea: ''),
+        isNull,
+      );
+    });
   });
 }

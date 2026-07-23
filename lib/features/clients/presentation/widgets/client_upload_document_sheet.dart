@@ -9,6 +9,8 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_mapper_utils.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_documents_state_provider.dart';
+import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
+import 'package:vcare_admin/features/documents/presentation/widgets/documents_type_picker_sheet.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
@@ -17,18 +19,33 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     super.key,
     required this.clientId,
     required this.hostContext,
+    required this.documentType,
   });
 
   final String clientId;
   final BuildContext hostContext;
+  final String documentType;
 
   static final _picker = ImagePicker();
 
-  static Future<void> show(BuildContext context, {required String clientId}) {
-    return context.showBottomSheet<void>(
+  static Future<void> show(BuildContext context, {required String clientId}) async {
+    final documentType = await DocumentsTypePickerSheet.show(
+      context,
+      includeW9: false,
+    );
+    if (!context.mounted ||
+        documentType == null ||
+        documentType.trim().isEmpty) {
+      return;
+    }
+
+    await context.showBottomSheet<void>(
       builder: (sheetContext) => ClientUploadDocumentSheet(
         clientId: clientId,
         hostContext: context,
+        documentType: documentType.trim().isEmpty
+            ? defaultDocumentTypeLabel
+            : documentType.trim(),
       ),
     );
   }
@@ -37,6 +54,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     ProviderContainer container,
     String clientId,
     BuildContext context, {
+    required String documentType,
     required String name,
     required List<int> bytes,
     required String mime,
@@ -51,6 +69,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
         .uploadDocument(
           fileName: displayName,
           bytes: bytes,
+          documentType: documentType,
           onCompleted: (success, error) {
             if (!context.mounted) return;
             if (success) {
@@ -72,8 +91,9 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   static Future<void> pickFromGallery(
     ProviderContainer container,
     String clientId,
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    required String documentType,
+  }) async {
     final image = await _picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
@@ -83,6 +103,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
       container,
       clientId,
       context,
+      documentType: documentType,
       name: image.name,
       bytes: bytes,
       mime: 'image/jpeg',
@@ -92,8 +113,9 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   static Future<void> takePicture(
     ProviderContainer container,
     String clientId,
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    required String documentType,
+  }) async {
     final image = await _picker.pickImage(source: ImageSource.camera);
     if (image == null) return;
     final bytes = await image.readAsBytes();
@@ -102,6 +124,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
       container,
       clientId,
       context,
+      documentType: documentType,
       name: image.name,
       bytes: bytes,
       mime: 'image/jpeg',
@@ -111,39 +134,24 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   static Future<void> chooseFile(
     ProviderContainer container,
     String clientId,
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    required String documentType,
+  }) async {
+    // Matches web client accept: images, pdf, doc/docx, txt
     const typeGroups = [
       XTypeGroup(
         label: 'Images',
-        extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'bmp', 'svg'],
+        extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
         mimeTypes: ['image/*'],
       ),
       XTypeGroup(
         label: 'Documents',
-        extensions: [
-          'pdf',
-          'doc',
-          'docx',
-          'txt',
-          'xls',
-          'xlsx',
-          'csv',
-          'ppt',
-          'pptx',
-          'rtf',
-        ],
+        extensions: ['pdf', 'doc', 'docx', 'txt'],
         mimeTypes: [
           'application/pdf',
           'application/msword',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'text/plain',
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'text/csv',
-          'application/vnd.ms-powerpoint',
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'application/rtf',
         ],
       ),
     ];
@@ -158,6 +166,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
       container,
       clientId,
       context,
+      documentType: documentType,
       name: file.name,
       bytes: bytes,
       mime: mime,
@@ -196,6 +205,13 @@ class ClientUploadDocumentSheet extends StatelessWidget {
             ),
           ),
           Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'Type: $documentType',
+              style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
+            ),
+          ),
+          Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 16),
             child: Column(
               children: [
@@ -206,6 +222,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
                     sheetContext: context,
                     hostContext: hostContext,
                     clientId: clientId,
+                    documentType: documentType,
                     action: pickFromGallery,
                   ),
                 ),
@@ -216,6 +233,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
                     sheetContext: context,
                     hostContext: hostContext,
                     clientId: clientId,
+                    documentType: documentType,
                     action: takePicture,
                   ),
                 ),
@@ -226,6 +244,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
                     sheetContext: context,
                     hostContext: hostContext,
                     clientId: clientId,
+                    documentType: documentType,
                     action: chooseFile,
                   ),
                 ),
@@ -241,18 +260,20 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     required BuildContext sheetContext,
     required BuildContext hostContext,
     required String clientId,
+    required String documentType,
     required Future<void> Function(
       ProviderContainer container,
       String clientId,
-      BuildContext context,
-    )
+      BuildContext context, {
+      required String documentType,
+    })
     action,
   }) {
     final container = ProviderScope.containerOf(hostContext);
     sheetContext.pop();
     Future<void>.delayed(const Duration(milliseconds: 225), () {
       if (!hostContext.mounted) return;
-      action(container, clientId, hostContext);
+      action(container, clientId, hostContext, documentType: documentType);
     });
   }
 }

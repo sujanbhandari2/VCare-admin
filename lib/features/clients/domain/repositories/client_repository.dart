@@ -101,6 +101,7 @@ abstract class ClientRepository {
     required String clientId,
     required String fileName,
     required List<int> bytes,
+    required String documentType,
     String? note,
     String? date,
     CancelToken? cancelToken,

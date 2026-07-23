@@ -2,9 +2,6 @@ class EnvKeys {
   static const String baseUrl = "BASE_URL";
   static const String storageBoxName = "HIVE_BOX_NAME";
 
-  static const String healthMessengerExternalTenantId =
-      "HEALTH_MESSENGER_EXTERNAL_TENANT_ID";
-
   static const String healthMessengerApiBaseUrl =
       "HEALTH_MESSENGER_API_BASE_URL";
 

@@ -6,8 +6,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/find_care_current_location_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_location_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_state_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/utils/find_care_current_location_flow.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
@@ -46,9 +48,9 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
 
   Future<void> _runSearch({bool loadMore = false}) async {
     if (!loadMore) {
-      await ref.read(findCareSearchLocationProvider.notifier).setFromDisplayText(
-            _locationController.text,
-          );
+      await ref
+          .read(findCareSearchLocationProvider.notifier)
+          .setFromDisplayText(_locationController.text);
     }
     final notifier = ref.read(findCareSearchStateProvider.notifier);
     notifier.setProviderQuery(_queryController.text);
@@ -67,6 +69,9 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     final location = ref.watch(findCareSearchLocationProvider);
+    final detecting = ref.watch(
+      findCareCurrentLocationStateProvider.select((s) => s.detecting),
+    );
     final searchState = ref.watch(findCareSearchStateProvider);
 
     if (!_initialized) {
@@ -76,10 +81,14 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
         ref
             .read(findCareSearchStateProvider.notifier)
             .initializeFromQuery(widget.initialQuery);
-        if (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty) {
+        if (widget.initialQuery != null &&
+            widget.initialQuery!.trim().isNotEmpty) {
           _runSearch();
         }
       });
+    } else if (_locationController.text != location.displayLabel &&
+        location.displayLabel.isNotEmpty) {
+      _locationController.text = location.displayLabel;
     }
 
     final stateLabel = location.state.trim();
@@ -102,17 +111,12 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(
                   locationController: _locationController,
-                  onDetectLocation: () async {
-                    await ref
-                        .read(findCareSearchLocationProvider.notifier)
-                        .detectCurrentLocation();
-                    final updated = ref.read(findCareSearchLocationProvider);
-                    _locationController.text = updated.displayLabel;
-                    if (!context.mounted) return;
-                    context.showVcareToast(
-                      title: 'Search area updated',
-                      description: updated.displayLabel,
-                      variant: VcareToastVariant.info,
+                  isDetecting: detecting,
+                  onDetectLocation: () {
+                    runFindCareCurrentLocationFlow(
+                      context,
+                      ref,
+                      userInitiated: true,
                     );
                   },
                   actions: Column(
@@ -196,7 +200,8 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
                 ],
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () => context.goNamed(AppRouter.findCare.toPathName),
+                  onPressed: () =>
+                      context.goNamed(AppRouter.findCare.toPathName),
                   child: Text(
                     '← Back to Find Care',
                     style: TextStyle(

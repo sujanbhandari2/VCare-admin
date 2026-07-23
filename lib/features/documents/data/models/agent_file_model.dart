@@ -9,6 +9,7 @@ class AgentFileModel {
     this.category,
     this.categoryReferenceId,
     this.subCategoryReferenceId,
+    this.documentType,
     this.userId,
     this.tenantId,
     this.createdBy,
@@ -24,6 +25,7 @@ class AgentFileModel {
   final String? category;
   final String? categoryReferenceId;
   final String? subCategoryReferenceId;
+  final String? documentType;
   final String? userId;
   final String? tenantId;
   final String? createdBy;
@@ -40,6 +42,7 @@ class AgentFileModel {
       category: json['category']?.toString(),
       categoryReferenceId: json['categoryReferenceId']?.toString(),
       subCategoryReferenceId: json['subCategoryReferenceId']?.toString(),
+      documentType: json['documentType']?.toString(),
       userId: json['userId']?.toString(),
       tenantId: json['tenantId']?.toString(),
       createdBy: json['createdBy']?.toString(),

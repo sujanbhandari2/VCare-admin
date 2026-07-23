@@ -3,15 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
-import 'package:vcare_admin/features/home/data/home_mock_data.dart';
+// TODO: Re-enable when saved providers returns to home.
+// import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/data/home_profile_mapper.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
-import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
+// TODO: Re-enable when saved providers returns to home.
+// import 'package:vcare_admin/features/home/data/home_saved_providers_builder.dart';
 import 'package:vcare_admin/features/home/presentation/providers/agent_stats_state_provider.dart';
 import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
@@ -20,17 +21,21 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_membership_s
 import 'package:vcare_admin/features/home/presentation/widgets/home_metrics_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_recent_activity_section.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/home_saved_providers_section.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
-import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+// TODO: Re-enable when saved providers returns to home.
+// import 'package:vcare_admin/features/home/presentation/widgets/home_saved_providers_section.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
+import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_transaction_detail_sheet.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_w9_form_sheet.dart';
+// TODO: Re-enable when saved providers returns to home.
+// import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
-import 'package:vcare_admin/shared/utils/extension_functions.dart';
+// TODO: Re-enable when saved providers returns to home.
+// import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:go_router/go_router.dart';
-
-// TODO: Re-enable when todo list API is available.
-// import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
 
 /// Section spacing from vcareapp `HomeDashboardBody` (`space-y-6`).
 const _sectionGap = 24.0;
@@ -43,12 +48,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  late HomeViewData _data;
-
   @override
   void initState() {
     super.initState();
-    _data = _buildViewData();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // TODO: Re-enable when notifications API is available.
       // await ref.read(notificationInboxStateProvider.notifier).fetchInbox();
@@ -57,8 +59,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         await Future.wait([
           ref.read(authMeStateProvider.notifier).fetchMe(),
           ref.read(agentStatsStateProvider.notifier).fetchStats(),
-          ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders(),
+          // TODO: Re-enable when saved providers returns to home.
+          // ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders(),
           ref.read(careTeamStateProvider.notifier).fetchCareTeam(),
+          ref.read(todoListStateProvider.notifier).loadInitial(),
         ]);
       }
       if (mounted) {
@@ -67,65 +71,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  HomeViewData _buildViewData() {
-    final base = HomeMockData.defaultView();
-    // TODO: Re-enable when todo list API is available.
-    // final recent = defaultRecentActivity();
-    // return base.copyWith(recentActivity: recent);
-    return base;
-  }
-
   bool _hasReferral(LocalProfile profile) =>
       profile.fullName.isNotEmpty && profile.email.isNotEmpty;
 
-  Future<void> _removeFavorite(SavedProviderItem item) async {
-    final npi = item.medicareNpi;
-    if (npi == null) return;
+  // TODO: Re-enable when saved providers returns to home.
+  // Future<void> _removeFavorite(SavedProviderItem item) async {
+  //   final npi = item.medicareNpi;
+  //   if (npi == null) return;
+  //
+  //   final removed = await ref
+  //       .read(savedProvidersStateProvider.notifier)
+  //       .removeByNpi(npi);
+  //   if (!mounted || !removed) return;
+  //
+  //   context.showVcareToast(
+  //     title: 'Provider removed',
+  //     description: item.name,
+  //     variant: VcareToastVariant.info,
+  //   );
+  // }
+  //
+  // void _openSavedProvider(SavedProviderItem item) {
+  //   final npi = item.medicareNpi;
+  //   if (npi == null) return;
+  //   context.pushNamed(
+  //     AppRouter.medicareProviderDetailName,
+  //     pathParameters: {'npi': npi},
+  //   );
+  // }
 
-    final removed = await ref
-        .read(savedProvidersStateProvider.notifier)
-        .removeByNpi(npi);
-    if (!mounted || !removed) return;
-
-    context.showVcareToast(
-      title: 'Provider removed',
-      description: item.name,
-      variant: VcareToastVariant.info,
-    );
-  }
-
-  void _openSavedProvider(SavedProviderItem item) {
-    final npi = item.medicareNpi;
-    if (npi == null) return;
-    context.pushNamed(
-      AppRouter.medicareProviderDetailName,
-      pathParameters: {'npi': npi},
-    );
-  }
-
-  void _handleActivityTap(ActivityItem item) {
-    if (item.kind == ActivityKind.transaction && item.transaction != null) {
-      showHomeTransactionReceiptSheet(context, item.transaction!);
+  Future<void> _handleTodoTap(TodoItem item) async {
+    if (item.type == TodoType.paymentFailed) {
+      await TodoTransactionDetailSheet.show(context, item: item);
       return;
     }
-
-    if (item.kind == ActivityKind.request) {
-      context.pushNamed(
-        AppRouter.requestDetailName,
-        pathParameters: {'id': item.id},
-      );
-      return;
+    if (item.type == TodoType.w9FormMissing) {
+      await TodoW9FormSheet.show(context, item: item);
     }
-
-    if (item.kind == ActivityKind.message && item.contactId != null) {
-      context.pushNamed(
-        AppRouter.careTeamDetailName,
-        pathParameters: {'id': item.contactId!},
-      );
-      return;
-    }
-
-    context.pushNamed(AppRouter.messages.toPathName);
   }
 
   Future<void> _onRefresh() async {
@@ -140,19 +122,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref
             .read(agentStatsStateProvider.notifier)
             .fetchStats(forceRefresh: true),
-        ref
-            .read(savedProvidersStateProvider.notifier)
-            .fetchSavedProviders(forceRefresh: true),
+        // TODO: Re-enable when saved providers returns to home.
+        // ref
+        //     .read(savedProvidersStateProvider.notifier)
+        //     .fetchSavedProviders(forceRefresh: true),
         ref.read(careTeamStateProvider.notifier).refresh(),
+        ref.read(todoListStateProvider.notifier).refresh(),
       ]);
     }
 
     if (futures.isNotEmpty) {
       await Future.wait(futures);
-    }
-
-    if (mounted) {
-      setState(() => _data = _buildViewData());
     }
   }
 
@@ -182,10 +162,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : 'Welcome back';
     final membershipMember = homeMemberFromProfile(profile);
     final careTeam = ref.watch(careTeamStateProvider).members;
-    final savedProvidersState = ref.watch(savedProvidersStateProvider);
-    final carouselSaved = buildHomeSavedProviders(
-      savedProviders: savedProvidersState.providers,
-    ).take(homeSavedProvidersCarouselLimit).toList();
+    // TODO: Re-enable when saved providers returns to home.
+    // final savedProvidersState = ref.watch(savedProvidersStateProvider);
+    // final carouselSaved = buildHomeSavedProviders(
+    //   savedProviders: savedProvidersState.providers,
+    // ).take(homeSavedProvidersCarouselLimit).toList();
+    final todoListState = ref.watch(todoListStateProvider);
 
     final safeTop = MediaQuery.paddingOf(context).top;
 
@@ -236,15 +218,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onTotalClientsTap: () =>
                         context.goNamed(AppRouter.clientsName),
                     onTotalCommissionTap: () =>
-                        context.pushNamed(AppRouter.commissionsName),
+                        context.pushNamed(AppRouter.homeCommissionsName),
                     onTotalSalesTap: () =>
-                        context.pushNamed(AppRouter.commissionsName),
+                        context.pushNamed(AppRouter.homeCommissionsName),
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeRecentActivitySection(
-                    items: _data.recentActivity,
+                    items: todoListState.items,
+                    isLoading: todoListState.isInitialLoading,
+                    isError: todoListState.isInitialError,
+                    errorMessage: todoListState.operation.errorMessage,
+                    onRetry: () =>
+                        ref.read(todoListStateProvider.notifier).loadInitial(),
                     onSeeAll: () => context.pushNamed(AppRouter.activityName),
-                    onItemTap: _handleActivityTap,
+                    onItemTap: _handleTodoTap,
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeCareTeamCarousel(
@@ -255,21 +242,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       pathParameters: {'id': member.id},
                     ),
                   ),
-                  const SizedBox(height: _sectionGap),
-                  HomeSavedProvidersSection(
-                    providers: carouselSaved,
-                    onSeeAll: () =>
-                        context.pushNamed(AppRouter.savedProvidersName),
-                    onFindCare: () =>
-                        context.pushNamed(AppRouter.findCare.toPathName),
-                    onProviderTap: _openSavedProvider,
-                    onRemove: _removeFavorite,
-                    isRemoving: (item) {
-                      final npi = item.medicareNpi;
-                      if (npi == null) return false;
-                      return savedProvidersState.isToggling(npi);
-                    },
-                  ),
+                  // TODO: Re-enable when saved providers returns to home.
+                  // const SizedBox(height: _sectionGap),
+                  // HomeSavedProvidersSection(
+                  //   providers: carouselSaved,
+                  //   onSeeAll: () =>
+                  //       context.pushNamed(AppRouter.savedProvidersName),
+                  //   onFindCare: () =>
+                  //       context.pushNamed(AppRouter.findCare.toPathName),
+                  //   onProviderTap: _openSavedProvider,
+                  //   onRemove: _removeFavorite,
+                  //   isRemoving: (item) {
+                  //     final npi = item.medicareNpi;
+                  //     if (npi == null) return false;
+                  //     return savedProvidersState.isToggling(npi);
+                  //   },
+                  // ),
                   const SizedBox(height: 16),
                 ]),
               ),

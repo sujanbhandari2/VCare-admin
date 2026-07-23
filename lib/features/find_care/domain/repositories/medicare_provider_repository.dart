@@ -17,9 +17,5 @@ abstract class MedicareProviderRepository {
   );
 
   Future<EitherResponseOrException<MedicareProviderServicesResult>>
-  fetchServices({
-    required String npi,
-    required int offset,
-    int size = 50,
-  });
+  fetchServices({required String npi, required int offset, int size = 50});
 }

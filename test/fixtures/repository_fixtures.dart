@@ -33,6 +33,7 @@ class RepositoryFixtures {
     String username = 'fixture.user',
     String email = 'fixture@example.com',
     String? profileId,
+    String? tenantId,
   }) => AuthSession(
     userId: userId,
     access: access,
@@ -40,6 +41,7 @@ class RepositoryFixtures {
     username: username,
     email: email,
     profileId: profileId,
+    tenantId: tenantId,
   );
 
   static RegisterResponse registerResponse({

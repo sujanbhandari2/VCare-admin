@@ -134,6 +134,11 @@ class LoginRequestStateNotifier extends _$LoginRequestStateNotifier {
         response.profileId,
       );
     }
+
+    final tenantId = response.tenantId?.trim();
+    if (tenantId != null && tenantId.isNotEmpty) {
+      await storageService.set(StorageKeys.loggedInUserTenantId, tenantId);
+    }
   }
 
   void _completeRequest() {

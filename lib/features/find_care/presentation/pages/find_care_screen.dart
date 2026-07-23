@@ -7,13 +7,14 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/find_care_current_location_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_location_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/utils/find_care_current_location_flow.dart';
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
-import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class FindCareScreen extends ConsumerStatefulWidget {
   const FindCareScreen({super.key});
@@ -32,11 +33,13 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
     final location = ref.read(findCareSearchLocationProvider);
     _locationController = TextEditingController(text: location.displayLabel);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (ref.read(userLoggedInStateProvider)) {
         ref
             .read(savedProvidersStateProvider.notifier)
             .ensureSavedProvidersLoaded();
       }
+      runFindCareCurrentLocationFlow(context, ref, userInitiated: false);
     });
   }
 
@@ -55,9 +58,9 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
   void _openSearch() {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
-    ref.read(findCareSearchLocationProvider.notifier).setFromDisplayText(
-          _locationController.text,
-        );
+    ref
+        .read(findCareSearchLocationProvider.notifier)
+        .setFromDisplayText(_locationController.text);
     context.pushNamed(
       AppRouter.findCareSearchName,
       queryParameters: {'q': query},
@@ -70,6 +73,9 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
     final safeTop = MediaQuery.paddingOf(context).top;
     final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
     final location = ref.watch(findCareSearchLocationProvider);
+    final detecting = ref.watch(
+      findCareCurrentLocationStateProvider.select((s) => s.detecting),
+    );
 
     if (_locationController.text != location.displayLabel &&
         location.displayLabel.isNotEmpty) {
@@ -99,17 +105,12 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(
                   locationController: _locationController,
-                  onDetectLocation: () async {
-                    await ref
-                        .read(findCareSearchLocationProvider.notifier)
-                        .detectCurrentLocation();
-                    final updated = ref.read(findCareSearchLocationProvider);
-                    _locationController.text = updated.displayLabel;
-                    if (!context.mounted) return;
-                    context.showVcareToast(
-                      title: 'Search area updated',
-                      description: updated.displayLabel,
-                      variant: VcareToastVariant.info,
+                  isDetecting: detecting,
+                  onDetectLocation: () {
+                    runFindCareCurrentLocationFlow(
+                      context,
+                      ref,
+                      userInitiated: true,
                     );
                   },
                   actions: Column(

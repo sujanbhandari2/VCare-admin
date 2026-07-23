@@ -28,10 +28,9 @@ class FindCareSearchLocation extends _$FindCareSearchLocation {
 
   Future<void> setLocation(SearchLocation location) async {
     state = location;
-    await ref.read(storageServiceProvider).set(
-          StorageKeys.findCareSearchLocation,
-          jsonEncode(location.toJson()),
-        );
+    await ref
+        .read(storageServiceProvider)
+        .set(StorageKeys.findCareSearchLocation, jsonEncode(location.toJson()));
   }
 
   Future<void> setFromDisplayText(String text) async {
@@ -39,10 +38,5 @@ class FindCareSearchLocation extends _$FindCareSearchLocation {
     final parts = text.split(',');
     final city = parts.isNotEmpty ? parts.first.trim() : '';
     await setLocation(SearchLocation(city: city, state: stateCode ?? ''));
-  }
-
-  Future<void> detectCurrentLocation() async {
-    // Reverse geocode is optional; keep a stable default for parity when unavailable.
-    await setLocation(const SearchLocation(city: 'San Francisco', state: 'CA'));
   }
 }

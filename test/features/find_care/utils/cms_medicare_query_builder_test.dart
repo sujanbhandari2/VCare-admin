@@ -14,10 +14,7 @@ void main() {
       expect(params['_table'], 'lookup');
       expect(params['size'], '15');
       expect(params['offset'], '0');
-      expect(
-        params['filter[ptype][condition][value]'],
-        'Pediatric',
-      );
+      expect(params['filter[ptype][condition][value]'], 'Pediatric');
     });
 
     test('includes first and last name filters', () {
@@ -33,10 +30,7 @@ void main() {
         params['filter[firstName][condition][path]'],
         'Rndrng_Prvdr_First_Name',
       );
-      expect(
-        params['filter[lastName][condition][value]'],
-        'Doe',
-      );
+      expect(params['filter[lastName][condition][value]'], 'Doe');
       expect(params['filter[state][condition][value]'], 'CA');
       expect(params['offset'], '30');
     });

@@ -10,6 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:vcare_admin/features/messages/health_messenger/health_messenger_bootstrap_config.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_state.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
 
 part 'health_messenger_session_provider.g.dart';
@@ -49,9 +50,12 @@ class HealthMessengerSession extends _$HealthMessengerSession
     try {
       final storage = ref.read(storageServiceProvider);
       final profile = ref.read(userProfileStateProvider).profile;
+      final currentTenantId =
+          ref.read(authMeStateProvider).data?.user.currentTenant?.id;
       final config = HealthMessengerBootstrapConfig.tryBuild(
         storage: storage,
         profile: profile,
+        currentTenantId: currentTenantId,
       );
 
       if (config == null) {
@@ -59,6 +63,7 @@ class HealthMessengerSession extends _$HealthMessengerSession
           HealthMessengerBootstrapConfig.describeValidationFailure(
             storage: storage,
             profile: profile,
+            currentTenantId: currentTenantId,
           ),
         );
       }
@@ -105,7 +110,9 @@ class HealthMessengerSession extends _$HealthMessengerSession
       }
 
       _registerLifecycleObserver();
-      _forwardLifecycleState(
+      // Forward onto the new session instance (state.session is still the old
+      // value until copyWith below).
+      session.handleAppLifecycleState(
         WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed,
       );
 
@@ -194,10 +201,6 @@ class HealthMessengerSession extends _$HealthMessengerSession
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
-    state.session?.handleAppLifecycleState(lifecycleState);
-  }
-
-  void _forwardLifecycleState(AppLifecycleState lifecycleState) {
     state.session?.handleAppLifecycleState(lifecycleState);
   }
 
