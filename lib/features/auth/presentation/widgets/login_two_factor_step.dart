@@ -5,9 +5,9 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 
-/// parity: vcare-agent-app-2.0/src/features/auth/components/VerifyStep.tsx
-class LoginVerifyStep extends StatelessWidget {
-  const LoginVerifyStep({
+/// parity: vcare-agent-app-2.0/src/features/auth/components/TwoFactorStep.tsx
+class LoginTwoFactorStep extends StatelessWidget {
+  const LoginTwoFactorStep({
     super.key,
     required this.destination,
     required this.otpController,
@@ -15,6 +15,8 @@ class LoginVerifyStep extends StatelessWidget {
     required this.loading,
     required this.resendIn,
     required this.resendLoading,
+    required this.rememberMe,
+    required this.onRememberMeChanged,
     required this.onCompleted,
     required this.onVerify,
     required this.onResend,
@@ -27,6 +29,8 @@ class LoginVerifyStep extends StatelessWidget {
   final bool loading;
   final int resendIn;
   final bool resendLoading;
+  final bool rememberMe;
+  final ValueChanged<bool> onRememberMeChanged;
   final ValueChanged<String> onCompleted;
   final VoidCallback onVerify;
   final VoidCallback onResend;
@@ -40,11 +44,11 @@ class LoginVerifyStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LoginStepHeader(
-          icon: LucideIcons.lock,
+          icon: LucideIcons.shieldCheck,
           title: 'Enter verification code',
           subtitle: Text.rich(
             TextSpan(
-              text: 'We sent a 6-digit code to ',
+              text: 'We sent a 6-digit code to\n',
               children: [
                 TextSpan(
                   text: destination,
@@ -58,11 +62,19 @@ class LoginVerifyStep extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 8),
           child: LoginOtpInput(
             controller: otpController,
             onChanged: onChanged,
             onCompleted: onCompleted,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            'The code is valid for 10 minutes.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
           ),
         ),
         if (error != null)
@@ -74,6 +86,49 @@ class LoginVerifyStep extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: VCareColors.destructive),
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Material(
+            color: vcare.muted.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => onRememberMeChanged(!rememberMe),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: rememberMe,
+                        onChanged: (value) =>
+                            onRememberMeChanged(value == true),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Remember this code for 7 days',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: vcare.mutedForeground,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: LoginPrimaryButton(
@@ -90,7 +145,7 @@ class LoginVerifyStep extends StatelessWidget {
             TextSpan(
               style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
               children: [
-                const TextSpan(text: "Didn't get a code? "),
+                const TextSpan(text: "Didn't receive the code? "),
                 WidgetSpan(
                   alignment: PlaceholderAlignment.baseline,
                   baseline: TextBaseline.alphabetic,

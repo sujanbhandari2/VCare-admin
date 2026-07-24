@@ -10,6 +10,8 @@ class ApiEndpoints {
   static const String authMe = "auth/me/";
 
   static const String login = "auth/login/";
+  static const String authSend2fa = "auth/send-2fa/";
+  static const String authVerify2fa = "auth/verify-2fa/";
   static const String googleLogin = "google-login/";
   static const String appleLogin = "apple-login/";
   static const String register = "register/";

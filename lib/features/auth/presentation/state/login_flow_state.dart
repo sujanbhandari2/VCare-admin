@@ -4,6 +4,7 @@ enum LoginFlowStep {
   verify,
   disambiguate,
   password,
+  twoFactor,
   activate,
   onboard,
   biometric,

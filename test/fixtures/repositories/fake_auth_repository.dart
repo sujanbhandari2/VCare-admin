@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
@@ -13,9 +14,13 @@ import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.da
 import '../repository_fixtures.dart';
 
 class FakeAuthRepository implements AuthRepository {
-  EitherResponseOrException<AuthSession> loginResult = Success(
+  EitherResponseOrException<AuthLoginOutcome> loginResult = Success(
+    AuthLoginSessionOutcome(RepositoryFixtures.authSession()),
+  );
+  EitherResponseOrException<AuthSession> verify2faResult = Success(
     RepositoryFixtures.authSession(),
   );
+  EitherResponseOrException<void> send2faResult = const Success(null);
   EitherResponseOrException<AuthSession> appleLoginResult = Success(
     RepositoryFixtures.authSession(userId: 12),
   );
@@ -62,6 +67,10 @@ class FakeAuthRepository implements AuthRepository {
   String? lastSetupAccountFirstName;
   String? lastSetupAccountLastName;
   String? lastPreAuthUserRegistrationToken;
+  String? lastSend2faChallengeToken;
+  String? lastVerify2faChallengeToken;
+  String? lastVerify2faOtp;
+  bool? lastVerify2faRememberMe;
 
   String get path4AppleLogin => '/auth/apple/';
 
@@ -156,12 +165,34 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<EitherResponseOrException<AuthSession>> login({
+  Future<EitherResponseOrException<AuthLoginOutcome>> login({
     required Map<String, dynamic> payloads,
     CancelToken? cancelToken,
   }) async {
     lastLoginPayloads = payloads;
     return loginResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> send2fa({
+    required String challengeToken,
+    CancelToken? cancelToken,
+  }) async {
+    lastSend2faChallengeToken = challengeToken;
+    return send2faResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthSession>> verify2fa({
+    required String challengeToken,
+    required String otp,
+    bool rememberMe = false,
+    CancelToken? cancelToken,
+  }) async {
+    lastVerify2faChallengeToken = challengeToken;
+    lastVerify2faOtp = otp;
+    lastVerify2faRememberMe = rememberMe;
+    return verify2faResult;
   }
 
   @override

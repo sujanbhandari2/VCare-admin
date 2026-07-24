@@ -57,16 +57,7 @@ extension AuthVerifyOtpResultMapper on model.AuthVerifyOtpResultModel {
 }
 
 extension AuthLoginResultMapper on model.AuthLoginResultModel {
-  AuthSession toEntity() {
-    return AuthSession(
-      refresh: session.refresh,
-      access: session.access,
-      email: session.email,
-      username: session.username,
-      profileId: profileId,
-      tenantId: tenantId,
-    );
-  }
+  AuthSession toEntity() => toSession();
 }
 
 extension LoginResponseMapper on model.LoginResponseModel {

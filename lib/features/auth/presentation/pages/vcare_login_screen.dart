@@ -34,6 +34,7 @@ import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_forgot_steps.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_phone_country_selector.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_two_factor_step.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
@@ -47,6 +48,7 @@ enum _LoginStep {
   verify,
   disambiguate,
   password,
+  twoFactor,
   activate,
   onboard,
   biometric,
@@ -99,6 +101,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   LoginClientRecord? _selectedClient;
   String? _identifiedDisplayName;
   bool _otpWasSkipped = false;
+  String? _twoFactorChallengeToken;
+  bool _twoFactorRememberMe = false;
 
   @override
   void dispose() {
@@ -278,9 +282,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     return errors.isEmpty;
   }
 
-  void _startResendTimer() {
+  void _startResendTimer({int seconds = 30}) {
     _resendTimer?.cancel();
-    setState(() => _resendIn = 30);
+    setState(() => _resendIn = seconds);
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
@@ -293,6 +297,31 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         setState(() => _resendIn -= 1);
       }
     });
+  }
+
+  void _clearTwoFactorChallenge() {
+    _twoFactorChallengeToken = null;
+    _twoFactorRememberMe = false;
+    _otpController.clear();
+  }
+
+  void _beginTwoFactorChallenge(String challengeToken) {
+    setState(() {
+      _loadingKey = null;
+      _error = null;
+      _twoFactorChallengeToken = challengeToken;
+      _twoFactorRememberMe = false;
+      _otpController.clear();
+      _step = _LoginStep.twoFactor;
+    });
+    _startResendTimer(seconds: 60);
+  }
+
+  void _completeAuthenticatedLogin() {
+    ref.invalidate(userLoggedInStateProvider);
+    ref.read(networkFetchSessionProvider.notifier).resetSession();
+    ref.read(authMeStateProvider.notifier).fetchMe();
+    context.goNamed(AppRouter.home.toPathName);
   }
 
   String get _normalizedIdentifier => AuthIdentifierNormalizer.normalize(
@@ -310,6 +339,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       LoginFlowStep.verify => _LoginStep.verify,
       LoginFlowStep.disambiguate => _LoginStep.disambiguate,
       LoginFlowStep.password => _LoginStep.password,
+      LoginFlowStep.twoFactor => _LoginStep.twoFactor,
       LoginFlowStep.activate => _LoginStep.activate,
       LoginFlowStep.onboard => _LoginStep.onboard,
       LoginFlowStep.biometric => _LoginStep.biometric,
@@ -564,6 +594,11 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         case _LoginStep.activate:
         case _LoginStep.onboard:
           _step = _LoginStep.verify;
+        case _LoginStep.twoFactor:
+          _clearTwoFactorChallenge();
+          _resendTimer?.cancel();
+          _resendIn = 0;
+          _step = _LoginStep.password;
         case _LoginStep.password:
           if (_otpWasSkipped) {
             ref.read(authIdentifyStateProvider.notifier).clear();
@@ -636,10 +671,11 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           },
           onSuccess: (_) {
             if (!mounted) return;
-            ref.invalidate(userLoggedInStateProvider);
-            ref.read(networkFetchSessionProvider.notifier).resetSession();
-            ref.read(authMeStateProvider.notifier).fetchMe();
-            context.goNamed(AppRouter.home.toPathName);
+            _completeAuthenticatedLogin();
+          },
+          onTwoFactorRequired: (challenge) {
+            if (!mounted) return;
+            _beginTwoFactorChallenge(challenge.challengeToken);
           },
           onError: (message) {
             if (!mounted) return;
@@ -651,6 +687,84 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         );
 
     if (mounted && _loadingKey == 'password') {
+      setState(() => _loadingKey = null);
+    }
+  }
+
+  Future<void> _verifyTwoFactor(String code) async {
+    final challengeToken = _twoFactorChallengeToken?.trim() ?? '';
+    if (challengeToken.isEmpty) {
+      setState(() {
+        _error = 'Verification session expired. Please sign in again.';
+        _clearTwoFactorChallenge();
+        _step = _LoginStep.password;
+      });
+      return;
+    }
+
+    final otp = code.trim();
+    if (otp.length != 6) {
+      setState(() => _error = 'Enter the 6-digit verification code.');
+      return;
+    }
+
+    setState(() {
+      _loadingKey = 'two-factor';
+      _error = null;
+    });
+
+    await ref.read(loginRequestStateProvider.notifier).verify2fa(
+          challengeToken: challengeToken,
+          otp: otp,
+          rememberMe: _twoFactorRememberMe,
+          onSuccess: (_) {
+            if (!mounted) return;
+            _clearTwoFactorChallenge();
+            _completeAuthenticatedLogin();
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Invalid verification code.';
+              _otpController.clear();
+            });
+          },
+        );
+
+    if (mounted && _loadingKey == 'two-factor') {
+      setState(() => _loadingKey = null);
+    }
+  }
+
+  Future<void> _resendTwoFactor() async {
+    final challengeToken = _twoFactorChallengeToken?.trim() ?? '';
+    if (challengeToken.isEmpty || _resendIn > 0) {
+      return;
+    }
+
+    setState(() {
+      _loadingKey = 'two-factor-resend';
+      _error = null;
+    });
+
+    await ref.read(loginRequestStateProvider.notifier).send2fa(
+          challengeToken: challengeToken,
+          onSuccess: () {
+            if (!mounted) return;
+            setState(() => _loadingKey = null);
+            _startResendTimer(seconds: 60);
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Unable to resend code.';
+            });
+          },
+        );
+
+    if (mounted && _loadingKey == 'two-factor-resend') {
       setState(() => _loadingKey = null);
     }
   }
@@ -864,6 +978,22 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             _LoginStep.verify => _buildVerifyStep(context),
             _LoginStep.disambiguate => _buildDisambiguateStep(context),
             _LoginStep.password => _buildPasswordStep(context),
+            _LoginStep.twoFactor => LoginTwoFactorStep(
+              destination: _destination,
+              otpController: _otpController,
+              error: _error,
+              loading: _loadingKey == 'two-factor',
+              resendIn: _resendIn,
+              resendLoading: _loadingKey == 'two-factor-resend',
+              rememberMe: _twoFactorRememberMe,
+              onRememberMeChanged: (value) {
+                setState(() => _twoFactorRememberMe = value);
+              },
+              onCompleted: _verifyTwoFactor,
+              onVerify: () => _verifyTwoFactor(_otpController.text),
+              onResend: _resendTwoFactor,
+              onChanged: (_) => setState(() => _error = null),
+            ),
             _LoginStep.activate => _buildActivateStep(context),
             _LoginStep.onboard => _buildOnboardStep(context),
             _LoginStep.biometric => _buildBiometricStep(context),

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
@@ -50,10 +51,23 @@ abstract class AuthRepository {
     CancelToken? cancelToken,
   });
 
-  /// Method to login
-  ///
-  Future<EitherResponseOrException<AuthSession>> login({
+  /// Password login — returns a session or a 2FA challenge.
+  Future<EitherResponseOrException<AuthLoginOutcome>> login({
     required Map<String, dynamic> payloads,
+    CancelToken? cancelToken,
+  });
+
+  /// Resends the 2FA OTP for an active challenge.
+  Future<EitherResponseOrException<void>> send2fa({
+    required String challengeToken,
+    CancelToken? cancelToken,
+  });
+
+  /// Completes login after 2FA OTP verification.
+  Future<EitherResponseOrException<AuthSession>> verify2fa({
+    required String challengeToken,
+    required String otp,
+    bool rememberMe = false,
     CancelToken? cancelToken,
   });
 
