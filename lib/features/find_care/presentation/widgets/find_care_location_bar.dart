@@ -10,11 +10,17 @@ class FindCareLocationBar extends StatelessWidget {
     required this.locationController,
     this.actions,
     this.onDetectLocation,
+    this.onClearCurrentLocation,
+    this.isDetecting = false,
+    this.isUsingCurrentLocation = false,
   });
 
   final TextEditingController locationController;
   final Widget? actions;
   final VoidCallback? onDetectLocation;
+  final VoidCallback? onClearCurrentLocation;
+  final bool isDetecting;
+  final bool isUsingCurrentLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +40,22 @@ class FindCareLocationBar extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.mapPin, size: 16, color: vcare.accent),
+                Icon(
+                  isUsingCurrentLocation
+                      ? LucideIcons.navigation
+                      : LucideIcons.mapPin,
+                  size: 16,
+                  color: vcare.accent,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Searching near',
+                        isUsingCurrentLocation
+                            ? 'Current location'
+                            : 'Searching near',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -70,15 +84,40 @@ class FindCareLocationBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Material(
-                  color: vcare.muted,
+                  color: isUsingCurrentLocation
+                      ? vcare.accent.withValues(alpha: 0.18)
+                      : vcare.muted,
                   shape: const CircleBorder(),
                   child: InkWell(
-                    onTap: onDetectLocation,
+                    onTap: isDetecting
+                        ? null
+                        : (isUsingCurrentLocation
+                              ? onClearCurrentLocation
+                              : onDetectLocation),
                     customBorder: const CircleBorder(),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 36,
                       height: 36,
-                      child: Icon(LucideIcons.locateFixed, size: 18),
+                      child: Center(
+                        child: isDetecting
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: vcare.accent,
+                                ),
+                              )
+                            : Icon(
+                                isUsingCurrentLocation
+                                    ? LucideIcons.x
+                                    : LucideIcons.locateFixed,
+                                size: 18,
+                                color: isUsingCurrentLocation
+                                    ? vcare.accent
+                                    : null,
+                              ),
+                      ),
                     ),
                   ),
                 ),
@@ -86,6 +125,52 @@ class FindCareLocationBar extends StatelessWidget {
             ),
           ),
         ),
+        if (isUsingCurrentLocation && onClearCurrentLocation != null) ...[
+          const SizedBox(height: 8),
+          Material(
+            color: vcare.muted.withValues(alpha: 0.65),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: vcare.border),
+            ),
+            child: InkWell(
+              onTap: onClearCurrentLocation,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.mapPin,
+                      size: 14,
+                      color: vcare.mutedForeground,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Using current location · tap to use your city & state',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: vcare.mutedForeground,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.rotateCcw,
+                      size: 14,
+                      color: vcare.accent,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
         if (actions != null) ...[const SizedBox(height: 8), actions!],
       ],
     );

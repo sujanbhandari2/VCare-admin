@@ -62,7 +62,9 @@ class _MedicareProviderDetailScreenState
             ),
             SliverFillRemaining(
               hasScrollBody: false,
-              child: Center(child: Text('Invalid NPI — use a 10-digit number.')),
+              child: Center(
+                child: Text('Invalid NPI — use a 10-digit number.'),
+              ),
             ),
           ],
         ),
@@ -101,7 +103,9 @@ class _MedicareProviderDetailScreenState
             ),
             SliverFillRemaining(
               hasScrollBody: false,
-              child: Center(child: Text('Provider not found in CMS directory.')),
+              child: Center(
+                child: Text('Provider not found in CMS directory.'),
+              ),
             ),
           ],
         ),
@@ -121,10 +125,7 @@ class _MedicareProviderDetailScreenState
       body: CustomScrollView(
         slivers: [
           const SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Medicare directory',
-              showBack: true,
-            ),
+            child: VcarePageHeader(title: 'Medicare directory', showBack: true),
           ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
@@ -163,7 +164,9 @@ class _MedicareProviderDetailScreenState
                   npiDigits: digits,
                   state: detailState,
                   onLoadMore: () => ref
-                      .read(medicareProviderDetailStateProvider(digits).notifier)
+                      .read(
+                        medicareProviderDetailStateProvider(digits).notifier,
+                      )
                       .loadMoreServices(),
                 ),
                 if (detailState.raw.isNotEmpty &&
@@ -284,7 +287,10 @@ class _ContactActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locale = [row.city, row.state].where((part) => part.isNotEmpty).join(', ');
+    final locale = [
+      row.city,
+      row.state,
+    ].where((part) => part.isNotEmpty).join(', ');
     final baseQuery = [name, locale].where((part) => part.isNotEmpty).join(' ');
     final callHref =
         'https://www.google.com/search?q=${Uri.encodeComponent('$baseQuery phone number')}';
@@ -295,10 +301,8 @@ class _ContactActions extends StatelessWidget {
       children: [
         Expanded(
           child: FilledButton.icon(
-            onPressed: () => launchUrlString(
-              callHref,
-              mode: LaunchMode.externalApplication,
-            ),
+            onPressed: () =>
+                launchUrlString(callHref, mode: LaunchMode.externalApplication),
             icon: const Icon(LucideIcons.phone, size: 16),
             label: const Text('Call'),
             style: FilledButton.styleFrom(
@@ -352,9 +356,7 @@ class _LocationCard extends StatelessWidget {
         children: [
           Icon(LucideIcons.mapPin, size: 18, color: vcare.mutedForeground),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(formatMedicareProviderLocation(row)),
-          ),
+          Expanded(child: Text(formatMedicareProviderLocation(row))),
         ],
       ),
     );

@@ -22,10 +22,7 @@ class MedicareProviderServicesResult {
 }
 
 class MedicareProviderByNpiResult {
-  const MedicareProviderByNpiResult({
-    this.item,
-    required this.headers,
-  });
+  const MedicareProviderByNpiResult({this.item, required this.headers});
 
   final MedicareProviderListItem? item;
   final List<String> headers;

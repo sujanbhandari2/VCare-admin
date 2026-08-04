@@ -94,6 +94,8 @@ class ClientPaymentMethod {
     required this.type,
     required this.label,
     this.last4,
+    this.expMonth,
+    this.expYear,
     this.isPrimary = false,
   });
 
@@ -101,6 +103,8 @@ class ClientPaymentMethod {
   final ClientPaymentMethodType type;
   final String label;
   final String? last4;
+  final int? expMonth;
+  final int? expYear;
   final bool isPrimary;
 }
 

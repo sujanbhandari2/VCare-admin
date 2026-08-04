@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/referral_share_sheet.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 
-class CommissionEmptyState extends StatelessWidget {
-  const CommissionEmptyState({super.key});
+class CommissionEmptyState extends ConsumerWidget {
+  const CommissionEmptyState({super.key, this.isAgencyTied = false});
+
+  final bool isAgencyTied;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final vcare = context.vcare;
+    final profile = ref.watch(localProfileStateProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,7 +73,9 @@ class CommissionEmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Your commissions and sales will appear here once your first client signs up.',
+                isAgencyTied
+                    ? 'Your sales will appear here when your first client has been successfully processed.'
+                    : 'Your commissions and sales will appear here when your first client has been successfully processed.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -76,10 +84,8 @@ class CommissionEmptyState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              FilledButton.icon(
+              FilledButton(
                 onPressed: () => context.goNamed(AppRouter.clientsName),
-                icon: const Icon(LucideIcons.arrowRight, size: 16),
-                label: const Text('View clients'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -87,90 +93,122 @@ class CommissionEmptyState extends StatelessWidget {
                   ),
                   shape: const StadiumBorder(),
                 ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('View clients'),
+                    SizedBox(width: 6),
+                    Icon(LucideIcons.arrowRight, size: 16),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
         Row(
-          children: const [
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Expanded(
-              child: _TipCard(
-                icon: LucideIcons.users,
-                title: 'Invite clients',
-                description: 'Share your referral link to start earning.',
+              child: _InviteTipCard(
+                onTap: () => showReferralShareSheet(context, profile: profile),
               ),
             ),
-            SizedBox(width: 12),
-            Expanded(
+            const SizedBox(width: 12),
+            const Expanded(
               child: _TipCard(
                 icon: LucideIcons.sparkles,
                 title: 'Track in real time',
-                description: 'Every signed agreement appears here.',
+                description:
+                    'Every signed agreement appears here automatically.',
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Material(
-          color: vcare.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: vcare.border),
-          ),
-          child: InkWell(
-            onTap: () => context.pushNamed(AppRouter.idCardName),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+      ],
+    );
+  }
+}
+
+class _InviteTipCard extends StatelessWidget {
+  const _InviteTipCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return Material(
+      color: VCareColors.primary.withValues(alpha: 0.06),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: VCareColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: VCareColors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  LucideIcons.users,
+                  size: 16,
+                  color: VCareColors.primary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Invite clients',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Share your referral link to start earning.',
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.35,
+                  color: vcare.mutedForeground,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: VCareColors.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      LucideIcons.share2,
-                      size: 16,
-                      color: VCareColors.success,
+                  Icon(
+                    LucideIcons.share2,
+                    size: 14,
+                    color: VCareColors.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Share link',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: VCareColors.primary,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Share your referral link',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          'Grow your book of business',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: vcare.mutedForeground,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(width: 4),
                   Icon(
                     LucideIcons.arrowRight,
-                    size: 16,
-                    color: vcare.mutedForeground,
+                    size: 14,
+                    color: VCareColors.primary,
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -193,9 +231,8 @@ class _TipCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: vcare.card,
+        color: vcare.muted.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: vcare.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,10 +241,11 @@ class _TipCard extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: vcare.muted,
+              color: vcare.card,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: vcare.border.withValues(alpha: 0.6)),
             ),
-            child: Icon(icon, size: 16),
+            child: Icon(icon, size: 16, color: vcare.mutedForeground),
           ),
           const SizedBox(height: 10),
           Text(

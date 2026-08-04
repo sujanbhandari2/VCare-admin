@@ -45,7 +45,7 @@ void main() {
       );
     });
 
-    test('resolvePostOtpStep routes pending accounts to onboard', () {
+    test('resolvePostOtpStep routes pending existing users to activate', () {
       const result = AuthIdentifyResult(
         userExists: true,
         multipleAccounts: false,
@@ -56,7 +56,7 @@ void main() {
 
       expect(
         AuthLoginNavigationPolicy.resolvePostOtpStep(result),
-        LoginFlowStep.onboard,
+        LoginFlowStep.activateDetails,
       );
     });
 
@@ -75,7 +75,8 @@ void main() {
       );
     });
 
-    test('resolvePostOtpStep defaults to password', () {
+    test('resolvePostOtpStep routes existing users without login to activate',
+        () {
       const result = AuthIdentifyResult(
         userExists: true,
         multipleAccounts: false,
@@ -86,9 +87,27 @@ void main() {
 
       expect(
         AuthLoginNavigationPolicy.resolvePostOtpStep(result),
-        LoginFlowStep.password,
+        LoginFlowStep.activateDetails,
       );
     });
+
+    test(
+      'resolvePostOtpStep routes already-logged-in accounts to password',
+      () {
+        const result = AuthIdentifyResult(
+          userExists: true,
+          multipleAccounts: false,
+          atLeastOneAccountLoggedIn: true,
+          otherPendingAccount: false,
+          otpSend: true,
+        );
+
+        expect(
+          AuthLoginNavigationPolicy.resolvePostOtpStep(result),
+          LoginFlowStep.password,
+        );
+      },
+    );
 
     test('resolveSkipOtpStep returns step when already logged in elsewhere', () {
       const result = AuthIdentifyResult(

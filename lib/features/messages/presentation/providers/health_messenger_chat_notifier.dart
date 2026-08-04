@@ -45,6 +45,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         currentUserId: state.currentUser?.id ?? '',
         mediaBaseUrl: _session?.config.apiBaseUrl.trim() ?? '',
         users: state.users,
+        associatedUsers: state.associatedUsers,
       );
 
   @override

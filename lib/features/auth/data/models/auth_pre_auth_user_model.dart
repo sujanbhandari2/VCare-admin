@@ -7,6 +7,9 @@ class AuthPreAuthUserModel {
     this.zipCode,
     this.email,
     this.phone,
+    this.gender,
+    this.primaryCity,
+    this.primaryState,
   });
 
   final String? firstName;
@@ -16,6 +19,9 @@ class AuthPreAuthUserModel {
   final String? zipCode;
   final String? email;
   final String? phone;
+  final String? gender;
+  final String? primaryCity;
+  final String? primaryState;
 
   factory AuthPreAuthUserModel.fromJson(Map<String, dynamic> json) {
     return AuthPreAuthUserModel(
@@ -26,6 +32,9 @@ class AuthPreAuthUserModel {
       zipCode: _nonEmptyString(json['zipCode']),
       email: _nonEmptyString(json['email']),
       phone: _nonEmptyString(json['phone']),
+      gender: _nonEmptyString(json['gender']),
+      primaryCity: _nonEmptyString(json['primaryCity']),
+      primaryState: _nonEmptyString(json['primaryState']),
     );
   }
 

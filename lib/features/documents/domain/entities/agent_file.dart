@@ -14,6 +14,7 @@ class AgentFile implements LoadableListItem {
     this.category,
     this.categoryReferenceId,
     this.subCategoryReferenceId,
+    this.documentType,
     this.createdBy,
   });
 
@@ -29,5 +30,6 @@ class AgentFile implements LoadableListItem {
   final String? category;
   final String? categoryReferenceId;
   final String? subCategoryReferenceId;
+  final String? documentType;
   final String? createdBy;
 }

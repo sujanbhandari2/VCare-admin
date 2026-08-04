@@ -1,4 +1,11 @@
-enum CareTeamRole { advocate, agent, provider, employer, insurance }
+enum CareTeamRole {
+  advocate,
+  agent,
+  customerSupport,
+  provider,
+  employer,
+  insurance,
+}
 
 class CareTeamMember {
   const CareTeamMember({
@@ -17,6 +24,9 @@ class CareTeamMember {
     this.hours,
     this.policyNumber,
     this.groupNumber,
+    this.profileId,
+    this.userId,
+    this.agentId,
   });
 
   final String id;
@@ -36,6 +46,13 @@ class CareTeamMember {
   final String? hours;
   final String? policyNumber;
   final String? groupNumber;
+  final String? profileId;
+
+  /// Peer user id for messaging; omit Message action when missing.
+  final String? userId;
+
+  /// Set for agent-owned contacts; null/empty for org-scoped listed members.
+  final String? agentId;
 
   String get roleLabel {
     final title = roleTitle?.trim();
@@ -48,6 +65,8 @@ class CareTeamMember {
         return 'Advocate';
       case CareTeamRole.agent:
         return 'Agent';
+      case CareTeamRole.customerSupport:
+        return 'Customer Support';
       case CareTeamRole.provider:
         return 'Provider';
       case CareTeamRole.employer:
@@ -57,8 +76,27 @@ class CareTeamMember {
     }
   }
 
+  /// Card eyebrow: "Your advocate" for Advocate, otherwise the display role.
+  String get cardRoleLabel {
+    final label = roleLabel.trim();
+    if (label.toLowerCase() == 'advocate') {
+      return 'Your advocate';
+    }
+    return label;
+  }
+
   bool get isOrg =>
       role == CareTeamRole.employer || role == CareTeamRole.insurance;
+
+  bool get isAgentOwned {
+    final id = agentId?.trim();
+    return id != null && id.isNotEmpty;
+  }
+
+  bool get canMessage {
+    final id = userId?.trim();
+    return id != null && id.isNotEmpty;
+  }
 
   CareTeamMember copyWith({
     String? id,
@@ -76,6 +114,9 @@ class CareTeamMember {
     String? hours,
     String? policyNumber,
     String? groupNumber,
+    String? profileId,
+    String? userId,
+    String? agentId,
     bool clearRoleTitle = false,
     bool clearPhotoAsset = false,
     bool clearPhotoUrl = false,
@@ -88,6 +129,9 @@ class CareTeamMember {
     bool clearHours = false,
     bool clearPolicyNumber = false,
     bool clearGroupNumber = false,
+    bool clearProfileId = false,
+    bool clearUserId = false,
+    bool clearAgentId = false,
   }) {
     return CareTeamMember(
       id: id ?? this.id,
@@ -106,6 +150,9 @@ class CareTeamMember {
       policyNumber:
           clearPolicyNumber ? null : (policyNumber ?? this.policyNumber),
       groupNumber: clearGroupNumber ? null : (groupNumber ?? this.groupNumber),
+      profileId: clearProfileId ? null : (profileId ?? this.profileId),
+      userId: clearUserId ? null : (userId ?? this.userId),
+      agentId: clearAgentId ? null : (agentId ?? this.agentId),
     );
   }
 }

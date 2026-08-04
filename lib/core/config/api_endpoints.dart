@@ -10,6 +10,8 @@ class ApiEndpoints {
   static const String authMe = "auth/me/";
 
   static const String login = "auth/login/";
+  static const String authSend2fa = "auth/send-2fa/";
+  static const String authVerify2fa = "auth/verify-2fa/";
   static const String googleLogin = "google-login/";
   static const String appleLogin = "apple-login/";
   static const String register = "register/";
@@ -27,8 +29,10 @@ class ApiEndpoints {
   static String notificationMarkRead(String id) => "notifications/$id/read/";
 
   static const String agentStats = "agents/stats";
+  static const String agentCode = "agents/agent-code";
   static const String agentCommissionSummary = "agents/commission-summary";
   static const String agentCommissionHistory = "agents/commission-history";
+  static const String agentSalesHistory = "agents/sales-history";
   static const String agentClients = "agents/clients";
   static String agentClient(String id) => "agents/clients/$id";
   static String agentClientMemberships(String id) =>
@@ -52,11 +56,19 @@ class ApiEndpoints {
 
   static String transactionCharge(String id) => "transactions/$id/charge";
 
+  static const String todos = "todos";
+
+  /// parity: vcare-agent-app-2.0/src/features/help-support/api/contact-support.endpoints.ts
+  static const String contactSupport = "contact-support";
+
   static const String files = "files";
+  static const String filesDocumentTypes = "files/document-types";
   static String file(String id) => "files/$id/";
+  static String fileContent(String id) => "files/$id/content";
 
   static const String providersSave = "providers/save";
-  static String providerSaveById(String providerId) => "providers/save/$providerId";
+  static String providerSaveById(String providerId) =>
+      "providers/save/$providerId";
 
   static const String familyMembers = "family-members/";
   static String familyMember(String id) => "family-members/$id";
@@ -65,4 +77,8 @@ class ApiEndpoints {
   static String careTeamMember(String id) => "care-team/$id";
 
   static const String usersAssociated = "users/associated";
+
+  /// Google Places proxy (matches web `placesApiPaths`).
+  static const String placesAutocomplete = "places/autocomplete";
+  static String placeById(String placeId) => "places/$placeId";
 }

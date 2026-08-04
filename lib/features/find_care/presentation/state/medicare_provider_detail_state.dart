@@ -54,8 +54,9 @@ class MedicareProviderDetailState {
       servicesLoading: servicesLoading ?? this.servicesLoading,
       servicesLoadingMore: servicesLoadingMore ?? this.servicesLoadingMore,
       lookupError: clearLookupError ? null : (lookupError ?? this.lookupError),
-      servicesError:
-          clearServicesError ? null : (servicesError ?? this.servicesError),
+      servicesError: clearServicesError
+          ? null
+          : (servicesError ?? this.servicesError),
       hasMoreServices: hasMoreServices ?? this.hasMoreServices,
     );
   }

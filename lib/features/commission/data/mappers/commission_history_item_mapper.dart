@@ -6,14 +6,26 @@ extension CommissionHistoryItemModelMapper on CommissionHistoryItemModel {
   CommissionHistoryItem toEntity() {
     return CommissionHistoryItem(
       id: id,
+      tenantId: tenantId,
+      commissionSettingsId: commissionSettingsId,
+      transactionId: transactionId,
+      agencyGroupId: agencyGroupId,
+      referrerAgentId: referrerAgentId,
       clientId: clientId,
       clientName: clientName,
+      clientPhotoUrl: clientProfilePreviewLink,
+      offeringName: offeringName,
+      itemType: type,
       commissionValue: commissionValue,
       commissionType: commissionType,
       commissionAmount: commissionAmount,
+      salesAmount: salesAmount,
       status: _mapStatus(status),
+      apiStatus: status,
       paidAt: paidAt,
+      notes: notes,
       createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 
@@ -23,9 +35,14 @@ extension CommissionHistoryItemModelMapper on CommissionHistoryItemModel {
         return CommissionStatus.pending;
       case 'PAID':
         return CommissionStatus.paid;
+      case 'REJECTED':
       case 'CANCELLED':
       case 'CANCELED':
         return CommissionStatus.cancelled;
+      case 'FAILED':
+        return CommissionStatus.failed;
+      case 'UPCOMING':
+        return CommissionStatus.upcoming;
       default:
         return CommissionStatus.unknown;
     }

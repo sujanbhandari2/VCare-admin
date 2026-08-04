@@ -131,11 +131,22 @@ class MultipartFormData extends RequestBody {
   Future<dynamic> encode() async => toFormData;
 
   /// Converts to Dio FormData.
+  ///
+  /// Multiple [FormFile]s that share the same [FormFile.key] are sent as a
+  /// list under that field name (e.g. repeated `files` parts).
   Future<FormData> get toFormData async {
     final map = <String, dynamic>{...nonNullFormFields};
 
+    final filesByKey = <String, List<MultipartFile>>{};
     for (final file in files) {
-      map[file.key] = await file.toMultipartFile();
+      filesByKey
+          .putIfAbsent(file.key, () => <MultipartFile>[])
+          .add(await file.toMultipartFile());
+    }
+    for (final entry in filesByKey.entries) {
+      map[entry.key] = entry.value.length == 1
+          ? entry.value.first
+          : entry.value;
     }
 
     return FormData.fromMap(map);

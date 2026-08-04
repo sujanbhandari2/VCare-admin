@@ -120,6 +120,10 @@ class AuthMeAgentProfileModel {
     this.agencyGroup,
     this.status,
     this.address,
+    this.bio,
+    this.allowTextNotification,
+    this.primaryCity,
+    this.primaryState,
   });
 
   final String? id;
@@ -140,6 +144,10 @@ class AuthMeAgentProfileModel {
   final AuthMeAgencyGroupModel? agencyGroup;
   final String? status;
   final AuthMeAddressModel? address;
+  final String? bio;
+  final bool? allowTextNotification;
+  final String? primaryCity;
+  final String? primaryState;
 
   factory AuthMeAgentProfileModel.fromJson(Map<String, dynamic> json) {
     final addressRaw = json['address'];
@@ -169,6 +177,10 @@ class AuthMeAgentProfileModel {
       address: addressRaw is Map<String, dynamic>
           ? AuthMeAddressModel.fromJson(addressRaw)
           : null,
+      bio: _optionalString(json['bio']),
+      allowTextNotification: json['allowTextNotification'] as bool?,
+      primaryCity: _optionalString(json['primaryCity']),
+      primaryState: _optionalString(json['primaryState']),
     );
   }
 }

@@ -12,7 +12,6 @@ class LocalProfileRepositoryImpl implements LocalProfileRepository {
   final StorageService _storage;
 
   static const LocalProfile defaults = LocalProfile(
-    fullName: '',
     email: '',
     phone: '',
     dob: '',

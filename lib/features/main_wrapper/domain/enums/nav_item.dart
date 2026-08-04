@@ -8,9 +8,16 @@ enum NavItem {
   clients(path: AppRouter.clients, label: 'Clients', icon: LucideIcons.users),
   provider(
     path: AppRouter.findCare,
-    label: 'Provider',
+    label: 'Providers',
     icon: LucideIcons.search,
   ),
+  // Sales tab replaced by Provider — commission/sales remain on Home metrics
+  // via [AppRouter.homeSalesName].
+  // sales(
+  //   path: AppRouter.sales,
+  //   label: 'Sales',
+  //   icon: LucideIcons.wallet,
+  // ),
   home(
     path: AppRouter.home,
     label: 'Home',
@@ -22,11 +29,7 @@ enum NavItem {
     label: 'Messages',
     icon: LucideIcons.messageCircle,
   ),
-  profile(
-    path: AppRouter.profile,
-    label: 'Profile',
-    icon: LucideIcons.user,
-  );
+  profile(path: AppRouter.profile, label: 'Profile', icon: LucideIcons.user);
   // AVA tab disabled for now — restore when AVA returns to the bottom nav.
   // ava(path: AppRouter.ava, label: 'AVA', icon: LucideIcons.sparkles);
 
@@ -46,6 +49,7 @@ enum NavItem {
   static const List<NavItem> mobileTabs = [
     NavItem.clients,
     NavItem.provider,
+    // NavItem.sales,
     NavItem.home,
     NavItem.messages,
     NavItem.profile,

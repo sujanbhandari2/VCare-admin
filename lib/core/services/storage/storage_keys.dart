@@ -4,8 +4,12 @@ class StorageKeys {
   static const String loggedInUserId = 'logged_in_user_id';
   static const String loggedInUserUuid = 'logged_in_user_uuid';
   static const String loggedInUserProfileId = 'logged_in_user_profile_id';
+  static const String loggedInUserTenantId = 'logged_in_user_tenant_id';
   static const String loggedInUserEmail = 'logged_in_user_email';
   static const String loggedInUserUsername = 'logged_in_user_username';
+
+  /// Stable install device id for 2FA remember-device (survives logout).
+  static const String deviceId = 'vcare.device-id';
   static const String locale = 'language_locale';
   static const String themeSeedColor = 'theme_seed_color';
   static const String themeMode = 'theme_mode';
@@ -27,7 +31,6 @@ class StorageKeys {
   static const String lastSyncedFcmToken = 'last_synced_fcm_token';
   static const String lastSyncedFcmUserId = 'last_synced_fcm_user_id';
   static const String localProfile = 'vcare.profile.v2';
-  static const String referralSlug = 'vcare.referralSlug';
-  static const String findCareSearchLocation = 'vcare.search-location.v2';
+  static const String findCareSearchLocation = 'vcare.search-location.v3';
   static const String findCareMockProviderFavorites = 'vcare:favorites:providers';
 }

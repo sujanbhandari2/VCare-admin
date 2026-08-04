@@ -15,9 +15,9 @@ class CommissionSummaryState {
   String? get error => operation.errorMessage;
 
   CommissionSummaryState loading() => CommissionSummaryState(
-        operation: OperationState.loading(data: data),
-        data: data,
-      );
+    operation: OperationState.loading(data: data),
+    data: data,
+  );
 
   CommissionSummaryState success(CommissionSummary summary) =>
       CommissionSummaryState(
@@ -26,7 +26,7 @@ class CommissionSummaryState {
       );
 
   CommissionSummaryState failure(String? message) => CommissionSummaryState(
-        operation: OperationState.failure(message, data: data),
-        data: data,
-      );
+    operation: OperationState.failure(message, data: data),
+    data: data,
+  );
 }

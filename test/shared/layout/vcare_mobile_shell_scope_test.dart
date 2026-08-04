@@ -36,6 +36,30 @@ void main() {
       expect(paddingOutsideScope, isNot(0));
     });
 
+    testWidgets('mobileShellBottomContentPadding is zero when keyboard is open',
+        (WidgetTester tester) async {
+      late double padding;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(390, 800),
+            viewInsets: EdgeInsets.only(bottom: 300),
+          ),
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) {
+                padding = context.mobileShellBottomContentPadding;
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(padding, 0);
+    });
+
     testWidgets('mobileShellScrollPadding keeps horizontal page padding in shell',
         (WidgetTester tester) async {
       late EdgeInsets scrollPadding;

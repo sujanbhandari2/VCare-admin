@@ -16,8 +16,8 @@ void main() {
 
     const sampleStats = AgentStats(
       totalClients: 2,
-      totalSales: '0',
-      totalCommission: '0',
+      totalSales: 0,
+      totalCommission: 0,
     );
 
     setUp(() {
@@ -36,9 +36,7 @@ void main() {
     test('fetchStats loads agent stats', () async {
       repository.fetchResult = Success(sampleStats);
 
-      await container
-          .read(agentStatsStateProvider.notifier)
-          .fetchStats();
+      await container.read(agentStatsStateProvider.notifier).fetchStats();
 
       final state = container.read(agentStatsStateProvider);
       expect(state.data, sampleStats);
@@ -55,9 +53,7 @@ void main() {
         ),
       );
 
-      await container
-          .read(agentStatsStateProvider.notifier)
-          .fetchStats();
+      await container.read(agentStatsStateProvider.notifier).fetchStats();
 
       final state = container.read(agentStatsStateProvider);
       expect(state.data, isNull);

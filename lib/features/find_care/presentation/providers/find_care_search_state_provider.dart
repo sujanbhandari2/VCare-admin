@@ -39,7 +39,9 @@ class FindCareSearchStateNotifier extends _$FindCareSearchStateNotifier {
     }
 
     final location = ref.read(findCareSearchLocationProvider);
-    final response = await ref.read(medicareProviderRepositoryProvider).searchDirectory(
+    final response = await ref
+        .read(medicareProviderRepositoryProvider)
+        .searchDirectory(
           firstName: parsed.firstName,
           lastName: parsed.lastName,
           state: location.state.trim().isEmpty ? null : location.state.trim(),
@@ -80,6 +82,9 @@ class FindCareSearchStateNotifier extends _$FindCareSearchStateNotifier {
 
   void initializeFromQuery(String? query) {
     if (query == null || query.trim().isEmpty) return;
-    state = state.copyWith(providerQuery: query.trim(), submitted: query.trim());
+    state = state.copyWith(
+      providerQuery: query.trim(),
+      submitted: query.trim(),
+    );
   }
 }

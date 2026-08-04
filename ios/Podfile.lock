@@ -21,6 +21,8 @@ PODS:
   - file_picker (0.0.1):
     - Flutter
     - FlutterMacOS
+  - file_saver (0.3.1):
+    - Flutter
   - file_selector_ios (0.0.1):
     - Flutter
   - Firebase/CoreOnly (12.12.0):
@@ -80,6 +82,9 @@ PODS:
   - fluttertoast (0.0.2):
     - Flutter
   - gal (1.0.0):
+    - Flutter
+    - FlutterMacOS
+  - geocoding_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
   - google_sign_in_ios (0.0.1):
@@ -166,6 +171,7 @@ DEPENDENCIES:
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/darwin`)
+  - file_saver (from `.symlinks/plugins/file_saver/ios`)
   - file_selector_ios (from `.symlinks/plugins/file_selector_ios/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
@@ -174,6 +180,7 @@ DEPENDENCIES:
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - gal (from `.symlinks/plugins/gal/darwin`)
+  - geocoding_darwin (from `.symlinks/plugins/geocoding_darwin/darwin`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - health_messenger_ui (from `.symlinks/plugins/health_messenger_ui/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
@@ -219,6 +226,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/device_info_plus/ios"
   file_picker:
     :path: ".symlinks/plugins/file_picker/darwin"
+  file_saver:
+    :path: ".symlinks/plugins/file_saver/ios"
   file_selector_ios:
     :path: ".symlinks/plugins/file_selector_ios/ios"
   firebase_core:
@@ -235,6 +244,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/fluttertoast/ios"
   gal:
     :path: ".symlinks/plugins/gal/darwin"
+  geocoding_darwin:
+    :path: ".symlinks/plugins/geocoding_darwin/darwin"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   health_messenger_ui:
@@ -268,6 +279,7 @@ SPEC CHECKSUMS:
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   file_picker: 70164d9778c42c47218d6cd79ce435de0856b11a
+  file_saver: 33b08000e02d10789a0acf35b9decf5bce5ca9de
   file_selector_ios: ec57ec07954363dd730b642e765e58f199bb621a
   Firebase: aa154fee4e9b8eac17aa42344988865b3e857d33
   firebase_core: 9156a152117c843440b0b990c785aa0259bc5447
@@ -285,6 +297,7 @@ SPEC CHECKSUMS:
   flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
   fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
   gal: baecd024ebfd13c441269ca7404792a7152fde89
+  geocoding_darwin: 968545604e6896deeef55517d53a81b3b9801971
   google_sign_in_ios: 000870aa06da9b28d1d0bf7ef70ff0213059dd28
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: fcee2257188d5eda57a5e2b6a715550ffff9206d

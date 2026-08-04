@@ -24,7 +24,9 @@ import 'package:vcare_admin/features/clients/presentation/providers/client_payme
 import 'package:vcare_admin/features/clients/presentation/providers/client_transactions_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_history_state_provider.dart';
+import 'package:vcare_admin/features/commission/presentation/providers/commission_sales_history_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_summary_state_provider.dart';
+import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_category_search_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_state_provider.dart';
@@ -38,6 +40,7 @@ import 'package:vcare_admin/features/profile/presentation/providers/auth_me_stat
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
+import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
@@ -47,6 +50,7 @@ const _sessionStorageKeys = <String>[
   StorageKeys.loggedInUserId,
   StorageKeys.loggedInUserUuid,
   StorageKeys.loggedInUserProfileId,
+  StorageKeys.loggedInUserTenantId,
   StorageKeys.loggedInUserEmail,
   StorageKeys.loggedInUserUsername,
   StorageKeys.tokenRefreshedDate,
@@ -126,7 +130,10 @@ void invalidateUserScopedProviders({
   invalidate(clientPaymentMethodsStateProvider);
   invalidate(clientTransactionsStateProvider);
   invalidate(documentsListStateProvider);
+  invalidate(documentTypesStateProvider);
+  invalidate(todoListStateProvider);
   invalidate(commissionHistoryStateProvider);
+  invalidate(commissionSalesHistoryStateProvider);
   invalidate(commissionSummaryStateProvider);
   invalidate(findCareSearchStateProvider);
   invalidate(findCareCategorySearchStateProvider);

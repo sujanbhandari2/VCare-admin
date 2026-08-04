@@ -17,6 +17,9 @@ class RepositoryFixtures {
     String zipCode = '12345',
     String email = 'fixture@example.com',
     String phone = '5551234567',
+    String? gender,
+    String? primaryCity,
+    String? primaryState,
   }) => AuthPreAuthUser(
     firstName: firstName,
     lastName: lastName,
@@ -24,6 +27,9 @@ class RepositoryFixtures {
     zipCode: zipCode,
     email: email,
     phone: phone,
+    gender: gender,
+    primaryCity: primaryCity,
+    primaryState: primaryState,
   );
 
   static AuthSession authSession({
@@ -33,6 +39,7 @@ class RepositoryFixtures {
     String username = 'fixture.user',
     String email = 'fixture@example.com',
     String? profileId,
+    String? tenantId,
   }) => AuthSession(
     userId: userId,
     access: access,
@@ -40,6 +47,7 @@ class RepositoryFixtures {
     username: username,
     email: email,
     profileId: profileId,
+    tenantId: tenantId,
   );
 
   static RegisterResponse registerResponse({

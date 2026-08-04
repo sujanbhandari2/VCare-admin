@@ -1,16 +1,20 @@
 class CommissionSummaryModel {
-  const CommissionSummaryModel({
-    this.totalSales,
-    this.totalCommission,
-  });
+  const CommissionSummaryModel({this.totalSales, this.totalCommission});
 
-  final String? totalSales;
-  final String? totalCommission;
+  final double? totalSales;
+  final double? totalCommission;
 
   factory CommissionSummaryModel.fromJson(Map<String, dynamic> json) {
     return CommissionSummaryModel(
-      totalSales: json['totalSales']?.toString(),
-      totalCommission: json['totalCommission']?.toString(),
+      totalSales: _asDouble(json['totalSales']),
+      totalCommission: _asDouble(json['totalCommission']),
     );
+  }
+
+  static double? _asDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
   }
 }

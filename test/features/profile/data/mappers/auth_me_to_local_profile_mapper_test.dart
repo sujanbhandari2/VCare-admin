@@ -79,12 +79,14 @@ void main() {
         ),
         agentProfile: AuthMeAgentProfile(
           referralLink: 'https://localhost:8080/refer/AGT-22581',
+          agentCode: 'AGT-22581',
         ),
       );
 
       final profile = localProfileFromAuthMe(authMe);
 
       expect(profile.referralLink, 'https://localhost:8080/refer/AGT-22581');
+      expect(profile.agentCode, 'AGT-22581');
     });
 
     test('maps agency group from agent profile for referral card agency section', () {
@@ -108,6 +110,7 @@ void main() {
       expect(profile.agencyGroupId, 'group-1');
       expect(profile.agencyName, 'Acme Insurance');
       expect(profile.hasAgencyGroup, isTrue);
+      expect(profile.agentCode, 'AGT-22581');
     });
 
     test('maps agency group from user agencyGroupName for referral card', () {
@@ -192,15 +195,21 @@ void main() {
           email: 'sujan+222@vitafyhealth.com',
           phoneNumber: '+13434343434',
           dateOfBirth: '1995-07-01T00:00:00.000Z',
+          gender: 'MALE',
           profilePreviewLink: 'https://cdn.example.com/user-preview.jpg',
         ),
         agentProfile: AuthMeAgentProfile(
           firstName: 'Sujan',
+          middleName: 'K',
           lastName: 'bhandari',
           email: 'sujan+222@vitafyhealth.com',
           phoneNumber: '+13434343434',
           dateOfBirth: '1995-07-01T00:00:00.000Z',
           profilePreviewLink: 'https://cdn.example.com/agent-preview.jpg',
+          bio: 'Licensed agent helping families navigate coverage.',
+          allowTextNotification: true,
+          primaryCity: 'Tampa',
+          primaryState: 'FL',
           address: AuthMeAddress(
             addressLine1: 'Autem eos iste rerum',
             addressLine2: 'Et placeat mollitia',
@@ -213,17 +222,38 @@ void main() {
 
       final profile = localProfileFromAuthMe(authMe);
 
-      expect(profile.fullName, 'Sujan bhandari');
+      expect(profile.firstName, 'Sujan');
+      expect(profile.middleName, 'K');
+      expect(profile.lastName, 'bhandari');
+      expect(profile.fullName, 'Sujan K bhandari');
       expect(profile.email, 'sujan+222@vitafyhealth.com');
       expect(profile.phone, '+13434343434');
       expect(profile.dob, '07/01/1995');
+      expect(profile.gender, 'Male');
       expect(profile.photoUrl, 'https://cdn.example.com/user-preview.jpg');
+      expect(
+        profile.bio,
+        'Licensed agent helping families navigate coverage.',
+      );
+      expect(profile.allowTextNotification, isTrue);
+      expect(profile.primaryCity, 'Tampa');
+      expect(profile.primaryState, 'FL');
       expect(profile.address?.line1, 'Autem eos iste rerum');
       expect(profile.address?.line2, 'Et placeat mollitia');
       expect(profile.address?.city, 'Aut saepe ipsum do c');
       expect(profile.address?.state, 'Arkansas');
       expect(profile.address?.postalCode, '97733');
       expect(profile.address?.country, 'United States');
+    });
+
+    test('maps OTHER gender to Others UI label', () {
+      const authMe = AuthMe(
+        user: AuthMeUser(gender: 'OTHER'),
+      );
+
+      final profile = localProfileFromAuthMe(authMe);
+
+      expect(profile.gender, 'Others');
     });
   });
 

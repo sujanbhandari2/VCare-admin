@@ -12,10 +12,12 @@ import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/http_response_validator.dart';
 import 'package:vcare_admin/core/services/network/api_client.dart';
 import 'package:vcare_admin/core/config/api_endpoints.dart';
+import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/features/auth/data/auth_api_headers.dart';
 import 'package:vcare_admin/features/auth/data/mappers/auth_mappers.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
@@ -35,9 +37,10 @@ import '../models/register_response_model.dart';
 class AuthRepositoryImpl extends AuthRepository {
   /// API Client Instance
   final ApiClient apiClient;
+  final StorageService storage;
 
   /// Constructor
-  AuthRepositoryImpl(this.apiClient);
+  AuthRepositoryImpl(this.apiClient, this.storage);
 
   @override
   Future<EitherResponseOrException<AuthIdentifyResult>> identify({
@@ -141,10 +144,13 @@ class AuthRepositoryImpl extends AuthRepository {
     String? middleName,
     required String lastName,
     required String password,
-    required String dob,
-    required String zipCode,
+    String? dob,
+    String? zipCode,
     required String email,
     required String phone,
+    String? gender,
+    String? primaryCity,
+    String? primaryState,
     String tenantSlug = 'default',
     CancelToken? cancelToken,
   }) {
@@ -157,10 +163,16 @@ class AuthRepositoryImpl extends AuthRepository {
             'middleName': middleName.trim(),
           'lastName': lastName,
           'password': password,
-          'dob': dob,
-          'zipCode': zipCode,
+          if (dob != null && dob.trim().isNotEmpty) 'dob': dob.trim(),
+          if (zipCode != null && zipCode.trim().isNotEmpty)
+            'zipCode': zipCode.trim(),
           'email': email,
           'phone': phone,
+          if (gender != null && gender.trim().isNotEmpty) 'gender': gender.trim(),
+          if (primaryCity != null && primaryCity.trim().isNotEmpty)
+            'primaryCity': primaryCity.trim(),
+          if (primaryState != null && primaryState.trim().isNotEmpty)
+            'primaryState': primaryState.trim(),
           'tenantSlug': tenantSlug,
         }),
         cancelToken: cancelToken,
@@ -180,20 +192,24 @@ class AuthRepositoryImpl extends AuthRepository {
     });
   }
 
-  /// Method to login
+  /// Password login — returns a session or a 2FA challenge.
   ///
   @override
-  Future<EitherResponseOrException<AuthSession>> login({
+  Future<EitherResponseOrException<AuthLoginOutcome>> login({
     required Map<String, dynamic> payloads,
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
+      final headers = await AuthApiHeaders.agentWith(
+        storage: storage,
+        includeDeviceId: true,
+      );
       final response = await apiClient.post(
         ApiEndpoints.login,
         JsonRequestBody(payloads),
         cancelToken: cancelToken,
         isAuthenticated: false,
-        additionalHeaders: AuthApiHeaders.agent,
+        additionalHeaders: headers,
       );
 
       final loginResultModel = ResponseValidator.parse(
@@ -201,7 +217,58 @@ class AuthRepositoryImpl extends AuthRepository {
         (data) => AuthLoginResultModel.fromJson(data),
         dataValidator: (data) => data is Map,
       );
-      return loginResultModel.toEntity();
+      return loginResultModel.toOutcome();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> send2fa({
+    required String challengeToken,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authSend2fa,
+        JsonRequestBody({'challengeToken': challengeToken}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      ResponseValidator.ensureValid(response);
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthSession>> verify2fa({
+    required String challengeToken,
+    required String otp,
+    bool rememberMe = false,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final headers = await AuthApiHeaders.agentWith(
+        storage: storage,
+        includeDeviceId: true,
+      );
+      final response = await apiClient.post(
+        ApiEndpoints.authVerify2fa,
+        JsonRequestBody({
+          'challengeToken': challengeToken,
+          'otp': otp,
+          'rememberMe': rememberMe,
+        }),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: headers,
+      );
+
+      final loginResultModel = ResponseValidator.parse(
+        response,
+        (data) => AuthLoginResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+      return loginResultModel.toSession();
     });
   }
 

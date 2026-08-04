@@ -6,11 +6,7 @@ import 'package:vcare_admin/features/home/domain/repositories/agent_stats_reposi
 
 class FakeAgentStatsRepository implements AgentStatsRepository {
   EitherResponseOrException<AgentStats> fetchResult = Success(
-    const AgentStats(
-      totalClients: 2,
-      totalSales: '0',
-      totalCommission: '0',
-    ),
+    const AgentStats(totalClients: 2, totalSales: 0, totalCommission: 0),
   );
 
   int fetchCallCount = 0;

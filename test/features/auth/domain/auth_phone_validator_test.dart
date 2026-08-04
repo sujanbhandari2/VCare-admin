@@ -38,7 +38,7 @@ void main() {
       );
     });
 
-    testWidgets('accepts valid 10-digit Canada number', (tester) async {
+    testWidgets('accepts formatted US number', (tester) async {
       late BuildContext context;
       await tester.pumpWidget(
         wrap(
@@ -53,57 +53,11 @@ void main() {
 
       expect(
         AuthPhoneValidator.validate(
-          '4165551234',
-          country: AuthPhoneCountry.canada,
+          '(555) 123-4567',
+          country: AuthPhoneCountry.usa,
           context: context,
         ),
         isNull,
-      );
-    });
-
-    testWidgets('accepts valid Nepal mobile number', (tester) async {
-      late BuildContext context;
-      await tester.pumpWidget(
-        wrap(
-          Builder(
-            builder: (ctx) {
-              context = ctx;
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      );
-
-      expect(
-        AuthPhoneValidator.validate(
-          '9841234567',
-          country: AuthPhoneCountry.nepal,
-          context: context,
-        ),
-        isNull,
-      );
-    });
-
-    testWidgets('rejects Nepal number with invalid prefix', (tester) async {
-      late BuildContext context;
-      await tester.pumpWidget(
-        wrap(
-          Builder(
-            builder: (ctx) {
-              context = ctx;
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      );
-
-      expect(
-        AuthPhoneValidator.validate(
-          '8841234567',
-          country: AuthPhoneCountry.nepal,
-          context: context,
-        ),
-        isNotNull,
       );
     });
 

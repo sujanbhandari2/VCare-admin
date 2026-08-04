@@ -7,6 +7,9 @@ class AuthPreAuthUser {
     this.zipCode,
     this.email,
     this.phone,
+    this.gender,
+    this.primaryCity,
+    this.primaryState,
   });
 
   final String? firstName;
@@ -16,4 +19,7 @@ class AuthPreAuthUser {
   final String? zipCode;
   final String? email;
   final String? phone;
+  final String? gender;
+  final String? primaryCity;
+  final String? primaryState;
 }

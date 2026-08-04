@@ -58,4 +58,22 @@ void main() {
       expect(ageFromDob(dob), 30);
     });
   });
+
+  group('profile gender mapping', () {
+    test('maps API values to UI labels', () {
+      expect(mapProfileGenderApiToUi('MALE'), 'Male');
+      expect(mapProfileGenderApiToUi('FEMALE'), 'Female');
+      expect(mapProfileGenderApiToUi('OTHER'), 'Others');
+      expect(mapProfileGenderApiToUi(null), '');
+      expect(mapProfileGenderApiToUi(''), '');
+    });
+
+    test('maps UI labels to API values', () {
+      expect(mapProfileGenderUiToApi('Male'), 'MALE');
+      expect(mapProfileGenderUiToApi('Female'), 'FEMALE');
+      expect(mapProfileGenderUiToApi('Others'), 'OTHER');
+      expect(mapProfileGenderUiToApi(''), isNull);
+      expect(mapProfileGenderUiToApi(null), isNull);
+    });
+  });
 }

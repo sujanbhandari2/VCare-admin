@@ -8,6 +8,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/health_messenger/mappers/associated_user_messenger_mapper.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
 import 'package:vcare_admin/features/users/domain/entities/associated_user.dart';
 
 class HealthMessengerNewChatSheet extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class HealthMessengerNewChatSheet extends ConsumerStatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const HealthMessengerNewChatSheet(),
     );
@@ -67,15 +69,8 @@ class _HealthMessengerNewChatSheetState
     final vcare = context.vcare;
     final chatState = ref.watch(healthMessengerChatProvider);
     final query = _queryController.text.trim().toLowerCase();
-    final associatedUsers = chatState.associatedUsers
+    final people = chatState.associatedUsers
         .where((user) => _matches(user, query))
-        .toList(growable: false);
-    final suggested = associatedUsers
-        .where((user) => !user.isPlatformUser)
-        .map(AssociatedUserMessengerMapper.toMessengerUser)
-        .toList(growable: false);
-    final allPeople = associatedUsers
-        .where((user) => user.isPlatformUser)
         .map(AssociatedUserMessengerMapper.toMessengerUser)
         .toList(growable: false);
     final isLoading =
@@ -141,81 +136,31 @@ class _HealthMessengerNewChatSheetState
               Expanded(
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                        children: [
-                          if (suggested.isNotEmpty) ...[
-                            _SectionLabel(
-                              'Suggested',
-                              vcare: vcare,
-                              icon: LucideIcons.sparkles,
+                    : people.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'No people match your search',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: vcare.mutedForeground),
                             ),
-                            const SizedBox(height: 8),
-                            for (final user in suggested)
-                              _ChatPickRow(
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                            itemCount: people.length,
+                            itemBuilder: (context, index) {
+                              final user = people[index];
+                              return _ChatPickRow(
                                 user: user,
                                 onTap: () => _openChat(user),
-                              ),
-                            const SizedBox(height: 12),
-                          ],
-                          if (allPeople.isNotEmpty) ...[
-                            _SectionLabel('All people', vcare: vcare),
-                            const SizedBox(height: 8),
-                            for (final user in allPeople)
-                              _ChatPickRow(
-                                user: user,
-                                onTap: () => _openChat(user),
-                              ),
-                          ],
-                          if (suggested.isEmpty && allPeople.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
-                              child: Text(
-                                'No people match your search',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: vcare.mutedForeground),
-                              ),
-                            ),
-                        ],
-                      ),
+                              );
+                            },
+                          ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(
-    this.label, {
-    required this.vcare,
-    this.icon,
-  });
-
-  final String label;
-  final VCareThemeExtension vcare;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 14, color: VCareColors.accent),
-          const SizedBox(width: 6),
-        ],
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-            color: vcare.mutedForeground,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -243,48 +188,40 @@ class _ChatPickRow extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    VcareMessengerAvatar(
-                      displayTitle: displayName,
-                      imageUrl: user.avatarUrl,
-                      size: 44,
-                      borderRadius: 16,
-                    ),
-                    Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: user.isOnline
-                              ? const Color(0xFF22C55E)
-                              : vcare.mutedForeground.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                VcareMessengerAvatar(
+                  displayTitle: displayName,
+                  imageUrl: user.avatarUrl,
+                  size: 44,
+                  borderRadius: 16,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        displayName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              displayName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (VcareMessengerRoleBadge.shouldShow(
+                            user.roleLabel,
+                          )) ...[
+                            const SizedBox(width: 6),
+                            VcareMessengerRoleBadge(
+                              roleLabel: user.roleLabel,
+                              compact: true,
+                            ),
+                          ],
+                        ],
                       ),
                       if (user.email.trim().isNotEmpty)
                         Text(

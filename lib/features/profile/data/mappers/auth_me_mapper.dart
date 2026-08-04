@@ -65,6 +65,10 @@ extension AuthMeAgentProfileMapper on model.AuthMeAgentProfileModel {
       agencyGroup: agencyGroup?.toEntity(),
       status: status,
       address: address?.toEntity(),
+      bio: bio,
+      allowTextNotification: allowTextNotification,
+      primaryCity: primaryCity,
+      primaryState: primaryState,
     );
   }
 }

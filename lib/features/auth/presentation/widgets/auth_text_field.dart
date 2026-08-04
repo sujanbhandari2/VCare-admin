@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class AuthTextField extends StatefulWidget {
@@ -20,6 +21,8 @@ class AuthTextField extends StatefulWidget {
     this.required = false,
     this.maxLength,
     this.readOnly = false,
+    this.prefix,
+    this.inputFormatters,
   });
 
   final String label;
@@ -38,6 +41,8 @@ class AuthTextField extends StatefulWidget {
   final bool required;
   final int? maxLength;
   final bool readOnly;
+  final Widget? prefix;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   State<AuthTextField> createState() => _AuthTextFieldState();
@@ -113,6 +118,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
               ),
               border: OutlineInputBorder(borderRadius: .circular(8.0)),
               isDense: true,
+              prefixIcon: widget.prefix,
+              prefixIconConstraints: widget.prefix == null
+                  ? null
+                  : const BoxConstraints(minWidth: 0, minHeight: 0),
               suffixIcon: widget.obscureText
                   ? GestureDetector(
                       onTap: _toggleObscure,
@@ -137,6 +146,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
             onFieldSubmitted: widget.onSubmitted,
             onSaved: widget.onSaved,
             keyboardType: widget.inputType,
+            inputFormatters: widget.inputFormatters,
             autovalidateMode: widget.autoValidateMode,
             enabled: widget.enabled,
             maxLength: widget.maxLength,

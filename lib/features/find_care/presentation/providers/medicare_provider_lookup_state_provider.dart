@@ -58,7 +58,9 @@ class MedicareProviderLookupStateNotifier
 
   Future<bool> _fetchPage({required bool loadMore}) async {
     final criteria = state.submitted!;
-    final response = await ref.read(medicareProviderRepositoryProvider).searchDirectory(
+    final response = await ref
+        .read(medicareProviderRepositoryProvider)
+        .searchDirectory(
           firstName: criteria.firstName,
           lastName: criteria.lastName,
           state: criteria.state.trim().isEmpty ? null : criteria.state.trim(),

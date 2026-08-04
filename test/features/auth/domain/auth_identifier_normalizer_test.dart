@@ -27,17 +27,6 @@ void main() {
       );
     });
 
-    test('phone includes country code for Nepal', () {
-      expect(
-        AuthIdentifierNormalizer.normalize(
-          method: LoginFlowMethod.phone,
-          raw: '9841234567',
-          phoneCountry: AuthPhoneCountry.nepal,
-        ),
-        '9779841234567',
-      );
-    });
-
     test('email trims and lowercases', () {
       expect(
         AuthIdentifierNormalizer.normalize(

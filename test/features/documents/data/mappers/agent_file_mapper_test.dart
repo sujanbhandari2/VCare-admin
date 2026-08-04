@@ -55,5 +55,74 @@ void main() {
       expect(item.imagePreviewUrl, 'https://example.com/photo-preview.jpg');
       expect(isDocumentImage(item.dataUrl, item.name), isTrue);
     });
+
+    test('maps AGENT category and documentType to list item', () {
+      final item = documentItemFromAgentFile(
+        AgentFileModel.fromJson({
+          'id': '2',
+          'name': 'contract.pdf',
+          'url': 'https://example.com/contract.pdf',
+          'category': 'AGENT',
+          'categoryReferenceId': 'agent-1',
+          'documentType': 'Contract',
+          'createdBy': 'user-1',
+          'userId': 'user-1',
+          'createdAt': '2026-06-25T11:06:33.526Z',
+        }).toEntity(hostBaseUrl: 'https://example.com/'),
+      );
+
+      expect(item.sourceLabel, 'Agent document');
+      expect(item.documentType, 'Contract');
+      expect(item.createdBy, 'user-1');
+      expect(item.sourceRouteName, isNull);
+    });
+  });
+
+  group('canManageDocument', () {
+    test('allows only matching uploader', () {
+      expect(
+        canManageDocument(
+          currentUserId: 'user-1',
+          createdBy: 'user-1',
+          userId: 'other',
+        ),
+        isTrue,
+      );
+      expect(
+        canManageDocument(
+          currentUserId: 'user-1',
+          createdBy: null,
+          userId: 'user-1',
+        ),
+        isTrue,
+      );
+      expect(
+        canManageDocument(
+          currentUserId: 'user-1',
+          createdBy: 'user-2',
+          userId: 'user-1',
+        ),
+        isFalse,
+      );
+      expect(
+        canManageDocument(
+          currentUserId: null,
+          createdBy: 'user-1',
+          userId: 'user-1',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('documentRenameValidationError', () {
+    test('requires allowed extension', () {
+      expect(documentRenameValidationError(''), 'Name is required');
+      expect(
+        documentRenameValidationError('noext'),
+        'Name must include a supported file extension',
+      );
+      expect(documentRenameValidationError('ok.pdf'), isNull);
+    });
   });
 }

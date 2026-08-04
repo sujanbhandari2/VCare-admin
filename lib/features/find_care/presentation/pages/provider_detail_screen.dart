@@ -8,8 +8,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/provider_detail_info_row.dart';
-import 'package:vcare_admin/features/home/data/home_models.dart'
-    as home_models;
+import 'package:vcare_admin/features/home/data/home_models.dart' as home_models;
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';

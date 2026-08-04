@@ -14,14 +14,20 @@ class DocumentsDocRow extends StatelessWidget {
   const DocumentsDocRow({
     super.key,
     required this.item,
-    this.isDeleting = false,
+    this.isBusy = false,
+    this.canManage = false,
     this.onOpen,
+    this.onDownload,
+    this.onRename,
     this.onDelete,
   });
 
   final DocumentItem item;
-  final bool isDeleting;
+  final bool isBusy;
+  final bool canManage;
   final VoidCallback? onOpen;
+  final VoidCallback? onDownload;
+  final VoidCallback? onRename;
   final VoidCallback? onDelete;
 
   @override
@@ -32,6 +38,7 @@ class DocumentsDocRow extends StatelessWidget {
       formatDocumentDate(item.createdAt),
       if (sizeLabel.isNotEmpty) sizeLabel,
     ].join(' · ');
+    final documentType = item.documentType?.trim();
 
     return Material(
       color: vcare.card,
@@ -46,88 +53,164 @@ class DocumentsDocRow extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                _DocumentThumbnail(item: item),
+                InkWell(
+                  onTap: item.canOpen ? onOpen : null,
+                  borderRadius: BorderRadius.circular(12),
+                  child: _DocumentThumbnail(item: item),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                  child: InkWell(
+                    onTap: item.canOpen ? onOpen : null,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      Text(
-                        meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
+                        Text(
+                          meta,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: vcare.mutedForeground,
+                          ),
+                        ),
+                        if (documentType != null && documentType.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: VCareColors.primary.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: VCareColors.primary.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              documentType,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: VCareColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 2),
+                        _SourceLabel(item: item),
+                      ],
+                    ),
+                  ),
+                ),
+                if (isBusy)
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
                           color: vcare.mutedForeground,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      _SourceLabel(item: item),
-                    ],
-                  ),
-                ),
-                if (item.canOpen && onOpen != null)
-                  TextButton(
-                    onPressed: onOpen,
-                    style: TextButton.styleFrom(
-                      foregroundColor: VCareColors.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
-                    child: const Text('Open'),
-                  ),
-                if (item.isDeletable && onDelete != null)
-                  IconButton(
-                    onPressed: isDeleting ? null : onDelete,
-                    tooltip: 'Delete',
-                    icon: isDeleting
-                        ? SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: vcare.mutedForeground,
-                            ),
-                          )
-                        : Icon(
-                            LucideIcons.trash2,
-                            size: 16,
-                            color: vcare.mutedForeground,
+                  )
+                else
+                  PopupMenuButton<_DocumentRowAction>(
+                    tooltip: 'Actions',
+                    padding: EdgeInsets.zero,
+                    onSelected: (action) {
+                      switch (action) {
+                        case _DocumentRowAction.view:
+                          onOpen?.call();
+                        case _DocumentRowAction.download:
+                          onDownload?.call();
+                        case _DocumentRowAction.rename:
+                          onRename?.call();
+                        case _DocumentRowAction.delete:
+                          onDelete?.call();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (item.canOpen && onOpen != null)
+                        const PopupMenuItem(
+                          value: _DocumentRowAction.view,
+                          child: _MenuRow(
+                            icon: LucideIcons.eye,
+                            label: 'View',
                           ),
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size(32, 32),
-                      maximumSize: const Size(32, 32),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: const CircleBorder(),
+                        ),
+                      if (onDownload != null)
+                        const PopupMenuItem(
+                          value: _DocumentRowAction.download,
+                          child: _MenuRow(
+                            icon: LucideIcons.download,
+                            label: 'Download',
+                          ),
+                        ),
+                      if (canManage && onRename != null)
+                        const PopupMenuItem(
+                          value: _DocumentRowAction.rename,
+                          child: _MenuRow(
+                            icon: LucideIcons.pencil,
+                            label: 'Rename',
+                          ),
+                        ),
+                      if (canManage && onDelete != null)
+                        const PopupMenuItem(
+                          value: _DocumentRowAction.delete,
+                          child: _MenuRow(
+                            icon: LucideIcons.trash2,
+                            label: 'Delete',
+                          ),
+                        ),
+                    ],
+                    child: Icon(
+                      LucideIcons.moreVertical,
+                      size: 18,
+                      color: vcare.mutedForeground,
                     ),
                   ),
               ],
             ),
           ),
-          if (item.kind == DocumentKind.audio && item.dataUrl.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: _AudioPreview(dataUrl: item.dataUrl),
-            ),
         ],
       ),
+    );
+  }
+}
+
+enum _DocumentRowAction { view, download, rename, delete }
+
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: context.vcare.mutedForeground),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 14)),
+      ],
     );
   }
 }
@@ -284,43 +367,6 @@ class _SourceLabel extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
-    );
-  }
-}
-
-class _AudioPreview extends StatelessWidget {
-  const _AudioPreview({required this.dataUrl});
-
-  final String dataUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: context.vcare.muted.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            LucideIcons.mic,
-            size: 16,
-            color: context.vcare.mutedForeground,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Audio attachment',
-              style: TextStyle(
-                fontSize: 12,
-                color: context.vcare.mutedForeground,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

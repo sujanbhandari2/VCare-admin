@@ -9,6 +9,8 @@ extension ClientPaymentMethodModelMapper on ClientPaymentMethodModel {
       type: _mapType(type),
       label: _buildLabel(),
       last4: cardLast4?.trim().isNotEmpty == true ? cardLast4!.trim() : null,
+      expMonth: cardExpMonth,
+      expYear: cardExpYear,
       isPrimary: isPrimary,
     );
   }

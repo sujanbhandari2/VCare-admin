@@ -14,17 +14,21 @@ class AuthLoginNavigationPolicy {
   }
 
   /// Resolves the post-OTP step from stored identify flags.
+  ///
+  /// Parity: web `resolvePostOtpStep` — existing users without an active login
+  /// go to activate-details; already-logged-in users go to password login.
   static LoginFlowStep resolvePostOtpStep(AuthIdentifyResult result) {
-    if (!result.userExists) {
-      return LoginFlowStep.onboard;
+    if (result.atLeastOneAccountLoggedIn) {
+      return LoginFlowStep.password;
     }
-    if (result.otherPendingAccount) {
+    if (!result.userExists) {
       return LoginFlowStep.onboard;
     }
     if (result.multipleAccounts) {
       return LoginFlowStep.disambiguate;
     }
-    return LoginFlowStep.password;
+    // userExists without login → activate (web ignores otherPendingAccount here)
+    return LoginFlowStep.activateDetails;
   }
 
   /// When already logged in elsewhere, skip OTP and route directly.

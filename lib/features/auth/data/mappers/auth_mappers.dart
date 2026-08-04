@@ -57,15 +57,7 @@ extension AuthVerifyOtpResultMapper on model.AuthVerifyOtpResultModel {
 }
 
 extension AuthLoginResultMapper on model.AuthLoginResultModel {
-  AuthSession toEntity() {
-    return AuthSession(
-      refresh: session.refresh,
-      access: session.access,
-      email: session.email,
-      username: session.username,
-      profileId: profileId,
-    );
-  }
+  AuthSession toEntity() => toSession();
 }
 
 extension LoginResponseMapper on model.LoginResponseModel {
@@ -102,6 +94,9 @@ extension AuthPreAuthUserMapper on model.AuthPreAuthUserModel {
       zipCode: zipCode,
       email: email,
       phone: phone,
+      gender: gender,
+      primaryCity: primaryCity,
+      primaryState: primaryState,
     );
   }
 }
@@ -109,7 +104,10 @@ extension AuthPreAuthUserMapper on model.AuthPreAuthUserModel {
 extension AuthSetupAccountResultMapper on model.AuthSetupAccountResultModel {
   AuthSetupAccountResult toEntity() {
     return AuthSetupAccountResult(
-      session: session.toEntity(),
+      session: session.toEntity().copyWith(
+        profileId: profileId,
+        tenantId: tenantId,
+      ),
       profileId: profileId,
       menu: menu,
     );

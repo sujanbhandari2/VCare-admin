@@ -3,7 +3,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 
 /// parity: vcare-agent-app-2.0/src/features/auth/components/VerifyStep.tsx
@@ -45,7 +44,7 @@ class LoginVerifyStep extends StatelessWidget {
           title: 'Enter verification code',
           subtitle: Text.rich(
             TextSpan(
-              text: 'We sent a 6-digit code to ',
+              text: 'We sent a 6-digit code to\n',
               children: [
                 TextSpan(
                   text: destination,

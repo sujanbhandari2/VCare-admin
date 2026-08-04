@@ -9,21 +9,29 @@ void main() {
     test('fromJson maps all fields when present', () {
       final model = AuthPreAuthUserModel.fromJson({
         'firstName': 'Jane',
+        'middleName': 'Q',
         'lastName': 'Doe',
         'dob': '1990-01-15',
         'zipCode': '12345',
         'email': 'jane@example.com',
         'phone': '+15551234567',
+        'gender': 'FEMALE',
+        'primaryCity': 'New Orleans',
+        'primaryState': 'Louisiana',
       });
 
       final entity = model.toEntity();
 
       expect(entity.firstName, 'Jane');
+      expect(entity.middleName, 'Q');
       expect(entity.lastName, 'Doe');
       expect(entity.dob, '1990-01-15');
       expect(entity.zipCode, '12345');
       expect(entity.email, 'jane@example.com');
       expect(entity.phone, '+15551234567');
+      expect(entity.gender, 'FEMALE');
+      expect(entity.primaryCity, 'New Orleans');
+      expect(entity.primaryState, 'Louisiana');
     });
 
     test('fromJson ignores missing and empty fields', () {
@@ -31,6 +39,8 @@ void main() {
         'firstName': '  ',
         'lastName': null,
         'email': 'user@example.com',
+        'gender': '',
+        'primaryCity': '  ',
       });
 
       final entity = model.toEntity();
@@ -41,6 +51,9 @@ void main() {
       expect(entity.zipCode, isNull);
       expect(entity.email, 'user@example.com');
       expect(entity.phone, isNull);
+      expect(entity.gender, isNull);
+      expect(entity.primaryCity, isNull);
+      expect(entity.primaryState, isNull);
     });
   });
 

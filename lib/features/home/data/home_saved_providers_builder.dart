@@ -4,7 +4,6 @@ import 'package:vcare_admin/features/saved_providers/data/mappers/saved_provider
 import 'package:vcare_admin/features/saved_providers/domain/entities/saved_provider.dart';
 
 const homeSavedProvidersCarouselLimit = 6;
-const homeCareTeamCarouselLimit = 4;
 
 List<SavedProviderItem> buildHomeSavedProviders({
   required List<SavedProvider> savedProviders,

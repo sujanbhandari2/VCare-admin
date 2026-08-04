@@ -1,4 +1,5 @@
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
+import 'package:vcare_admin/features/users/domain/entities/associated_user.dart';
 
 /// Maps generic-chat API models to package UI models for [MessengerChatShell].
 class HealthMessengerMappers {
@@ -6,11 +7,13 @@ class HealthMessengerMappers {
     required this.currentUserId,
     required this.mediaBaseUrl,
     required this.users,
+    this.associatedUsers = const [],
   });
 
   final String currentUserId;
   final String mediaBaseUrl;
   final List<TenantUser> users;
+  final List<AssociatedUser> associatedUsers;
 
   MessengerUser mapTenantUser(TenantUser user) {
     return MessengerUser(
@@ -19,7 +22,7 @@ class HealthMessengerMappers {
       roleLabel: user.role.label,
       email: user.email,
       isOnline: user.isOnline,
-      avatarUrl: user.avatarUrl,
+      avatarUrl: resolveAvatarUrl(user.avatarUrl),
     );
   }
 
@@ -218,23 +221,101 @@ class HealthMessengerMappers {
       roleLabel: user.role.label,
       email: user.email?.trim() ?? '',
       isOnline: user.isOnline,
-      avatarUrl: user.avatarUrl,
+      avatarUrl: resolveAvatarUrl(user.avatarUrl),
     );
   }
 
   String? avatarForParticipant(ConversationParticipant participant) {
-    final participantAvatar = participant.user.avatarUrl?.trim();
-    if (participantAvatar != null && participantAvatar.isNotEmpty) {
+    // Prefer users/associated profilePreviewLink when we can match the peer.
+    final associatedAvatar = avatarFromAssociated(participant);
+    if (associatedAvatar != null && associatedAvatar.isNotEmpty) {
+      return associatedAvatar;
+    }
+
+    final participantAvatar = resolveAvatarUrl(participant.user.avatarUrl);
+    if (participantAvatar != null) {
       return participantAvatar;
     }
     return avatarForUser(participant.user.id) ??
         avatarForUser(participant.userId);
   }
 
+  /// Absolutizes relative chat media paths and drops values that cannot be
+  /// loaded as network images (storage keys, blank strings, etc.).
+  String? resolveAvatarUrl(String? raw) {
+    final trimmed = raw?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return null;
+    }
+    final absolute = messengerAbsoluteMediaUrl(
+      trimmed,
+      baseOrigin: mediaBaseUrl.isEmpty ? null : mediaBaseUrl,
+    );
+    if (absolute.isEmpty || !messengerMediaSourceIsNetwork(absolute)) {
+      return null;
+    }
+    return absolute;
+  }
+
+  String? avatarFromAssociated(ConversationParticipant participant) {
+    for (final tenant in users) {
+      final matchesChatId = tenant.id == participant.user.id ||
+          tenant.id == participant.userId;
+      if (!matchesChatId) {
+        continue;
+      }
+      final providerId = tenant.providerUserId?.trim().toLowerCase() ?? '';
+      if (providerId.isEmpty) {
+        continue;
+      }
+      final photo = associatedPhotoByPlatformId(providerId);
+      if (photo != null) {
+        return photo;
+      }
+    }
+
+    final email = participant.user.email?.trim().toLowerCase() ?? '';
+    if (email.isEmpty) {
+      return null;
+    }
+    return associatedPhotoByEmail(email);
+  }
+
+  String? associatedPhotoByPlatformId(String platformId) {
+    final normalized = platformId.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final user in associatedUsers) {
+      if (user.id.trim().toLowerCase() == normalized) {
+        return resolveAvatarUrl(user.profilePhotoUrl);
+      }
+    }
+    return null;
+  }
+
+  String? associatedPhotoByEmail(String email) {
+    final normalized = email.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final user in associatedUsers) {
+      if (user.email.trim().toLowerCase() == normalized) {
+        return resolveAvatarUrl(user.profilePhotoUrl);
+      }
+    }
+    return null;
+  }
+
   String? avatarForUser(String userId) {
     for (final user in users) {
       if (user.id == userId) {
-        return user.avatarUrl;
+        final providerId = user.providerUserId?.trim() ?? '';
+        final associatedPhoto = associatedPhotoByPlatformId(providerId);
+        if (associatedPhoto != null) {
+          return associatedPhoto;
+        }
+        return resolveAvatarUrl(user.avatarUrl);
       }
     }
     return null;

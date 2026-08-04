@@ -47,60 +47,8 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadClientData());
-  }
-
-  void _loadClientData() {
-    final clientId = widget.clientId;
-
-    final detailState = ref.read(clientDetailStateProvider(clientId));
-    if (detailState.data == null && !detailState.fetching) {
-      ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail();
-    }
-
-    final membershipsState = ref.read(clientMembershipsStateProvider(clientId));
-    if (membershipsState.data == null && !membershipsState.fetching) {
-      ref
-          .read(clientMembershipsStateProvider(clientId).notifier)
-          .fetchMemberships();
-    }
-
-    final dependentsState = ref.read(clientDependentsStateProvider(clientId));
-    if (dependentsState.dependents.isEmpty && !dependentsState.fetching) {
-      ref
-          .read(clientDependentsStateProvider(clientId).notifier)
-          .fetchDependents();
-    }
-
-    final paymentMethodsState = ref.read(
-      clientPaymentMethodsStateProvider(clientId),
-    );
-    if (paymentMethodsState.methods.isEmpty && !paymentMethodsState.fetching) {
-      ref
-          .read(clientPaymentMethodsStateProvider(clientId).notifier)
-          .fetchPaymentMethods();
-    }
-
-    final transactionsState = ref.read(clientTransactionsStateProvider(clientId));
-    if (!transactionsState.operation.isLoading &&
-        transactionsState.items.isEmpty &&
-        !transactionsState.operation.hasError) {
-      ref.read(clientTransactionsStateProvider(clientId).notifier).loadInitial();
-    }
-
-    final casesState = ref.read(clientCasesStateProvider(clientId));
-    if (!casesState.operation.isLoading &&
-        casesState.items.isEmpty &&
-        !casesState.operation.hasError) {
-      ref.read(clientCasesStateProvider(clientId).notifier).loadInitial();
-    }
-
-    final documentsState = ref.read(clientDocumentsStateProvider(clientId));
-    if (!documentsState.list.operation.isLoading &&
-        documentsState.list.items.isEmpty &&
-        !documentsState.list.operation.hasError) {
-      ref.read(clientDocumentsStateProvider(clientId).notifier).loadInitial();
-    }
+    // Always refetch when this screen is opened (providers are keepAlive).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onRefresh());
   }
 
   Future<void> _onRefresh() async {
@@ -185,108 +133,113 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _onRefresh,
+        // NestedScrollView + TabBarView nest scrollables, so default
+        // depth == 0 misses pulls on tab ListViews. Accept any vertical
+        // scroll notification so pull-to-refresh works from every tab.
+        notificationPredicate: (notification) =>
+            notification.metrics.axis == Axis.vertical,
         child: NestedScrollView(
           physics: VcareRefreshScrollView.physics,
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: VcarePinnedPageTitleDelegate(
-              safeTop: safeTop,
-              textScaleFactor: textScaleFactor,
-              hasSubtitle: false,
-              title: vcareTabPageTitle(
-                title: detail.fullName,
-                showBack: true,
-                action: IconButton(
-                  onPressed: () => ClientDetailsDrawer.show(context, detail),
-                  icon: const Icon(LucideIcons.info, size: 16),
-                  tooltip: 'Client details',
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size(32, 32),
-                    maximumSize: const Size(32, 32),
-                    padding: EdgeInsets.zero,
-                    foregroundColor: vcare.mutedForeground,
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: VcarePinnedPageTitleDelegate(
+                safeTop: safeTop,
+                textScaleFactor: textScaleFactor,
+                hasSubtitle: false,
+                title: vcareTabPageTitle(
+                  title: detail.fullName,
+                  showBack: true,
+                  action: IconButton(
+                    onPressed: () => ClientDetailsDrawer.show(context, detail),
+                    icon: const Icon(LucideIcons.info, size: 16),
+                    tooltip: 'Client details',
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(32, 32),
+                      maximumSize: const Size(32, 32),
+                      padding: EdgeInsets.zero,
+                      foregroundColor: vcare.mutedForeground,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(child: _IdentityCard(detail: detail)),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: ClientDetailTabBarHeader(
-              tabBar: ClientDetailTabBar(controller: _tabController),
-            ),
-          ),
-        ],
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            ClientMembershipsTab(
-              memberships: membershipsState.data?.memberships ?? const [],
-              dependents: dependentsState.dependents,
-              isLoading: membershipsState.fetching,
-              error: membershipsState.error,
-              isLoadingDependents: dependentsState.fetching,
-              dependentsError: dependentsState.error,
-              onRetry: () => ref
-                  .read(clientMembershipsStateProvider(clientId).notifier)
-                  .fetchMemberships(),
-              onRetryDependents: () => ref
-                  .read(clientDependentsStateProvider(clientId).notifier)
-                  .fetchDependents(),
-              onMembershipInfo: (m) => _showMembershipNote(context, m),
-            ),
-            ClientBillingTab(
-              clientId: clientId,
-              memberships: membershipsState.data?.memberships ?? const [],
-              paymentMethods: paymentMethodsState.methods,
-              transactionsState: transactionsState,
-              isLoadingPaymentMethods: paymentMethodsState.fetching,
-              paymentMethodsError: paymentMethodsState.error,
-              onRetryPaymentMethods: () => ref
-                  .read(clientPaymentMethodsStateProvider(clientId).notifier)
-                  .fetchPaymentMethods(),
-              onRetryTransactions: () => ref
-                  .read(clientTransactionsStateProvider(clientId).notifier)
-                  .loadInitial(),
-              onLoadMoreTransactions: () => ref
-                  .read(clientTransactionsStateProvider(clientId).notifier)
-                  .loadMore(),
-              onTransactionTap: (t) => _showTransactionDetails(
-                context,
-                transaction: t,
-                clientName: detail.fullName,
-                clientEmail: detail.email,
-                dependents: dependentsState.dependents,
+            SliverToBoxAdapter(child: _IdentityCard(detail: detail)),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: ClientDetailTabBarHeader(
+                tabBar: ClientDetailTabBar(controller: _tabController),
               ),
             ),
-            ClientCasesTab(
-              clientId: clientId,
-              casesState: casesState,
-              onRetry: () => ref
-                  .read(clientCasesStateProvider(clientId).notifier)
-                  .loadInitial(),
-              onLoadMore: () => ref
-                  .read(clientCasesStateProvider(clientId).notifier)
-                  .loadMore(),
-            ),
-            ClientDocumentsTab(
-              clientId: clientId,
-              documentsState: documentsState,
-              onRetry: () => ref
-                  .read(clientDocumentsStateProvider(clientId).notifier)
-                  .loadInitial(),
-              onLoadMore: () => ref
-                  .read(clientDocumentsStateProvider(clientId).notifier)
-                  .loadMore(),
-              onDocumentAction: (file, action) =>
-                  _handleDocumentAction(context, clientId, file, action),
-            ),
           ],
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              ClientMembershipsTab(
+                memberships: membershipsState.data?.memberships ?? const [],
+                dependents: dependentsState.dependents,
+                isLoading: membershipsState.fetching,
+                error: membershipsState.error,
+                isLoadingDependents: dependentsState.fetching,
+                dependentsError: dependentsState.error,
+                onRetry: () => ref
+                    .read(clientMembershipsStateProvider(clientId).notifier)
+                    .fetchMemberships(),
+                onRetryDependents: () => ref
+                    .read(clientDependentsStateProvider(clientId).notifier)
+                    .fetchDependents(),
+                onMembershipInfo: (m) => _showMembershipNote(context, m),
+              ),
+              ClientBillingTab(
+                clientId: clientId,
+                memberships: membershipsState.data?.memberships ?? const [],
+                paymentMethods: paymentMethodsState.methods,
+                transactionsState: transactionsState,
+                isLoadingPaymentMethods: paymentMethodsState.fetching,
+                paymentMethodsError: paymentMethodsState.error,
+                onRetryPaymentMethods: () => ref
+                    .read(clientPaymentMethodsStateProvider(clientId).notifier)
+                    .fetchPaymentMethods(),
+                onRetryTransactions: () => ref
+                    .read(clientTransactionsStateProvider(clientId).notifier)
+                    .loadInitial(),
+                onLoadMoreTransactions: () => ref
+                    .read(clientTransactionsStateProvider(clientId).notifier)
+                    .loadMore(),
+                onTransactionTap: (t) => _showTransactionDetails(
+                  context,
+                  transaction: t,
+                  clientName: detail.fullName,
+                  clientEmail: detail.email,
+                  dependents: dependentsState.dependents,
+                ),
+              ),
+              ClientCasesTab(
+                clientId: clientId,
+                casesState: casesState,
+                onRetry: () => ref
+                    .read(clientCasesStateProvider(clientId).notifier)
+                    .loadInitial(),
+                onLoadMore: () => ref
+                    .read(clientCasesStateProvider(clientId).notifier)
+                    .loadMore(),
+              ),
+              ClientDocumentsTab(
+                clientId: clientId,
+                documentsState: documentsState,
+                onRetry: () => ref
+                    .read(clientDocumentsStateProvider(clientId).notifier)
+                    .loadInitial(),
+                onLoadMore: () => ref
+                    .read(clientDocumentsStateProvider(clientId).notifier)
+                    .loadMore(),
+                onDocumentAction: (file, action) =>
+                    _handleDocumentAction(context, clientId, file, action),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 

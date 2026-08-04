@@ -5,7 +5,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_category_search_state_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/providers/find_care_current_location_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_search_location_provider.dart';
+import 'package:vcare_admin/features/find_care/presentation/utils/find_care_current_location_flow.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_location_bar.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_category_utils.dart';
@@ -23,7 +25,8 @@ class FindCareCategoryScreen extends ConsumerStatefulWidget {
       _FindCareCategoryScreenState();
 }
 
-class _FindCareCategoryScreenState extends ConsumerState<FindCareCategoryScreen> {
+class _FindCareCategoryScreenState
+    extends ConsumerState<FindCareCategoryScreen> {
   final _queryController = TextEditingController();
   late final TextEditingController _locationController;
 
@@ -52,23 +55,27 @@ class _FindCareCategoryScreenState extends ConsumerState<FindCareCategoryScreen>
     super.dispose();
   }
 
+  Future<void> _clearCurrentLocation() async {
+    await ref
+        .read(findCareSearchLocationProvider.notifier)
+        .useProfileLocation();
+  }
+
   Future<void> _runSearch() async {
     final category = _category;
     if (category == null) return;
-    await ref.read(findCareSearchLocationProvider.notifier).setFromDisplayText(
-          _locationController.text,
-        );
-    await ref.read(findCareCategorySearchStateProvider.notifier).search(
-          slug: widget.slug,
-          keyword: _queryController.text,
-        );
+    await ref
+        .read(findCareSearchLocationProvider.notifier)
+        .setFromDisplayText(_locationController.text);
+    await ref
+        .read(findCareCategorySearchStateProvider.notifier)
+        .search(slug: widget.slug, keyword: _queryController.text);
   }
 
   Future<void> _loadMore() async {
-    await ref.read(findCareCategorySearchStateProvider.notifier).loadMore(
-          slug: widget.slug,
-          keyword: _queryController.text,
-        );
+    await ref
+        .read(findCareCategorySearchStateProvider.notifier)
+        .loadMore(slug: widget.slug, keyword: _queryController.text);
   }
 
   @override
@@ -77,7 +84,14 @@ class _FindCareCategoryScreenState extends ConsumerState<FindCareCategoryScreen>
     final vcare = context.vcare;
     final searchState = ref.watch(findCareCategorySearchStateProvider);
     final location = ref.watch(findCareSearchLocationProvider);
+    final detecting = ref.watch(
+      findCareCurrentLocationStateProvider.select((s) => s.detecting),
+    );
     final stateLabel = location.state.trim().isEmpty ? null : location.state;
+
+    if (_locationController.text != location.displayLabel) {
+      _locationController.text = location.displayLabel;
+    }
 
     if (category == null) {
       return Scaffold(
@@ -117,13 +131,16 @@ class _FindCareCategoryScreenState extends ConsumerState<FindCareCategoryScreen>
               delegate: SliverChildListDelegate([
                 FindCareLocationBar(
                   locationController: _locationController,
-                  onDetectLocation: () async {
-                    await ref
-                        .read(findCareSearchLocationProvider.notifier)
-                        .detectCurrentLocation();
-                    final updated = ref.read(findCareSearchLocationProvider);
-                    _locationController.text = updated.displayLabel;
+                  isDetecting: detecting,
+                  isUsingCurrentLocation: location.fromCurrentLocation,
+                  onDetectLocation: () {
+                    runFindCareCurrentLocationFlow(
+                      context,
+                      ref,
+                      userInitiated: true,
+                    );
                   },
+                  onClearCurrentLocation: _clearCurrentLocation,
                   actions: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

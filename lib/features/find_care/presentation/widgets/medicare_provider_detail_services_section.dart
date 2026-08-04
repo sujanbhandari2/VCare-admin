@@ -40,7 +40,11 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(LucideIcons.clipboardList, size: 20, color: VCareColors.primary),
+              Icon(
+                LucideIcons.clipboardList,
+                size: 20,
+                color: VCareColors.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -149,9 +153,7 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
                           DataCell(Text(line.totalServices)),
                           DataCell(
                             Text(
-                              formatCmsMoney(
-                                line.averageMedicarePaymentAmount,
-                              ),
+                              formatCmsMoney(line.averageMedicarePaymentAmount),
                             ),
                           ),
                         ],

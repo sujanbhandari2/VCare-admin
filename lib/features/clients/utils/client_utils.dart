@@ -1,5 +1,6 @@
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 
 String clientInitials(String fullName) => profileInitials(fullName);
 
@@ -9,34 +10,11 @@ String buildClientsSubtitle(int totalCount, {bool isLoading = false}) {
   return '$totalCount active $label';
 }
 
-String formatClientDate(String isoDate) {
-  final parsed = DateTime.tryParse(isoDate);
-  if (parsed == null) return isoDate;
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
-}
+String formatClientDate(String isoDate) => formatDisplayDateString(isoDate);
 
-/// MM/dd/yyyy — parity with vcareapp [fmtDate] on client detail.
-String formatClientDateNumeric(String isoDate) {
-  final parsed = DateTime.tryParse(isoDate);
-  if (parsed == null) return isoDate;
-  final mm = parsed.month.toString().padLeft(2, '0');
-  final dd = parsed.day.toString().padLeft(2, '0');
-  return '$mm/$dd/${parsed.year}';
-}
+/// Date-only display for client detail and commission — `Aug 2, 1999`.
+String formatClientDateNumeric(String isoDate) =>
+    formatDisplayDateString(isoDate);
 
 String clientPaymentMethodTypeLabel(ClientPaymentMethodType type) {
   switch (type) {

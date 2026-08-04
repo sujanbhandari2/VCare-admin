@@ -61,11 +61,11 @@ class AuthPhoneFormatter {
     if (digits.length <= 3) {
       return digits;
     }
-    if (digits.length <= 6) {
-      return '${digits.substring(0, 3)}-${digits.substring(3)}';
+    if (digits.length <= 7) {
+      return '${digits.substring(0, 3)} ${digits.substring(3)}';
     }
-    return '${digits.substring(0, 3)}-${digits.substring(3, 6)}-'
-        '${digits.substring(6)}';
+    return '${digits.substring(0, 3)} ${digits.substring(3, 7)} '
+        '${digits.substring(7)}';
   }
 
   /// Infers country from API-style digits when pre-filling phone fields.

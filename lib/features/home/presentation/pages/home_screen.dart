@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
-import 'package:vcare_admin/features/home/data/home_mock_data.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/data/home_profile_mapper.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
@@ -21,16 +20,17 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_metrics_sect
 import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_recent_activity_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_saved_providers_section.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
+import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_transaction_detail_sheet.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_w9_form_sheet.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:go_router/go_router.dart';
-
-// TODO: Re-enable when todo list API is available.
-// import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
 
 /// Section spacing from vcareapp `HomeDashboardBody` (`space-y-6`).
 const _sectionGap = 24.0;
@@ -43,12 +43,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  late HomeViewData _data;
-
   @override
   void initState() {
     super.initState();
-    _data = _buildViewData();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // TODO: Re-enable when notifications API is available.
       // await ref.read(notificationInboxStateProvider.notifier).fetchInbox();
@@ -59,20 +56,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ref.read(agentStatsStateProvider.notifier).fetchStats(),
           ref.read(savedProvidersStateProvider.notifier).fetchSavedProviders(),
           ref.read(careTeamStateProvider.notifier).fetchCareTeam(),
+          ref.read(todoListStateProvider.notifier).loadInitial(),
         ]);
       }
       if (mounted) {
         ref.read(networkFetchSessionProvider.notifier).markSessionHydrated();
       }
     });
-  }
-
-  HomeViewData _buildViewData() {
-    final base = HomeMockData.defaultView();
-    // TODO: Re-enable when todo list API is available.
-    // final recent = defaultRecentActivity();
-    // return base.copyWith(recentActivity: recent);
-    return base;
   }
 
   bool _hasReferral(LocalProfile profile) =>
@@ -103,29 +93,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _handleActivityTap(ActivityItem item) {
-    if (item.kind == ActivityKind.transaction && item.transaction != null) {
-      showHomeTransactionReceiptSheet(context, item.transaction!);
+  Future<void> _handleTodoTap(TodoItem item) async {
+    if (item.type == TodoType.paymentFailed) {
+      await TodoTransactionDetailSheet.show(context, item: item);
       return;
     }
-
-    if (item.kind == ActivityKind.request) {
-      context.pushNamed(
-        AppRouter.requestDetailName,
-        pathParameters: {'id': item.id},
+    if (item.type == TodoType.w9FormMissing) {
+      await TodoW9FormSheet.show(context, item: item);
+      return;
+    }
+    if (item.type == TodoType.completeProfile) {
+      await context.pushNamed(
+        AppRouter.profileEditName,
+        queryParameters: const {'tab': 'story'},
       );
-      return;
+      if (!mounted) {
+        return;
+      }
+      await ref.read(todoListStateProvider.notifier).refresh();
     }
-
-    if (item.kind == ActivityKind.message && item.contactId != null) {
-      context.pushNamed(
-        AppRouter.careTeamDetailName,
-        pathParameters: {'id': item.contactId!},
-      );
-      return;
-    }
-
-    context.pushNamed(AppRouter.messages.toPathName);
   }
 
   Future<void> _onRefresh() async {
@@ -144,15 +130,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             .read(savedProvidersStateProvider.notifier)
             .fetchSavedProviders(forceRefresh: true),
         ref.read(careTeamStateProvider.notifier).refresh(),
+        ref.read(todoListStateProvider.notifier).refresh(),
       ]);
     }
 
     if (futures.isNotEmpty) {
       await Future.wait(futures);
-    }
-
-    if (mounted) {
-      setState(() => _data = _buildViewData());
     }
   }
 
@@ -163,7 +146,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final inboxState = ref.watch(notificationInboxStateProvider);
     final agentStatsState = ref.watch(agentStatsStateProvider);
     final agentStats = agentStatsState.data;
-    final hasCommission = agentStats?.hasCommission ?? false;
+    // Match web HomeMetricsSection: stats.isAgencyAssociated || profile.agencyGroup.
+    final isAgencyTied =
+        (agentStats?.isAgencyAssociated ?? false) || profile.hasAgencyGroup;
     final totalClients = agentStats == null
         ? '—'
         : formatAgentStatCount(agentStats.totalClients);
@@ -186,6 +171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final carouselSaved = buildHomeSavedProviders(
       savedProviders: savedProvidersState.providers,
     ).take(homeSavedProvidersCarouselLimit).toList();
+    final todoListState = ref.watch(todoListStateProvider);
 
     final safeTop = MediaQuery.paddingOf(context).top;
 
@@ -229,31 +215,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeMetricsSection(
-                    hasCommission: hasCommission,
+                    isAgencyTied: isAgencyTied,
                     totalClients: totalClients,
                     totalCommission: totalCommission,
                     totalSales: totalSales,
                     onTotalClientsTap: () =>
                         context.goNamed(AppRouter.clientsName),
-                    onTotalCommissionTap: () =>
-                        context.pushNamed(AppRouter.commissionsName),
-                    onTotalSalesTap: () =>
-                        context.pushNamed(AppRouter.commissionsName),
+                    onSalesOrCommissionTap: () =>
+                        context.pushNamed(AppRouter.homeSalesName),
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeRecentActivitySection(
-                    items: _data.recentActivity,
+                    items: todoListState.items,
+                    isLoading: todoListState.isInitialLoading,
+                    isError: todoListState.isInitialError,
+                    errorMessage: todoListState.operation.errorMessage,
+                    onRetry: () =>
+                        ref.read(todoListStateProvider.notifier).loadInitial(),
                     onSeeAll: () => context.pushNamed(AppRouter.activityName),
-                    onItemTap: _handleActivityTap,
+                    onItemTap: _handleTodoTap,
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeCareTeamCarousel(
                     careTeam: careTeam,
                     onSeeAll: () => context.pushNamed(AppRouter.careTeamName),
-                    onMemberTap: (member) => context.pushNamed(
-                      AppRouter.careTeamDetailName,
-                      pathParameters: {'id': member.id},
-                    ),
+                    onAdd: () => context.pushNamed(AppRouter.careTeamNewName),
                   ),
                   const SizedBox(height: _sectionGap),
                   HomeSavedProvidersSection(

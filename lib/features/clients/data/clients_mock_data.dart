@@ -264,6 +264,8 @@ class ClientsMockData {
           type: ClientPaymentMethodType.creditDebitCard,
           label: 'Visa ending in 4242',
           last4: '4242',
+          expMonth: 12,
+          expYear: 2030,
           isPrimary: true,
         ),
         ClientPaymentMethod(

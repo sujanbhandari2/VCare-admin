@@ -8,7 +8,7 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart';
+import 'package:vcare_admin/features/care_team/presentation/widgets/care_avatar.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/message_groups_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_chat_sheet.dart';

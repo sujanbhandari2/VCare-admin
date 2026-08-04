@@ -1,84 +1,116 @@
 import 'package:intl/intl.dart';
 
-import 'package:vcare_admin/features/commission/domain/entities/commission_filter.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_history_item.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_status.dart';
-import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
+import 'package:vcare_admin/features/commission/domain/entities/sales_transaction_status.dart';
 
-const _agencySaleTitles = [
-  'Membership Plan - Individual',
-  'Membership Plan - Family',
-  'Company Group - Monthly',
-  'Membership Plan - Individual',
-  'Company Group - Annual',
-  'Membership Plan - Family',
-  'Membership Plan - Individual',
-];
-
+/// Fallback badge label from mapped enum.
 String commissionStatusLabel(CommissionStatus status) => switch (status) {
-      CommissionStatus.paid => 'Paid',
-      CommissionStatus.pending => 'Earned',
-      CommissionStatus.cancelled => 'Failed',
-      CommissionStatus.unknown => 'Unknown',
-    };
+  CommissionStatus.pending => 'Pending',
+  CommissionStatus.paid => 'Successful',
+  CommissionStatus.cancelled => 'Rejected',
+  CommissionStatus.failed => 'Failed',
+  CommissionStatus.upcoming => 'Upcoming',
+  CommissionStatus.unknown => 'Unknown',
+};
 
-List<CommissionHistoryItem> filterCommissionHistory(
-  List<CommissionHistoryItem> items,
-  CommissionFilter filter,
-) {
-  if (filter == CommissionFilter.all) return items;
-
-  return items.where((item) {
-    return switch (filter) {
-      CommissionFilter.paid => item.status == CommissionStatus.paid,
-      CommissionFilter.earned => item.status == CommissionStatus.pending,
-      CommissionFilter.failed => item.status == CommissionStatus.cancelled,
-      CommissionFilter.all => true,
-    };
-  }).toList();
+/// Agent-facing status label for history rows (matches web).
+///
+/// parity: vcare-agent-app-2.0/src/features/commission/utils.ts
+String resolveCommissionStatusLabel(CommissionHistoryItem item) {
+  final s = item.apiStatus.toUpperCase();
+  if (s == 'FAILED') return 'Failed';
+  if (s == 'REJECTED') return 'Rejected';
+  final itemType = item.itemType?.toUpperCase();
+  if (s == 'UPCOMING' ||
+      itemType == 'UPCOMING' ||
+      itemType == 'ENROLLMENT' ||
+      item.id.startsWith('pending:') ||
+      item.id.startsWith('subscription:')) {
+    return 'Upcoming';
+  }
+  if (s == 'PENDING') return 'Pending';
+  if (s == 'PAID') return 'Successful';
+  if (item.apiStatus.trim().isNotEmpty) return item.apiStatus;
+  return commissionStatusLabel(item.status);
 }
 
-String formatCommissionMoney(String? amount, {bool signed = false}) {
+/// Badge label for sales-history transaction status.
+String salesTransactionStatusLabel(SalesTransactionStatus status) =>
+    switch (status) {
+      SalesTransactionStatus.pending => 'Upcoming',
+      SalesTransactionStatus.paid => 'Earned',
+      SalesTransactionStatus.failed => 'Failed',
+      SalesTransactionStatus.refunded => 'Refunded',
+      SalesTransactionStatus.voided => 'Voided',
+      SalesTransactionStatus.unknown => 'Unknown',
+    };
+
+String formatCommissionMoney(
+  double? amount, {
+  bool signed = false,
+  String? currency,
+}) {
   if (amount == null) return '—';
 
-  final parsed = double.tryParse(amount);
-  if (parsed == null) return '—';
-
-  final formatted = NumberFormat.simpleCurrency(decimalDigits: 2).format(parsed.abs());
+  final code = (currency ?? 'USD').trim().toUpperCase();
+  final formatted = NumberFormat.simpleCurrency(
+    name: code.isEmpty ? 'USD' : code,
+    decimalDigits: 2,
+  ).format(amount.abs());
   if (!signed) return formatted;
 
-  if (parsed > 0) return '+$formatted';
-  if (parsed < 0) return '-$formatted';
+  if (amount > 0) return '+$formatted';
+  if (amount < 0) return '-$formatted';
   return formatted;
 }
 
-String agencySaleTitle(String id) {
-  var hash = 0;
-  for (var i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.codeUnitAt(i)) & 0xFFFFFFFF;
-  }
-  return _agencySaleTitles[hash % _agencySaleTitles.length];
-}
-
-double agencySaleAmount(String commissionAmount) {
-  final parsed = double.tryParse(commissionAmount) ?? 0;
-  return (parsed.abs() * 10).clamp(99, double.infinity);
-}
-
 String commissionRateLabel(CommissionHistoryItem item) {
+  final value = item.commissionValue?.trim();
+  if (value == null || value.isEmpty) return '—';
+
   final type = item.commissionType.toUpperCase();
   if (type == 'PERCENTAGE') {
-    return '${item.commissionValue}% commission';
+    return '$value% commission';
   }
-  return item.commissionValue;
+  return value;
 }
 
 bool isCommissionSummaryEmpty({
-  required String? totalSales,
+  required double? totalSales,
+  double? totalCommission,
+  int upcomingCount = 0,
+  int needsAttentionCount = 0,
   required bool historyEmpty,
 }) {
   if (!historyEmpty) return false;
+  if (upcomingCount > 0 || needsAttentionCount > 0) return false;
+  final salesEmpty = totalSales == null || totalSales == 0;
+  final commissionEmpty = totalCommission == null || totalCommission == 0;
+  return salesEmpty && commissionEmpty;
+}
 
-  final sales = double.tryParse(totalSales ?? '');
-  return sales == null || sales == 0;
+/// Sum sale amounts for aggregate metrics (matches web `aggregateSaleTotals`).
+({double total, int count}) aggregateSaleTotals(
+  Iterable<CommissionHistoryItem> entries,
+) {
+  var total = 0.0;
+  var count = 0;
+  for (final entry in entries) {
+    final sale = entry.salesAmount;
+    if (sale == null) continue;
+    total += sale;
+    count += 1;
+  }
+  return (total: total, count: count);
+}
+
+/// Short transaction ref matching web detail drawer (`#` + last 4 hex).
+String formatShortTransactionRef(String? id) {
+  final compact = (id ?? '').replaceAll('-', '');
+  if (compact.isEmpty) return '—';
+  final tail = compact.length <= 4
+      ? compact
+      : compact.substring(compact.length - 4);
+  return '#${tail.toUpperCase()}';
 }

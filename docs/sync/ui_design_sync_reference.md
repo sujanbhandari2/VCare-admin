@@ -79,6 +79,9 @@ Web `index.css` disables all shadows globally. Flutter parity:
 | `/clients` | `pages/Clients.tsx` | `features/clients/.../clients_screen.dart` |
 | `/home/id-card` | `pages/IdCard.tsx` | `features/home/.../id_card_screen.dart` |
 | Referral card | `features/id-card/components/VCareReferralCard.tsx` | `features/home/.../vcare_referral_card.dart` |
+| Contact support | `features/help-support/components/ContactSupportDialog.tsx` | `features/help_support/.../contact_support_sheet.dart` |
+| Commission | `features/commission/` | `features/commission/` |
+| Home care team | `features/home/components/HomeCareTeamCarousel.tsx` | `features/home/.../home_care_team_carousel.dart` |
 
 ## Sync workflow
 
@@ -94,7 +97,7 @@ Web `index.css` disables all shadows globally. Flutter parity:
 
 - Add Client drawer (`AddClientDrawer.tsx`) — separate phase
 - Desktop sidebar (`md+` in `MobileShell.tsx`)
-- `/commissions`, `/billings/pending` routes
+- `/billings/pending` route
 - `vcare_parity_screens.dart` monolith migration
 
 ## Forgot password route

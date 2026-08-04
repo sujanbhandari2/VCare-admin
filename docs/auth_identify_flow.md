@@ -252,10 +252,10 @@ Priority order in `AuthLoginNavigationPolicy.resolvePostOtpStep`:
 
 | Priority | Condition | Login step |
 |----------|-----------|------------|
-| 1 | `!userExists` | onboard |
-| 2 | `otherPendingAccount` | onboard |
+| 1 | `atLeastOneAccountLoggedIn` | password |
+| 2 | `!userExists` | onboard |
 | 3 | `multipleAccounts` | disambiguate |
-| 4 | default | password |
+| 4 | `userExists` (no login yet) | activateDetails |
 
 ## State persistence
 

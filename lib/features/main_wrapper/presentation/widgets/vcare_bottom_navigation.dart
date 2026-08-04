@@ -6,11 +6,16 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
+import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
 
 export 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 
-/// Returns 0 when [MainWrapperScreen] already applied shell bottom inset.
+/// Returns 0 when [MainWrapperScreen] already applied shell bottom inset,
+/// or when the IME is open (floating nav sits under the keyboard).
 double vcareTabComposerBottomPadding(BuildContext context) {
+  if (isSoftKeyboardOpen(context)) {
+    return 0;
+  }
   if (VCareMobileShellScope.appliesBottomInsetOf(context)) {
     return 0;
   }
@@ -32,10 +37,15 @@ class VcareBottomNavigation extends StatelessWidget {
     super.key,
     required this.currentItem,
     required this.onSelect,
+    this.collapsed = false,
   });
 
   final NavItem currentItem;
   final ValueChanged<NavItem> onSelect;
+
+  /// When true, occupies no layout height so the IME can sit flush under content.
+  /// The widget stays mounted so the shell does not lose the bar after dismiss.
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +55,12 @@ class VcareBottomNavigation extends StatelessWidget {
 
     if (width >= VCareLayout.mobileBreakpoint) {
       return const SizedBox.shrink();
+    }
+
+    // Zero-height placeholder — never return a different widget type / null from
+    // [Scaffold.bottomNavigationBar] or the bar can fail to restore after IME.
+    if (collapsed) {
+      return const SizedBox(width: double.infinity, height: 0);
     }
 
     return SizedBox(

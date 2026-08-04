@@ -1,152 +1,173 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
-import 'package:vcare_admin/features/home/data/home_models.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/home_transaction_receipt_sheet.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
+import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_list_row.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_transaction_detail_sheet.dart';
+import 'package:vcare_admin/features/todo/presentation/widgets/todo_w9_form_sheet.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
+import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 
-class HomeActivityScreen extends StatelessWidget {
+class HomeActivityScreen extends ConsumerStatefulWidget {
   const HomeActivityScreen({super.key});
 
   @override
+  ConsumerState<HomeActivityScreen> createState() => _HomeActivityScreenState();
+}
+
+class _HomeActivityScreenState extends ConsumerState<HomeActivityScreen> {
+  static const double _loadMoreTriggerThreshold = 240;
+
+  final _scrollController = ScrollController();
+  bool _isLoadMoreRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(todoListStateProvider);
+      if (state.items.isEmpty &&
+          !state.isInitialLoading &&
+          !state.isInitialError) {
+        ref.read(todoListStateProvider.notifier).loadInitial();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final listState = ref.read(todoListStateProvider);
+    final shouldLoadMore =
+        listState.hasMore &&
+        listState.items.isNotEmpty &&
+        !listState.isLoadingMore &&
+        listState.loadMoreErrorMessage == null &&
+        !listState.isInitialLoading &&
+        !listState.isInitialError &&
+        !_isLoadMoreRequested &&
+        _scrollController.hasClients &&
+        _scrollController.position.extentAfter <= _loadMoreTriggerThreshold;
+
+    if (shouldLoadMore) {
+      _isLoadMoreRequested = true;
+      ref.read(todoListStateProvider.notifier).loadMore().whenComplete(() {
+        if (mounted) {
+          _isLoadMoreRequested = false;
+        }
+      });
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await ref.read(todoListStateProvider.notifier).refresh();
+  }
+
+  Future<void> _handleItemTap(TodoItem item) async {
+    if (item.type == TodoType.paymentFailed) {
+      await TodoTransactionDetailSheet.show(context, item: item);
+      return;
+    }
+    if (item.type == TodoType.w9FormMissing) {
+      await TodoW9FormSheet.show(context, item: item);
+      return;
+    }
+    if (item.type == TodoType.completeProfile) {
+      await context.pushNamed(
+        AppRouter.profileEditName,
+        queryParameters: const {'tab': 'story'},
+      );
+      if (!mounted) {
+        return;
+      }
+      await ref.read(todoListStateProvider.notifier).refresh();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final items = defaultRecentActivity();
-    final vcare = context.vcare;
+    final listState = ref.watch(todoListStateProvider);
+    final items = listState.items;
+
     return Scaffold(
-      body: CustomScrollView(
+      body: VcareRefreshScrollView(
+        onRefresh: _onRefresh,
+        controller: _scrollController,
         slivers: [
           const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'Recent Activity', showBack: true),
+            child: VcarePageHeader(title: 'To do list', showBack: true),
           ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final item = items[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Material(
-                    color: vcare.card,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: vcare.border),
+              delegate: SliverChildListDelegate([
+                if (listState.isInitialLoading && items.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (listState.isInitialError && items.isEmpty)
+                  VcareErrorStatePanel(
+                    title: 'Unable to load tasks',
+                    message: listState.operation.errorMessage,
+                    padding: const EdgeInsets.all(24),
+                    actionLabel: context.appLocalization.retry,
+                    onAction: () =>
+                        ref.read(todoListStateProvider.notifier).loadInitial(),
+                  )
+                else if (items.isEmpty)
+                  const VcareEmptyStateCard(
+                    icon: LucideIcons.listChecks,
+                    title: 'No tasks yet',
+                    description:
+                        'Action items and updates will appear here when something needs your attention.',
+                  )
+                else
+                  for (var i = 0; i < items.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 8),
+                    TodoListRow(
+                      item: items[i],
+                      onTap: () => _handleItemTap(items[i]),
                     ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        if (item.kind == ActivityKind.transaction &&
-                            item.transaction != null) {
-                          showHomeTransactionReceiptSheet(
+                  ],
+                if (listState.isLoadingMore)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                if (listState.loadMoreErrorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () =>
+                            ref.read(todoListStateProvider.notifier).loadMore(),
+                        child: Text(
+                          NetworkErrorMessage.displayMessage(
                             context,
-                            item.transaction!,
-                          );
-                          return;
-                        }
-                        if (item.kind == ActivityKind.request) {
-                          context.pushNamed(
-                            AppRouter.requestDetailName,
-                            pathParameters: {'id': item.id},
-                          );
-                          return;
-                        }
-                        context.pushNamed(AppRouter.messages.toPathName);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            if (item.kind == ActivityKind.message &&
-                                item.photoAsset != null)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.asset(
-                                  item.photoAsset!,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            else if (item.kind == ActivityKind.transaction)
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: vcare.muted,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  LucideIcons.receipt,
-                                  size: 16,
-                                  color: vcare.mutedForeground,
-                                ),
-                              )
-                            else
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: vcare.muted,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  LucideIcons.inbox,
-                                  size: 16,
-                                  color: vcare.mutedForeground,
-                                ),
-                              ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          item.title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        formatWhen(item.when),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: vcare.mutedForeground,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item.subtitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: vcare.mutedForeground,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                            message: listState.loadMoreErrorMessage,
+                          ),
+                          style: TextStyle(color: VCareColors.primary),
                         ),
                       ),
                     ),
                   ),
-                );
-              }, childCount: items.length),
+              ]),
             ),
           ),
         ],

@@ -8,9 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:vcare_admin/features/profile/data/mappers/auth_me_to_local_profile_mapper.dart';
-import 'package:vcare_admin/features/profile/data/mappers/auth_me_update_mapper.dart';
 import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
-import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/user_profile_repository_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/state/auth_me_state.dart';
@@ -29,6 +27,18 @@ bool _isLocalPhotoPath(String? photoUrl) {
     return false;
   }
   return true;
+}
+
+/// Result of [AuthMeStateNotifier.updateMe].
+enum UpdateMeOutcome {
+  /// Sparse body was empty and no photo upload was needed.
+  noChanges,
+
+  /// PATCH succeeded (and auth/me was refreshed).
+  success,
+
+  /// Upload or PATCH failed; see [AuthMeState.error].
+  failure,
 }
 
 /// Fetches and caches the current authenticated user from `GET auth/me`.
@@ -92,6 +102,13 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
                   email,
                 );
           }
+          final tenantId = authMe.user.currentTenant?.id?.trim();
+          if (tenantId != null && tenantId.isNotEmpty) {
+            await ref.read(storageServiceProvider).set(
+                  StorageKeys.loggedInUserTenantId,
+                  tenantId,
+                );
+          }
 
           final localProfile = localProfileFromAuthMe(authMe);
           await ref.read(localProfileStateProvider.notifier).save(localProfile);
@@ -106,17 +123,12 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
     }
   }
 
-  /// Uploads a new local photo (if any), then PATCHes `auth/me`.
-  ///
-  /// When [photoUrl] is a local file path, the file is uploaded to `POST files`
-  /// first and the returned file id is sent as `profileId`.
-  Future<bool> updateMe({
-    required String fullName,
-    required String email,
-    required String phone,
-    required String dateOfBirth,
+  /// Uploads a new local photo (if any), then PATCHes `auth/me` with a sparse
+  /// [body]. When [photoUrl] is a local file path, the file is uploaded to
+  /// `POST files` first and the returned file id is set as `profileId`.
+  Future<UpdateMeOutcome> updateMe({
+    required Map<String, dynamic> body,
     String? photoUrl,
-    ProfileAddress? address,
     CancelToken? cancelToken,
   }) async {
     if (ref.mounted) {
@@ -124,14 +136,8 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
     }
 
     final repository = ref.read(userProfileRepositoryProvider);
-    final current = state.data;
-    final nameParts = _resolveNameParts(fullName: fullName, current: current);
-    final gender = _firstNonEmpty([
-      current?.user.gender,
-      current?.agentProfile?.gender,
-    ]);
+    final payload = Map<String, dynamic>.from(body);
 
-    String? profileId;
     if (_isLocalPhotoPath(photoUrl)) {
       final photoPath = photoUrl!.trim();
       try {
@@ -153,9 +159,9 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
         );
 
         if (uploadedId == null) {
-          return false;
+          return UpdateMeOutcome.failure;
         }
-        profileId = uploadedId;
+        payload['profileId'] = uploadedId;
       } on FileSystemException catch (error) {
         if (ref.mounted) {
           state = state.updateFailure(
@@ -164,20 +170,19 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
                 : 'Could not read the selected photo.',
           );
         }
-        return false;
+        return UpdateMeOutcome.failure;
       }
     }
 
+    if (payload.isEmpty) {
+      if (ref.mounted) {
+        state = state.updateSuccess();
+      }
+      return UpdateMeOutcome.noChanges;
+    }
+
     final response = await repository.updateMe(
-      firstName: nameParts.firstName,
-      middleName: nameParts.middleName,
-      lastName: nameParts.lastName,
-      email: email,
-      phone: phone,
-      dateOfBirth: dateOfBirth,
-      gender: gender,
-      profileId: profileId,
-      address: address,
+      body: payload,
       cancelToken: cancelToken,
     );
 
@@ -186,52 +191,15 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
         if (ref.mounted) {
           state = state.updateFailure(error.userMessage);
         }
-        return false;
+        return UpdateMeOutcome.failure;
       },
       success: (_) async {
         if (ref.mounted) {
           state = state.updateSuccess();
         }
         await fetchMe(forceRefresh: true, cancelToken: cancelToken);
-        return true;
+        return UpdateMeOutcome.success;
       },
     );
   }
-}
-
-({String firstName, String? middleName, String lastName}) _resolveNameParts({
-  required String fullName,
-  AuthMe? current,
-}) {
-  final trimmed = fullName.trim();
-  final user = current?.user;
-  final agent = current?.agentProfile;
-
-  final currentDisplay = (agent?.displayName.isNotEmpty == true
-          ? agent!.displayName
-          : user?.displayName ?? '')
-      .trim();
-
-  if (trimmed.isNotEmpty &&
-      currentDisplay.isNotEmpty &&
-      trimmed == currentDisplay) {
-    final first = _firstNonEmpty([agent?.firstName, user?.firstName]) ?? '';
-    final middle = _firstNonEmpty([agent?.middleName, user?.middleName]);
-    final last = _firstNonEmpty([agent?.lastName, user?.lastName]) ?? '';
-    if (first.isNotEmpty || last.isNotEmpty) {
-      return (firstName: first, middleName: middle, lastName: last);
-    }
-  }
-
-  return splitFullName(trimmed);
-}
-
-String? _firstNonEmpty(List<String?> values) {
-  for (final value in values) {
-    final trimmed = value?.trim();
-    if (trimmed != null && trimmed.isNotEmpty) {
-      return trimmed;
-    }
-  }
-  return null;
 }

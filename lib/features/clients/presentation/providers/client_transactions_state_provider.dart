@@ -15,11 +15,8 @@ part 'client_transactions_state_provider.g.dart';
 @Riverpod(keepAlive: true)
 class ClientTransactionsState extends _$ClientTransactionsState
     with PaginatedListNotifierMixin<ClientTransaction> {
-  late final String _clientId;
-
   @override
   LoadableListState<ClientTransaction> build(String clientId) {
-    _clientId = clientId;
     return LoadableListState<ClientTransaction>();
   }
 
@@ -36,7 +33,7 @@ class ClientTransactionsState extends _$ClientTransactionsState
     bool forceRefresh = false,
   }) {
     return ref.read(clientRepositoryProvider).fetchTransactions(
-      _clientId,
+      clientId,
       request,
       forceRefresh: forceRefresh,
     );

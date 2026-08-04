@@ -4,87 +4,121 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_history_item.dart';
-import 'package:vcare_admin/features/commission/domain/entities/commission_status.dart';
+import 'package:vcare_admin/features/commission/presentation/widgets/commission_earnings_columns.dart';
+import 'package:vcare_admin/features/commission/presentation/widgets/commission_status_pill.dart';
 import 'package:vcare_admin/features/commission/utils/commission_utils.dart';
 
+/// Compact individual row: client + date, then sale + commission + status.
+///
+/// parity: vcare-agent-app-2.0/src/features/commission/components/CommissionHistoryList.tsx
 class CommissionHistoryRow extends StatelessWidget {
-  const CommissionHistoryRow({
-    super.key,
-    required this.item,
-    this.maskAmount = false,
-    this.onTap,
-  });
+  const CommissionHistoryRow({super.key, required this.item, this.onTap});
 
   final CommissionHistoryItem item;
-  final bool maskAmount;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final title = maskAmount ? agencySaleTitle(item.id) : item.displayClientName;
-    final amount = maskAmount
-        ? formatCommissionMoney(
-            agencySaleAmount(item.commissionAmount).toStringAsFixed(2),
-          )
-        : formatCommissionMoney(item.commissionAmount, signed: true);
-    final badgeLabel = maskAmount ? 'XXX' : commissionStatusLabel(item.status);
+    final statusLabel = resolveCommissionStatusLabel(item);
+    final isFailed = statusLabel == 'Failed' || statusLabel == 'Rejected';
+    final photoUrl = item.clientPhotoUrl?.trim();
+    final offering = item.offeringName?.trim();
+    final initials = _clientInitials(item.displayClientName);
 
     return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: vcare.border),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: CommissionEarningsColumns.rowPadding,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      formatClientDateNumeric(item.createdAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: vcare.mutedForeground,
+                    _ClientAvatar(photoUrl: photoUrl, initials: initials),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.displayClientName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (offering != null && offering.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              offering,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: vcare.mutedForeground,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 2),
+                          Text(
+                            formatClientDateNumeric(item.displayDate),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: vcare.mutedForeground,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    amount,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(width: CommissionEarningsColumns.gap),
+              CommissionAmountCell(
+                width: CommissionEarningsColumns.saleWidth,
+                child: Text(
+                  formatCommissionMoney(item.salesAmount),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isFailed ? VCareColors.destructive : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: CommissionEarningsColumns.gap),
+              CommissionAmountCell(
+                width: CommissionEarningsColumns.commissionWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatCommissionMoney(item.commissionAmount),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isFailed
+                            ? VCareColors.destructive
+                            : VCareColors.success,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  CommissionStatusBadge(
-                    label: badgeLabel,
-                    status: maskAmount ? CommissionStatus.unknown : item.status,
-                  ),
-                ],
+                    const SizedBox(height: 3),
+                    CommissionStatusPill(label: statusLabel),
+                  ],
+                ),
               ),
             ],
           ),
@@ -94,49 +128,76 @@ class CommissionHistoryRow extends StatelessWidget {
   }
 }
 
-class CommissionStatusBadge extends StatelessWidget {
-  const CommissionStatusBadge({
-    super.key,
-    required this.label,
-    required this.status,
-  });
+String _clientInitials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+  if (parts.isEmpty) return '?';
+  final list = parts.toList();
+  if (list.length == 1) {
+    return list.first.substring(0, list.first.length.clamp(0, 2)).toUpperCase();
+  }
+  final first = list.first[0];
+  final last = list.last[0];
+  return '$first$last'.toUpperCase();
+}
 
-  final String label;
-  final CommissionStatus status;
+class _ClientAvatar extends StatelessWidget {
+  const _ClientAvatar({required this.photoUrl, required this.initials});
+
+  final String? photoUrl;
+  final String initials;
 
   @override
   Widget build(BuildContext context) {
-    final (background, foreground) = switch (status) {
-      CommissionStatus.paid => (
-          VCareColors.primary,
-          VCareColors.primaryForeground,
-        ),
-      CommissionStatus.pending => (
-          VCareColors.secondary,
-          VCareColors.secondaryForeground,
-        ),
-      CommissionStatus.cancelled => (
-          VCareColors.destructive,
-          VCareColors.destructiveForeground,
-        ),
-      CommissionStatus.unknown => (
-          VCareColors.muted,
-          VCareColors.mutedForeground,
-        ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
+    final vcare = context.vcare;
+    final url = photoUrl?.trim();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: url != null && url.isNotEmpty
+            ? Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _InitialsBubble(
+                  initials: initials,
+                  background: vcare.muted,
+                  foreground: vcare.mutedForeground,
+                ),
+              )
+            : _InitialsBubble(
+                initials: initials,
+                background: vcare.muted,
+                foreground: vcare.mutedForeground,
+              ),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-          color: foreground,
+    );
+  }
+}
+
+class _InitialsBubble extends StatelessWidget {
+  const _InitialsBubble({
+    required this.initials,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String initials;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: background,
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: foreground,
+          ),
         ),
       ),
     );
@@ -156,13 +217,10 @@ class CommissionHistoryEmptyFilter extends StatelessWidget {
       decoration: BoxDecoration(
         color: vcare.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: vcare.border,
-          style: BorderStyle.solid,
-        ),
+        border: Border.all(color: vcare.border, style: BorderStyle.solid),
       ),
       child: Text(
-        'No commissions for this filter.',
+        'No commissions yet.',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
       ),

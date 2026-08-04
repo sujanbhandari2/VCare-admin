@@ -209,6 +209,7 @@ class DioApiClient implements ApiClient {
       additionalHeaders: additionalHeaders,
       customBaseUrl: customBaseUrl,
       cancelToken: cancelToken,
+      isAuthenticated: true,
       optionsBuilder: (headers) => Options(
         headers: headers,
         responseType: ResponseType.bytes,

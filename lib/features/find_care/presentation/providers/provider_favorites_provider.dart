@@ -38,9 +38,8 @@ class ProviderFavorites extends _$ProviderFavorites {
   }
 
   Future<void> _persist() async {
-    await ref.read(storageServiceProvider).set(
-          StorageKeys.findCareMockProviderFavorites,
-          jsonEncode(state),
-        );
+    await ref
+        .read(storageServiceProvider)
+        .set(StorageKeys.findCareMockProviderFavorites, jsonEncode(state));
   }
 }

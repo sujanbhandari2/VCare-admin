@@ -56,6 +56,10 @@ void main() {
       await storage.set(StorageKeys.loggedInUserRefreshToken, 'refresh');
       await storage.set(StorageKeys.loggedInUserId, 42);
       await storage.set(StorageKeys.loggedInUserProfileId, 'profile-id');
+      await storage.set(
+        StorageKeys.loggedInUserTenantId,
+        '1b4b5118-055f-44e7-9ddd-59e5e357e756',
+      );
       await storage.set(StorageKeys.loggedInUserEmail, 'user@example.com');
       await storage.set(StorageKeys.loggedInUserUsername, 'user');
       await storage.set(StorageKeys.tokenRefreshedDate, '2026-01-01T00:00:00.000');
@@ -76,6 +80,7 @@ void main() {
         StorageKeys.loggedInUserRefreshToken,
         StorageKeys.loggedInUserId,
         StorageKeys.loggedInUserProfileId,
+        StorageKeys.loggedInUserTenantId,
         StorageKeys.loggedInUserEmail,
         StorageKeys.loggedInUserUsername,
         StorageKeys.tokenRefreshedDate,

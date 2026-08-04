@@ -20,6 +20,9 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
   int _currentPage = 0;
   int _requestGeneration = 0;
 
+  /// 1-based page from the last successful fetch; `0` before the first load.
+  int get currentPage => _currentPage;
+
   String? get searchQuery {
     final value = state.extras?[searchExtraKey];
     return value is String ? value : null;
@@ -85,10 +88,7 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
 
   Future<void> search(String query) async {
     final trimmed = query.trim();
-    final extras = <String, dynamic>{
-      ...?state.extras,
-      searchExtraKey: trimmed,
-    };
+    final extras = <String, dynamic>{...?state.extras, searchExtraKey: trimmed};
 
     _currentPage = 0;
     await loadInitial(extras: extras);
@@ -125,6 +125,41 @@ mixin PaginatedListNotifierMixin<T extends LoadableListItem> {
         _currentPage = result.pagination.page;
         state = state.appendSuccess(
           appendedItems: result.items,
+          total: result.pagination.total,
+        );
+      },
+    );
+  }
+
+  /// Replace the list with a specific page (Prev/Next style pagination).
+  Future<void> loadPage(int page, {bool forceRefresh = true}) async {
+    if (page < 1) return;
+
+    final generation = ++_requestGeneration;
+
+    if (mounted) {
+      state = state.loading(extras: state.extras);
+    }
+
+    final response = await fetchPage(
+      buildRequest(page: page),
+      forceRefresh: forceRefresh,
+    );
+
+    response.when(
+      failure: (error) {
+        if (!mounted || generation != _requestGeneration) {
+          return;
+        }
+        state = state.failure(error.userMessage);
+      },
+      success: (result) {
+        if (!mounted || generation != _requestGeneration) {
+          return;
+        }
+        _currentPage = result.pagination.page;
+        state = state.success(
+          items: result.items,
           total: result.pagination.total,
         );
       },

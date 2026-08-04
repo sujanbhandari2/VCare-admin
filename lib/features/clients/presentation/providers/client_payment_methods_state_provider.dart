@@ -102,7 +102,8 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
 
   Future<void> addPaymentMethod({
     required AddClientPaymentMethodRequest request,
-    void Function(bool success, String? error)? onCompleted,
+    void Function(bool success, String? error, [ClientPaymentMethod? method])?
+    onCompleted,
   }) async {
     final response = await ref
         .read(clientRepositoryProvider)
@@ -112,9 +113,9 @@ class ClientPaymentMethodsState extends _$ClientPaymentMethodsState {
       failure: (error) async {
         onCompleted?.call(false, error.userMessage);
       },
-      success: (_) async {
+      success: (method) async {
         await fetchPaymentMethods();
-        onCompleted?.call(true, null);
+        onCompleted?.call(true, null, method);
       },
     );
   }

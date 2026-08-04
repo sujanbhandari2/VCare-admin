@@ -19,7 +19,7 @@ enum AuthPhoneCountry {
     label: 'Nepal',
     flag: '🇳🇵',
     nationalLength: 10,
-    hint: '98XXXXXXXX',
+    hint: '980 4332 283',
   );
 
   const AuthPhoneCountry({

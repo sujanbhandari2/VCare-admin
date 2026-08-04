@@ -2,10 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/commission/domain/entities/commission_filter.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_history_item.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_status.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_history_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_repository_provider.dart';
+import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 import 'package:vcare_admin/shared/pagination/pagination_meta.dart';
 
@@ -21,9 +24,18 @@ void main() {
       clientId: 'client-1',
       commissionValue: '5',
       commissionType: 'PERCENTAGE',
-      commissionAmount: '1.16',
+      commissionAmount: 1.16,
       status: CommissionStatus.pending,
       createdAt: '2026-06-25T12:22:46.546Z',
+    );
+
+    const agencyProfile = LocalProfile(
+      firstName: 'Agency',
+      lastName: 'Agent',
+      email: 'agent@example.com',
+      phone: '',
+      dob: '',
+      agencyGroupId: 'agency-group-1',
     );
 
     setUp(() {
@@ -31,6 +43,7 @@ void main() {
       container = ProviderContainer(
         overrides: [
           commissionRepositoryProvider.overrideWith((ref) => repository),
+          localProfileStateProvider.overrideWithValue(agencyProfile),
         ],
       );
     });
@@ -39,7 +52,79 @@ void main() {
       container.dispose();
     });
 
-    test('loadInitial loads commission history', () async {
+    test('loadInitial loads commission history with page size 20', () async {
+      repository.fetchHistoryResult = Success(
+        PaginatedResult<CommissionHistoryItem>(
+          items: const [sampleItem],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      await container
+          .read(commissionHistoryStateProvider.notifier)
+          .loadInitial();
+
+      final state = container.read(commissionHistoryStateProvider);
+      expect(state.items, [sampleItem]);
+      expect(state.totalItems, 1);
+      expect(repository.fetchHistoryCallCount, 1);
+      expect(repository.lastHistoryForceRefresh, isTrue);
+      expect(repository.lastHistoryStatus, isNull);
+      expect(repository.lastHistoryType, 'all');
+      expect(repository.lastHistoryAgencyGroupId, 'agency-group-1');
+      expect(repository.lastHistoryRequest?.limit, 20);
+    });
+
+    test('setFilter sends mapped API status', () async {
+      repository.fetchHistoryResult = Success(
+        PaginatedResult<CommissionHistoryItem>(
+          items: const [sampleItem],
+          pagination: const PaginationMeta(
+            page: 1,
+            limit: 10,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        ),
+      );
+
+      final notifier = container.read(commissionHistoryStateProvider.notifier);
+
+      await notifier.setFilter(CommissionFilter.paid);
+      expect(notifier.filter, CommissionFilter.paid);
+      expect(repository.lastHistoryStatus, 'PAID');
+
+      await notifier.setFilter(CommissionFilter.rejected);
+      expect(notifier.filter, CommissionFilter.rejected);
+      expect(repository.lastHistoryStatus, 'REJECTED');
+    });
+
+    test('omits agencyGroupId when profile has none', () async {
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          commissionRepositoryProvider.overrideWith((ref) => repository),
+          localProfileStateProvider.overrideWithValue(
+            const LocalProfile(
+              firstName: 'Independent',
+              lastName: 'Agent',
+              email: 'agent@example.com',
+              phone: '',
+              dob: '',
+            ),
+          ),
+        ],
+      );
+
       repository.fetchHistoryResult = Success(
         PaginatedResult<CommissionHistoryItem>(
           items: const [sampleItem],
@@ -58,11 +143,7 @@ void main() {
           .read(commissionHistoryStateProvider.notifier)
           .loadInitial();
 
-      final state = container.read(commissionHistoryStateProvider);
-      expect(state.items, [sampleItem]);
-      expect(state.totalItems, 1);
-      expect(repository.fetchHistoryCallCount, 1);
-      expect(repository.lastHistoryForceRefresh, isTrue);
+      expect(repository.lastHistoryAgencyGroupId, isNull);
     });
   });
 }
