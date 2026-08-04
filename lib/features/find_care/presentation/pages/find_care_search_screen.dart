@@ -46,6 +46,12 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
     super.dispose();
   }
 
+  Future<void> _clearCurrentLocation() async {
+    await ref
+        .read(findCareSearchLocationProvider.notifier)
+        .useProfileLocation();
+  }
+
   Future<void> _runSearch({bool loadMore = false}) async {
     if (!loadMore) {
       await ref
@@ -86,8 +92,7 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
           _runSearch();
         }
       });
-    } else if (_locationController.text != location.displayLabel &&
-        location.displayLabel.isNotEmpty) {
+    } else if (_locationController.text != location.displayLabel) {
       _locationController.text = location.displayLabel;
     }
 
@@ -112,6 +117,7 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
                 FindCareLocationBar(
                   locationController: _locationController,
                   isDetecting: detecting,
+                  isUsingCurrentLocation: location.fromCurrentLocation,
                   onDetectLocation: () {
                     runFindCareCurrentLocationFlow(
                       context,
@@ -119,6 +125,7 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
                       userInitiated: true,
                     );
                   },
+                  onClearCurrentLocation: _clearCurrentLocation,
                   actions: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

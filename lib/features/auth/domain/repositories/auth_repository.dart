@@ -36,17 +36,20 @@ abstract class AuthRepository {
     CancelToken? cancelToken,
   });
 
-  /// Completes account setup after OTP verification for new users.
+  /// Completes account setup after OTP verification for new or activating users.
   Future<EitherResponseOrException<AuthSetupAccountResult>> setupAccount({
     required String registrationToken,
     required String firstName,
     String? middleName,
     required String lastName,
     required String password,
-    required String dob,
-    required String zipCode,
+    String? dob,
+    String? zipCode,
     required String email,
     required String phone,
+    String? gender,
+    String? primaryCity,
+    String? primaryState,
     String tenantSlug = 'default',
     CancelToken? cancelToken,
   });

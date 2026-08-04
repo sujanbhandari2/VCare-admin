@@ -7,9 +7,9 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/care_avatar.dart';
+import 'package:vcare_admin/features/care_team/presentation/widgets/care_avatar.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
-import 'package:vcare_admin/features/home/utils/care_team_utils.dart';
+import 'package:vcare_admin/features/care_team/utils/care_team_utils.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 
 class MessagesNewChatSheet extends ConsumerStatefulWidget {

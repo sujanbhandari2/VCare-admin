@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
@@ -83,6 +85,17 @@ class _HomeActivityScreenState extends ConsumerState<HomeActivityScreen> {
     }
     if (item.type == TodoType.w9FormMissing) {
       await TodoW9FormSheet.show(context, item: item);
+      return;
+    }
+    if (item.type == TodoType.completeProfile) {
+      await context.pushNamed(
+        AppRouter.profileEditName,
+        queryParameters: const {'tab': 'story'},
+      );
+      if (!mounted) {
+        return;
+      }
+      await ref.read(todoListStateProvider.notifier).refresh();
     }
   }
 

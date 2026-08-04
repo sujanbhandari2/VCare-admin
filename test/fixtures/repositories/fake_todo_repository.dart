@@ -27,6 +27,7 @@ class FakeTodoRepository implements TodoRepository {
                 amount: 99.5,
                 currency: 'USD',
                 invoiceNumber: 'INV-100',
+                failureReason: 'Insufficient funds',
               ),
             ),
           ],

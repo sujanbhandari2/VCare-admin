@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 import 'package:vcare_admin/core/services/payment/card_connect_field_validators.dart';
 
-/// Formats card numbers as the user types (4-4-4-4, or Amex 4-6-5).
+/// Formats card numbers as the user types (`xxxx xxxx xxxx xxxx`).
 class CardNumberInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -10,9 +10,8 @@ class CardNumberInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final digits = digitsOnly(newValue.text);
-    final maxDigits = maxCardNumberDigits(digits);
-    final limited = digits.length > maxDigits
-        ? digits.substring(0, maxDigits)
+    final limited = digits.length > maxCardNumberDigits
+        ? digits.substring(0, maxCardNumberDigits)
         : digits;
 
     final formatted = formatCardNumberDisplay(limited);
@@ -50,33 +49,16 @@ class CardNumberInputFormatter extends TextInputFormatter {
   }
 }
 
-/// Amex max 15, others up to 19 (usually 16).
-int maxCardNumberDigits(String digits) {
-  if (RegExp(r'^3[47]').hasMatch(digits)) return 15;
-  return 19;
-}
+/// Card numbers are limited to 16 digits.
+const int maxCardNumberDigits = 16;
 
-/// Expected complete length for common brands.
-int expectedCardNumberLength(String digits) {
-  if (RegExp(r'^3[47]').hasMatch(digits)) return 15;
-  if (RegExp(r'^3(?:0[0-5]|[68])').hasMatch(digits)) return 14; // Diners
-  if (RegExp(r'^35').hasMatch(digits)) return 16; // JCB
-  return 16;
-}
+/// Expected complete length (exactly 16 digits).
+const int expectedCardNumberLength = 16;
 
-/// Groups: Amex `XXXX XXXXXX XXXXX`, otherwise `XXXX XXXX XXXX XXXX`.
+/// Groups digits as `xxxx xxxx xxxx xxxx`.
 String formatCardNumberDisplay(String cardNumber) {
   final digits = digitsOnly(cardNumber);
   if (digits.isEmpty) return '';
-
-  if (RegExp(r'^3[47]').hasMatch(digits)) {
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i == 4 || i == 10) buffer.write(' ');
-      buffer.write(digits[i]);
-    }
-    return buffer.toString();
-  }
 
   final buffer = StringBuffer();
   for (var i = 0; i < digits.length; i++) {
@@ -86,15 +68,14 @@ String formatCardNumberDisplay(String cardNumber) {
   return buffer.toString();
 }
 
-/// Inline card-number validation after the number looks complete for its brand.
+/// Inline card-number validation after the number looks complete.
 String? cardNumberFieldError(String cardNumber) {
   final digits = digitsOnly(cardNumber);
   if (digits.isEmpty) return null;
 
-  final expected = expectedCardNumberLength(digits);
-  if (digits.length < expected) return null;
+  if (digits.length < expectedCardNumberLength) return null;
 
-  if (digits.length > 19) {
+  if (digits.length > maxCardNumberDigits) {
     return 'Enter a valid card number';
   }
 
@@ -107,7 +88,5 @@ String? cardNumberFieldError(String cardNumber) {
 
 bool isCompleteValidCardNumber(String cardNumber) {
   final digits = digitsOnly(cardNumber);
-  if (digits.length < 13 || digits.length > 19) return false;
-  final expected = expectedCardNumberLength(digits);
-  return digits.length >= expected && passesLuhn(digits);
+  return digits.length == expectedCardNumberLength && passesLuhn(digits);
 }

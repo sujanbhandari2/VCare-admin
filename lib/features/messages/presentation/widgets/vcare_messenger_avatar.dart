@@ -1,10 +1,15 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/services/image/stable_image_cache_key.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 
 /// Avatar styling aligned with [CareAvatar] and mock Messages list rows.
+///
+/// Uses initials as the loading placeholder so list/sheet rows never sit on a
+/// long shimmer while remote profile photos download.
 class VcareMessengerAvatar extends StatelessWidget {
   const VcareMessengerAvatar({
     super.key,
@@ -43,86 +48,36 @@ class VcareMessengerAvatar extends StatelessWidget {
       );
     }
 
-    final trimmedUrl = imageUrl?.trim();
-    if (trimmedUrl != null && trimmedUrl.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: CachedNetworkImage(
-          imageUrl: trimmedUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => _InitialsFallback(
-            displayTitle: displayTitle,
-            size: size,
-            borderRadius: borderRadius,
-            vcare: vcare,
-          ),
-        ),
-      );
-    }
-
-    return _InitialsFallback(
+    final initials = _InitialsFallback(
       displayTitle: displayTitle,
       size: size,
       borderRadius: borderRadius,
       vcare: vcare,
     );
-  }
-}
 
-class VcareMessengerPresenceAvatar extends StatelessWidget {
-  const VcareMessengerPresenceAvatar({
-    super.key,
-    required this.displayTitle,
-    this.imageUrl,
-    this.isGroup = false,
-    this.isOnline = false,
-    this.showOnlinePresence = true,
-    this.size = 48,
-    this.borderRadius = 16,
-  });
-
-  final String displayTitle;
-  final String? imageUrl;
-  final bool isGroup;
-  final bool isOnline;
-  final bool showOnlinePresence;
-  final double size;
-  final double borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        VcareMessengerAvatar(
-          displayTitle: displayTitle,
-          imageUrl: imageUrl,
-          isGroup: isGroup,
-          size: size,
-          borderRadius: borderRadius,
-        ),
-        if (showOnlinePresence && !isGroup)
-          Positioned(
-            bottom: -2,
-            right: -2,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: isOnline
-                    ? const Color(0xFF22C55E)
-                    : const Color(0xFFEF4444),
-                shape: BoxShape.circle,
-                border: Border.all(color: vcare.card, width: 2.5),
-              ),
-            ),
+    final trimmedUrl = imageUrl?.trim();
+    // Skip non-http(s) values (storage keys / relative paths) so we never sit
+    // on a loading placeholder waiting for an unresolvable URL.
+    if (trimmedUrl != null && trimmedUrl.isNotEmpty && trimmedUrl.isUrl) {
+      return ClipRRect(
+        borderRadius: radius,
+        child: VCareCachedImage(
+          imageUrl: trimmedUrl,
+          cacheKey: stableImageCacheKey(
+            prefix: 'messenger-avatar',
+            imageUrl: trimmedUrl,
           ),
-      ],
-    );
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          fadeInDuration: Duration.zero,
+          placeholder: initials,
+          errorWidget: initials,
+        ),
+      );
+    }
+
+    return initials;
   }
 }
 

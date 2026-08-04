@@ -7,6 +7,7 @@ import 'package:vcare_admin/features/home/data/home_activity_builder.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_activity_status_chip.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
+import 'package:vcare_admin/features/todo/utils/failed_payment_copy.dart';
 
 class TodoListRow extends StatelessWidget {
   const TodoListRow({super.key, required this.item, this.onTap});
@@ -33,6 +34,8 @@ class TodoListRow extends StatelessWidget {
             TodoType.paymentFailed =>
               _PaymentFailedRow(item: item, vcare: vcare),
             TodoType.w9FormMissing => _W9FormRow(item: item, vcare: vcare),
+            TodoType.completeProfile =>
+              _CompleteProfileRow(item: item, vcare: vcare),
             TodoType.unknown => _GenericRow(item: item, vcare: vcare),
           },
         ),
@@ -55,6 +58,10 @@ class _PaymentFailedRow extends StatelessWidget {
         : NumberFormat.simpleCurrency(
             name: details.currency,
           ).format(details.amount);
+    final failureCopy = getFailedPaymentCopy(
+      details?.failureReason,
+      details?.payerName ?? item.displayPayerName,
+    );
     final error = Theme.of(context).colorScheme.error;
 
     return Row(
@@ -102,7 +109,7 @@ class _PaymentFailedRow extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const HomeActivityStatusChip(label: 'Failed'),
+                  HomeActivityStatusChip(label: failureCopy.shortLabel),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -152,6 +159,84 @@ class _W9FormRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Icon(LucideIcons.fileText, size: 20, color: _orange),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    formatWhen(item.occurredAt),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: vcare.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const HomeActivityStatusChip(label: 'Action needed'),
+                  if (item.description.trim().isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item.description,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: vcare.mutedForeground,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ] else
+                    const Spacer(),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CompleteProfileRow extends StatelessWidget {
+  const _CompleteProfileRow({required this.item, required this.vcare});
+
+  final TodoItem item;
+  final VCareThemeExtension vcare;
+
+  static const _orange = Color(0xFFEA580C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: _orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(LucideIcons.userCircle, size: 20, color: _orange),
         ),
         const SizedBox(width: 12),
         Expanded(

@@ -1,22 +1,8 @@
-import 'package:intl/intl.dart';
-
 import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
+import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 
-/// Parses profile DOB from ISO (`yyyy-MM-dd`, timestamps) or US (`MM/dd/yyyy`).
-DateTime? parseProfileDob(String? input) {
-  if (input == null || input.isEmpty) {
-    return null;
-  }
-  final iso = DateTime.tryParse(input);
-  if (iso != null) {
-    return iso;
-  }
-  try {
-    return DateFormat('MM/dd/yyyy').parseStrict(input);
-  } on FormatException {
-    return null;
-  }
-}
+/// Parses profile DOB from ISO, US (`MM/dd/yyyy`), or display (`MMM d, y`).
+DateTime? parseProfileDob(String? input) => parseDisplayDate(input);
 
 /// ISO date (`yyyy-MM-dd`) for profile edit inputs.
 String profileDobToIso(String? input) {
@@ -33,19 +19,8 @@ String profileDobToIso(String? input) {
   return '$year-$month-$day';
 }
 
-/// US date format MM/DD/YYYY — parity with vcareapp formatUsDate.
-String formatProfileDob(String? input) {
-  if (input == null || input.isEmpty) {
-    return '';
-  }
-  final parsed = parseProfileDob(input);
-  if (parsed == null) {
-    return input;
-  }
-  final month = parsed.month.toString().padLeft(2, '0');
-  final day = parsed.day.toString().padLeft(2, '0');
-  return '$month/$day/${parsed.year}';
-}
+/// Display date format `Aug 2, 1999` for DOB fields and pickers.
+String formatProfileDob(String? input) => formatDisplayDateString(input);
 
 String profileInitials(String name) {
   final parts = name
@@ -76,3 +51,34 @@ int ageFromDob(String dob) {
 }
 
 String formatProfileAddress(ProfileAddress address) => address.format();
+
+/// Profile edit gender options (UI labels) — parity with web PROFILE_GENDER_OPTIONS.
+const profileGenderOptions = ['Male', 'Female', 'Others'];
+
+/// Maps API gender (`MALE` / `FEMALE` / `OTHER`) to profile-edit UI labels.
+String mapProfileGenderApiToUi(String? gender) {
+  switch (gender?.trim().toUpperCase()) {
+    case 'MALE':
+      return 'Male';
+    case 'FEMALE':
+      return 'Female';
+    case 'OTHER':
+      return 'Others';
+    default:
+      return '';
+  }
+}
+
+/// Maps profile-edit UI gender to API enum. Empty / unknown → null (omit).
+String? mapProfileGenderUiToApi(String? gender) {
+  switch (gender?.trim()) {
+    case 'Male':
+      return 'MALE';
+    case 'Female':
+      return 'FEMALE';
+    case 'Others':
+      return 'OTHER';
+    default:
+      return null;
+  }
+}

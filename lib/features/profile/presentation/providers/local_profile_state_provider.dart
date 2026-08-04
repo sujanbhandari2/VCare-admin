@@ -19,14 +19,18 @@ class LocalProfileStateNotifier extends _$LocalProfileStateNotifier {
   }
 
   Future<void> updatePersonalInfo({
-    required String fullName,
+    required String firstName,
+    String middleName = '',
+    required String lastName,
     required String email,
     required String phone,
     required String dob,
     String? photoUrl,
   }) async {
     final updated = state.copyWith(
-      fullName: fullName,
+      firstName: firstName,
+      middleName: middleName,
+      lastName: lastName,
       email: email,
       phone: phone,
       dob: dob,
@@ -43,8 +47,21 @@ class LocalProfileStateNotifier extends _$LocalProfileStateNotifier {
     await save(updated);
   }
 
+  Future<void> updateReferralCode({
+    required String agentCode,
+    String? referralLink,
+  }) async {
+    final updated = state.copyWith(
+      agentCode: agentCode,
+      referralLink: referralLink,
+    );
+    await save(updated);
+  }
+
   Future<void> updateProfile({
-    required String fullName,
+    required String firstName,
+    String middleName = '',
+    required String lastName,
     required String email,
     required String phone,
     required String dob,
@@ -52,7 +69,9 @@ class LocalProfileStateNotifier extends _$LocalProfileStateNotifier {
     ProfileAddress? address,
   }) async {
     final updated = state.copyWith(
-      fullName: fullName,
+      firstName: firstName,
+      middleName: middleName,
+      lastName: lastName,
       email: email,
       phone: phone,
       dob: dob,

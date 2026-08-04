@@ -102,8 +102,9 @@ class SalesHistoryItem implements LoadableListItem {
     final name = payer?.name?.trim();
     if (name != null && name.isNotEmpty) return name;
     final id = (payerId ?? payer?.id ?? '').trim();
-    if (id.isEmpty) return 'Payer';
-    if (id.length <= 8) return 'Payer $id';
-    return 'Payer ${id.substring(0, 8)}…';
+    if (id.isEmpty) return 'Client';
+    final shortId = id.replaceAll('-', '');
+    final compact = shortId.length <= 8 ? shortId : shortId.substring(0, 8);
+    return 'Client ${compact.toUpperCase()}';
   }
 }

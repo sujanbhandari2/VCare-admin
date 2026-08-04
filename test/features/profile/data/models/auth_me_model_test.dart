@@ -175,6 +175,10 @@ void main() {
           'profilePreviewLink':
               'https://cdn.example.com/agent-preview.jpg',
           'referralLink': 'https://qa-app.vcareadvocacy.com/refer/AGT-00002',
+          'bio': 'Licensed agent helping families navigate coverage.',
+          'allowTextNotification': true,
+          'primaryCity': 'Tampa',
+          'primaryState': 'FL',
           'address': {
             'addressLine1': 'Autem eos iste rerum',
             'addressLine2': 'Et placeat mollitia',
@@ -194,6 +198,13 @@ void main() {
       expect(entity.agentProfile?.displayName, 'Sujan bhandari');
       expect(entity.agentProfile?.email, 'sujan+222@vitafyhealth.com');
       expect(entity.agentProfile?.phoneNumber, '+13434343434');
+      expect(
+        entity.agentProfile?.bio,
+        'Licensed agent helping families navigate coverage.',
+      );
+      expect(entity.agentProfile?.allowTextNotification, isTrue);
+      expect(entity.agentProfile?.primaryCity, 'Tampa');
+      expect(entity.agentProfile?.primaryState, 'FL');
       expect(entity.agentProfile?.address?.addressLine1,
           'Autem eos iste rerum');
       expect(entity.agentProfile?.address?.city, 'Aut saepe ipsum do c');

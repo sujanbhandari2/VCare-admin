@@ -7,8 +7,6 @@ import 'package:vcare_admin/features/commission/domain/entities/commission_filte
 import 'package:vcare_admin/features/commission/domain/entities/commission_summary.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_repository_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_summary_state_provider.dart';
-import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
-import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 
 import '../../../../fixtures/repositories/fake_commission_repository.dart';
 
@@ -19,20 +17,11 @@ void main() {
 
     const sampleSummary = CommissionSummary(totalSales: 0, totalCommission: 0);
 
-    const agencyProfile = LocalProfile(
-      fullName: 'Agency Agent',
-      email: 'agent@example.com',
-      phone: '',
-      dob: '',
-      agencyGroupId: 'agency-group-1',
-    );
-
     setUp(() {
       repository = FakeCommissionRepository();
       container = ProviderContainer(
         overrides: [
           commissionRepositoryProvider.overrideWith((ref) => repository),
-          localProfileStateProvider.overrideWithValue(agencyProfile),
         ],
       );
     });
@@ -49,10 +38,15 @@ void main() {
           .fetchSummary();
 
       final state = container.read(commissionSummaryStateProvider);
-      expect(state.data, sampleSummary);
+      expect(state.data?.totalSales, 0);
+      expect(state.data?.totalCommission, 0);
+      expect(state.data?.upcomingCount, 0);
+      expect(state.data?.needsAttentionCount, 0);
       expect(state.fetching, isFalse);
       expect(repository.fetchSummaryCallCount, 1);
-      expect(repository.lastSummaryAgencyGroupId, 'agency-group-1');
+      expect(repository.fetchHistoryCallCount, 2);
+      expect(repository.historyTypesCalled, ['upcoming', 'commission']);
+      expect(repository.lastSummaryAgencyGroupId, isNull);
       expect(repository.lastSummaryStatus, isNull);
     });
 
@@ -64,7 +58,7 @@ void main() {
 
       expect(notifier.filter, CommissionFilter.paid);
       expect(repository.lastSummaryStatus, 'PAID');
-      expect(repository.lastSummaryAgencyGroupId, 'agency-group-1');
+      expect(repository.lastSummaryAgencyGroupId, isNull);
     });
 
     test('fetchSummary sets failure on error', () async {

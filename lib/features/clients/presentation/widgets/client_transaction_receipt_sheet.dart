@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
+import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
@@ -458,7 +459,7 @@ String _formatMoney(double amount, String currency) {
 String _formatDate(String value) {
   final parsed = DateTime.tryParse(value);
   if (parsed != null) {
-    return DateFormat('MMM d, yyyy').format(parsed.toLocal());
+    return formatDisplayDate(parsed.toLocal());
   }
   return value;
 }

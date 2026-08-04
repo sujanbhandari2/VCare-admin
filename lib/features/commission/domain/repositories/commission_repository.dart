@@ -19,6 +19,7 @@ abstract class CommissionRepository {
   fetchHistory(
     PaginatedListRequest request, {
     String? status,
+    String? type,
     String? agencyGroupId,
     CancelToken? cancelToken,
     bool forceRefresh = false,

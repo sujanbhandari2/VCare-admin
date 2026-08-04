@@ -23,9 +23,11 @@ extension TodoItemModelMapper on TodoItemModel {
       id: id,
       type: todoType,
       title: title.trim().isNotEmpty ? title.trim() : 'Task',
-      description: todoType == TodoType.w9FormMissing
-          ? _cleanW9Description(description)
-          : description.trim(),
+      description: switch (todoType) {
+        TodoType.w9FormMissing => _cleanW9Description(description),
+        TodoType.completeProfile => _cleanCompleteProfileDescription(description),
+        _ => description.trim(),
+      },
       occurredAt: DateTime.tryParse(occurredAt) ?? DateTime.now(),
       resource: resourceEntity,
       paymentFailedDetails: paymentDetails,
@@ -38,8 +40,8 @@ extension TodoItemModelMapper on TodoItemModel {
 extension TodoPaymentFailedDetailsModelMapper on TodoPaymentFailedDetailsModel {
   TodoPaymentFailedDetails toEntity() {
     return TodoPaymentFailedDetails(
-      transactionId: transactionId,
-      payerId: payerId,
+      transactionId: transactionId.trim(),
+      payerId: payerId.trim(),
       payerName: payerName.trim().isNotEmpty ? payerName.trim() : 'Client',
       amount: double.tryParse(amount) ?? 0,
       currency: currency.trim().isNotEmpty
@@ -47,6 +49,9 @@ extension TodoPaymentFailedDetailsModelMapper on TodoPaymentFailedDetailsModel {
           : 'USD',
       invoiceNumber: invoiceNumber?.trim().isNotEmpty == true
           ? invoiceNumber!.trim()
+          : null,
+      failureReason: failureReason?.trim().isNotEmpty == true
+          ? failureReason!.trim()
           : null,
     );
   }
@@ -69,6 +74,14 @@ String _cleanW9Description(String raw) {
       .replaceAll(RegExp(r'\bagent\b', caseSensitive: false), '')
       .replaceAll(RegExp(r'\s{2,}'), ' ')
       .trim();
+  if (cleaned.isEmpty) return cleaned;
+  cleaned = cleaned.replaceFirst(RegExp(r'[.!?]?$'), '.');
+  return cleaned;
+}
+
+/// Matches web `mapCompleteProfileTodo` description cleanup.
+String _cleanCompleteProfileDescription(String raw) {
+  var cleaned = raw.trim();
   if (cleaned.isEmpty) return cleaned;
   cleaned = cleaned.replaceFirst(RegExp(r'[.!?]?$'), '.');
   return cleaned;

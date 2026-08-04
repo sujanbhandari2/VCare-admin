@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
-import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 import 'package:vcare_admin/features/profile/domain/repositories/user_profile_repository.dart';
 
@@ -28,6 +27,8 @@ class FakeUserProfileRepository implements UserProfileRepository {
   String? lastUploadedFileName;
   String? lastUpdateMeProfileId;
 
+  Map<String, dynamic>? lastUpdateMeBody;
+
   @override
   Future<EitherResponseOrException<AuthMe>> fetchMe({
     bool forceRefresh = true,
@@ -48,19 +49,11 @@ class FakeUserProfileRepository implements UserProfileRepository {
 
   @override
   Future<EitherResponseOrException<void>> updateMe({
-    required String firstName,
-    String? middleName,
-    required String lastName,
-    required String email,
-    required String phone,
-    required String dateOfBirth,
-    String? gender,
-    String? profileId,
-    bool? allowTextNotification,
-    ProfileAddress? address,
+    required Map<String, dynamic> body,
     CancelToken? cancelToken,
   }) async {
-    lastUpdateMeProfileId = profileId;
+    lastUpdateMeBody = body;
+    lastUpdateMeProfileId = body['profileId']?.toString();
     return updateMeResult;
   }
 

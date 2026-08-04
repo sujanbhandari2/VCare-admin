@@ -6,6 +6,7 @@ class AssociatedUser {
     this.middleName,
     this.lastName,
     this.profileImage,
+    this.profilePreviewLink,
     required this.userType,
     required this.role,
     required this.status,
@@ -17,6 +18,7 @@ class AssociatedUser {
   final String? middleName;
   final String? lastName;
   final String? profileImage;
+  final String? profilePreviewLink;
   final String userType;
   final String role;
   final String status;
@@ -32,6 +34,19 @@ class AssociatedUser {
     }
     final trimmedEmail = email.trim();
     return trimmedEmail.isNotEmpty ? trimmedEmail : id;
+  }
+
+  /// Prefer [profilePreviewLink] over legacy [profileImage] for display URLs.
+  String? get profilePhotoUrl {
+    final preview = profilePreviewLink?.trim();
+    if (preview != null && preview.isNotEmpty) {
+      return preview;
+    }
+    final image = profileImage?.trim();
+    if (image != null && image.isNotEmpty) {
+      return image;
+    }
+    return null;
   }
 
   bool get isPlatformUser => userType.toUpperCase() == 'PLATFORM_USER';

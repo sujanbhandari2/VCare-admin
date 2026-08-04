@@ -10,6 +10,8 @@ import 'package:vcare_admin/l10n/app_localizations.dart';
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
+import 'package:vcare_admin/shared/utils/date_format_utils.dart';
+import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
 
 /// BuildContext Extension functions
 extension BuildContextExt on BuildContext {
@@ -28,8 +30,12 @@ extension BuildContextExt on BuildContext {
 
   /// Bottom padding so scroll/content ends above the mobile shell nav pill.
   ///
-  /// Returns 0 when [MainWrapperScreen] already applied shell bottom inset.
+  /// Returns 0 when [MainWrapperScreen] already applied shell bottom inset,
+  /// or when the IME is open (nav sits under the keyboard).
   double get mobileShellBottomContentPadding {
+    if (isSoftKeyboardOpen(this)) {
+      return 0;
+    }
     if (VCareMobileShellScope.appliesBottomInsetOf(this)) {
       return 0;
     }
@@ -167,29 +173,8 @@ extension StringExt on String {
     return values[s] ?? s;
   }
 
-  /// Format the date like this 11 Jan 2022.
-  String get toddMMMYYYY {
-    final date = DateTime.tryParse(this);
-
-    if (date == null) return "";
-
-    final months = {
-      DateTime.january: 'Jan',
-      DateTime.february: 'Feb',
-      DateTime.march: 'Mar',
-      DateTime.april: 'Apr',
-      DateTime.may: 'May',
-      DateTime.june: 'Jun',
-      DateTime.july: 'Jul',
-      DateTime.august: 'Aug',
-      DateTime.september: 'Sept',
-      DateTime.october: 'Oct',
-      DateTime.november: 'Nov',
-      DateTime.december: 'Dec',
-    };
-
-    return "${date.day} ${months[date.month]} ${date.year}";
-  }
+  /// Format the date like this: Aug 2, 1999.
+  String get toddMMMYYYY => formatDisplayDateString(this);
 
   /// Check if the string is a file path.
   ///

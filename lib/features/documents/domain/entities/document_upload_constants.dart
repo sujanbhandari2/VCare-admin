@@ -2,6 +2,7 @@
 abstract final class DocumentUploadCategories {
   static const String agent = 'AGENT';
   static const String client = 'CLIENT';
+  static const String careTeam = 'CARE_TEAM';
 }
 
 /// Key from `GET /files/document-types` for the W-9 option.

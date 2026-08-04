@@ -37,9 +37,9 @@ class CommissionRepositoryImpl implements CommissionRepository {
         queryParameters['status'] = trimmedStatus;
       }
       final trimmedAgencyGroupId = agencyGroupId?.trim();
-      // if (trimmedAgencyGroupId != null && trimmedAgencyGroupId.isNotEmpty) {
-      //   queryParameters['agencyGroupId'] = trimmedAgencyGroupId;
-      // }
+      if (trimmedAgencyGroupId != null && trimmedAgencyGroupId.isNotEmpty) {
+        queryParameters['agencyGroupId'] = trimmedAgencyGroupId;
+      }
 
       final response = await apiClient.get(
         ApiEndpoints.agentCommissionSummary,
@@ -64,6 +64,7 @@ class CommissionRepositoryImpl implements CommissionRepository {
   fetchHistory(
     PaginatedListRequest request, {
     String? status,
+    String? type,
     String? agencyGroupId,
     CancelToken? cancelToken,
     bool forceRefresh = false,
@@ -73,6 +74,8 @@ class CommissionRepositoryImpl implements CommissionRepository {
         request,
         sortBy: 'createdAt',
         status: status,
+        type: type,
+        agencyGroupId: agencyGroupId,
       );
 
       final response = await apiClient.get(
@@ -106,6 +109,7 @@ class CommissionRepositoryImpl implements CommissionRepository {
         request,
         sortBy: 'transactionDate',
         status: status,
+        agencyGroupId: agencyGroupId,
       );
 
       final response = await apiClient.get(
@@ -129,6 +133,7 @@ class CommissionRepositoryImpl implements CommissionRepository {
     PaginatedListRequest request, {
     required String sortBy,
     String? status,
+    String? type,
     String? agencyGroupId,
   }) {
     final queryParameters = <String, dynamic>{
@@ -139,6 +144,10 @@ class CommissionRepositoryImpl implements CommissionRepository {
     final trimmedStatus = status?.trim();
     if (trimmedStatus != null && trimmedStatus.isNotEmpty) {
       queryParameters['status'] = trimmedStatus;
+    }
+    final trimmedType = type?.trim();
+    if (trimmedType != null && trimmedType.isNotEmpty) {
+      queryParameters['type'] = trimmedType;
     }
     final trimmedAgencyGroupId = agencyGroupId?.trim();
     if (trimmedAgencyGroupId != null && trimmedAgencyGroupId.isNotEmpty) {

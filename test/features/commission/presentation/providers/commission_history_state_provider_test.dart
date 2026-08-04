@@ -30,7 +30,8 @@ void main() {
     );
 
     const agencyProfile = LocalProfile(
-      fullName: 'Agency Agent',
+      firstName: 'Agency',
+      lastName: 'Agent',
       email: 'agent@example.com',
       phone: '',
       dob: '',
@@ -51,13 +52,13 @@ void main() {
       container.dispose();
     });
 
-    test('loadInitial loads commission history with page size 10', () async {
+    test('loadInitial loads commission history with page size 20', () async {
       repository.fetchHistoryResult = Success(
         PaginatedResult<CommissionHistoryItem>(
           items: const [sampleItem],
           pagination: const PaginationMeta(
             page: 1,
-            limit: 10,
+            limit: 20,
             total: 1,
             totalPages: 1,
             hasNext: false,
@@ -76,8 +77,9 @@ void main() {
       expect(repository.fetchHistoryCallCount, 1);
       expect(repository.lastHistoryForceRefresh, isTrue);
       expect(repository.lastHistoryStatus, isNull);
+      expect(repository.lastHistoryType, 'all');
       expect(repository.lastHistoryAgencyGroupId, 'agency-group-1');
-      expect(repository.lastHistoryRequest?.limit, 10);
+      expect(repository.lastHistoryRequest?.limit, 20);
     });
 
     test('setFilter sends mapped API status', () async {
@@ -113,7 +115,8 @@ void main() {
           commissionRepositoryProvider.overrideWith((ref) => repository),
           localProfileStateProvider.overrideWithValue(
             const LocalProfile(
-              fullName: 'Independent Agent',
+              firstName: 'Independent',
+              lastName: 'Agent',
               email: 'agent@example.com',
               phone: '',
               dob: '',

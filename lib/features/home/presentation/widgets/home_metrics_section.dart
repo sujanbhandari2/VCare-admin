@@ -3,34 +3,33 @@ import 'package:flutter/material.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
-/// Overview stat cards — parity with vcareapp [HomeMetricsSection].
+/// Overview stat cards — parity with web [HomeMetricsSection].
 class HomeMetricsSection extends StatelessWidget {
   const HomeMetricsSection({
     super.key,
-    required this.hasCommission,
+    required this.isAgencyTied,
     required this.totalClients,
     required this.totalCommission,
     required this.totalSales,
     this.onTotalClientsTap,
-    this.onTotalCommissionTap,
-    this.onTotalSalesTap,
+    this.onSalesOrCommissionTap,
   });
 
-  final bool hasCommission;
+  final bool isAgencyTied;
   final String totalClients;
   final String totalCommission;
   final String totalSales;
   final VoidCallback? onTotalClientsTap;
-  final VoidCallback? onTotalCommissionTap;
-  final VoidCallback? onTotalSalesTap;
+  final VoidCallback? onSalesOrCommissionTap;
 
   @override
   Widget build(BuildContext context) {
-    final secondaryLabel =
-        hasCommission ? 'Total Commission' : 'Total Sales';
-    final secondaryValue = hasCommission ? totalCommission : totalSales;
-    final secondaryOnTap =
-        hasCommission ? onTotalCommissionTap : onTotalSalesTap;
+    final salesOrCommissionLabel = isAgencyTied
+        ? 'Total Sales'
+        : 'Total Commission';
+    final salesOrCommissionValue = isAgencyTied
+        ? totalSales
+        : totalCommission;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,17 +56,22 @@ class HomeMetricsSection extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _MetricCard(
-                label: secondaryLabel,
-                value: secondaryValue,
+                label: salesOrCommissionLabel,
+                value: salesOrCommissionValue,
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    VCareColors.primary.withValues(alpha: 0.15),
-                    VCareColors.primary.withValues(alpha: 0.05),
-                  ],
+                  colors: isAgencyTied
+                      ? [
+                          VCareColors.success.withValues(alpha: 0.15),
+                          VCareColors.success.withValues(alpha: 0.05),
+                        ]
+                      : [
+                          VCareColors.primary.withValues(alpha: 0.15),
+                          VCareColors.primary.withValues(alpha: 0.05),
+                        ],
                 ),
-                onTap: secondaryOnTap,
+                onTap: onSalesOrCommissionTap,
               ),
             ),
           ],

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_thread_composer.dart';
-import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_thread_profile_card.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
 enum _ThreadOverflowAction {
@@ -39,28 +39,33 @@ Widget _buildHeader(BuildContext context, MessengerThreadHeaderData data) {
   }
 
   final overflow = _buildOverflowAction(context, data, conversation);
+  final avatarUrl = conversation.avatarUrl?.trim();
+  final showAvatar = !conversation.isGroup &&
+      avatarUrl != null &&
+      avatarUrl.isNotEmpty;
 
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      VcarePageHeader(
-        title: conversation.title,
-        subtitle: conversation.isGroup ? 'Shared care-team conversation' : null,
-        showBack: data.isMobile,
-        onBack: data.onBack,
-        showBell: conversation.isGroup && data.onEditGroupConversation != null,
-        onBellTap: conversation.isGroup && data.onEditGroupConversation != null
-            ? () => unawaited(
-                  Future<void>.sync(
-                    () => data.onEditGroupConversation!(conversation),
-                  ),
-                )
-            : null,
-        action: overflow,
-      ),
-      if (!conversation.isGroup)
-        VcareMessengerThreadProfileCard(conversation: conversation),
-    ],
+  return VcarePageHeader(
+    title: conversation.title,
+    subtitle: conversation.isGroup ? 'Shared care-team conversation' : null,
+    leading: showAvatar
+        ? VcareMessengerAvatar(
+            displayTitle: conversation.title,
+            imageUrl: avatarUrl,
+            size: 40,
+            borderRadius: 12,
+          )
+        : null,
+    showBack: data.isMobile,
+    onBack: data.onBack,
+    showBell: conversation.isGroup && data.onEditGroupConversation != null,
+    onBellTap: conversation.isGroup && data.onEditGroupConversation != null
+        ? () => unawaited(
+              Future<void>.sync(
+                () => data.onEditGroupConversation!(conversation),
+              ),
+            )
+        : null,
+    action: overflow,
   );
 }
 

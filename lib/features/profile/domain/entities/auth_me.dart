@@ -138,6 +138,10 @@ class AuthMeAgentProfile {
     this.agencyGroup,
     this.status,
     this.address,
+    this.bio,
+    this.allowTextNotification,
+    this.primaryCity,
+    this.primaryState,
   });
 
   final String? id;
@@ -158,6 +162,10 @@ class AuthMeAgentProfile {
   final AuthMeAgencyGroup? agencyGroup;
   final String? status;
   final AuthMeAddress? address;
+  final String? bio;
+  final bool? allowTextNotification;
+  final String? primaryCity;
+  final String? primaryState;
 
   String get displayName {
     final parts = [firstName, middleName, lastName]

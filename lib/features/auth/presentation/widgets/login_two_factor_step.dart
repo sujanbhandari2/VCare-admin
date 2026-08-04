@@ -157,7 +157,9 @@ class LoginTwoFactorStep extends StatelessWidget {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      resendIn > 0 ? 'Resend in ${resendIn}s' : 'Resend code',
+                      resendIn > 0
+                          ? 'Resend in ${_formatTwoFactorResendLabel(resendIn)}'
+                          : 'Resend code',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -176,4 +178,14 @@ class LoginTwoFactorStep extends StatelessWidget {
       ],
     );
   }
+}
+
+/// parity: TwoFactorStep.tsx resendLabel (`M:SS` when minutes > 0, else `Xs`)
+String _formatTwoFactorResendLabel(int resendIn) {
+  final minutes = resendIn ~/ 60;
+  final seconds = resendIn % 60;
+  if (minutes > 0) {
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+  return '${seconds}s';
 }

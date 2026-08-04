@@ -11,6 +11,12 @@ class CareTeamMemberModel {
     this.policy,
     this.group,
     this.profilePreviewLink,
+    this.profileId,
+    this.userId,
+    this.agentId,
+    this.profileFileUrl,
+    this.userEmail,
+    this.userNestedId,
   });
 
   final String id;
@@ -24,8 +30,26 @@ class CareTeamMemberModel {
   final String? policy;
   final String? group;
   final String? profilePreviewLink;
+  final String? profileId;
+  final String? userId;
+  final String? agentId;
+  final String? profileFileUrl;
+  final String? userEmail;
+  final String? userNestedId;
 
   factory CareTeamMemberModel.fromJson(Map<String, dynamic> json) {
+    final user = json['user'];
+    Map<String, dynamic>? userMap;
+    if (user is Map) {
+      userMap = Map<String, dynamic>.from(user);
+    }
+
+    final profileFile = json['profileFile'];
+    String? profileFileUrl;
+    if (profileFile is Map) {
+      profileFileUrl = profileFile['url']?.toString();
+    }
+
     return CareTeamMemberModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -38,6 +62,12 @@ class CareTeamMemberModel {
       policy: json['policy']?.toString(),
       group: json['group']?.toString(),
       profilePreviewLink: json['profilePreviewLink']?.toString(),
+      profileId: json['profileId']?.toString(),
+      userId: json['userId']?.toString(),
+      agentId: json['agentId']?.toString(),
+      profileFileUrl: profileFileUrl,
+      userEmail: userMap?['email']?.toString(),
+      userNestedId: userMap?['id']?.toString(),
     );
   }
 }

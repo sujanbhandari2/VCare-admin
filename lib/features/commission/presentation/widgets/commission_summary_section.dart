@@ -7,6 +7,7 @@ import 'package:vcare_admin/features/commission/domain/entities/commission_summa
 import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
+/// parity: vcare-agent-app-2.0/src/features/commission/components/CommissionSummaryCard.tsx
 class CommissionSummarySection extends StatelessWidget {
   const CommissionSummarySection({
     super.key,
@@ -32,61 +33,63 @@ class CommissionSummarySection extends StatelessWidget {
     final totalSales = isLoading
         ? '—'
         : formatAgentStatMoney(summary?.totalSales);
-    final totalCommission = isLoading
-        ? '—'
-        : isAgencyGroup
-        ? 'XXX'
-        : formatAgentStatMoney(summary?.totalCommission);
+
+    final upcomingSales = summary?.upcomingSales ?? 0;
+    final upcomingCount = summary?.upcomingCount ?? 0;
+    final needsAttentionSales = summary?.needsAttentionSales ?? 0;
+    final needsAttentionCount = summary?.needsAttentionCount ?? 0;
+
+    final showUpcoming = isLoading || upcomingSales > 0 || upcomingCount > 0;
+    final showNeedsAttention =
+        isLoading || needsAttentionSales > 0 || needsAttentionCount > 0;
+
+    final upcomingSubtext = upcomingCount == 1
+        ? '1 scheduled · not counted yet'
+        : '$upcomingCount scheduled · not counted yet';
+    final attentionSubtext = needsAttentionCount == 1
+        ? '1 sale that failed to collect'
+        : '$needsAttentionCount sales that failed to collect';
+
+    final metrics = <Widget>[
+      _CompactMetricCell(label: 'Total Sales', value: totalSales),
+      if (!isAgencyGroup)
+        _CompactMetricCell(
+          label: 'Commission',
+          value: isLoading
+              ? '—'
+              : formatAgentStatMoney(summary?.totalCommission),
+          highlighted: true,
+        ),
+      if (showUpcoming)
+        _CompactMetricCell(
+          label: 'Upcoming',
+          value: isLoading ? '—' : formatAgentStatMoney(upcomingSales),
+          tone: _MetricTone.upcoming,
+          subtext: isLoading ? null : upcomingSubtext,
+        ),
+      if (showNeedsAttention)
+        _CompactMetricCell(
+          label: 'Needs Attention',
+          value: isLoading ? '—' : formatAgentStatMoney(needsAttentionSales),
+          tone: _MetricTone.attention,
+          subtext: isLoading ? null : attentionSubtext,
+        ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _MetricCard(
-                label: 'Total Sales',
-                value: totalSales,
-                delta: 'This month',
-                icon: LucideIcons.wallet,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    VCareColors.muted.withValues(alpha: 0.9),
-                    VCareColors.muted.withValues(alpha: 0.4),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _MetricCard(
-                label: 'Commission Earned',
-                value: totalCommission,
-                delta: isAgencyGroup ? 'Paid to agency' : 'This month',
-                deltaPositive: isAgencyGroup ? null : true,
-                icon: LucideIcons.dollarSign,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    VCareColors.success.withValues(alpha: 0.15),
-                    VCareColors.success.withValues(alpha: 0.05),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+        _CompactMetricStrip(children: metrics),
         if (isAgencyGroup) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           const _AgencyInfoBanner(),
         ],
       ],
     );
   }
 }
+
+enum _MetricTone { normal, upcoming, attention }
 
 class _AgencyInfoBanner extends StatelessWidget {
   const _AgencyInfoBanner();
@@ -96,23 +99,23 @@ class _AgencyInfoBanner extends StatelessWidget {
     final vcare = context.vcare;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: vcare.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.info, size: 16, color: vcare.mutedForeground),
+          Icon(LucideIcons.info, size: 14, color: vcare.mutedForeground),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "Commissions are paid to your agency and distributed according to your agency's policy.",
               style: TextStyle(
                 fontSize: 12,
-                height: 1.35,
+                height: 1.3,
                 color: vcare.mutedForeground,
               ),
             ),
@@ -123,88 +126,146 @@ class _AgencyInfoBanner extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-    required this.delta,
-    required this.icon,
-    required this.gradient,
-    this.deltaPositive,
-  });
+class _CompactMetricStrip extends StatelessWidget {
+  const _CompactMetricStrip({required this.children});
 
-  final String label;
-  final String value;
-  final String delta;
-  final IconData icon;
-  final Gradient gradient;
-  final bool? deltaPositive;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final deltaColor = deltaPositive == null
-        ? vcare.mutedForeground
-        : deltaPositive!
-        ? VCareColors.success
-        : VCareColors.destructive;
 
+    if (children.length <= 2) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: vcare.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: vcare.border),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0)
+                  VerticalDivider(width: 1, thickness: 1, color: vcare.border),
+                Expanded(child: children[i]),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Wrap into a 2-column grid when Upcoming / Needs Attention appear.
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
+        color: vcare.card,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: vcare.border),
       ),
+      child: Column(
+        children: [
+          for (var row = 0; row < children.length; row += 2) ...[
+            if (row > 0) Divider(height: 1, thickness: 1, color: vcare.border),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: children[row]),
+                  if (row + 1 < children.length) ...[
+                    VerticalDivider(
+                      width: 1,
+                      thickness: 1,
+                      color: vcare.border,
+                    ),
+                    Expanded(child: children[row + 1]),
+                  ] else
+                    const Expanded(child: SizedBox.shrink()),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactMetricCell extends StatelessWidget {
+  const _CompactMetricCell({
+    required this.label,
+    required this.value,
+    this.highlighted = false,
+    this.tone = _MetricTone.normal,
+    this.subtext,
+  });
+
+  final String label;
+  final String value;
+  final bool highlighted;
+  final _MetricTone tone;
+  final String? subtext;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+    final Color? bg;
+    final Color valueColor;
+    switch (tone) {
+      case _MetricTone.upcoming:
+        bg = const Color(0x14F97316);
+        valueColor = const Color(0xFF9A3412);
+      case _MetricTone.attention:
+        bg = VCareColors.destructive.withValues(alpha: 0.08);
+        valueColor = VCareColors.destructive;
+      case _MetricTone.normal:
+        bg = highlighted
+            ? VCareColors.success.withValues(alpha: 0.06)
+            : Colors.transparent;
+        valueColor = VCareColors.foreground;
+    }
+
+    return ColoredBox(
+      color: bg,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: vcare.card.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 16),
-                ),
-                if (deltaPositive != null)
-                  Icon(
-                    deltaPositive!
-                        ? LucideIcons.trendingUp
-                        : LucideIcons.trendingDown,
-                    size: 16,
-                    color: deltaColor,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, color: vcare.mutedForeground),
             ),
             const SizedBox(height: 2),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 20,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.3,
+                height: 1.15,
+                color: valueColor,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              delta,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: deltaColor,
+            if (subtext != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtext!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  height: 1.25,
+                  color: vcare.mutedForeground,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

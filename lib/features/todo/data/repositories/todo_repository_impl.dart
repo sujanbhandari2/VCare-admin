@@ -8,6 +8,7 @@ import 'package:vcare_admin/core/services/network/typedefs/response_or_exception
 import 'package:vcare_admin/features/todo/data/mappers/todo_item_mapper.dart';
 import 'package:vcare_admin/features/todo/data/models/todo_item_model.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
+import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
 import 'package:vcare_admin/features/todo/domain/repositories/todo_repository.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_response_parser.dart';
@@ -33,12 +34,23 @@ class TodoRepositoryImpl implements TodoRepository {
         forceRefresh: forceRefresh,
       );
 
-      return PaginatedResponseParser.parse(
+      final page = PaginatedResponseParser.parse(
         response,
         (json) => TodoItemModel.fromJson(
           Map<String, dynamic>.from(json as Map),
         ).toEntity(),
       );
+
+      // Match web `mapTodoItem`: drop PAYMENT_FAILED rows with incomplete details.
+      final items = page.items
+          .where(
+            (item) =>
+                item.type != TodoType.paymentFailed ||
+                item.paymentFailedDetails != null,
+          )
+          .toList(growable: false);
+
+      return PaginatedResult(items: items, pagination: page.pagination);
     });
   }
 

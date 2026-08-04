@@ -185,6 +185,7 @@ void main() {
         final result = await repository.fetchHistory(
           const PaginatedListRequest(page: 1, limit: 10),
           status: 'PENDING',
+          type: 'all',
           agencyGroupId: 'agency-group-1',
         );
 
@@ -196,6 +197,7 @@ void main() {
           'sortBy': 'createdAt',
           'sortOrder': 'desc',
           'status': 'PENDING',
+          'type': 'all',
           'agencyGroupId': 'agency-group-1',
         });
         result.when(

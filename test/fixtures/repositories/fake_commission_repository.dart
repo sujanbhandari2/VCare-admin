@@ -52,8 +52,10 @@ class FakeCommissionRepository implements CommissionRepository {
   String? lastSummaryStatus;
   String? lastSummaryAgencyGroupId;
   String? lastHistoryStatus;
+  String? lastHistoryType;
   String? lastHistoryAgencyGroupId;
   bool? lastHistoryForceRefresh;
+  final historyTypesCalled = <String?>[];
   String? lastSalesHistoryStatus;
   String? lastSalesHistoryAgencyGroupId;
   bool? lastSalesHistoryForceRefresh;
@@ -76,6 +78,7 @@ class FakeCommissionRepository implements CommissionRepository {
   fetchHistory(
     PaginatedListRequest request, {
     String? status,
+    String? type,
     String? agencyGroupId,
     CancelToken? cancelToken,
     bool forceRefresh = false,
@@ -83,6 +86,8 @@ class FakeCommissionRepository implements CommissionRepository {
     fetchHistoryCallCount++;
     lastHistoryRequest = request;
     lastHistoryStatus = status;
+    lastHistoryType = type;
+    historyTypesCalled.add(type);
     lastHistoryAgencyGroupId = agencyGroupId;
     lastHistoryForceRefresh = forceRefresh;
     return fetchHistoryResult;

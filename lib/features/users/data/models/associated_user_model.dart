@@ -6,6 +6,7 @@ class AssociatedUserModel {
     this.middleName,
     this.lastName,
     this.profileImage,
+    this.profilePreviewLink,
     required this.userType,
     required this.role,
     required this.status,
@@ -17,6 +18,7 @@ class AssociatedUserModel {
   final String? middleName;
   final String? lastName;
   final String? profileImage;
+  final String? profilePreviewLink;
   final String userType;
   final String role;
   final String status;
@@ -28,7 +30,8 @@ class AssociatedUserModel {
       firstName: json['firstName'] as String?,
       middleName: json['middleName'] as String?,
       lastName: json['lastName'] as String?,
-      profileImage: json['profileImage'] as String?,
+      profileImage: _optionalString(json['profileImage']),
+      profilePreviewLink: _optionalString(json['profilePreviewLink']),
       userType: json['userType']?.toString() ?? '',
       role: json['role']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
@@ -38,4 +41,12 @@ class AssociatedUserModel {
   static bool isValidApiData(dynamic data) {
     return data is Map<String, dynamic> && data['data'] is List;
   }
+}
+
+String? _optionalString(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  final trimmed = value.toString().trim();
+  return trimmed.isEmpty ? null : trimmed;
 }

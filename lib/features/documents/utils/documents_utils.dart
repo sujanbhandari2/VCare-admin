@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
 import 'package:vcare_admin/features/documents/domain/entities/agent_file.dart';
@@ -7,6 +5,7 @@ import 'package:vcare_admin/features/documents/domain/entities/document_filter.d
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_type_option.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
+import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 
 DocumentKind documentKindOf(String dataUrl, String name) {
   if (isDocumentImage(dataUrl, name)) {
@@ -167,7 +166,7 @@ String mimeTypeFromFileName(String? fileName) {
 }
 
 String formatDocumentDate(DateTime date) {
-  return DateFormat.yMMMd().format(date.toLocal());
+  return formatDisplayDate(date.toLocal());
 }
 
 String formatDocumentSize(int bytes) {

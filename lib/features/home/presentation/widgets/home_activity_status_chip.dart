@@ -50,7 +50,20 @@ class HomeActivityStatusChip extends StatelessWidget {
   ) {
     final normalized = status.toLowerCase();
 
-    if (normalized == 'failed' || normalized == 'overdue') {
+    // Payment-failure short labels from `getFailedPaymentCopy` (+ banner chips).
+    final isPaymentFailureChip =
+        normalized == 'failed' ||
+        normalized == 'overdue' ||
+        normalized == 'payment failed' ||
+        normalized == 'not enough funds' ||
+        normalized == 'card problem' ||
+        normalized == 'card declined' ||
+        normalized.startsWith('payment failed ·') ||
+        normalized.startsWith('not enough funds ·') ||
+        normalized.startsWith('card problem ·') ||
+        normalized.startsWith('card declined ·');
+
+    if (isPaymentFailureChip) {
       return (
         VCareColors.destructive.withValues(alpha: 0.1),
         VCareColors.destructive,

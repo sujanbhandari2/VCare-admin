@@ -1,6 +1,8 @@
-# Commission Feature — API & API-Driven UI
+# Commission Feature — API & UI Parity (Web → Mobile)
 
-**Document for Flutter / admin app parity with `GET /api/v1/agents/*` commission endpoints.**
+**Source of truth:** web `vcare-agent-app-2.0/src/features/commission/`  
+**Mobile:** `lib/features/commission/`  
+**Synced to web commit:** see `docs/sync/vcare_last_synced_commit.txt`
 
 ---
 
@@ -8,10 +10,10 @@
 
 | Endpoint | Method | Auth | Query Params |
 |---|---|---|---|
-| `GET {BASE_URL}api/v1/agents/stats` | GET | Bearer token | none |
-| `GET {BASE_URL}api/v1/agents/commission-summary` | GET | Bearer token | optional `status`, optional `agencyGroupId` |
-| `GET {BASE_URL}api/v1/agents/commission-history` | GET | Bearer token | `page` (default 1), `limit` (default 10), optional `status`, optional `agencyGroupId`, `sortBy` (default `createdAt`), `sortOrder` (default `desc`) |
-| `GET {BASE_URL}api/v1/agents/sales-history` | GET | Bearer token | `page` (default 1), `limit` (default 10), optional `status`, optional `agencyGroupId`, `sortBy` (default `transactionDate`), `sortOrder` (default `desc`) |
+| `GET {BASE_URL}api/v1/agents/stats` | GET | Bearer | none |
+| `GET {BASE_URL}api/v1/agents/commission-summary` | GET | Bearer | optional `status`, optional `agencyGroupId` |
+| `GET {BASE_URL}api/v1/agents/commission-history` | GET | Bearer | `page`, `limit`, optional `status`, optional **`type`** (`all` \| `commission` \| `enrollment` \| `upcoming`), optional `agencyGroupId`, `sortBy=createdAt`, `sortOrder=desc` |
+| `GET {BASE_URL}api/v1/agents/sales-history` | GET | Bearer | `page`, `limit` (default **20**), optional `status`, optional `agencyGroupId`, `sortBy=transactionDate`, `sortOrder=desc` |
 
 Responses use the standard envelope:
 
@@ -21,238 +23,116 @@ Responses use the standard envelope:
 
 ---
 
-## Agency scoping
+## Agency scoping & list source
 
-- When the logged-in profile has an `agencyGroupId`, the app automatically sends it on summary and history requests.
-- When `agencyGroupId` is omitted, results are scoped to the caller's agent profile.
-- **List source:**
-  - Independent agents (no profile `agencyGroupId`) → `commission-history`
-  - Agency-associated agents (profile has `agencyGroupId`) → `sales-history`
-- Agency **summary/masking** mode in the UI is still driven by the response: `totalCommission === null`.
+`isAgencyTied` (web) / `usesSalesHistory` (mobile) is true when **any** of:
 
-| Field | Independent agent | Agency-associated / `agencyGroupId` set |
-|-------|-------------------|-----------------------------------------|
-| `totalSales` | number | number |
-| `totalCommission` | number | null |
-| `commissionValue` (commission-history) | string | null |
-| `commissionAmount` (commission-history / sales-history) | number | null |
+1. Agent stats report `isAgencyAssociated` (`totalCommission === null`)
+2. Profile has an agency group (`agencyGroup` / `agencyGroupId` / agency name)
+3. Commission summary returns `totalCommission === null`
 
-`totalSales` and `totalCommission` are **numbers**, not strings.
+| Mode | Summary UI | List API (mobile) | List columns | Detail title |
+|---|---|---|---|---|
+| Independent | Total Sales + Commission + conditional Upcoming / Needs Attention | `commission-history?type=all` | Client · Sale · Commission + status | Commission details |
+| Agency-tied | Total Sales + conditional Upcoming / Needs Attention + agency banner | `sales-history` | Client · Sale | Sale details |
 
-Commission-history does **not** include transaction/sale amounts. Sale amounts come from sales-history (`amount`).
+**Note:** Web uses `commission-history` for both modes (hides commission column when agency-tied). Mobile keeps `sales-history` for the agency-tied list. Upcoming / Needs Attention aggregates always use `commission-history` with `type` filters (web parity).
+
+When `agencyGroupId` is present on the profile, send it on history / aggregate / sales-history requests. Do **not** send `agencyGroupId` on `commission-summary`.
 
 ---
 
-## API Fields → UI Behavior
+## Summary aggregates (client-side, matches web `useCommissions`)
 
-### GET agents/stats
+Base totals come from `GET agents/commission-summary`. Then:
 
-| API Field | UI Element | Behavior |
+| Metric | Query | Client logic |
 |---|---|---|
-| `totalClients` | Clients metric | Count |
-| `totalSales` | Sales metric | Currency |
-| `totalCommission` | Commission metric | Currency when non-null; hidden/placeholder when null |
+| Upcoming | `commission-history?type=upcoming&page=1&limit=100` | Sum `salesAmount`, count rows with non-null sales |
+| Needs Attention | `commission-history?type=commission&page=1&limit=100` | Keep rows where API status is `FAILED` (`paymentFailed`), then sum `salesAmount` |
 
-### GET agents/commission-summary
+Upcoming / Needs Attention cards show when loading **or** count/sales > 0.
 
-| API Field | UI Element | Behavior |
-|---|---|---|
-| `totalSales` | Total Sales card | Displayed as currency |
-| `totalCommission` | Commission Earned card | Displayed as currency |
-| `totalCommission === null` | Agency group mode | Triggers agency UI across the summary section |
-| `totalCommission === 0` | Commission Earned card | Shows $0 — individual mode, NOT agency |
-| `totalSales === 0` or null + empty active list | Empty state | Shows "No sales yet" when filter is All |
+Subtext:
 
-#### Agency group mode (when `totalCommission === null`)
+- Upcoming: `N scheduled · not counted yet`
+- Needs Attention: `N sale(s) that failed to collect`
 
-| UI Element | Behavior |
+---
+
+## Screen composition
+
+1. Sticky header: **Sales & Commissions**
+2. If summary + aggregates + history are empty → full-page empty state
+3. Else:
+   - Summary metrics
+   - Section title **Your earnings** + entry count
+   - List (tap row → detail sheet, or Failed Payment recovery when `paymentFailed`)
+   - Prev/Next pager when `total > pageSize`
+
+Status pills **are** shown on list rows (web table chips).
+
+---
+
+## History status labels
+
+| API / context | UI label |
 |---|---|
-| Commission Earned card | Shows "XXX" instead of real amount |
-| Commission Earned subtitle | Shows "Paid to agency" instead of "This month" |
-| Info banner | Shown: commissions are paid to the agency |
-| List title | "Total Sales" (sales-history) |
-| Sales row amount | Shows sales-history `amount` |
-| Sales row status badge | Shows transaction status (`PENDING` / `PAID` / `FAILED` / `REFUNDED` / `VOIDED`) |
-| Sales row click | Disabled — no detail modal opens |
-
----
-
-### GET agents/commission-history (each item) — independent agents
-
-| API Field | UI Element | Behavior |
-|---|---|---|
-| `clientName` / nested `client` name parts | Row title | First available value; fallback to "Client {id}" |
-| `commissionAmount` | Row amount | Signed currency (e.g. +$1.16); null → "—" |
-| `createdAt` | Row date | Formatted as MM/DD/YYYY |
-| `status` | Status badge / filters | Server-side filter via query param (`PENDING` / `PAID` / `REJECTED`) |
-| `commissionType` + `commissionValue` | Detail modal — Commission rate | If PERCENTAGE → "5% commission"; null → "—" |
-| `commissionAmount` | Detail modal — amount | Shown when non-null |
-| `paidAt` | Detail modal timeline — Paid date | Used for "Paid out" when status is PAID |
-| `createdAt` | Detail modal timeline — Processed date | Used for "Processed" |
-| `transactionId` | Domain metadata | Linked transaction id (amount not included) |
-
-#### Example commission-history item payload (independent)
-
-```json
-{
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "tenantId": "1f0e8a2b-0000-4000-8000-000000000000",
-  "commissionSettingsId": "3c4d5e6f-0000-4000-8000-000000000000",
-  "transactionId": "9a8b7c6d-0000-4000-8000-000000000000",
-  "agencyGroupId": null,
-  "referrerAgentId": "5e6f7a8b-0000-4000-8000-000000000000",
-  "clientId": "cccccccc-dddd-eeee-ffff-000000000000",
-  "clientName": "Jane Doe",
-  "commissionValue": "10",
-  "commissionType": "PERCENTAGE",
-  "commissionAmount": 50.0,
-  "status": "PAID",
-  "paidAt": "2026-07-15T10:30:00.000Z",
-  "notes": null,
-  "createdAt": "2026-07-01T08:00:00.000Z",
-  "updatedAt": "2026-07-15T10:30:00.000Z"
-}
-```
-
-#### Example commission-history item payload (agency-associated)
-
-```json
-{
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "transactionId": "9a8b7c6d-0000-4000-8000-000000000000",
-  "agencyGroupId": "ag-1111-2222-3333-4444-555555555555",
-  "clientId": "cccccccc-dddd-eeee-ffff-000000000000",
-  "clientName": "Acme Corp",
-  "commissionValue": null,
-  "commissionType": "PERCENTAGE",
-  "commissionAmount": null,
-  "status": "PENDING",
-  "paidAt": null,
-  "createdAt": "2026-07-01T08:00:00.000Z"
-}
-```
-
----
-
-### GET agents/sales-history (each item) — agency-associated agents
-
-| API Field | UI Element | Behavior |
-|---|---|---|
-| `payer.name` | Row title | Fallback to "Payer {id}" |
-| `amount` | Row amount | Sale currency |
-| `transactionDate` | Row date | Formatted as MM/DD/YYYY |
-| `status` | Status badge | Transaction status (not commission status) |
-| Filter chips | Query `status` | Still uses commission status `PENDING` / `PAID` / `REJECTED` |
-| `commissionAmount` | Hidden in agency UI | null for agency-associated agents |
-
-#### Example sales-history item payload
-
-```json
-{
-  "id": "9a8b7c6d-0000-4000-8000-000000000000",
-  "tenantId": "1f0e8a2b-0000-4000-8000-000000000000",
-  "payerId": "7c8d9e0f-0000-4000-8000-000000000000",
-  "payer": {
-    "id": "7c8d9e0f-0000-4000-8000-000000000000",
-    "name": "Jane Doe",
-    "email": "jane@example.com",
-    "phoneNumber": "+15551234567",
-    "address": { "line1": "123 Main St", "city": "Austin", "state": "TX", "zip": "78701" },
-    "profileId": null,
-    "profilePreviewLink": null
-  },
-  "subscriptionId": "4b5c6d7e-0000-4000-8000-000000000000",
-  "paymentMethodId": "2a3b4c5d-0000-4000-8000-000000000000",
-  "paymentMethod": {
-    "id": "2a3b4c5d-0000-4000-8000-000000000000",
-    "type": "card",
-    "cardBrand": "visa",
-    "cardLast4": "4242",
-    "cardExpMonth": 12,
-    "cardExpYear": 2028,
-    "nickname": null
-  },
-  "type": "MEMBERSHIP_SUBSCRIPTION",
-  "status": "PAID",
-  "amount": 500.0,
-  "currency": "usd",
-  "commissionAmount": null,
-  "billingStartDate": "2026-07-01",
-  "billingEndDate": "2026-07-31",
-  "transactionDate": "2026-07-01T12:00:00.000Z",
-  "invoiceNumber": "INV-1001",
-  "createdAt": "2026-07-01T12:00:00.000Z",
-  "updatedAt": "2026-07-01T12:00:00.000Z"
-}
-```
-
----
-
-## Status Mapping (API → UI)
-
-### Commission status (filters + commission-history badges)
-
-| API `status` value | Badge label | Filter chip | Query param |
-|---|---|---|---|
-| _(none)_ | — | All | omitted |
-| `PENDING` | Pending | Pending | `status=PENDING` |
-| `PAID` | Paid | Paid | `status=PAID` |
-| `REJECTED` | Rejected | Rejected | `status=REJECTED` |
-
-Filter chips refetch summary and the active list with the same commission `status`.
-
-### Transaction status (sales-history badges)
-
-| API `status` value | Badge label |
-|---|---|
-| `PENDING` | Pending |
-| `PAID` | Paid |
 | `FAILED` | Failed |
-| `REFUNDED` | Refunded |
-| `VOIDED` | Voided |
+| `REJECTED` | Rejected |
+| `UPCOMING`, or `itemType` `UPCOMING`/`ENROLLMENT`, or id prefix `pending:`/`subscription:` | Upcoming |
+| `PENDING` | Pending |
+| `PAID` | Successful |
+
+`FAILED` / `UPCOMING` must **not** render as Unknown.
 
 ---
 
-## Timeline (Detail Modal — driven by `status` + dates)
+## History row fields (commission-history)
 
-Independent commission rows only.
-
-| API `status` | Timeline steps shown |
+| API Field | UI |
 |---|---|
-| `PENDING` | Processed (`createdAt`) → Pending payout |
-| `PAID` | Processed (`createdAt`) → Paid out (`paidAt` or `createdAt`) |
-| `REJECTED` | Processed (`createdAt`) → Rejected → Paid (pending) |
-| unknown | Processed (`createdAt`) only |
+| `clientName` / `clientId` | Name (fallback `Client {shortId}`) |
+| `clientProfilePreviewLink` | Avatar photo (else initials) |
+| `offeringName` | Secondary line under name when present |
+| `salesAmount` | Sale |
+| `commissionAmount` | Commission (hidden in agency mode) |
+| `status` + `type` | Status pill via label mapping above |
+| `paidAt` ?? `createdAt` | Date |
+
+### Failed-row recovery
+
+When `status === FAILED` and `clientId` + `transactionId` are present, row tap opens `TodoTransactionDetailSheet` (mobile Failed Payment sheet) instead of the detail drawer. Contact Support from that sheet posts to `POST /contact-support`.
 
 ---
 
-## Pagination (API-driven)
+## Empty state
 
-| API field | UI behavior |
-|---|---|
-| `pagination.total` | Entry count + whether more pages exist |
-| `page` + `limit` query params | Sent on each fetch; page increments on scroll |
+- Title: **No sales yet**
+- Body (agency): sales will appear when first client is processed
+- Body (independent): commissions and sales will appear when first client is processed
+- CTA: **View clients** → clients tab
 
-Default page size: **10**
+---
 
-- Commission history default sort: `sortBy=createdAt`, `sortOrder=desc`
-- Sales history default sort: `sortBy=transactionDate`, `sortOrder=desc`
+## Pagination
+
+Default page size: **20**. Aggregate fetches use limit **100**.
 
 ---
 
 ## Quick Reference
 
 ```
-GET  {BASE_URL}api/v1/agents/stats
-GET  {BASE_URL}api/v1/agents/commission-summary?status=PAID&agencyGroupId={id}
-GET  {BASE_URL}api/v1/agents/commission-history?page=1&limit=10&status=PAID&sortBy=createdAt&sortOrder=desc
-GET  {BASE_URL}api/v1/agents/sales-history?page=1&limit=10&status=PAID&sortBy=transactionDate&sortOrder=desc&agencyGroupId={id}
+GET  agents/commission-summary
+GET  agents/commission-history?page=1&limit=20&type=all&sortBy=createdAt&sortOrder=desc
+GET  agents/commission-history?page=1&limit=100&type=upcoming&sortBy=createdAt&sortOrder=desc
+GET  agents/commission-history?page=1&limit=100&type=commission&sortBy=createdAt&sortOrder=desc
+GET  agents/sales-history?page=1&limit=20&sortBy=transactionDate&sortOrder=desc
+POST contact-support   (multipart; failed-payment recovery)
 ```
 
 All require: `Authorization: Bearer <token>`
 
-**Agency group rule:** `totalCommission === null` (not `0`, not missing — explicitly null) drives summary masking.
-
-**List source rule:** profile `agencyGroupId` present → sales-history; otherwise → commission-history.
-
-**Profile sync:** commission screen awaits `auth/me` before the first summary/history fetch so `agencyGroupId` is available when present.
+**Agency group rule:** `totalCommission === null` (not `0`) drives commission masking.  
+**Sale amount on commission-history:** field name is `salesAmount`.

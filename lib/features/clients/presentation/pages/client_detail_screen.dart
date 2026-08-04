@@ -130,15 +130,6 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
       );
     }
 
-    final isRefreshing =
-        detailState.isRefreshing ||
-        membershipsState.isRefreshing ||
-        dependentsState.isRefreshing ||
-        paymentMethodsState.isRefreshing ||
-        transactionsState.isRefreshing ||
-        casesState.isRefreshing ||
-        documentsState.list.isRefreshing;
-
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _onRefresh,
@@ -173,10 +164,6 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
                 ),
               ),
             ),
-            if (isRefreshing)
-              const SliverToBoxAdapter(
-                child: LinearProgressIndicator(minHeight: 2),
-              ),
             SliverToBoxAdapter(child: _IdentityCard(detail: detail)),
             SliverPersistentHeader(
               pinned: true,

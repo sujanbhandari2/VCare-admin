@@ -1,18 +1,26 @@
+import 'dart:io';
+
+import 'package:file_saver/file_saver.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
+import 'package:vcare_admin/features/help_support/presentation/widgets/contact_support_sheet.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+
+const String _w9BlankFormFileName = 'fw9.pdf';
 
 /// Bottom-sheet equivalent of web `HomeActivityRow` W-9 Sheet.
 class TodoW9FormSheet extends ConsumerStatefulWidget {
@@ -41,8 +49,10 @@ class TodoW9FormSheet extends ConsumerStatefulWidget {
 
 class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
   bool _uploading = false;
+  bool _downloading = false;
 
   TodoItem get item => widget.item;
+  bool get _busy => _uploading || _downloading;
 
   @override
   void initState() {
@@ -88,26 +98,62 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
   }
 
   Future<void> _downloadBlankForm() async {
-    final launched = await launchUrlString(
-      w9BlankFormUrl,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!mounted) return;
-    if (launched) {
+    if (_busy) return;
+
+    setState(() => _downloading = true);
+
+    try {
+      final location = await _saveBlankForm();
+
+      if (!mounted) return;
+      setState(() => _downloading = false);
       context.showVcareToast(
-        title: 'Opening W-9 form',
+        title: 'W-9 form downloaded',
+        description: location,
         variant: VcareToastVariant.success,
       );
-    } else {
+    } catch (error, stackTrace) {
+      Logger.logError('W-9 blank form download failed: $error\n$stackTrace');
+      if (!mounted) return;
+      setState(() => _downloading = false);
       context.showVcareToast(
-        title: 'Unable to open W-9 form',
+        title: 'Could not download W-9 form',
         variant: VcareToastVariant.destructive,
       );
     }
   }
 
+  /// Saves the blank W-9 and returns a description of where it landed.
+  Future<String> _saveBlankForm() async {
+    if (Platform.isAndroid) {
+      // DownloadManager is the only way to reach the shared Downloads folder
+      // on Android 11+, where a file manager can actually find the PDF.
+      await FileSaver.instance.downloadLink(
+        link: LinkDetails(link: w9BlankFormUrl),
+        name: _w9BlankFormFileName,
+      );
+      return 'Saved to your Downloads folder.';
+    }
+
+    // iOS has no shared Downloads folder; the app's documents directory is
+    // what Files browses into, so write the bytes there ourselves.
+    final response = await http.get(Uri.parse(w9BlankFormUrl));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException(
+        'W-9 request failed with status ${response.statusCode}',
+        uri: Uri.parse(w9BlankFormUrl),
+      );
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$_w9BlankFormFileName');
+    await file.writeAsBytes(response.bodyBytes, flush: true);
+
+    return 'Saved to Files under VCare client.';
+  }
+
   Future<void> _pickAndUploadPdf() async {
-    if (_uploading) return;
+    if (_busy) return;
 
     final categoryReferenceId = _categoryReferenceId;
     if (categoryReferenceId == null) {
@@ -135,36 +181,38 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
       final bytes = await file.readAsBytes();
       final fileName = file.name.trim().isEmpty ? 'w9.pdf' : file.name;
 
-      await ref.read(documentsListStateProvider.notifier).uploadDocument(
-        fileName: fileName,
-        bytes: bytes,
-        documentType: documentType,
-        agentProfileId: categoryReferenceId,
-        onCompleted: (success, error) async {
-          if (!mounted) return;
+      await ref
+          .read(documentsListStateProvider.notifier)
+          .uploadDocument(
+            fileName: fileName,
+            bytes: bytes,
+            documentType: documentType,
+            agentProfileId: categoryReferenceId,
+            onCompleted: (success, error) async {
+              if (!mounted) return;
 
-          if (!success) {
-            setState(() => _uploading = false);
-            context.showVcareToast(
-              title: error?.trim().isNotEmpty == true
-                  ? error!
-                  : 'Upload failed',
-              variant: VcareToastVariant.destructive,
-            );
-            return;
-          }
+              if (!success) {
+                setState(() => _uploading = false);
+                context.showVcareToast(
+                  title: error?.trim().isNotEmpty == true
+                      ? error!
+                      : 'Upload failed',
+                  variant: VcareToastVariant.destructive,
+                );
+                return;
+              }
 
-          await ref.read(todoListStateProvider.notifier).refresh();
-          if (!mounted) return;
+              await ref.read(todoListStateProvider.notifier).refresh();
+              if (!mounted) return;
 
-          setState(() => _uploading = false);
-          context.showVcareToast(
-            title: 'Uploaded 1 file',
-            variant: VcareToastVariant.success,
+              setState(() => _uploading = false);
+              context.showVcareToast(
+                title: 'Uploaded 1 file',
+                variant: VcareToastVariant.success,
+              );
+              Navigator.of(context).pop();
+            },
           );
-          Navigator.of(context).pop();
-        },
-      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _uploading = false);
@@ -176,12 +224,12 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
   }
 
   void _contactSupport() {
-    context.showVcareToast(
-      title: 'Contacting support',
-      description: "We'll be in touch shortly.",
-      variant: VcareToastVariant.info,
+    // parity: HomeActivityRow → ContactSupportDialog (W-9)
+    ContactSupportSheet.show(
+      context,
+      subject: 'W-9 Upload',
+      contextPayload: const {'page': 'w9-upload'},
     );
-    Navigator.of(context).pop();
   }
 
   @override
@@ -238,10 +286,13 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                   _StepCard(
                     step: 1,
                     title: 'Download the blank form',
-                    subtitle: 'Opens the official IRS $documentType PDF.',
+                    subtitle: _downloading
+                        ? 'Downloading the official IRS $documentType PDF…'
+                        : 'Downloads the official IRS $documentType PDF.',
                     icon: LucideIcons.download,
                     emphasized: false,
-                    onTap: _uploading ? null : _downloadBlankForm,
+                    busy: _downloading,
+                    onTap: _busy ? null : _downloadBlankForm,
                   ),
                   const SizedBox(height: 12),
                   _StepCard(
@@ -261,7 +312,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                     icon: LucideIcons.upload,
                     emphasized: true,
                     footer: FilledButton(
-                      onPressed: _uploading ? null : _pickAndUploadPdf,
+                      onPressed: _busy ? null : _pickAndUploadPdf,
                       style: FilledButton.styleFrom(
                         backgroundColor: VCareColors.primary,
                         foregroundColor: VCareColors.primaryForeground,
@@ -286,9 +337,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                             const Icon(LucideIcons.upload, size: 16),
                           const SizedBox(width: 8),
                           Text(
-                            _uploading
-                                ? 'Uploading…'
-                                : 'Choose file to upload',
+                            _uploading ? 'Uploading…' : 'Choose file to upload',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -312,7 +361,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                           alignment: PlaceholderAlignment.baseline,
                           baseline: TextBaseline.alphabetic,
                           child: GestureDetector(
-                            onTap: _uploading ? null : _contactSupport,
+                            onTap: _busy ? null : _contactSupport,
                             child: Text(
                               'Contact support',
                               style: TextStyle(
@@ -338,9 +387,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
               border: Border(top: BorderSide(color: vcare.border)),
             ),
             child: OutlinedButton(
-              onPressed: _uploading
-                  ? null
-                  : () => Navigator.of(context).pop(),
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -367,6 +414,7 @@ class _StepCard extends StatelessWidget {
     required this.icon,
     required this.emphasized,
     this.muted = false,
+    this.busy = false,
     this.onTap,
     this.footer,
   });
@@ -377,6 +425,7 @@ class _StepCard extends StatelessWidget {
   final IconData icon;
   final bool emphasized;
   final bool muted;
+  final bool busy;
   final VoidCallback? onTap;
   final Widget? footer;
 
@@ -401,9 +450,7 @@ class _StepCard extends StatelessWidget {
         : muted
         ? vcare.mutedForeground
         : VCareColors.primary;
-    final iconColor = emphasized
-        ? VCareColors.primary
-        : vcare.mutedForeground;
+    final iconColor = emphasized ? VCareColors.primary : vcare.mutedForeground;
 
     final content = Padding(
       padding: const EdgeInsets.all(14),
@@ -448,7 +495,17 @@ class _StepCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Icon(icon, size: 16, color: iconColor),
+                          if (busy)
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: iconColor,
+                              ),
+                            )
+                          else
+                            Icon(icon, size: 16, color: iconColor),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -478,9 +535,7 @@ class _StepCard extends StatelessWidget {
         side: BorderSide(color: borderColor),
       ),
       clipBehavior: Clip.antiAlias,
-      child: onTap == null
-          ? content
-          : InkWell(onTap: onTap, child: content),
+      child: onTap == null ? content : InkWell(onTap: onTap, child: content),
     );
   }
 }

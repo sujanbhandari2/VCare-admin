@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/app/router/app_router_provider.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
 import 'package:vcare_admin/core/styles/text_scale_provider.dart';
 import 'package:vcare_admin/core/styles/theme_appearance_provider.dart';
@@ -46,9 +47,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Tear down StatefulShellRoute on logout only. Refreshing on login races with
-    // context.goNamed(home) and remounts StatefulNavigationShell with the same
-    // GlobalKey (Duplicate GlobalKey / inactive element assertions).
+    // Remove the StatefulShellRoute from the page stack on logout.
     ref.listen(userLoggedInStateProvider, (previous, next) {
       if (previous == next) return;
       if (previous == true && next == false) {
@@ -56,12 +55,16 @@ class _MyAppState extends ConsumerState<MyApp> {
       }
     });
 
+    final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeStateProvider);
     final themeMode = ref.watch(themeModeProvider);
     final themeAppearance = ref.watch(themeAppearanceProvider);
     final textScale = ref.watch(textScaleProvider);
 
     return MaterialApp.router(
+      // Rebuild the whole tree when the session router is swapped so no element
+      // is carried over from the previous session.
+      key: ValueKey(router),
       title: "VCare client",
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
@@ -87,7 +90,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      routerConfig: AppRouter.router,
+      routerConfig: router,
     );
   }
 

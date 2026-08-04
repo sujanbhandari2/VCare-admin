@@ -13,10 +13,15 @@ extension CommissionHistoryItemModelMapper on CommissionHistoryItemModel {
       referrerAgentId: referrerAgentId,
       clientId: clientId,
       clientName: clientName,
+      clientPhotoUrl: clientProfilePreviewLink,
+      offeringName: offeringName,
+      itemType: type,
       commissionValue: commissionValue,
       commissionType: commissionType,
       commissionAmount: commissionAmount,
+      salesAmount: salesAmount,
       status: _mapStatus(status),
+      apiStatus: status,
       paidAt: paidAt,
       notes: notes,
       createdAt: createdAt,
@@ -34,6 +39,10 @@ extension CommissionHistoryItemModelMapper on CommissionHistoryItemModel {
       case 'CANCELLED':
       case 'CANCELED':
         return CommissionStatus.cancelled;
+      case 'FAILED':
+        return CommissionStatus.failed;
+      case 'UPCOMING':
+        return CommissionStatus.upcoming;
       default:
         return CommissionStatus.unknown;
     }

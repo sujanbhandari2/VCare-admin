@@ -20,9 +20,6 @@ class CommissionSalesHistoryState extends _$CommissionSalesHistoryState
   CommissionFilter get filter => _filter;
 
   @override
-  int get pageSize => 10;
-
-  @override
   LoadableListState<SalesHistoryItem> build() =>
       LoadableListState<SalesHistoryItem>();
 

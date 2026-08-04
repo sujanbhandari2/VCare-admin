@@ -20,6 +20,7 @@ class TodoPaymentFailedDetailsModel {
     required this.amount,
     required this.currency,
     this.invoiceNumber,
+    this.failureReason,
   });
 
   final String transactionId;
@@ -28,16 +29,46 @@ class TodoPaymentFailedDetailsModel {
   final String amount;
   final String currency;
   final String? invoiceNumber;
+  final String? failureReason;
 
-  factory TodoPaymentFailedDetailsModel.fromJson(Map<String, dynamic> json) {
+  /// Parity with web `todoDetailsSchema` + `mapPaymentFailedTodo`.
+  ///
+  /// Prefer canonical API fields (`name`, `relatedId`, `code`, `reason`) and
+  /// fall back to older Flutter-shaped keys when present.
+  factory TodoPaymentFailedDetailsModel.fromJson(
+    Map<String, dynamic> json, {
+    String? resourceTransactionId,
+  }) {
+    final reason = _firstNonEmptyString(json, const ['reason', 'failureReason']);
+    final invoice = _firstNonEmptyString(json, const ['code', 'invoiceNumber']);
+    final transactionId =
+        (resourceTransactionId?.trim().isNotEmpty == true
+            ? resourceTransactionId!.trim()
+            : null) ??
+        _firstNonEmptyString(json, const ['transactionId']) ??
+        '';
+
     return TodoPaymentFailedDetailsModel(
-      transactionId: json['transactionId']?.toString() ?? '',
-      payerId: json['payerId']?.toString() ?? '',
-      payerName: json['payerName']?.toString() ?? '',
-      amount: json['amount']?.toString() ?? '0',
-      currency: json['currency']?.toString() ?? 'USD',
-      invoiceNumber: json['invoiceNumber']?.toString(),
+      transactionId: transactionId,
+      payerId:
+          _firstNonEmptyString(json, const ['relatedId', 'payerId']) ?? '',
+      payerName: _firstNonEmptyString(json, const ['name', 'payerName']) ?? '',
+      amount: json['amount']?.toString() ?? '',
+      currency: _firstNonEmptyString(json, const ['currency']) ?? '',
+      invoiceNumber: invoice,
+      failureReason: reason,
     );
+  }
+
+  static String? _firstNonEmptyString(
+    Map<String, dynamic> json,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = json[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
   }
 }
 
@@ -86,19 +117,34 @@ class TodoItemModel {
     );
   }
 
+  /// Returns null when required payment-failed fields are missing (web drops item).
   TodoPaymentFailedDetailsModel? paymentFailedDetails() {
     final raw = details;
     if (raw == null) return null;
-    return TodoPaymentFailedDetailsModel.fromJson(raw);
+
+    final model = TodoPaymentFailedDetailsModel.fromJson(
+      raw,
+      resourceTransactionId: resource?.id,
+    );
+
+    if (model.payerName.isEmpty ||
+        model.payerId.isEmpty ||
+        model.currency.isEmpty ||
+        model.transactionId.isEmpty) {
+      return null;
+    }
+
+    final amount = double.tryParse(model.amount);
+    if (amount == null || !amount.isFinite) return null;
+
+    return model;
   }
 
   TodoW9FormDetailsModel w9FormDetails({required String? agentId}) {
     final raw = details;
     final code = raw?['code']?.toString().trim();
     return TodoW9FormDetailsModel(
-      documentType: (code != null && code.isNotEmpty)
-          ? code
-          : 'W-9 Form',
+      documentType: (code != null && code.isNotEmpty) ? code : 'W-9 Form',
       agentId: agentId,
     );
   }

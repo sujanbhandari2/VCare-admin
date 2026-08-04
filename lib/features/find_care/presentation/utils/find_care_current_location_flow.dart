@@ -11,8 +11,9 @@ import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// Orchestrates permission explanation + device location detection for Find Care.
 ///
-/// - Automatic (Provider tab): prompts at most once per app session.
 /// - User-initiated (locate button): may re-show the explanation sheet after denial.
+/// - Automatic mode ([userInitiated] false) still prompts at most once per session
+///   if called, but Find Care no longer auto-prompts on open.
 Future<void> runFindCareCurrentLocationFlow(
   BuildContext context,
   WidgetRef ref, {

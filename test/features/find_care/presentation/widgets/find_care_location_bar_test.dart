@@ -57,4 +57,43 @@ void main() {
 
     controller.dispose();
   });
+
+  testWidgets('shows clear UI when using current location', (tester) async {
+    var clears = 0;
+    final controller = TextEditingController(text: 'Austin, TX');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        home: Scaffold(
+          body: FindCareLocationBar(
+            locationController: controller,
+            isUsingCurrentLocation: true,
+            onDetectLocation: () {},
+            onClearCurrentLocation: () => clears += 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Current location'), findsOneWidget);
+    expect(
+      find.text('Using current location · tap to use your city & state'),
+      findsOneWidget,
+    );
+    expect(find.byIcon(LucideIcons.locateFixed), findsNothing);
+    expect(find.byIcon(LucideIcons.x), findsOneWidget);
+
+    await tester.tap(find.byIcon(LucideIcons.x));
+    await tester.pump();
+    expect(clears, 1);
+
+    await tester.tap(
+      find.text('Using current location · tap to use your city & state'),
+    );
+    await tester.pump();
+    expect(clears, 2);
+
+    controller.dispose();
+  });
 }

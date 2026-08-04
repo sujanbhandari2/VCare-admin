@@ -7,6 +7,7 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
+import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
 
 /// VCare-styled conversation composer for Live Chat thread overrides.
 ///
@@ -23,21 +24,11 @@ class VcareMessengerThreadComposer extends StatelessWidget {
   /// Extra space above the nav pill so the input is not covered by the bar.
   static const double _aboveNavGap = 45;
 
-  /// True when the IME is visible.
-  ///
-  /// Must read insets from the platform [View], not [MediaQuery.viewInsets]:
-  /// an ancestor [Scaffold] with `resizeToAvoidBottomInset` consumes viewInsets
-  /// for its body, so MediaQuery here reports 0 while the keyboard is open —
-  /// which previously kept applying nav clearance and floated the field up.
-  static bool _isKeyboardOpen(BuildContext context) {
-    return MediaQueryData.fromView(View.of(context)).viewInsets.bottom > 0;
-  }
-
   /// Clears the floating nav pill when the keyboard is closed. Uses
   /// [MediaQuery.viewPadding] because [Scaffold.extendBody] zeroes
   /// [MediaQuery.padding] bottom in the body.
   static double _composerBottomPadding(BuildContext context) {
-    if (_isKeyboardOpen(context)) {
+    if (isSoftKeyboardOpen(context)) {
       return 0;
     }
     if (VCareMobileShellScope.appliesBottomInsetOf(context)) {

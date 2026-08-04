@@ -6,6 +6,7 @@ import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:vcare_admin/features/find_care/domain/entities/search_location.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
+import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 
 part 'find_care_search_location_provider.g.dart';
 
@@ -23,7 +24,15 @@ class FindCareSearchLocation extends _$FindCareSearchLocation {
         }
       } catch (_) {}
     }
-    return const SearchLocation(city: 'San Francisco', state: 'CA');
+    return _locationFromProfile();
+  }
+
+  SearchLocation _locationFromProfile() {
+    final profile = ref.read(localProfileStateProvider);
+    return searchLocationFromProfile(
+      primaryCity: profile.primaryCity,
+      primaryState: profile.primaryState,
+    );
   }
 
   Future<void> setLocation(SearchLocation location) async {
@@ -33,10 +42,28 @@ class FindCareSearchLocation extends _$FindCareSearchLocation {
         .set(StorageKeys.findCareSearchLocation, jsonEncode(location.toJson()));
   }
 
+  /// Applies a GPS-resolved search area and marks it as current location.
+  Future<void> setFromCurrentLocation(SearchLocation location) async {
+    await setLocation(
+      location.copyWith(fromCurrentLocation: true),
+    );
+  }
+
+  /// Restores the search area to the user's profile city/state.
+  Future<void> useProfileLocation() async {
+    await setLocation(_locationFromProfile());
+  }
+
   Future<void> setFromDisplayText(String text) async {
     final stateCode = parseSearchState(text);
     final parts = text.split(',');
     final city = parts.isNotEmpty ? parts.first.trim() : '';
-    await setLocation(SearchLocation(city: city, state: stateCode ?? ''));
+    await setLocation(
+      SearchLocation(
+        city: city,
+        state: stateCode ?? '',
+        fromCurrentLocation: false,
+      ),
+    );
   }
 }

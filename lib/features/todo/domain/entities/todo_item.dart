@@ -16,6 +16,7 @@ class TodoPaymentFailedDetails {
     required this.amount,
     required this.currency,
     this.invoiceNumber,
+    this.failureReason,
   });
 
   final String transactionId;
@@ -24,6 +25,9 @@ class TodoPaymentFailedDetails {
   final double amount;
   final String currency;
   final String? invoiceNumber;
+
+  /// Raw failure text from API `details.reason` / `details.failureReason`.
+  final String? failureReason;
 }
 
 class TodoW9FormDetails {
@@ -65,6 +69,8 @@ class TodoItem implements LoadableListItem {
   bool get isPaymentFailed => type == TodoType.paymentFailed;
 
   bool get isW9FormMissing => type == TodoType.w9FormMissing;
+
+  bool get isCompleteProfile => type == TodoType.completeProfile;
 
   String? get transactionId =>
       paymentFailedDetails?.transactionId ??

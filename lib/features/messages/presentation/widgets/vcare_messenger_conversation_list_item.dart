@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
 
 /// VCare-styled conversation list row for [MessengerChatShell.userListItemBuilder].
 class VcareMessengerConversationListItem extends StatelessWidget {
@@ -29,6 +30,9 @@ class VcareMessengerConversationListItem extends StatelessWidget {
         (data.isConversationRow && data.groupAvatarUsers.length > 1);
     // peerUsers excludes the current user; include self for total member count.
     final groupMemberCount = data.groupAvatarUsers.length + 1;
+    final roleLabel = data.roleLabel.trim().isNotEmpty
+        ? data.roleLabel.trim()
+        : data.user.roleLabel.trim();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -52,12 +56,10 @@ class VcareMessengerConversationListItem extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              VcareMessengerPresenceAvatar(
+              VcareMessengerAvatar(
                 displayTitle: data.displayTitle,
                 imageUrl: isGroupRow ? null : data.user.avatarUrl,
                 isGroup: isGroupRow,
-                isOnline: data.user.isOnline,
-                showOnlinePresence: data.showOnlinePresence && !isGroupRow,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -67,14 +69,27 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            data.displayTitle,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  data.displayTitle,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (!isGroupRow &&
+                                  VcareMessengerRoleBadge.shouldShow(
+                                    roleLabel,
+                                  )) ...[
+                                const SizedBox(width: 6),
+                                VcareMessengerRoleBadge(roleLabel: roleLabel),
+                              ],
+                            ],
                           ),
                         ),
                         if (lastActivityAt != null) ...[

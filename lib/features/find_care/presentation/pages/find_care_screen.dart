@@ -39,8 +39,13 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
             .read(savedProvidersStateProvider.notifier)
             .ensureSavedProvidersLoaded();
       }
-      runFindCareCurrentLocationFlow(context, ref, userInitiated: false);
     });
+  }
+
+  Future<void> _clearCurrentLocation() async {
+    await ref
+        .read(findCareSearchLocationProvider.notifier)
+        .useProfileLocation();
   }
 
   @override
@@ -77,8 +82,7 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
       findCareCurrentLocationStateProvider.select((s) => s.detecting),
     );
 
-    if (_locationController.text != location.displayLabel &&
-        location.displayLabel.isNotEmpty) {
+    if (_locationController.text != location.displayLabel) {
       _locationController.text = location.displayLabel;
     }
 
@@ -94,7 +98,7 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
               textScaleFactor: textScaleFactor,
               hasSubtitle: true,
               title: vcareTabPageTitle(
-                title: 'Find Care',
+                title: 'Find Providers',
                 subtitle: 'Browse by category.',
               ),
             ),
@@ -106,6 +110,7 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
                 FindCareLocationBar(
                   locationController: _locationController,
                   isDetecting: detecting,
+                  isUsingCurrentLocation: location.fromCurrentLocation,
                   onDetectLocation: () {
                     runFindCareCurrentLocationFlow(
                       context,
@@ -113,6 +118,7 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
                       userInitiated: true,
                     );
                   },
+                  onClearCurrentLocation: _clearCurrentLocation,
                   actions: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -137,49 +143,6 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: vcare.mutedForeground,
-                      height: 1.45,
-                    ),
-                    children: [
-                      const TextSpan(text: 'Searches the live '),
-                      TextSpan(
-                        text: 'Medicare Physician & Other Practitioners',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: VCareColors.foreground,
-                        ),
-                      ),
-                      const TextSpan(
-                        text:
-                            ' public dataset (CMS). Use Provider name, NPI, Service name; your "Searching near" state narrows results when set. For first + last fields, use ',
-                      ),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: GestureDetector(
-                          onTap: () => context.pushNamed(
-                            AppRouter.medicareProviderLookupName,
-                          ),
-                          child: Text(
-                            'Medicare provider lookup',
-                            style: TextStyle(
-                              color: VCareColors.primary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: VCareColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const TextSpan(text: '.'),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -210,75 +173,6 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
                       ),
                     );
                   },
-                ),
-                const SizedBox(height: 8),
-                _LinkCard(
-                  icon: LucideIcons.landmark,
-                  iconBg: VCareColors.primary.withValues(alpha: 0.1),
-                  iconColor: VCareColors.primary,
-                  title: 'Medicare provider lookup',
-                  subtitle:
-                      'Search CMS Medicare physician & practitioner directory.',
-                  vcare: vcare,
-                  onTap: () =>
-                      context.pushNamed(AppRouter.medicareProviderLookupName),
-                ),
-                const SizedBox(height: 12),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => context.pushNamed(AppRouter.costLookupName),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: vcare.gradientCard,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: _cardShadow,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Icon(
-                                LucideIcons.dollarSign,
-                                color: VCareColors.primaryForeground,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Procedure cost lookup',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: VCareColors.primaryForeground,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    "Estimate what you'll pay before you go.",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: VCareColors.primaryForeground,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ]),
             ),
@@ -401,80 +295,3 @@ class _CategoryCard extends StatelessWidget {
     );
   }
 }
-
-class _LinkCard extends StatelessWidget {
-  const _LinkCard({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.vcare,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final VCareThemeExtension vcare;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: vcare.border),
-      ),
-      shadowColor: Colors.black12,
-      elevation: 1,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: vcare.mutedForeground,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-const _cardShadow = [
-  BoxShadow(color: Color(0x14000000), blurRadius: 14, offset: Offset(0, 4)),
-];

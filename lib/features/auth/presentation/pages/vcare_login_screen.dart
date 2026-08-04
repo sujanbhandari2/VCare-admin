@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
+// TODO: Restore when social login is enabled.
+// import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/app/router/app_router_provider.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
@@ -22,6 +22,7 @@ import 'package:vcare_admin/features/auth/domain/auth_phone_validator.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_phone_country.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
+import 'package:vcare_admin/features/auth/domain/enums/gender.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_identify_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_pre_auth_user_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_setup_account_state_provider.dart';
@@ -30,6 +31,7 @@ import 'package:vcare_admin/features/auth/presentation/providers/login_request_s
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/login_flow_state.dart';
+import 'package:vcare_admin/features/places/presentation/widgets/primary_location_field.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_forgot_steps.dart';
@@ -39,7 +41,8 @@ import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/field_validator.dart';
-import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+// TODO: Restore when social login is enabled.
+// import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 enum _LoginMethod { phone, email }
 
@@ -49,7 +52,8 @@ enum _LoginStep {
   disambiguate,
   password,
   twoFactor,
-  activate,
+  activateDetails,
+  activatePassword,
   onboard,
   biometric,
   forgotIdentify,
@@ -84,6 +88,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   final _onboardDobController = TextEditingController();
   final _onboardEmailController = TextEditingController();
   final _onboardPhoneController = TextEditingController();
+  final _primaryCityController = TextEditingController();
+  final _primaryStateController = TextEditingController();
   final _forgotEmailController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmNewPasswordController = TextEditingController();
@@ -103,6 +109,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   bool _otpWasSkipped = false;
   String? _twoFactorChallengeToken;
   bool _twoFactorRememberMe = false;
+  Gender? _activateGender;
+  String? _preAuthPhone;
 
   @override
   void dispose() {
@@ -120,6 +128,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _onboardDobController.dispose();
     _onboardEmailController.dispose();
     _onboardPhoneController.dispose();
+    _primaryCityController.dispose();
+    _primaryStateController.dispose();
     _forgotEmailController.dispose();
     _newPasswordController.dispose();
     _confirmNewPasswordController.dispose();
@@ -159,8 +169,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
     final storage = ref.read(storageServiceProvider);
     final token =
-        storage.get(StorageKeys.loggedInUserToken, defaultValue: '')?.toString() ??
-            '';
+        storage
+            .get(StorageKeys.loggedInUserToken, defaultValue: '')
+            ?.toString() ??
+        '';
 
     if (token.trim().isEmpty) {
       await VcareMockAuth.signIn(ref);
@@ -171,7 +183,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
     if (!mounted) return;
     ref.read(networkFetchSessionProvider.notifier).resetSession();
-    context.goNamed(AppRouter.home.toPathName);
+    startAuthenticatedRouterSession(ref);
   }
 
   Future<void> _pickOnboardDob() async {
@@ -314,24 +326,24 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _otpController.clear();
       _step = _LoginStep.twoFactor;
     });
-    _startResendTimer(seconds: 60);
+    _startResendTimer(seconds: 90);
   }
 
   void _completeAuthenticatedLogin() {
     ref.invalidate(userLoggedInStateProvider);
     ref.read(networkFetchSessionProvider.notifier).resetSession();
     ref.read(authMeStateProvider.notifier).fetchMe();
-    context.goNamed(AppRouter.home.toPathName);
+    // Must be last: this disposes the router that owns this screen.
+    startAuthenticatedRouterSession(ref);
   }
 
   String get _normalizedIdentifier => AuthIdentifierNormalizer.normalize(
-        method: _method == _LoginMethod.phone
-            ? LoginFlowMethod.phone
-            : LoginFlowMethod.email,
-        raw: _identifier,
-        phoneCountry:
-            _method == _LoginMethod.phone ? _phoneCountry : null,
-      );
+    method: _method == _LoginMethod.phone
+        ? LoginFlowMethod.phone
+        : LoginFlowMethod.email,
+    raw: _identifier,
+    phoneCountry: _method == _LoginMethod.phone ? _phoneCountry : null,
+  );
 
   _LoginStep _mapFlowStep(LoginFlowStep step) {
     return switch (step) {
@@ -340,7 +352,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       LoginFlowStep.disambiguate => _LoginStep.disambiguate,
       LoginFlowStep.password => _LoginStep.password,
       LoginFlowStep.twoFactor => _LoginStep.twoFactor,
-      LoginFlowStep.activate => _LoginStep.activate,
+      LoginFlowStep.activateDetails => _LoginStep.activateDetails,
+      LoginFlowStep.activatePassword => _LoginStep.activatePassword,
       LoginFlowStep.onboard => _LoginStep.onboard,
       LoginFlowStep.biometric => _LoginStep.biometric,
       LoginFlowStep.forgotIdentify => _LoginStep.forgotIdentify,
@@ -366,8 +379,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       if (skipStep == LoginFlowStep.password) {
         _hydratePasswordContext(result, otpSkipped: true);
       }
-      if (skipStep == LoginFlowStep.onboard) {
-        _loadPreAuthUserAndNavigate();
+      if (skipStep == LoginFlowStep.onboard ||
+          skipStep == LoginFlowStep.activateDetails) {
+        _loadPreAuthUserAndNavigate(skipStep);
         return;
       }
       setState(() => _step = _mapFlowStep(skipStep));
@@ -387,8 +401,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     if (nextStep == LoginFlowStep.password) {
       _hydratePasswordContext(result, otpSkipped: false);
     }
-    if (nextStep == LoginFlowStep.onboard) {
-      _loadPreAuthUserAndNavigate();
+    if (nextStep == LoginFlowStep.onboard ||
+        nextStep == LoginFlowStep.activateDetails) {
+      _loadPreAuthUserAndNavigate(nextStep);
       return;
     }
     setState(() {
@@ -396,28 +411,32 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     });
   }
 
-  void _navigateToOnboard() {
+  void _navigateToSetupStep(LoginFlowStep target) {
     setState(() {
       _loadingKey = null;
-      _step = _LoginStep.onboard;
+      _step = _mapFlowStep(target);
     });
   }
 
-  Future<void> _loadPreAuthUserAndNavigate() async {
-    final registrationToken =
-        ref.read(authVerifyOtpStateProvider).data?.registrationToken;
+  Future<void> _loadPreAuthUserAndNavigate(LoginFlowStep target) async {
+    final registrationToken = ref
+        .read(authVerifyOtpStateProvider)
+        .data
+        ?.registrationToken;
 
     if (registrationToken == null || registrationToken.isEmpty) {
-      _navigateToOnboard();
+      _navigateToSetupStep(target);
       return;
     }
 
     setState(() {
       _loadingKey = 'preAuth';
-      _step = _LoginStep.onboard;
+      _step = _mapFlowStep(target);
     });
 
-    await ref.read(authPreAuthUserStateProvider.notifier).fetchPreAuthUser(
+    await ref
+        .read(authPreAuthUserStateProvider.notifier)
+        .fetchPreAuthUser(
           registrationToken: registrationToken,
           onCompleted: (user) {
             if (!mounted) return;
@@ -452,18 +471,68 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _zipController.text = user.zipCode!;
     }
 
-    if (_method == _LoginMethod.phone && user.email != null) {
-      _onboardEmailController.text = user.email!;
-    } else if (_method == _LoginMethod.email && user.phone != null) {
+    // Email: prefer pre-auth, else identifier when login method is email.
+    if (user.email != null && user.email!.trim().isNotEmpty) {
+      _onboardEmailController.text = user.email!.trim();
+    } else if (_method == _LoginMethod.email &&
+        _emailController.text.trim().isNotEmpty) {
+      _onboardEmailController.text = _emailController.text.trim();
+    }
+
+    // Phone: prefer pre-auth, else identifier when login method is phone.
+    final preAuthPhone = user.phone?.trim();
+    if (preAuthPhone != null && preAuthPhone.isNotEmpty) {
+      _preAuthPhone = preAuthPhone;
       final displayDigits = AuthPhoneFormatter.toDisplayDigits(
-        user.phone!,
+        preAuthPhone,
         fallback: _phoneCountry,
       );
       _onboardPhoneController.text = AuthPhoneFormatter.formatNationalDisplay(
         displayDigits,
         _phoneCountry,
       );
+    } else if (_method == _LoginMethod.phone) {
+      final displayDigits = AuthPhoneFormatter.toDisplayDigits(
+        _phoneController.text,
+        fallback: _phoneCountry,
+      );
+      if (displayDigits.length >= 10) {
+        _preAuthPhone = AuthPhoneFormatter.toApiDigits(
+          _phoneCountry.dialCode,
+          displayDigits,
+        );
+        _onboardPhoneController.text = AuthPhoneFormatter.formatNationalDisplay(
+          displayDigits,
+          _phoneCountry,
+        );
+      }
     }
+
+    _activateGender = _parseGender(user.gender);
+    if (user.primaryCity != null) {
+      _primaryCityController.text = user.primaryCity!;
+    }
+    if (user.primaryState != null) {
+      _primaryStateController.text = user.primaryState!;
+    }
+  }
+
+  Gender? _parseGender(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final upper = raw.trim().toUpperCase();
+    if (upper == 'MALE' || raw.trim() == 'Male') return Gender.male;
+    if (upper == 'FEMALE' || raw.trim() == 'Female') return Gender.female;
+    if (upper == 'OTHER' || raw.trim() == 'Other') return Gender.other;
+    return null;
+  }
+
+  String? _genderApiValue(Gender? gender) {
+    if (gender == null) return null;
+    return switch (gender) {
+      Gender.male => 'MALE',
+      Gender.female => 'FEMALE',
+      Gender.other => 'OTHER',
+    };
   }
 
   Future<void> _sendCode() async {
@@ -494,7 +563,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _loadingKey = 'send';
     });
 
-    await ref.read(authIdentifyStateProvider.notifier).identify(
+    await ref
+        .read(authIdentifyStateProvider.notifier)
+        .identify(
           identifier: identifier,
           onCompleted: (result) {
             if (!mounted) return;
@@ -520,7 +591,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _loadingKey = 'send';
     });
 
-    await ref.read(authRequestOtpStateProvider.notifier).requestOtp(
+    await ref
+        .read(authRequestOtpStateProvider.notifier)
+        .requestOtp(
           identifier: identifier,
           onCompleted: () {
             if (!mounted) return;
@@ -551,13 +624,16 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _error = null;
     });
 
-    await ref.read(authVerifyOtpStateProvider.notifier).verifyOtp(
+    await ref
+        .read(authVerifyOtpStateProvider.notifier)
+        .verifyOtp(
           identifier: identifier,
           otp: value,
           onCompleted: (_) {
             if (!mounted) return;
-            final identifyResult =
-                ref.read(authIdentifyStateProvider).lastResult;
+            final identifyResult = ref
+                .read(authIdentifyStateProvider)
+                .lastResult;
             setState(() => _loadingKey = null);
             if (identifyResult != null) {
               _routeAfterVerify(identifyResult);
@@ -574,14 +650,15 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         );
   }
 
-  Future<void> _finishSocial(String provider) async {
-    final label = provider == 'apple' ? 'Apple' : 'Google';
-    if (!mounted) return;
-    context.showVcareToast(
-      title: '$label sign-in is coming soon.',
-      variant: VcareToastVariant.info,
-    );
-  }
+  // TODO: Restore when social login is enabled.
+  // Future<void> _finishSocial(String provider) async {
+  //   final label = provider == 'apple' ? 'Apple' : 'Google';
+  //   if (!mounted) return;
+  //   context.showVcareToast(
+  //     title: '$label sign-in is coming soon.',
+  //     variant: VcareToastVariant.info,
+  //   );
+  // }
 
   void _goBack() {
     setState(() {
@@ -591,9 +668,11 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           ref.read(authIdentifyStateProvider.notifier).clear();
           _step = _LoginStep.identify;
         case _LoginStep.disambiguate:
-        case _LoginStep.activate:
+        case _LoginStep.activateDetails:
         case _LoginStep.onboard:
           _step = _LoginStep.verify;
+        case _LoginStep.activatePassword:
+          _step = _LoginStep.activateDetails;
         case _LoginStep.twoFactor:
           _clearTwoFactorChallenge();
           _resendTimer?.cancel();
@@ -611,7 +690,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         case _LoginStep.biometric:
           _step = _branch is LoginLookupNew
               ? _LoginStep.onboard
-              : _LoginStep.activate;
+              : _LoginStep.activateDetails;
         case _LoginStep.forgotIdentify:
           _step = _LoginStep.password;
         case _LoginStep.forgotSelect:
@@ -645,8 +724,12 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     );
     setState(() {
       _selectedClient = match;
-      _step = match.hasLogin ? _LoginStep.password : _LoginStep.activate;
     });
+    if (match.hasLogin) {
+      setState(() => _step = _LoginStep.password);
+    } else {
+      _loadPreAuthUserAndNavigate(LoginFlowStep.activateDetails);
+    }
   }
 
   Future<void> _submitPassword() async {
@@ -664,7 +747,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
     setState(() => _loadingKey = 'password');
 
-    await ref.read(loginRequestStateProvider.notifier).login(
+    await ref
+        .read(loginRequestStateProvider.notifier)
+        .login(
           payloads: {
             'identifier': identifier,
             'password': _passwordController.text,
@@ -713,7 +798,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _error = null;
     });
 
-    await ref.read(loginRequestStateProvider.notifier).verify2fa(
+    await ref
+        .read(loginRequestStateProvider.notifier)
+        .verify2fa(
           challengeToken: challengeToken,
           otp: otp,
           rememberMe: _twoFactorRememberMe,
@@ -748,12 +835,14 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       _error = null;
     });
 
-    await ref.read(loginRequestStateProvider.notifier).send2fa(
+    await ref
+        .read(loginRequestStateProvider.notifier)
+        .send2fa(
           challengeToken: challengeToken,
           onSuccess: () {
             if (!mounted) return;
             setState(() => _loadingKey = null);
-            _startResendTimer(seconds: 60);
+            _startResendTimer(seconds: 90);
           },
           onError: (message) {
             if (!mounted) return;
@@ -769,17 +858,107 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     }
   }
 
-  void _submitActivation() {
+  void _advanceActivateDetails() {
+    setState(() {
+      _error = null;
+      _step = _LoginStep.activatePassword;
+    });
+  }
+
+  Future<void> _submitActivation() async {
     setState(() => _error = null);
-    if (_passwordController.text.length < 8) {
-      setState(() => _error = 'Password must be at least 8 characters.');
+
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    if (firstName.isEmpty || lastName.isEmpty) {
+      setState(() => _error = 'Please enter your name.');
+      return;
+    }
+
+    final passwordError = FieldValidator.validatePassword(
+      _passwordController.text,
+      context: context,
+      complexValidation: true,
+    );
+    if (passwordError != null) {
+      setState(() => _error = passwordError);
       return;
     }
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() => _error = "Passwords don't match.");
       return;
     }
-    setState(() => _step = _LoginStep.biometric);
+
+    final registrationToken = ref
+        .read(authVerifyOtpStateProvider)
+        .data
+        ?.registrationToken;
+    if (registrationToken == null || registrationToken.isEmpty) {
+      setState(
+        () => _error = 'Session expired. Please verify your code again.',
+      );
+      return;
+    }
+
+    final identifier = _normalizedIdentifier;
+    final email = _onboardEmailController.text.trim().isNotEmpty
+        ? _onboardEmailController.text.trim().toLowerCase()
+        : (_method == _LoginMethod.email ? identifier : '');
+    final phone = (_preAuthPhone != null && _preAuthPhone!.trim().isNotEmpty)
+        ? _preAuthPhone!.trim()
+        : (_method == _LoginMethod.phone
+              ? identifier
+              : AuthPhoneFormatter.toApiDigits(
+                  _phoneCountry.dialCode,
+                  AuthIdentifierNormalizer.normalize(
+                    method: LoginFlowMethod.phone,
+                    raw: _onboardPhoneController.text,
+                  ),
+                ));
+
+    if (email.isEmpty) {
+      setState(() => _error = 'Email is required to activate your account.');
+      return;
+    }
+    if (phone.isEmpty) {
+      setState(() => _error = 'Phone is required to activate your account.');
+      return;
+    }
+
+    final dobText = _onboardDobController.text.trim();
+    final dobIso = dobText.isEmpty ? null : profileDobToIso(dobText);
+    final primaryCity = _primaryCityController.text.trim();
+    final primaryState = _primaryStateController.text.trim();
+
+    setState(() => _loadingKey = 'activate');
+
+    await ref
+        .read(authSetupAccountStateProvider.notifier)
+        .setupAccount(
+          registrationToken: registrationToken,
+          firstName: firstName,
+          middleName: _middleNameController.text.trim(),
+          lastName: lastName,
+          password: _passwordController.text,
+          dob: dobIso,
+          email: email,
+          phone: phone,
+          gender: _genderApiValue(_activateGender),
+          primaryCity: primaryCity.isEmpty ? null : primaryCity,
+          primaryState: primaryState.isEmpty ? null : primaryState,
+          onCompleted: (_) {
+            if (!mounted) return;
+            setState(() => _loadingKey = null);
+            _completeAuthenticatedLogin();
+          },
+          onError: (message) {
+            if (!mounted) return;
+            setState(() {
+              _loadingKey = null;
+              _error = message ?? 'Unable to activate account.';
+            });
+          },
+        );
   }
 
   Future<void> _submitOnboard() async {
@@ -787,8 +966,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       return;
     }
 
-    final registrationToken =
-        ref.read(authVerifyOtpStateProvider).data?.registrationToken;
+    final registrationToken = ref
+        .read(authVerifyOtpStateProvider)
+        .data
+        ?.registrationToken;
     if (registrationToken == null || registrationToken.isEmpty) {
       setState(
         () => _error = 'Session expired. Please verify your code again.',
@@ -812,7 +993,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
 
     setState(() => _loadingKey = 'onboard');
 
-    await ref.read(authSetupAccountStateProvider.notifier).setupAccount(
+    await ref
+        .read(authSetupAccountStateProvider.notifier)
+        .setupAccount(
           registrationToken: registrationToken,
           firstName: _firstNameController.text.trim(),
           middleName: _middleNameController.text.trim(),
@@ -824,10 +1007,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           phone: phone,
           onCompleted: (_) {
             if (!mounted) return;
-            setState(() {
-              _loadingKey = null;
-              _step = _LoginStep.biometric;
-            });
+            setState(() => _loadingKey = null);
+            _completeAuthenticatedLogin();
           },
           onError: (message) {
             if (!mounted) return;
@@ -994,7 +1175,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               onResend: _resendTwoFactor,
               onChanged: (_) => setState(() => _error = null),
             ),
-            _LoginStep.activate => _buildActivateStep(context),
+            _LoginStep.activateDetails => _buildActivateDetailsStep(context),
+            _LoginStep.activatePassword => _buildActivatePasswordStep(context),
             _LoginStep.onboard => _buildOnboardStep(context),
             _LoginStep.biometric => _buildBiometricStep(context),
             _LoginStep.forgotIdentify => LoginForgotIdentifyStep(
@@ -1043,37 +1225,38 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     return Column(
       children: [
         const LoginBrandHeader(),
-        Row(
-          children: [
-            Expanded(
-              child: LoginSocialButton(
-                label: 'Google',
-                loading: _loadingKey == 'google',
-                onTap: () => _finishSocial('google'),
-                child: SvgPicture.asset(
-                  'assets/svg/google.svg',
-                  width: 20,
-                  height: 20,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: LoginSocialButton(
-                label: 'Apple',
-                loading: _loadingKey == 'apple',
-                onTap: () => _finishSocial('apple'),
-                child: SvgPicture.asset(
-                  'assets/svg/apple.svg',
-                  width: 20,
-                  height: 20,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 28),
-        const LoginOrDivider(),
+        // TODO: Restore when social login is enabled.
+        // Row(
+        //   children: [
+        //     Expanded(
+        //       child: LoginSocialButton(
+        //         label: 'Google',
+        //         loading: _loadingKey == 'google',
+        //         onTap: () => _finishSocial('google'),
+        //         child: SvgPicture.asset(
+        //           'assets/svg/google.svg',
+        //           width: 20,
+        //           height: 20,
+        //         ),
+        //       ),
+        //     ),
+        //     const SizedBox(width: 12),
+        //     Expanded(
+        //       child: LoginSocialButton(
+        //         label: 'Apple',
+        //         loading: _loadingKey == 'apple',
+        //         onTap: () => _finishSocial('apple'),
+        //         child: SvgPicture.asset(
+        //           'assets/svg/apple.svg',
+        //           width: 20,
+        //           height: 20,
+        //         ),
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 28),
+        // const LoginOrDivider(),
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -1106,9 +1289,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               keyboardType: TextInputType.phone,
               hint: _phoneCountry.hint,
               hasError: _error != null,
-              inputFormatters: [
-                AuthNationalPhoneInputFormatter(_phoneCountry),
-              ],
+              inputFormatters: [AuthNationalPhoneInputFormatter(_phoneCountry)],
               onChanged: (_) => setState(() => _error = null),
               prefix: const LoginPhoneCountrySelector(),
             ),
@@ -1273,29 +1454,181 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     );
   }
 
-  Widget _buildActivateStep(BuildContext context) {
-    final client = _selectedClient;
-    if (client == null) return const SizedBox.shrink();
+  Widget _buildActivateDetailsStep(BuildContext context) {
+    final vcare = context.vcare;
+
+    if (_loadingKey == 'preAuth') {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LoginStepHeader(
+            icon: LucideIcons.shieldCheck,
+            title: 'Activate your account',
+            subtitle: Text(
+              'We found your VCare record. Confirm your details to continue.',
+            ),
+          ),
+          SizedBox(height: 48),
+          Center(child: CircularProgressIndicator()),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LoginStepHeader(
+        const LoginStepHeader(
           icon: LucideIcons.shieldCheck,
           title: 'Activate your account',
           subtitle: Text(
-            'We found your VCare record (${client.memberId}). Set up your login to continue.',
+            'We found your VCare record. Confirm your details to continue.',
           ),
         ),
-        LoginClientCard(
-          fullName: client.fullName,
-          detail: 'DOB ${client.dobMasked} · ZIP ${client.zipMasked}',
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: LoginTextField(
+                controller: _firstNameController,
+                hint: 'First name',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: LoginTextField(
+                controller: _middleNameController,
+                hint: 'Middle name',
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        LoginTextField(controller: _lastNameController, hint: 'Last name'),
+        const SizedBox(height: 12),
+        // Web ActivateDetailsStep: Email + Phone always shown, both disabled.
+        LoginTextField(
+          controller: _onboardEmailController,
+          keyboardType: TextInputType.emailAddress,
+          hint: 'Email',
+          enabled: false,
+        ),
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: _onboardPhoneController,
+          keyboardType: TextInputType.phone,
+          hint: 'Phone number',
+          enabled: false,
+          prefix: const LoginPhoneCountrySelector(),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _loadingKey != null ? null : _pickOnboardDob,
+          child: AbsorbPointer(
+            child: LoginTextField(
+              controller: _onboardDobController,
+              hint: 'Date of birth',
+              prefix: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Icon(
+                  LucideIcons.calendar,
+                  size: 16,
+                  color: vcare.mutedForeground,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildActivateGenderField(context),
+        const SizedBox(height: 12),
+        PrimaryLocationField(
+          cityController: _primaryCityController,
+          stateController: _primaryStateController,
+          showLabel: false,
+          loginStyle: true,
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+          ),
+        ],
+        const SizedBox(height: 12),
+        LoginPrimaryButton(
+          label: 'Continue',
+          onPressed: _loadingKey != null ? null : _advanceActivateDetails,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivateGenderField(BuildContext context) {
+    final vcare = context.vcare;
+    final borderColor = vcare.border;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: vcare.muted.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Gender>(
+          value: _activateGender,
+          isExpanded: true,
+          hint: Text(
+            'Gender',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: vcare.mutedForeground.withValues(alpha: 0.6),
+            ),
+          ),
+          icon: Icon(
+            LucideIcons.chevronDown,
+            size: 16,
+            color: vcare.mutedForeground,
+          ),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          items: Gender.values
+              .map(
+                (gender) =>
+                    DropdownMenuItem(value: gender, child: Text(gender.label)),
+              )
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              _error = null;
+              _activateGender = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivatePasswordStep(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const LoginStepHeader(
+          icon: LucideIcons.shieldCheck,
+          title: 'Create your password',
+          subtitle: Text(
+            'Use at least 8 characters with upper and lower case letters, a '
+            'number, and a special character.',
+          ),
+        ),
         LoginTextField(
           controller: _passwordController,
           obscureText: true,
-          hint: 'Create a password (min 8 chars)',
+          hint: 'Create a password',
         ),
         const SizedBox(height: 12),
         LoginTextField(
@@ -1311,7 +1644,11 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           ),
         ],
         const SizedBox(height: 12),
-        LoginPrimaryButton(label: 'Continue', onPressed: _submitActivation),
+        LoginPrimaryButton(
+          label: 'Continue',
+          loading: _loadingKey == 'activate',
+          onPressed: _loadingKey != null ? null : _submitActivation,
+        ),
       ],
     );
   }
@@ -1385,7 +1722,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             child: AbsorbPointer(
               child: LoginTextField(
                 controller: _onboardDobController,
-                hint: 'MM/DD/YYYY',
+                hint: 'Aug 2, 1999',
                 hasError: _onboardErrors.containsKey('dob'),
                 prefix: Padding(
                   padding: const EdgeInsets.only(left: 16),
@@ -1442,9 +1779,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               keyboardType: TextInputType.phone,
               hint: _phoneCountry.hint,
               hasError: _onboardErrors.containsKey('phone'),
-              inputFormatters: [
-                AuthNationalPhoneInputFormatter(_phoneCountry),
-              ],
+              inputFormatters: [AuthNationalPhoneInputFormatter(_phoneCountry)],
               onChanged: (_) => _clearOnboardError('phone'),
               prefix: const LoginPhoneCountrySelector(),
             ),

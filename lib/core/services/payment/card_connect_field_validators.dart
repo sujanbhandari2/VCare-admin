@@ -4,7 +4,7 @@ String digitsOnly(String value) => value.replaceAll(RegExp(r'\D'), '');
 
 bool isValidCardNumber(String cardNumber) {
   final digits = digitsOnly(cardNumber);
-  return digits.length >= 13 && digits.length <= 19;
+  return digits.length == 16;
 }
 
 /// Luhn check — helps catch typos before calling CardSecure.
@@ -75,18 +75,14 @@ bool isAmexCardNumber(String cardNumber) {
   return RegExp(r'^3[47]').hasMatch(digitsOnly(cardNumber));
 }
 
-/// Amex expects 4-digit CID; other brands 3-digit CVV.
+/// CVV is always 4 digits.
 bool isValidCvv(String cvv, {String? cardNumber}) {
   final digits = digitsOnly(cvv);
-  if (cardNumber != null && isAmexCardNumber(cardNumber)) {
-    return digits.length == 4;
-  }
-  return digits.length == 3 || digits.length == 4;
+  return digits.length == expectedCvvLength;
 }
 
-int expectedCvvLength(String cardNumber) {
-  return isAmexCardNumber(cardNumber) ? 4 : 3;
-}
+/// Fixed 4-digit CVV length.
+const int expectedCvvLength = 4;
 
 bool isValidRoutingNumber(String routing) {
   return RegExp(r'^\d{9}$').hasMatch(digitsOnly(routing));
@@ -162,19 +158,15 @@ String? expYearFieldError(String expYear, {String? expMonth}) {
   return null;
 }
 
-/// Inline CVV error once length reaches expected for the brand.
+/// Inline CVV error once length reaches 4 digits.
 String? cvvFieldError(String cvv, {String? cardNumber}) {
   final digits = digitsOnly(cvv);
   if (digits.isEmpty) return null;
 
-  final expected = cardNumber == null || cardNumber.trim().isEmpty
-      ? 3
-      : expectedCvvLength(cardNumber);
-
-  if (digits.length < expected) return null;
+  if (digits.length < expectedCvvLength) return null;
 
   if (!isValidCvv(cvv, cardNumber: cardNumber)) {
-    return expected == 4 ? 'Enter a 4-digit CVV' : 'Enter a 3-digit CVV';
+    return 'Enter a 4-digit CVV';
   }
   return null;
 }
@@ -228,11 +220,8 @@ String? validateCardFields({
     return 'Card has expired';
   }
 
-  final expectedCvv = expectedCvvLength(cardNumber);
   if (!isValidCvv(cvv, cardNumber: cardNumber)) {
-    return expectedCvv == 4
-        ? 'Enter a 4-digit CVV'
-        : 'Enter a 3-digit CVV';
+    return 'Enter a 4-digit CVV';
   }
 
   return null;

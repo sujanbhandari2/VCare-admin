@@ -20,9 +20,6 @@ class CommissionHistoryState extends _$CommissionHistoryState
   CommissionFilter get filter => _filter;
 
   @override
-  int get pageSize => 10;
-
-  @override
   LoadableListState<CommissionHistoryItem> build() =>
       LoadableListState<CommissionHistoryItem>();
 
@@ -46,6 +43,7 @@ class CommissionHistoryState extends _$CommissionHistoryState
         .fetchHistory(
           request,
           status: _filter.apiStatus,
+          type: 'all',
           agencyGroupId: _resolveAgencyGroupId(),
           forceRefresh: forceRefresh,
         );

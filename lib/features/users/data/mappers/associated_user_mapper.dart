@@ -12,6 +12,7 @@ extension AssociatedUserModelMapper on AssociatedUserModel {
       middleName: middleName,
       lastName: lastName,
       profileImage: profileImage,
+      profilePreviewLink: profilePreviewLink,
       userType: userType,
       role: role,
       status: status,

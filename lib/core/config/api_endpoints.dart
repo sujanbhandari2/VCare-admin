@@ -29,6 +29,7 @@ class ApiEndpoints {
   static String notificationMarkRead(String id) => "notifications/$id/read/";
 
   static const String agentStats = "agents/stats";
+  static const String agentCode = "agents/agent-code";
   static const String agentCommissionSummary = "agents/commission-summary";
   static const String agentCommissionHistory = "agents/commission-history";
   static const String agentSalesHistory = "agents/sales-history";
@@ -57,6 +58,9 @@ class ApiEndpoints {
 
   static const String todos = "todos";
 
+  /// parity: vcare-agent-app-2.0/src/features/help-support/api/contact-support.endpoints.ts
+  static const String contactSupport = "contact-support";
+
   static const String files = "files";
   static const String filesDocumentTypes = "files/document-types";
   static String file(String id) => "files/$id/";
@@ -73,4 +77,8 @@ class ApiEndpoints {
   static String careTeamMember(String id) => "care-team/$id";
 
   static const String usersAssociated = "users/associated";
+
+  /// Google Places proxy (matches web `placesApiPaths`).
+  static const String placesAutocomplete = "places/autocomplete";
+  static String placeById(String placeId) => "places/$placeId";
 }

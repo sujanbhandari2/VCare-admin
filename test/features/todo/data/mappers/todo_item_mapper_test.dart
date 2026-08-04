@@ -6,7 +6,7 @@ import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
 
 void main() {
   group('TodoItemModelMapper', () {
-    test('maps payment failed todo from API payload', () {
+    test('maps payment failed todo from web API payload', () {
       final model = TodoItemModel.fromJson({
         'id': 'payment-failed:txn-1',
         'type': 'PAYMENT_FAILED',
@@ -15,12 +15,12 @@ void main() {
         'occurredAt': '2026-07-21T05:00:00.000Z',
         'resource': {'type': 'TRANSACTION', 'id': 'txn-1'},
         'details': {
-          'transactionId': 'txn-1',
-          'payerId': 'payer-1',
-          'payerName': 'Jane Doe',
+          'name': 'Jane Doe',
           'amount': '99.5',
           'currency': 'USD',
-          'invoiceNumber': 'INV-100',
+          'code': 'INV-100',
+          'relatedId': 'payer-1',
+          'reason': 'Insufficient funds',
         },
       });
 
@@ -42,8 +42,61 @@ void main() {
       expect(entity.paymentFailedDetails?.amount, 99.5);
       expect(entity.paymentFailedDetails?.currency, 'USD');
       expect(entity.paymentFailedDetails?.invoiceNumber, 'INV-100');
+      expect(entity.paymentFailedDetails?.failureReason, 'Insufficient funds');
       expect(entity.transactionId, 'txn-1');
       expect(entity.displayPayerName, 'Jane Doe');
+    });
+
+    test('maps payment failed todo from legacy Flutter-shaped details', () {
+      final model = TodoItemModel.fromJson({
+        'id': 'payment-failed:txn-1',
+        'type': 'PAYMENT_FAILED',
+        'title': 'Payment failed',
+        'description': "Jane Doe's payment of USD 99.5 failed",
+        'occurredAt': '2026-07-21T05:00:00.000Z',
+        'resource': {'type': 'TRANSACTION', 'id': 'txn-1'},
+        'details': {
+          'transactionId': 'txn-1',
+          'payerId': 'payer-1',
+          'payerName': 'Jane Doe',
+          'amount': '99.5',
+          'currency': 'USD',
+          'invoiceNumber': 'INV-100',
+          'failureReason': 'Card declined',
+        },
+      });
+
+      final entity = model.toEntity();
+
+      expect(entity.paymentFailedDetails?.transactionId, 'txn-1');
+      expect(entity.paymentFailedDetails?.payerId, 'payer-1');
+      expect(entity.paymentFailedDetails?.payerName, 'Jane Doe');
+      expect(entity.paymentFailedDetails?.invoiceNumber, 'INV-100');
+      expect(entity.paymentFailedDetails?.failureReason, 'Card declined');
+    });
+
+    test('drops incomplete payment failed details', () {
+      final model = TodoItemModel.fromJson({
+        'id': 'payment-failed:txn-2',
+        'type': 'PAYMENT_FAILED',
+        'title': '',
+        'description': '',
+        'occurredAt': 'not-a-date',
+        'details': {
+          'transactionId': 'txn-2',
+          'payerId': '',
+          'payerName': '  ',
+          'amount': 'bad',
+          'currency': '',
+        },
+      });
+
+      final entity = model.toEntity();
+
+      expect(entity.title, 'Task');
+      expect(entity.resource, isNull);
+      expect(entity.paymentFailedDetails, isNull);
+      expect(entity.displayPayerName, 'Client');
     });
 
     test('maps W9_FORM_REQUIRED todo with document type and cleaned subtitle', () {
@@ -88,6 +141,30 @@ void main() {
       expect(entity.description, 'Please upload your form.');
     });
 
+    test('maps COMPLETE_PROFILE todo with cleaned subtitle', () {
+      final model = TodoItemModel.fromJson({
+        'id': 'complete-profile:agent-1',
+        'type': 'COMPLETE_PROFILE',
+        'title': 'Complete your profile',
+        'description': 'Add a photo and bio to finish your profile',
+        'occurredAt': '2026-07-21T05:00:00.000Z',
+        'resource': {'type': 'AGENT', 'id': 'agent-1'},
+        'details': {},
+      });
+
+      final entity = model.toEntity();
+
+      expect(entity.type, TodoType.completeProfile);
+      expect(entity.isCompleteProfile, isTrue);
+      expect(entity.rawType, 'COMPLETE_PROFILE');
+      expect(
+        entity.description,
+        'Add a photo and bio to finish your profile.',
+      );
+      expect(entity.paymentFailedDetails, isNull);
+      expect(entity.w9FormDetails, isNull);
+    });
+
     test('maps unknown future type without payment details', () {
       final model = TodoItemModel.fromJson({
         'id': 'other:abc',
@@ -106,33 +183,6 @@ void main() {
       expect(entity.paymentFailedDetails, isNull);
       expect(entity.w9FormDetails, isNull);
       expect(entity.transactionId, isNull);
-    });
-
-    test('handles missing optional fields gracefully', () {
-      final model = TodoItemModel.fromJson({
-        'id': 'payment-failed:txn-2',
-        'type': 'PAYMENT_FAILED',
-        'title': '',
-        'description': '',
-        'occurredAt': 'not-a-date',
-        'details': {
-          'transactionId': 'txn-2',
-          'payerId': '',
-          'payerName': '  ',
-          'amount': 'bad',
-          'currency': '',
-        },
-      });
-
-      final entity = model.toEntity();
-
-      expect(entity.title, 'Task');
-      expect(entity.resource, isNull);
-      expect(entity.paymentFailedDetails?.payerName, 'Client');
-      expect(entity.paymentFailedDetails?.amount, 0);
-      expect(entity.paymentFailedDetails?.currency, 'USD');
-      expect(entity.paymentFailedDetails?.invoiceNumber, isNull);
-      expect(entity.displayPayerName, 'Client');
     });
   });
 }

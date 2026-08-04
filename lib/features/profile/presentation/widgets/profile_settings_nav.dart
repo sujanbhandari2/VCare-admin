@@ -41,11 +41,11 @@ const profileNavItems = <ProfileNavItem>[
   //   label: 'Notifications',
   //   icon: LucideIcons.bell,
   // ),
-  // ProfileNavItem(
-  //   routeName: AppRouter.savedProvidersName,
-  //   label: 'Saved providers',
-  //   icon: LucideIcons.heart,
-  // ),
+  ProfileNavItem(
+    routeName: AppRouter.savedProvidersName,
+    label: 'Saved providers',
+    icon: LucideIcons.heart,
+  ),
   // ProfileNavItem(
   //   routeName: AppRouter.privacySecurityName,
   //   label: 'Privacy & security',

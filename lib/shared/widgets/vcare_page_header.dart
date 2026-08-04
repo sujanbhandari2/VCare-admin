@@ -176,6 +176,7 @@ class VcarePageHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.leading,
     this.showBack = false,
     this.onBack,
     this.showBell = false,
@@ -186,6 +187,8 @@ class VcarePageHeader extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+  /// Optional widget shown before the title (e.g. conversation avatar).
+  final Widget? leading;
   final bool showBack;
   final VoidCallback? onBack;
   final bool showBell;
@@ -216,6 +219,10 @@ class VcarePageHeader extends StatelessWidget {
             _VcarePageHeaderBackButton(
               onPressed: onBack ?? () => Navigator.maybePop(context),
             ),
+            const SizedBox(width: VcarePageHeaderLayout.itemGap),
+          ],
+          if (leading != null) ...[
+            leading!,
             const SizedBox(width: VcarePageHeaderLayout.itemGap),
           ],
           Expanded(

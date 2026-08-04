@@ -2,65 +2,10 @@ import 'package:intl/intl.dart';
 
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 import 'package:vcare_admin/features/find_care/domain/entities/search_location.dart';
+import 'package:vcare_admin/shared/utils/us_states.dart';
 
-const usStateCodes = <({String code, String name})>[
-  (code: 'AL', name: 'Alabama'),
-  (code: 'AK', name: 'Alaska'),
-  (code: 'AZ', name: 'Arizona'),
-  (code: 'AR', name: 'Arkansas'),
-  (code: 'CA', name: 'California'),
-  (code: 'CO', name: 'Colorado'),
-  (code: 'CT', name: 'Connecticut'),
-  (code: 'DE', name: 'Delaware'),
-  (code: 'DC', name: 'District of Columbia'),
-  (code: 'FL', name: 'Florida'),
-  (code: 'GA', name: 'Georgia'),
-  (code: 'HI', name: 'Hawaii'),
-  (code: 'ID', name: 'Idaho'),
-  (code: 'IL', name: 'Illinois'),
-  (code: 'IN', name: 'Indiana'),
-  (code: 'IA', name: 'Iowa'),
-  (code: 'KS', name: 'Kansas'),
-  (code: 'KY', name: 'Kentucky'),
-  (code: 'LA', name: 'Louisiana'),
-  (code: 'ME', name: 'Maine'),
-  (code: 'MD', name: 'Maryland'),
-  (code: 'MA', name: 'Massachusetts'),
-  (code: 'MI', name: 'Michigan'),
-  (code: 'MN', name: 'Minnesota'),
-  (code: 'MS', name: 'Mississippi'),
-  (code: 'MO', name: 'Missouri'),
-  (code: 'MT', name: 'Montana'),
-  (code: 'NE', name: 'Nebraska'),
-  (code: 'NV', name: 'Nevada'),
-  (code: 'NH', name: 'New Hampshire'),
-  (code: 'NJ', name: 'New Jersey'),
-  (code: 'NM', name: 'New Mexico'),
-  (code: 'NY', name: 'New York'),
-  (code: 'NC', name: 'North Carolina'),
-  (code: 'ND', name: 'North Dakota'),
-  (code: 'OH', name: 'Ohio'),
-  (code: 'OK', name: 'Oklahoma'),
-  (code: 'OR', name: 'Oregon'),
-  (code: 'PA', name: 'Pennsylvania'),
-  (code: 'RI', name: 'Rhode Island'),
-  (code: 'SC', name: 'South Carolina'),
-  (code: 'SD', name: 'South Dakota'),
-  (code: 'TN', name: 'Tennessee'),
-  (code: 'TX', name: 'Texas'),
-  (code: 'UT', name: 'Utah'),
-  (code: 'VT', name: 'Vermont'),
-  (code: 'VA', name: 'Virginia'),
-  (code: 'WA', name: 'Washington'),
-  (code: 'WV', name: 'West Virginia'),
-  (code: 'WI', name: 'Wisconsin'),
-  (code: 'WY', name: 'Wyoming'),
-  (code: 'AS', name: 'American Samoa'),
-  (code: 'GU', name: 'Guam'),
-  (code: 'MP', name: 'Northern Mariana Islands'),
-  (code: 'PR', name: 'Puerto Rico'),
-  (code: 'VI', name: 'U.S. Virgin Islands'),
-];
+export 'package:vcare_admin/shared/utils/us_states.dart'
+    show usStateCodes, normalizeUsStateCode;
 
 String normalizeNpi(String npi) => npi.replaceAll(RegExp(r'\D'), '');
 
@@ -106,34 +51,13 @@ String? parseSearchState(String locationText) {
       (state.length == 2 ? state.toUpperCase() : state);
 }
 
-/// Normalizes a US state name or abbreviation to a two-letter CMS state code.
-String? normalizeUsStateCode(String? raw) {
-  final trimmed = raw?.trim();
-  if (trimmed == null || trimmed.isEmpty) return null;
-
-  if (trimmed.length == 2) {
-    final upper = trimmed.toUpperCase();
-    for (final entry in usStateCodes) {
-      if (entry.code == upper) return entry.code;
-    }
-    return upper;
-  }
-
-  final lower = trimmed.toLowerCase();
-  for (final entry in usStateCodes) {
-    if (entry.name.toLowerCase() == lower) {
-      return entry.code;
-    }
-  }
-  return null;
-}
-
 /// Builds a [SearchLocation] city/state pair from reverse-geocode placemark fields.
 SearchLocation? searchLocationFromAddressParts({
   String? locality,
   String? subAdministrativeArea,
   String? subLocality,
   String? administrativeArea,
+  bool fromCurrentLocation = false,
 }) {
   final cityCandidates = [locality, subAdministrativeArea, subLocality];
   String city = '';
@@ -147,5 +71,20 @@ SearchLocation? searchLocationFromAddressParts({
 
   final state = normalizeUsStateCode(administrativeArea) ?? '';
   if (city.isEmpty && state.isEmpty) return null;
+  return SearchLocation(
+    city: city,
+    state: state,
+    fromCurrentLocation: fromCurrentLocation,
+  );
+}
+
+/// Builds a [SearchLocation] from the user's profile primary city/state.
+SearchLocation searchLocationFromProfile({
+  String? primaryCity,
+  String? primaryState,
+}) {
+  final city = primaryCity?.trim() ?? '';
+  final rawState = primaryState?.trim() ?? '';
+  final state = normalizeUsStateCode(rawState) ?? rawState;
   return SearchLocation(city: city, state: state);
 }

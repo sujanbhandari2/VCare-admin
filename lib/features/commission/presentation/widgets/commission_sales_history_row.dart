@@ -5,8 +5,11 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/commission/domain/entities/sales_history_item.dart';
 import 'package:vcare_admin/features/commission/domain/entities/sales_transaction_status.dart';
+import 'package:vcare_admin/features/commission/presentation/widgets/commission_earnings_columns.dart';
+import 'package:vcare_admin/features/commission/presentation/widgets/commission_status_pill.dart';
 import 'package:vcare_admin/features/commission/utils/commission_utils.dart';
 
+/// Compact sales row: client + date, sale amount + status on the right.
 class CommissionSalesHistoryRow extends StatelessWidget {
   const CommissionSalesHistoryRow({super.key, required this.item, this.onTap});
 
@@ -16,30 +19,27 @@ class CommissionSalesHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final title = item.displayPayerName;
-    final amount = formatCommissionMoney(item.amount);
-    final badgeLabel = salesTransactionStatusLabel(item.status);
+    final statusLabel = salesTransactionStatusLabel(item.status);
+    final isFailed = item.status == SalesTransactionStatus.failed;
+    final amountColor = isFailed
+        ? VCareColors.destructive
+        : VCareColors.foreground;
 
     return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: vcare.border),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: CommissionEarningsColumns.rowPadding,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      item.displayPayerName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -50,6 +50,8 @@ class CommissionSalesHistoryRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       formatClientDateNumeric(item.transactionDate),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         color: vcare.mutedForeground,
@@ -58,77 +60,38 @@ class CommissionSalesHistoryRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    amount,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                    formatCommissionMoney(item.amount, currency: item.currency),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: amountColor,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  SalesTransactionStatusBadge(
-                    label: badgeLabel,
-                    status: item.status,
-                  ),
+                  if (isFailed) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Failed to collect',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: VCareColors.destructive,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 3),
+                  CommissionStatusPill(label: statusLabel),
                 ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class SalesTransactionStatusBadge extends StatelessWidget {
-  const SalesTransactionStatusBadge({
-    super.key,
-    required this.label,
-    required this.status,
-  });
-
-  final String label;
-  final SalesTransactionStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (background, foreground) = switch (status) {
-      SalesTransactionStatus.paid => (
-        VCareColors.primary,
-        VCareColors.primaryForeground,
-      ),
-      SalesTransactionStatus.pending => (
-        VCareColors.secondary,
-        VCareColors.secondaryForeground,
-      ),
-      SalesTransactionStatus.failed ||
-      SalesTransactionStatus.refunded ||
-      SalesTransactionStatus.voided => (
-        VCareColors.destructive,
-        VCareColors.destructiveForeground,
-      ),
-      SalesTransactionStatus.unknown => (
-        VCareColors.muted,
-        VCareColors.mutedForeground,
-      ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-          color: foreground,
         ),
       ),
     );
@@ -151,7 +114,7 @@ class CommissionSalesHistoryEmptyFilter extends StatelessWidget {
         border: Border.all(color: vcare.border, style: BorderStyle.solid),
       ),
       child: Text(
-        'No sales for this filter.',
+        'No sales yet.',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
       ),

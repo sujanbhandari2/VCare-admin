@@ -17,6 +17,7 @@ import 'package:vcare_admin/features/main_wrapper/presentation/widgets/vcare_bot
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 import 'package:vcare_admin/shared/navigation/tab_data_refresh_coordinator.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
 
 import '../../../inapp_update/domain/entities/remote_config_app_update_info.dart';
 import '../../../inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
@@ -36,7 +37,8 @@ class MainWrapperScreen extends ConsumerStatefulWidget {
   ConsumerState<MainWrapperScreen> createState() => _MainWrapperScreenState();
 }
 
-class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
+class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
+    with WidgetsBindingObserver {
   bool get _showNavBar => NavItem.mobileTabs.any(
     (item) => widget.state.matchedLocation.startsWith(item.path),
   );
@@ -65,12 +67,28 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
   @override
   void initState() {
     super.initState();
+    // Rebuild when platform view insets change so the floating nav can
+    // collapse/restore even if MediaQuery was zeroed by a nested Scaffold.
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(remoteConfigAppUpdateStateProvider.notifier).checkForUpdate();
       if (ref.read(userLoggedInStateProvider)) {
         unawaited(_bootstrapAuthenticatedSession());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _bootstrapAuthenticatedSession() async {
@@ -96,6 +114,7 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
       context,
       liveChatThreadOpen: liveChatThreadOpen,
     );
+    final keyboardOpen = isSoftKeyboardOpen(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -105,13 +124,18 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
             : Brightness.dark,
       ),
       child: Scaffold(
+        // Let tab screens / nested Scaffolds handle IME avoidance. Resizing
+        // this shell would also push [bottomNavigationBar] above the keyboard.
+        resizeToAvoidBottomInset: false,
         // Do not conditionally wrap [widget.shell] — StatefulNavigationShell's
         // GlobalKey cannot be reparented when chat session bootstrap completes.
         body: VCareMobileShellScope(
+          // Keep the scope flag stable while the keyboard is open so child
+          // composers do not re-add nav clearance on top of the IME.
           appliesBottomContentInset: appliesShellBottomInset,
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: appliesShellBottomInset
+              bottom: appliesShellBottomInset && !keyboardOpen
                   ? vcareMobileBottomNavContentPadding(context)
                   : 0,
             ),
@@ -119,11 +143,12 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen> {
           ),
         ),
         extendBody: true,
-        // Always mounted on mobile tab shell. Never gate on keyboard/IME/thread
-        // visibility — those caused the bar to disappear until a full restart.
-        // [VcareBottomNavigation] itself no-ops on tablet widths.
+        // Always the same [VcareBottomNavigation] instance type — collapse to
+        // height 0 while the IME is open instead of nulling this slot (that
+        // previously left the bar missing until a full restart).
         bottomNavigationBar: VcareBottomNavigation(
           currentItem: _currentNavItem,
+          collapsed: keyboardOpen,
           onSelect: (item) {
             widget.shell.goBranch(
               NavItem.branchIndexFor(item),

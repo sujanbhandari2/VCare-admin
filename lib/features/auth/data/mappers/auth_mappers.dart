@@ -94,6 +94,9 @@ extension AuthPreAuthUserMapper on model.AuthPreAuthUserModel {
       zipCode: zipCode,
       email: email,
       phone: phone,
+      gender: gender,
+      primaryCity: primaryCity,
+      primaryState: primaryState,
     );
   }
 }

@@ -88,5 +88,19 @@ void main() {
         isNull,
       );
     });
+
+    test('searchLocationFromProfile normalizes state codes', () {
+      final location = searchLocationFromProfile(
+        primaryCity: ' Tampa ',
+        primaryState: 'Florida',
+      );
+
+      expect(location.city, 'Tampa');
+      expect(location.state, 'FL');
+      expect(location.fromCurrentLocation, isFalse);
+
+      final empty = searchLocationFromProfile();
+      expect(empty.displayLabel, isEmpty);
+    });
   });
 }

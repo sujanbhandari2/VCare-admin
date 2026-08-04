@@ -5,7 +5,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_transaction_receipt_sheet.dart';
+import 'package:vcare_admin/features/help_support/presentation/widgets/contact_support_sheet.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
+import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 Future<void> showHomeTransactionReceiptSheet(
@@ -265,12 +267,20 @@ class _FailedActions extends StatelessWidget {
             label: 'Contact',
             outlined: true,
             onTap: () {
-              context.showVcareToast(
-                title: 'Contacting support',
-                description: "We'll be in touch shortly.",
-                variant: VcareToastVariant.info,
+              ContactSupportSheet.show(
+                context,
+                subject: 'Transaction Receipt',
+                contextPayload: {
+                  'page': 'transaction-receipt',
+                  'invoiceNumber': transaction.invoiceNumber,
+                  'payerName': transaction.payerName,
+                  'membershipName': transaction.membership,
+                  'status': transaction.status,
+                  'amount': NumberFormat.simpleCurrency(
+                    name: transaction.currency,
+                  ).format(transaction.amount),
+                },
               );
-              Navigator.of(context).pop();
             },
           ),
         ),
@@ -425,7 +435,7 @@ String _formatMoney(HomeTransaction transaction) {
   ).format(transaction.amount);
 }
 
-String _formatDate(DateTime value) => DateFormat('MMM d, yyyy').format(value);
+String _formatDate(DateTime value) => formatDisplayDate(value);
 
 String _formatDateTime(DateTime value) =>
     DateFormat('MMM d, yyyy, h:mm a').format(value);

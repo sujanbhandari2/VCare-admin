@@ -19,6 +19,7 @@ void main() {
         'commissionValue': '5',
         'commissionType': 'PERCENTAGE',
         'commissionAmount': 1.16,
+        'salesAmount': 232.0,
         'status': 'PENDING',
         'paidAt': null,
         'notes': null,
@@ -36,6 +37,7 @@ void main() {
       expect(entity.commissionValue, '5');
       expect(entity.commissionType, 'PERCENTAGE');
       expect(entity.commissionAmount, 1.16);
+      expect(entity.salesAmount, 232.0);
       expect(entity.status, CommissionStatus.pending);
       expect(entity.paidAt, isNull);
       expect(entity.createdAt, '2026-06-25T12:22:46.546Z');
@@ -75,6 +77,45 @@ void main() {
       });
 
       expect(model.toEntity().status, CommissionStatus.cancelled);
+    });
+
+    test('maps FAILED and UPCOMING statuses and photo/offering fields', () {
+      final failed = CommissionHistoryItemModel.fromJson({
+        'id': 'failed-1',
+        'type': 'COMMISSION',
+        'clientId': 'client-1',
+        'clientName': 'Jane',
+        'clientProfilePreviewLink': 'https://cdn.example/photo.jpg',
+        'offeringName': 'Family Plan',
+        'commissionType': 'PERCENTAGE',
+        'commissionAmount': 0,
+        'salesAmount': 99,
+        'status': 'FAILED',
+        'transactionId': 'tx-1',
+        'createdAt': '2026-06-25T12:22:46.546Z',
+      }).toEntity();
+
+      expect(failed.status, CommissionStatus.failed);
+      expect(failed.apiStatus, 'FAILED');
+      expect(failed.paymentFailed, isTrue);
+      expect(failed.canRecoverPayment, isTrue);
+      expect(failed.clientPhotoUrl, 'https://cdn.example/photo.jpg');
+      expect(failed.offeringName, 'Family Plan');
+      expect(failed.itemType, 'COMMISSION');
+
+      final upcoming = CommissionHistoryItemModel.fromJson({
+        'id': 'upcoming-1',
+        'type': 'UPCOMING',
+        'clientId': 'client-2',
+        'commissionType': 'PERCENTAGE',
+        'status': 'UPCOMING',
+        'salesAmount': 120,
+        'createdAt': '2026-06-25T12:22:46.546Z',
+      }).toEntity();
+
+      expect(upcoming.status, CommissionStatus.upcoming);
+      expect(upcoming.paymentFailed, isFalse);
+      expect(upcoming.itemType, 'UPCOMING');
     });
   });
 }

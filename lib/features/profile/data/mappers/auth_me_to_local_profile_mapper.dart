@@ -9,21 +9,31 @@ LocalProfile localProfileFromAuthMe(AuthMe authMe) {
   final user = authMe.user;
   final agent = authMe.agentProfile;
 
-  final fullName = _resolveFullName(user: user, agent: agent);
+  final firstName = _firstNonEmpty([agent?.firstName, user.firstName]) ?? '';
+  final middleName = _firstNonEmpty([agent?.middleName, user.middleName]) ?? '';
+  final lastName = _firstNonEmpty([agent?.lastName, user.lastName]) ?? '';
+
   final email = _firstNonEmpty([agent?.email, user.email]) ?? '';
   final phone = _firstNonEmpty([agent?.phoneNumber, user.phoneNumber]) ?? '';
   final dob = formatProfileDob(
     _firstNonEmpty([agent?.dateOfBirth, user.dateOfBirth]),
   );
+  final gender = mapProfileGenderApiToUi(
+    _firstNonEmpty([user.gender, agent?.gender]),
+  );
 
   return LocalProfile(
-    fullName: fullName.isEmpty ? 'Member' : fullName,
+    firstName: firstName,
+    middleName: middleName,
+    lastName: lastName,
     email: email,
     phone: phone,
     dob: dob,
+    gender: gender,
     photoUrl: authMe.profilePhotoUrl,
     photoCacheKey: authMe.profilePhotoCacheKey,
     referralLink: authMe.referralLink,
+    agentCode: _firstNonEmpty([agent?.agentCode]),
     agencyGroupId: _firstNonEmpty([
       user.agencyGroupId,
       agent?.agencyGroup?.id,
@@ -33,6 +43,10 @@ LocalProfile localProfileFromAuthMe(AuthMe authMe) {
       agent?.agencyGroup?.name,
     ]),
     address: profileAddressFromAuthMeAddress(agent?.address),
+    bio: _firstNonEmpty([agent?.bio]),
+    allowTextNotification: agent?.allowTextNotification ?? false,
+    primaryCity: _firstNonEmpty([agent?.primaryCity]),
+    primaryState: _firstNonEmpty([agent?.primaryState]),
   );
 }
 
@@ -76,17 +90,6 @@ ProfileAddress? profileAddressFromAuthMeAddress(AuthMeAddress? address) {
     postalCode: postalCode,
     country: country?.isNotEmpty == true ? country! : 'United States',
   );
-}
-
-String _resolveFullName({
-  required AuthMeUser user,
-  AuthMeAgentProfile? agent,
-}) {
-  final agentName = agent?.displayName ?? '';
-  if (agentName.isNotEmpty) {
-    return agentName;
-  }
-  return user.displayName;
 }
 
 String? _firstNonEmpty(List<String?> values) {

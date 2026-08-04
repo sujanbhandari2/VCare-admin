@@ -10,13 +10,19 @@ class AssociatedUserMessengerMapper {
   }
 
   static MessengerUser toMessengerUser(AssociatedUser user) {
+    final photoUrl = user.profilePhotoUrl?.trim();
+    final loadablePhoto = photoUrl != null &&
+            photoUrl.isNotEmpty &&
+            messengerMediaSourceIsNetwork(photoUrl)
+        ? photoUrl
+        : null;
     return MessengerUser(
       id: user.id,
       username: user.displayName,
       roleLabel: humanizeRole(user.role),
       email: user.email,
       isOnline: false,
-      avatarUrl: user.profileImage,
+      avatarUrl: loadablePhoto,
     );
   }
 
@@ -24,6 +30,7 @@ class AssociatedUserMessengerMapper {
     AssociatedUser user, {
     required String externalTenantId,
   }) {
+    final photoUrl = user.profilePhotoUrl;
     return ChatUserRegistrationBody.resolve(
       externalTenantId: externalTenantId,
       externalUserId: user.id,
@@ -32,9 +39,7 @@ class AssociatedUserMessengerMapper {
           : user.role.trim().toLowerCase(),
       email: user.email.trim().isEmpty ? null : user.email.trim(),
       name: user.displayName.trim().isEmpty ? null : user.displayName.trim(),
-      profile: user.profileImage?.trim().isEmpty ?? true
-          ? null
-          : user.profileImage!.trim(),
+      profile: photoUrl,
     );
   }
 
@@ -57,6 +62,10 @@ class AssociatedUserMessengerMapper {
     final trimmed = role.trim();
     if (trimmed.isEmpty) {
       return 'User';
+    }
+    final upper = trimmed.toUpperCase();
+    if (upper == 'CLIENT' || upper == 'AGENT' || upper == 'ADMIN') {
+      return upper;
     }
     return trimmed
         .toLowerCase()

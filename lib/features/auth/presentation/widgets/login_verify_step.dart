@@ -44,7 +44,7 @@ class LoginVerifyStep extends StatelessWidget {
           title: 'Enter verification code',
           subtitle: Text.rich(
             TextSpan(
-              text: 'We sent a 6-digit code to ',
+              text: 'We sent a 6-digit code to\n',
               children: [
                 TextSpan(
                   text: destination,

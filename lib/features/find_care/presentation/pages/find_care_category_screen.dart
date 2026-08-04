@@ -55,6 +55,12 @@ class _FindCareCategoryScreenState
     super.dispose();
   }
 
+  Future<void> _clearCurrentLocation() async {
+    await ref
+        .read(findCareSearchLocationProvider.notifier)
+        .useProfileLocation();
+  }
+
   Future<void> _runSearch() async {
     final category = _category;
     if (category == null) return;
@@ -83,8 +89,7 @@ class _FindCareCategoryScreenState
     );
     final stateLabel = location.state.trim().isEmpty ? null : location.state;
 
-    if (_locationController.text != location.displayLabel &&
-        location.displayLabel.isNotEmpty) {
+    if (_locationController.text != location.displayLabel) {
       _locationController.text = location.displayLabel;
     }
 
@@ -127,6 +132,7 @@ class _FindCareCategoryScreenState
                 FindCareLocationBar(
                   locationController: _locationController,
                   isDetecting: detecting,
+                  isUsingCurrentLocation: location.fromCurrentLocation,
                   onDetectLocation: () {
                     runFindCareCurrentLocationFlow(
                       context,
@@ -134,6 +140,7 @@ class _FindCareCategoryScreenState
                       userInitiated: true,
                     );
                   },
+                  onClearCurrentLocation: _clearCurrentLocation,
                   actions: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

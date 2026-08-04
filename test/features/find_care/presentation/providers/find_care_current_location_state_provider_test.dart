@@ -48,6 +48,7 @@ void main() {
       expect(state.detecting, isFalse);
       expect(state.hasError, isFalse);
       expect(location.displayLabel, 'Denver, CO');
+      expect(location.fromCurrentLocation, isTrue);
       expect(repository.detectCallCount, 1);
     });
 

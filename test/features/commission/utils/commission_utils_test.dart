@@ -31,16 +31,124 @@ void main() {
 
     test('maps status labels from API status', () {
       expect(commissionStatusLabel(CommissionStatus.pending), 'Pending');
-      expect(commissionStatusLabel(CommissionStatus.paid), 'Paid');
+      expect(commissionStatusLabel(CommissionStatus.paid), 'Successful');
       expect(commissionStatusLabel(CommissionStatus.cancelled), 'Rejected');
+      expect(commissionStatusLabel(CommissionStatus.failed), 'Failed');
+      expect(commissionStatusLabel(CommissionStatus.upcoming), 'Upcoming');
+    });
+
+    test('resolves web-aligned history status labels', () {
+      expect(
+        resolveCommissionStatusLabel(
+          const CommissionHistoryItem(
+            id: '1',
+            clientId: 'c1',
+            commissionType: 'FLAT',
+            status: CommissionStatus.failed,
+            apiStatus: 'FAILED',
+            createdAt: '2026-06-25T12:22:46.546Z',
+          ),
+        ),
+        'Failed',
+      );
+      expect(
+        resolveCommissionStatusLabel(
+          const CommissionHistoryItem(
+            id: '2',
+            clientId: 'c1',
+            commissionType: 'FLAT',
+            status: CommissionStatus.upcoming,
+            apiStatus: 'UPCOMING',
+            createdAt: '2026-06-25T12:22:46.546Z',
+          ),
+        ),
+        'Upcoming',
+      );
+      expect(
+        resolveCommissionStatusLabel(
+          const CommissionHistoryItem(
+            id: 'pending:abc',
+            clientId: 'c1',
+            commissionType: 'FLAT',
+            itemType: 'ENROLLMENT',
+            status: CommissionStatus.pending,
+            apiStatus: 'PENDING',
+            createdAt: '2026-06-25T12:22:46.546Z',
+          ),
+        ),
+        'Upcoming',
+      );
+      expect(
+        resolveCommissionStatusLabel(
+          const CommissionHistoryItem(
+            id: '3',
+            clientId: 'c1',
+            commissionType: 'FLAT',
+            status: CommissionStatus.paid,
+            apiStatus: 'PAID',
+            createdAt: '2026-06-25T12:22:46.546Z',
+          ),
+        ),
+        'Successful',
+      );
+      expect(
+        resolveCommissionStatusLabel(
+          const CommissionHistoryItem(
+            id: '4',
+            clientId: 'c1',
+            commissionType: 'FLAT',
+            status: CommissionStatus.pending,
+            apiStatus: 'PENDING',
+            createdAt: '2026-06-25T12:22:46.546Z',
+          ),
+        ),
+        'Pending',
+      );
+    });
+
+    test('aggregates sale totals skipping null sales amounts', () {
+      final totals = aggregateSaleTotals([
+        const CommissionHistoryItem(
+          id: '1',
+          clientId: 'c1',
+          commissionType: 'FLAT',
+          salesAmount: 100,
+          status: CommissionStatus.upcoming,
+          apiStatus: 'UPCOMING',
+          createdAt: '2026-06-25T12:22:46.546Z',
+        ),
+        const CommissionHistoryItem(
+          id: '2',
+          clientId: 'c2',
+          commissionType: 'FLAT',
+          salesAmount: null,
+          status: CommissionStatus.upcoming,
+          apiStatus: 'UPCOMING',
+          createdAt: '2026-06-25T12:22:46.546Z',
+        ),
+        const CommissionHistoryItem(
+          id: '3',
+          clientId: 'c3',
+          commissionType: 'FLAT',
+          salesAmount: 50.5,
+          status: CommissionStatus.failed,
+          apiStatus: 'FAILED',
+          createdAt: '2026-06-25T12:22:46.546Z',
+        ),
+      ]);
+      expect(totals.total, 150.5);
+      expect(totals.count, 2);
     });
 
     test('maps sales transaction status labels', () {
       expect(
         salesTransactionStatusLabel(SalesTransactionStatus.pending),
-        'Pending',
+        'Upcoming',
       );
-      expect(salesTransactionStatusLabel(SalesTransactionStatus.paid), 'Paid');
+      expect(
+        salesTransactionStatusLabel(SalesTransactionStatus.paid),
+        'Earned',
+      );
       expect(
         salesTransactionStatusLabel(SalesTransactionStatus.failed),
         'Failed',
@@ -66,6 +174,7 @@ void main() {
       expect(signed, startsWith('+'));
       expect(signed, contains('1.16'));
       expect(formatCommissionMoney(null), '—');
+      expect(formatCommissionMoney(500, currency: 'usd'), contains('500.00'));
     });
 
     test('formats commission rate labels', () {
@@ -86,7 +195,15 @@ void main() {
 
     test('uses client name when available', () {
       expect(itemPaid.displayClientName, 'Jane Doe');
-      expect(itemPending.displayClientName, 'Client client-2');
+      expect(itemPending.displayClientName, 'Client CLIENT2');
+    });
+
+    test('formats short transaction refs', () {
+      expect(
+        formatShortTransactionRef('64608a3c-4f0e-4b21-b154-8c6457ccdd02'),
+        '#DD02',
+      );
+      expect(formatShortTransactionRef(null), '—');
     });
 
     test('detects empty summary state', () {
@@ -95,12 +212,44 @@ void main() {
         isTrue,
       );
       expect(
+        isCommissionSummaryEmpty(
+          totalSales: 0,
+          totalCommission: 0,
+          historyEmpty: true,
+        ),
+        isTrue,
+      );
+      expect(
         isCommissionSummaryEmpty(totalSales: 100, historyEmpty: true),
+        isFalse,
+      );
+      expect(
+        isCommissionSummaryEmpty(
+          totalSales: 0,
+          totalCommission: 25,
+          historyEmpty: true,
+        ),
         isFalse,
       );
       expect(
         isCommissionSummaryEmpty(totalSales: null, historyEmpty: true),
         isTrue,
+      );
+      expect(
+        isCommissionSummaryEmpty(
+          totalSales: 0,
+          upcomingCount: 1,
+          historyEmpty: true,
+        ),
+        isFalse,
+      );
+      expect(
+        isCommissionSummaryEmpty(
+          totalSales: 0,
+          needsAttentionCount: 2,
+          historyEmpty: true,
+        ),
+        isFalse,
       );
     });
   });

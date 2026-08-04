@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
-import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 
 abstract class UserProfileRepository {
@@ -20,17 +19,10 @@ abstract class UserProfileRepository {
   });
 
   /// Updates the current authenticated user via `PATCH auth/me`.
+  ///
+  /// [body] should be a sparse diff payload (only changed fields).
   Future<EitherResponseOrException<void>> updateMe({
-    required String firstName,
-    String? middleName,
-    required String lastName,
-    required String email,
-    required String phone,
-    required String dateOfBirth,
-    String? gender,
-    String? profileId,
-    bool? allowTextNotification,
-    ProfileAddress? address,
+    required Map<String, dynamic> body,
     CancelToken? cancelToken,
   });
 

@@ -1,6 +1,7 @@
 enum TodoType {
   paymentFailed,
   w9FormMissing,
+  completeProfile,
   unknown;
 
   static TodoType fromApi(String? value) {
@@ -10,6 +11,8 @@ enum TodoType {
       case 'W9_FORM_MISSING':
       case 'W9_FORM_REQUIRED':
         return TodoType.w9FormMissing;
+      case 'COMPLETE_PROFILE':
+        return TodoType.completeProfile;
       default:
         return TodoType.unknown;
     }
@@ -21,6 +24,8 @@ enum TodoType {
         return 'PAYMENT_FAILED';
       case TodoType.w9FormMissing:
         return 'W9_FORM_MISSING';
+      case TodoType.completeProfile:
+        return 'COMPLETE_PROFILE';
       case TodoType.unknown:
         return 'UNKNOWN';
     }

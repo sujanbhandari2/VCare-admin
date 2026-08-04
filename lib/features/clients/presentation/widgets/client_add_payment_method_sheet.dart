@@ -12,6 +12,7 @@ import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_payment_method_mapper.dart';
 import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_method_request.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
@@ -59,18 +60,43 @@ const _addMethodOptions = [
 ];
 
 class ClientAddPaymentMethodSheet extends ConsumerStatefulWidget {
-  const ClientAddPaymentMethodSheet({super.key, required this.clientId});
+  const ClientAddPaymentMethodSheet({
+    super.key,
+    required this.clientId,
+    this.submitLabel,
+    this.onAdded,
+  });
 
   final String clientId;
 
-  static Future<void> show(BuildContext context, {required String clientId}) {
+  /// When set, CTA uses this label and [onAdded] runs after a successful save
+  /// (web charge-from-add flow: `Save and pay $X`).
+  final String? submitLabel;
+
+  /// Called with the created method after save when [submitLabel] / charge flow
+  /// is active. Caller is responsible for follow-up charge and toasts.
+  final Future<void> Function(ClientPaymentMethod method)? onAdded;
+
+  bool get isChargeFlow =>
+      submitLabel != null && submitLabel!.trim().isNotEmpty;
+
+  static Future<void> show(
+    BuildContext context, {
+    required String clientId,
+    String? submitLabel,
+    Future<void> Function(ClientPaymentMethod method)? onAdded,
+  }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
       builder: (sheetContext) {
         final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
         return Padding(
           padding: EdgeInsets.only(bottom: bottomInset),
-          child: ClientAddPaymentMethodSheet(clientId: clientId),
+          child: ClientAddPaymentMethodSheet(
+            clientId: clientId,
+            submitLabel: submitLabel,
+            onAdded: onAdded,
+          ),
         );
       },
     );
@@ -106,8 +132,7 @@ class _ClientAddPaymentMethodSheetState
 
   List<int> get _expMonthOptions {
     final now = DateTime.now();
-    final startMonth =
-        _selectedExpYear == now.year ? now.month : 1;
+    final startMonth = _selectedExpYear == now.year ? now.month : 1;
     return [for (var m = startMonth; m <= 12; m++) m];
   }
 
@@ -179,9 +204,9 @@ class _ClientAddPaymentMethodSheetState
       cardNumberFieldError(_cardNumberController.text);
 
   String? get _cvvError => cvvFieldError(
-        _cvvController.text,
-        cardNumber: _cardNumberController.text,
-      );
+    _cvvController.text,
+    cardNumber: _cardNumberController.text,
+  );
 
   String? get _cardBrandHint {
     final digits = digitsOnly(_cardNumberController.text);
@@ -240,9 +265,7 @@ class _ClientAddPaymentMethodSheetState
       late final AddClientPaymentMethodRequest request;
 
       if (type == 'CASH') {
-        request = AddClientPaymentMethodRequest.cash(
-          nickname: trimmedNickname,
-        );
+        request = AddClientPaymentMethodRequest.cash(nickname: trimmedNickname);
       } else if (type == 'CARD') {
         final month = _selectedExpMonth;
         final year = _selectedExpYear;
@@ -312,23 +335,29 @@ class _ClientAddPaymentMethodSheetState
           .read(clientPaymentMethodsStateProvider(widget.clientId).notifier)
           .addPaymentMethod(
             request: request,
-            onCompleted: (success, error) {
+            onCompleted: (success, error, [method]) async {
               if (!mounted) return;
 
-              if (success) {
+              if (!success || method == null) {
+                setState(() => _isSubmitting = false);
                 context.showVcareToast(
-                  title: 'Payment method added',
-                  variant: VcareToastVariant.success,
+                  title: error ?? 'Could not add payment method',
+                  variant: VcareToastVariant.destructive,
                 );
-                context.pop();
                 return;
               }
 
-              setState(() => _isSubmitting = false);
+              if (widget.isChargeFlow && widget.onAdded != null) {
+                context.pop();
+                await widget.onAdded!(method);
+                return;
+              }
+
               context.showVcareToast(
-                title: error ?? 'Could not add payment method',
-                variant: VcareToastVariant.destructive,
+                title: 'Payment method added',
+                variant: VcareToastVariant.success,
               );
+              context.pop();
             },
           );
 
@@ -383,9 +412,9 @@ class _ClientAddPaymentMethodSheetState
                 _selectedType == null
                     ? 'Add payment method'
                     : 'Add payment details',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             if (_selectedType == null)
@@ -394,57 +423,61 @@ class _ClientAddPaymentMethodSheetState
                 child: Column(
                   children: [
                     for (final option in _addMethodOptions)
-                      InkWell(
-                        onTap: () => _onSelectType(option.type),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: VCareColors.primary.withValues(
-                                    alpha: 0.1,
+                      if (!widget.isChargeFlow ||
+                          option.type == 'CARD' ||
+                          option.type == 'BANK')
+                        InkWell(
+                          onTap: () => _onSelectType(option.type),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: VCareColors.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  borderRadius: BorderRadius.circular(10),
+                                  child: Icon(
+                                    option.icon,
+                                    size: 16,
+                                    color: VCareColors.primary,
+                                  ),
                                 ),
-                                child: Icon(
-                                  option.icon,
-                                  size: 16,
-                                  color: VCareColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      option.label,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        option.label,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      option.description,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: vcare.mutedForeground,
+                                      Text(
+                                        option.description,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: vcare.mutedForeground,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
                   ],
                 ),
               )
@@ -467,7 +500,7 @@ class _ClientAddPaymentMethodSheetState
                         ],
                         decoration: _inputDecoration(
                           vcare,
-                          hint: '4242 4242 4242 4242',
+                          hint: 'xxxx xxxx xxxx xxxx',
                           errorText: _cardNumberError,
                           suffixText: _cardBrandHint,
                         ),
@@ -481,7 +514,7 @@ class _ClientAddPaymentMethodSheetState
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 const _FieldLabel(
-                                  'Exp. month',
+                                  'Expiry month',
                                   isRequired: true,
                                 ),
                                 const SizedBox(height: 6),
@@ -510,7 +543,7 @@ class _ClientAddPaymentMethodSheetState
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 const _FieldLabel(
-                                  'Exp. year',
+                                  'Expiry year',
                                   isRequired: true,
                                 ),
                                 const SizedBox(height: 6),
@@ -536,7 +569,7 @@ class _ClientAddPaymentMethodSheetState
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const _FieldLabel('CVV', isRequired: true),
+                                const _FieldLabel('CVC/CVV', isRequired: true),
                                 const SizedBox(height: 6),
                                 TextField(
                                   controller: _cvvController,
@@ -545,19 +578,12 @@ class _ClientAddPaymentMethodSheetState
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
                                     LengthLimitingTextInputFormatter(
-                                      expectedCvvLength(
-                                        _cardNumberController.text,
-                                      ),
+                                      expectedCvvLength,
                                     ),
                                   ],
                                   decoration: _inputDecoration(
                                     vcare,
-                                    hint: expectedCvvLength(
-                                              _cardNumberController.text,
-                                            ) ==
-                                            4
-                                        ? '1234'
-                                        : '123',
+                                    hint: 'xxxx',
                                     errorText: _cvvError,
                                   ),
                                 ),
@@ -579,10 +605,7 @@ class _ClientAddPaymentMethodSheetState
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(9),
                         ],
-                        decoration: _inputDecoration(
-                          vcare,
-                          hint: '011401533',
-                        ),
+                        decoration: _inputDecoration(vcare, hint: '011401533'),
                       ),
                       const SizedBox(height: 16),
                       const _FieldLabel('Account number', isRequired: true),
@@ -630,11 +653,11 @@ class _ClientAddPaymentMethodSheetState
                             onPressed: _isSubmitting
                                 ? null
                                 : () => setState(() {
-                                      _selectedType = null;
-                                      _selectedExpMonth = null;
-                                      _selectedExpYear = null;
-                                      _fieldError = null;
-                                    }),
+                                    _selectedType = null;
+                                    _selectedExpMonth = null;
+                                    _selectedExpYear = null;
+                                    _fieldError = null;
+                                  }),
                             text: 'Back',
                             height: 44,
                             width: null,
@@ -645,11 +668,16 @@ class _ClientAddPaymentMethodSheetState
                         const SizedBox(width: 8),
                         Expanded(
                           child: AppButton.elevated(
-                            onPressed:
-                                (_hasRequiredInput && !_isSubmitting)
-                                    ? _submit
-                                    : null,
-                            text: _isSubmitting ? 'Adding…' : 'Add method',
+                            onPressed: (_hasRequiredInput && !_isSubmitting)
+                                ? _submit
+                                : null,
+                            text: _isSubmitting
+                                ? (widget.isChargeFlow
+                                      ? 'Processing…'
+                                      : 'Adding…')
+                                : (widget.submitLabel?.trim().isNotEmpty == true
+                                      ? widget.submitLabel!.trim()
+                                      : 'Add method'),
                             loading: _isSubmitting,
                             color: VCareColors.primary,
                             onButtonColor: VCareColors.primaryForeground,
@@ -716,12 +744,11 @@ class _FieldLabel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${label.toUpperCase()}${isRequired ? ' *' : ''}',
+          '$label${isRequired ? ' *' : ''}',
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
-            color: vcare.mutedForeground,
+            color: VCareColors.foreground,
           ),
         ),
         if (hint != null)
