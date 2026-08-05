@@ -925,8 +925,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       return;
     }
 
-    final dobText = _onboardDobController.text.trim();
-    final dobIso = dobText.isEmpty ? null : profileDobToIso(dobText);
     final primaryCity = _primaryCityController.text.trim();
     final primaryState = _primaryStateController.text.trim();
 
@@ -937,10 +935,8 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         .setupAccount(
           registrationToken: registrationToken,
           firstName: firstName,
-          middleName: _middleNameController.text.trim(),
           lastName: lastName,
           password: _passwordController.text,
-          dob: dobIso,
           email: email,
           phone: phone,
           gender: _genderApiValue(_activateGender),
@@ -1455,8 +1451,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   }
 
   Widget _buildActivateDetailsStep(BuildContext context) {
-    final vcare = context.vcare;
-
     if (_loadingKey == 'preAuth') {
       return const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1496,14 +1490,12 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: LoginTextField(
-                controller: _middleNameController,
-                hint: 'Middle name',
+                controller: _lastNameController,
+                hint: 'Last name',
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        LoginTextField(controller: _lastNameController, hint: 'Last name'),
         const SizedBox(height: 12),
         // Web ActivateDetailsStep: Email + Phone always shown, both disabled.
         LoginTextField(
@@ -1519,24 +1511,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           hint: 'Phone number',
           enabled: false,
           prefix: const LoginPhoneCountrySelector(),
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _loadingKey != null ? null : _pickOnboardDob,
-          child: AbsorbPointer(
-            child: LoginTextField(
-              controller: _onboardDobController,
-              hint: 'Date of birth',
-              prefix: Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Icon(
-                  LucideIcons.calendar,
-                  size: 16,
-                  color: vcare.mutedForeground,
-                ),
-              ),
-            ),
-          ),
         ),
         const SizedBox(height: 12),
         _buildActivateGenderField(context),

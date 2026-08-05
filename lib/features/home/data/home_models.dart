@@ -19,6 +19,7 @@ class HomeMember {
     this.groupNumber = 'GRP-22841',
     this.effectiveDate = 'Jan 1, 2026',
     this.referralUrl,
+    this.referralCode,
   });
 
   final String fullName;
@@ -31,6 +32,7 @@ class HomeMember {
   final String groupNumber;
   final String effectiveDate;
   final String? referralUrl;
+  final String? referralCode;
 }
 
 class HomeProfile {

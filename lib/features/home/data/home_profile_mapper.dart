@@ -22,6 +22,9 @@ HomeMember homeMemberFromProfile(LocalProfile profile) {
       email: profile.email,
       referralLink: profile.referralLink,
     ),
+    referralCode: profile.agentCode?.trim().isNotEmpty == true
+        ? profile.agentCode!.trim()
+        : null,
   );
 }
 

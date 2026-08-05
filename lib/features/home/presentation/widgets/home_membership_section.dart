@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
@@ -8,6 +9,7 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_empty_state_
 import 'package:vcare_admin/features/home/presentation/widgets/home_section_header.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/referral_qr_code.dart';
 import 'package:vcare_admin/features/home/utils/referral_utils.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class HomeMembershipSection extends StatelessWidget {
   const HomeMembershipSection({
@@ -64,6 +66,23 @@ class _ReferralCard extends StatelessWidget {
   final LinearGradient gradient;
   final VoidCallback? onTap;
 
+  Future<void> _copyReferralLink(BuildContext context) async {
+    final referralUrl =
+        member.referralUrl ?? referralUrlFromEmail(member.email);
+    final referralCode = splitReferralUrl(
+      referralUrl,
+      agentCode: member.referralCode,
+    ).code;
+
+    await Clipboard.setData(ClipboardData(text: referralCode));
+    if (!context.mounted) return;
+
+    context.showVcareToast(
+      title: 'Referral link copied successfully',
+      variant: VcareToastVariant.success,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final referralUrl =
@@ -104,14 +123,36 @@ class _ReferralCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'MY REFERRAL',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.2,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'MY REFERRAL',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1.2,
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _copyReferralLink(context),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4),
+                                        child: Icon(
+                                          LucideIcons.copy,
+                                          size: 14,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.85,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
