@@ -85,7 +85,7 @@ class _CardEditScreenState extends State<CardEditScreen> {
     return Scaffold(
       body: Column(
         children: [
-          VcarePageHeader(
+          VcareStickyPageHeader(
             title: isNew ? 'Add Card' : 'Edit Card',
             subtitle: 'Insurance, dental, vision, and more',
             showBack: true,

@@ -42,9 +42,7 @@ class _SavedProvidersScreenState extends ConsumerState<SavedProvidersScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'Saved Providers', showBack: true),
-          ),
+          const SliverVcarePageHeader(title: 'Saved Providers', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(

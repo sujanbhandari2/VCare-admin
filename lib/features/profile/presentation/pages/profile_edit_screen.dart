@@ -397,7 +397,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
     return Scaffold(
       body: Column(
         children: [
-          VcarePageHeader(
+          VcareStickyPageHeader(
             title: 'Edit profile',
             showBack: true,
             action: TextButton(

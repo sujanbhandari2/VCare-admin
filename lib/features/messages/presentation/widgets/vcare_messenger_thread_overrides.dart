@@ -44,7 +44,7 @@ Widget _buildHeader(BuildContext context, MessengerThreadHeaderData data) {
       avatarUrl != null &&
       avatarUrl.isNotEmpty;
 
-  return VcarePageHeader(
+  return VcareStickyPageHeader(
     title: conversation.title,
     subtitle: conversation.isGroup ? 'Shared care-team conversation' : null,
     leading: showAvatar

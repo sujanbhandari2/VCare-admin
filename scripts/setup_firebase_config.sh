@@ -28,7 +28,7 @@ fi
 
 FLAVOR=$1
 GOOGLE_SERVICES_SOURCE="android/app/google-services-${FLAVOR}.json"
-GOOGLE_SERVICES_DEST="android/app/google-services.json"
+GOOGLE_SERVICES_DEST="android/app/src/${FLAVOR}/google-services.json"
 FIREBASE_OPTIONS_FILE="lib/firebase_options.dart"
 
 print_info "Updating Firebase configuration for flavor: ${FLAVOR}"
@@ -39,8 +39,9 @@ if [ ! -f "$GOOGLE_SERVICES_SOURCE" ]; then
     exit 1
 fi
 
-# Copy flavor-specific google-services.json to main google-services.json
+# Copy flavor-specific google-services.json into the matching Android source set
 print_info "Copying ${GOOGLE_SERVICES_SOURCE} to ${GOOGLE_SERVICES_DEST}"
+mkdir -p "$(dirname "$GOOGLE_SERVICES_DEST")"
 cp "$GOOGLE_SERVICES_SOURCE" "$GOOGLE_SERVICES_DEST"
 if [ $? -eq 0 ]; then
     print_info "✅ Successfully copied google-services.json"
@@ -64,11 +65,30 @@ PROJECT_ID=$(jq -r '.project_info.project_id' "$GOOGLE_SERVICES_SOURCE")
 PROJECT_NUMBER=$(jq -r '.project_info.project_number' "$GOOGLE_SERVICES_SOURCE")
 STORAGE_BUCKET=$(jq -r '.project_info.storage_bucket' "$GOOGLE_SERVICES_SOURCE")
 
-# Get the first client (you can modify this if you have multiple clients)
-ANDROID_CLIENT_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' "$GOOGLE_SERVICES_SOURCE")
-ANDROID_API_KEY=$(jq -r '.client[0].api_key[0].current_key' "$GOOGLE_SERVICES_SOURCE")
-ANDROID_APP_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' "$GOOGLE_SERVICES_SOURCE")
-ANDROID_PACKAGE_NAME=$(jq -r '.client[0].client_info.android_client_info.package_name' "$GOOGLE_SERVICES_SOURCE")
+# Map flavor to expected Android package name
+case "$FLAVOR" in
+    dev)  EXPECTED_PACKAGE="com.vcare.admin.dev" ;;
+    qa)   EXPECTED_PACKAGE="com.vcare.admin.qa" ;;
+    uat)  EXPECTED_PACKAGE="com.vcare.admin.uat" ;;
+    prod) EXPECTED_PACKAGE="com.vcare.admin" ;;
+    *)    EXPECTED_PACKAGE="" ;;
+esac
+
+# Select Android client matching the flavor package name
+ANDROID_CLIENT_INDEX=$(jq -r --arg pkg "$EXPECTED_PACKAGE" '
+  .client | to_entries[] | select(.value.client_info.android_client_info.package_name == $pkg) | .key
+' "$GOOGLE_SERVICES_SOURCE" | head -n 1)
+
+if [ -z "$ANDROID_CLIENT_INDEX" ] || [ "$ANDROID_CLIENT_INDEX" = "null" ]; then
+    print_warning "No Android client found for package: $EXPECTED_PACKAGE"
+    print_warning "Falling back to first client in google-services.json"
+    ANDROID_CLIENT_INDEX=0
+fi
+
+ANDROID_CLIENT_ID=$(jq -r ".client[$ANDROID_CLIENT_INDEX].client_info.mobilesdk_app_id" "$GOOGLE_SERVICES_SOURCE")
+ANDROID_API_KEY=$(jq -r ".client[$ANDROID_CLIENT_INDEX].api_key[0].current_key" "$GOOGLE_SERVICES_SOURCE")
+ANDROID_APP_ID=$(jq -r ".client[$ANDROID_CLIENT_INDEX].client_info.mobilesdk_app_id" "$GOOGLE_SERVICES_SOURCE")
+ANDROID_PACKAGE_NAME=$(jq -r ".client[$ANDROID_CLIENT_INDEX].client_info.android_client_info.package_name" "$GOOGLE_SERVICES_SOURCE")
 
 print_info "Extracted Android configuration:"
 print_info "  Project ID: $PROJECT_ID"
@@ -82,6 +102,9 @@ IOS_APP_ID=""
 IOS_CLIENT_ID=""
 IOS_API_KEY=""
 IOS_BUNDLE_ID=""
+IOS_PROJECT_ID=""
+IOS_STORAGE_BUCKET=""
+IOS_GCM_SENDER_ID=""
 
 if [ -f "$IOS_PLIST_SOURCE" ]; then
     print_info "Copying ${IOS_PLIST_SOURCE} to ${IOS_PLIST_DEST}"
@@ -101,9 +124,12 @@ if [ -f "$IOS_PLIST_SOURCE" ]; then
         plutil -convert json "$IOS_PLIST_SOURCE" -o "$TEMP_JSON"
         
         IOS_APP_ID=$(jq -r '.GOOGLE_APP_ID' "$TEMP_JSON")
-        IOS_CLIENT_ID=$(jq -r '.CLIENT_ID' "$TEMP_JSON")
+        IOS_CLIENT_ID=$(jq -r '.CLIENT_ID // empty' "$TEMP_JSON")
         IOS_API_KEY=$(jq -r '.API_KEY' "$TEMP_JSON")
         IOS_BUNDLE_ID=$(jq -r '.BUNDLE_ID' "$TEMP_JSON")
+        IOS_PROJECT_ID=$(jq -r '.PROJECT_ID // empty' "$TEMP_JSON")
+        IOS_STORAGE_BUCKET=$(jq -r '.STORAGE_BUCKET // empty' "$TEMP_JSON")
+        IOS_GCM_SENDER_ID=$(jq -r '.GCM_SENDER_ID // empty' "$TEMP_JSON")
         
         rm "$TEMP_JSON"
     else
@@ -191,10 +217,10 @@ class DefaultFirebaseOptions {
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: '${IOS_API_KEY:-${ANDROID_API_KEY}}',
     appId: '${IOS_APP_ID:-${ANDROID_APP_ID}}',
-    messagingSenderId: '${PROJECT_NUMBER}',
-    projectId: '${PROJECT_ID}',
-    storageBucket: '${STORAGE_BUCKET}',
-    iosBundleId: '${IOS_BUNDLE_ID:-com.example.app}',
+    messagingSenderId: '${IOS_GCM_SENDER_ID:-${PROJECT_NUMBER}}',
+    projectId: '${IOS_PROJECT_ID:-${PROJECT_ID}}',
+    storageBucket: '${IOS_STORAGE_BUCKET:-${STORAGE_BUCKET}}',
+    iosBundleId: '${IOS_BUNDLE_ID:-${EXPECTED_PACKAGE}}',
   );
 }
 EOF

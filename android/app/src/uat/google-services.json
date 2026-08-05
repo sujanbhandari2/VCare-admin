@@ -45,25 +45,6 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:775303366461:android:0d19919522cbfbdeb06754",
-        "android_client_info": {
-          "package_name": "com.vcare.admin.qa"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD-1BoKk_jsPXlG4OFHOicL_jMAgeVToi8"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:775303366461:android:eb988d0d95f9f90cb06754",
         "android_client_info": {
           "package_name": "com.vcare.admin.uat"

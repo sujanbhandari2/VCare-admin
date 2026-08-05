@@ -71,9 +71,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: VcareRefreshScrollView(
         onRefresh: _onRefresh,
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'Profile', showBack: false),
-          ),
+          const SliverVcarePageHeader(title: 'Profile', showBack: false),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(

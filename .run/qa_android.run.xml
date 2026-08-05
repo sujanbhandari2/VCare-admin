@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="qa (Android)" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="additionalArgs" value="--flavor qa" />
+    <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Configure qa" run_configuration_type="ShConfigurationType" />
+    </method>
+  </configuration>
+</component>

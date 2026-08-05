@@ -48,12 +48,10 @@ class _MedicareProviderLookupScreenState
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Medicare Lookup',
-              subtitle: 'CMS physician & practitioner directory',
-              showBack: true,
-            ),
+          const SliverVcarePageHeader(
+            title: 'Medicare Lookup',
+            subtitle: 'CMS physician & practitioner directory',
+            showBack: true,
           ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,

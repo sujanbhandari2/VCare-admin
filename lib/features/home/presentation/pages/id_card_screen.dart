@@ -87,28 +87,26 @@ class _IdCardScreenState extends ConsumerState<IdCardScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'My Referral',
-              showBack: true,
-              showBell: false,
-              action: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _ReferralHeaderActionButton(
-                    tooltip: 'Share referral card',
-                    icon: LucideIcons.share2,
-                    isLoading: _isSharing,
-                    onPressed: _isBusy ? null : () => _onShareCard(actions),
-                  ),
-                  _ReferralHeaderActionButton(
-                    tooltip: 'Download referral card',
-                    icon: LucideIcons.download,
-                    isLoading: _isDownloading,
-                    onPressed: _isBusy ? null : () => _onDownloadCard(actions),
-                  ),
-                ],
-              ),
+          SliverVcarePageHeader(
+            title: 'My Referral',
+            showBack: true,
+            showBell: false,
+            action: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ReferralHeaderActionButton(
+                  tooltip: 'Share referral card',
+                  icon: LucideIcons.share2,
+                  isLoading: _isSharing,
+                  onPressed: _isBusy ? null : () => _onShareCard(actions),
+                ),
+                _ReferralHeaderActionButton(
+                  tooltip: 'Download referral card',
+                  icon: LucideIcons.download,
+                  isLoading: _isDownloading,
+                  onPressed: _isBusy ? null : () => _onDownloadCard(actions),
+                ),
+              ],
             ),
           ),
           SliverPadding(

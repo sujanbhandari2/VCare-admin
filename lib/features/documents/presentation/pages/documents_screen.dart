@@ -311,13 +311,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         controller: _scrollController,
         padForMobileBottomNav: true,
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'My Documents',
-              subtitle: "Everything you've shared, in one place",
-              showBack: true,
-              showBell: false,
-            ),
+          SliverVcarePageHeader(
+            title: 'My Documents',
+            subtitle: "Everything you've shared, in one place",
+            showBack: true,
+            showBell: false,
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: _horizontalPadding),

@@ -37,9 +37,7 @@ class ProviderDetailScreen extends ConsumerWidget {
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
-              child: VcarePageHeader(title: 'Provider', showBack: true),
-            ),
+            const SliverVcarePageHeader(title: 'Provider', showBack: true),
             SliverFillRemaining(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -66,9 +64,7 @@ class ProviderDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'Provider', showBack: true),
-          ),
+          const SliverVcarePageHeader(title: 'Provider', showBack: true),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               ProviderDetailLayout.horizontalPadding,

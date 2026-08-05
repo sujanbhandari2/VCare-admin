@@ -243,7 +243,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return Scaffold(
       body: Column(
         children: [
-          VcarePageHeader(
+          VcareStickyPageHeader(
             title: 'Care group',
             subtitle: 'Shared care-team conversation',
             showBack: true,
@@ -675,12 +675,10 @@ class _VcareScaffold extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: title,
-              subtitle: subtitle,
-              showBack: showBack,
-            ),
+          SliverVcarePageHeader(
+            title: title,
+            subtitle: subtitle,
+            showBack: showBack,
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(20, 0, 20, bottom == null ? 40 : 120),

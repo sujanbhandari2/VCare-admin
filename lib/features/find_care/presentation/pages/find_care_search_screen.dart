@@ -101,14 +101,12 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Search Providers',
-              subtitle: searchState.submitted.isEmpty
-                  ? 'CMS Medicare directory'
-                  : 'Results for "${searchState.submitted}"',
-              showBack: true,
-            ),
+          SliverVcarePageHeader(
+            title: 'Search Providers',
+            subtitle: searchState.submitted.isEmpty
+                ? 'CMS Medicare directory'
+                : 'Results for "${searchState.submitted}"',
+            showBack: true,
           ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,

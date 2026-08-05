@@ -87,6 +87,37 @@ HIVE_BOX_NAME=FlutterTemplateApp
 
 > `.env` files are ignored by git. Never commit real secrets.
 
+## IDE Setup
+
+### Android Studio
+
+1. Open the **project root** (`vcare2.0-admin`), not the `android/` subfolder.
+2. First-time setup: run `make setup-env` and edit `.env.dev`, `.env.qa`, `.env.uat`, `.env.prod`.
+3. Select a shared run configuration from `.run/`:
+   - `dev (Android)`, `qa (Android)`, `uat (Android)`, `prod (Android)`
+4. Each config runs `./scripts/configure_flavor.sh` before launch to sync `.env` and Firebase files.
+5. For Android builds, match **Build Variants** to the selected flavor (for example `devDebug` when running `dev (Android)`).
+
+All four flavors can be installed side-by-side on one device because each flavor uses a distinct application ID.
+
+### Xcode
+
+1. Open `ios/Runner.xcworkspace` (not `Runner.xcodeproj`).
+2. Select the scheme: `dev`, `qa`, `uat`, or `prod`.
+3. Run or Archive. Each scheme pre-runs `./scripts/configure_flavor.sh` for the matching flavor.
+4. Profile builds use the flavor-specific `Profile-{flavor}` configuration.
+
+### Flavor reference
+
+| Flavor | Android app ID | iOS bundle ID | CLI run |
+|--------|----------------|---------------|---------|
+| dev | `com.vcare.admin.dev` | `com.vcare.admin.dev` | `make run-dev` |
+| qa | `com.vcare.admin.qa` | `com.vcare.admin.qa` | `make run-qa` |
+| uat | `com.vcare.admin.uat` | `com.vcare.admin.uat` | `make run-uat` |
+| prod | `com.vcare.admin` | `com.vcare.admin` | `make run-prod` |
+
+See [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) for Firebase file setup per flavor.
+
 ## Flavor Commands
 
 ### Run

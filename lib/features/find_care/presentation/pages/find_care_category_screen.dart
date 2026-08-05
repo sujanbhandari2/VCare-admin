@@ -97,9 +97,7 @@ class _FindCareCategoryScreenState
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
-              child: VcarePageHeader(title: 'Category', showBack: true),
-            ),
+            const SliverVcarePageHeader(title: 'Category', showBack: true),
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
@@ -118,12 +116,10 @@ class _FindCareCategoryScreenState
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: category.label,
-              subtitle: category.blurb,
-              showBack: true,
-            ),
+          SliverVcarePageHeader(
+            title: category.label,
+            subtitle: category.blurb,
+            showBack: true,
           ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,

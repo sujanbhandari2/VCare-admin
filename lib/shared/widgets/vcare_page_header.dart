@@ -122,6 +122,7 @@ class VcareStickyPageHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.leading,
     this.showBack = false,
     this.onBack,
     this.showBell = false,
@@ -132,6 +133,7 @@ class VcareStickyPageHeader extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+  final Widget? leading;
   final bool showBack;
   final VoidCallback? onBack;
   final bool showBell;
@@ -156,6 +158,7 @@ class VcareStickyPageHeader extends StatelessWidget {
             child: VcarePageHeader(
               title: title,
               subtitle: subtitle,
+              leading: leading,
               showBack: showBack,
               onBack: onBack,
               showBell: showBell,
@@ -165,6 +168,56 @@ class VcareStickyPageHeader extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Scroll sliver with top safe-area inset before [VcarePageHeader].
+class SliverVcarePageHeader extends StatelessWidget {
+  const SliverVcarePageHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.showBack = false,
+    this.onBack,
+    this.showBell = false,
+    this.unreadCount = 0,
+    this.onBellTap,
+    this.action,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? leading;
+  final bool showBack;
+  final VoidCallback? onBack;
+  final bool showBell;
+  final int unreadCount;
+  final VoidCallback? onBellTap;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: MediaQuery.paddingOf(context).top),
+          VcarePageHeader(
+            title: title,
+            subtitle: subtitle,
+            leading: leading,
+            showBack: showBack,
+            onBack: onBack,
+            showBell: showBell,
+            unreadCount: unreadCount,
+            onBellTap: onBellTap,
+            action: action,
+          ),
+        ],
       ),
     );
   }

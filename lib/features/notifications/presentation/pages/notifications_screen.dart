@@ -43,16 +43,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: MediaQuery.paddingOf(context).top),
-            ),
-            SliverToBoxAdapter(
-              child: VcarePageHeader(
-                title: 'Notifications',
-                subtitle: 'Messages, reminders, tips, and billing updates',
-                showBack: true,
-                onBack: () => context.pop(),
-              ),
+            SliverVcarePageHeader(
+              title: 'Notifications',
+              subtitle: 'Messages, reminders, tips, and billing updates',
+              showBack: true,
+              onBack: () => context.pop(),
             ),
             if (inboxState.fetching && inboxState.items.isEmpty)
               const SliverFillRemaining(

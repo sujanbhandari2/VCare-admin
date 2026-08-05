@@ -42,13 +42,11 @@ class _CasesScreenState extends State<CasesScreen> {
         onRefresh: _onRefresh,
         padForMobileBottomNav: true,
         slivers: [
-          SliverToBoxAdapter(
-            child: VcarePageHeader(
-              title: 'Cases',
-              subtitle: 'Your advocate is here to help',
-              action: CasesHeaderAction(
-                onPressed: () => context.pushNamed(AppRouter.requestNewName),
-              ),
+          SliverVcarePageHeader(
+            title: 'Cases',
+            subtitle: 'Your advocate is here to help',
+            action: CasesHeaderAction(
+              onPressed: () => context.pushNamed(AppRouter.requestNewName),
             ),
           ),
           SliverPadding(

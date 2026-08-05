@@ -59,6 +59,16 @@ class VCareColors {
     colors: [Color(0xFF009E9E), Color(0xFF0B6B6B)],
   );
 
+  /// Teal tint overlay — web `from-primary/15 to-primary/5`.
+  static LinearGradient get primaryTint => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          primary.withValues(alpha: 0.15),
+          primary.withValues(alpha: 0.05),
+        ],
+      );
+
   static const gradientWarm = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,

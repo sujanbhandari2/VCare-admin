@@ -109,9 +109,7 @@ class _HomeActivityScreenState extends ConsumerState<HomeActivityScreen> {
         onRefresh: _onRefresh,
         controller: _scrollController,
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'To do list', showBack: true),
-          ),
+          const SliverVcarePageHeader(title: 'To do list', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(

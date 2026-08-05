@@ -43,10 +43,13 @@ class _HealthMessengerChatBodyState
   final FocusNode _composerFocusNode = FocusNode();
   bool _isRecording = false;
   bool _bootstrapStarted = false;
+  late final LiveChatMobileThreadVisible _mobileThreadVisibleNotifier;
 
   @override
   void initState() {
     super.initState();
+    _mobileThreadVisibleNotifier =
+        ref.read(liveChatMobileThreadVisibleProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _bootstrapStarted) {
         return;
@@ -70,7 +73,7 @@ class _HealthMessengerChatBodyState
   @override
   void dispose() {
     // Route may be torn down with the tab; ensure shell inset is restored.
-    ref.read(liveChatMobileThreadVisibleProvider.notifier).setVisible(false);
+    _mobileThreadVisibleNotifier.setVisible(false);
     _composerController.dispose();
     _messagesScrollController.dispose();
     _composerFocusNode.dispose();

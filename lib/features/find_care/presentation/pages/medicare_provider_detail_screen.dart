@@ -51,16 +51,14 @@ class _MedicareProviderDetailScreenState
     }
 
     if (!detailState.isValidNpi) {
-      return const Scaffold(
+      return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: VcarePageHeader(
-                title: 'Medicare directory',
-                showBack: true,
-              ),
+            SliverVcarePageHeader(
+              title: 'Medicare directory',
+              showBack: true,
             ),
-            SliverFillRemaining(
+            const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
                 child: Text('Invalid NPI — use a 10-digit number.'),
@@ -72,16 +70,14 @@ class _MedicareProviderDetailScreenState
     }
 
     if (detailState.lookupLoading && detailState.row == null) {
-      return const Scaffold(
+      return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: VcarePageHeader(
-                title: 'Medicare directory',
-                showBack: true,
-              ),
+            SliverVcarePageHeader(
+              title: 'Medicare directory',
+              showBack: true,
             ),
-            SliverFillRemaining(
+            const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(child: CircularProgressIndicator()),
             ),
@@ -92,16 +88,14 @@ class _MedicareProviderDetailScreenState
 
     final row = detailState.row;
     if (row == null && !detailState.lookupLoading) {
-      return const Scaffold(
+      return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: VcarePageHeader(
-                title: 'Medicare directory',
-                showBack: true,
-              ),
+            SliverVcarePageHeader(
+              title: 'Medicare directory',
+              showBack: true,
             ),
-            SliverFillRemaining(
+            const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
                 child: Text('Provider not found in CMS directory.'),
@@ -124,9 +118,7 @@ class _MedicareProviderDetailScreenState
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(
-            child: VcarePageHeader(title: 'Medicare directory', showBack: true),
-          ),
+          SliverVcarePageHeader(title: 'Medicare directory', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(

@@ -15,6 +15,7 @@ import 'package:vcare_admin/features/home/presentation/providers/agent_stats_sta
 import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_care_team_carousel.dart';
+import 'package:vcare_admin/features/home/presentation/widgets/home_guides_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_membership_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_metrics_section.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
@@ -256,6 +257,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return savedProvidersState.isToggling(npi);
                     },
                   ),
+                  const SizedBox(height: _sectionGap),
+                  const HomeGuidesSection(),
                   const SizedBox(height: 16),
                 ]),
               ),

@@ -224,7 +224,7 @@ class _RequestNewScreenState extends State<RequestNewScreen> {
     return Scaffold(
       body: Column(
         children: [
-          VcarePageHeader(
+          VcareStickyPageHeader(
             title: 'New request',
             showBack: true,
             onBack: () => context.pop(),

@@ -300,12 +300,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: VcarePageHeader(
-                title: 'Case',
-                showBack: true,
-                onBack: () => context.pop(),
-              ),
+            SliverVcarePageHeader(
+              title: 'Case',
+              showBack: true,
+              onBack: () => context.pop(),
             ),
             const SliverFillRemaining(
               child: Center(child: Text('Request not found')),
@@ -318,7 +316,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     return Scaffold(
       body: Column(
         children: [
-          VcarePageHeader(
+          VcareStickyPageHeader(
             title: 'Case',
             showBack: true,
             onBack: () => context.pop(),

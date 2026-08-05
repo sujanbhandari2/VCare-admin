@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
@@ -17,73 +18,76 @@ class ClientRow extends StatelessWidget {
     final vcare = context.vcare;
 
     return Material(
-      color: vcare.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: vcare.border),
-      ),
+      color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: VCareCachedImage(
-                    imageUrl: client.avatarUrl,
-                    fit: BoxFit.cover,
-                    errorWidget: ColoredBox(
-                      color: vcare.muted,
-                      child: Center(
-                        child: Text(
-                          clientInitials(client.fullName),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: VCareColors.primaryTint,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: vcare.border),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: VCareCachedImage(
+                      imageUrl: client.avatarUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: ColoredBox(
+                        color: vcare.muted,
+                        child: Center(
+                          child: Text(
+                            clientInitials(client.fullName),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      client.fullName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        client.fullName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      client.email,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: vcare.mutedForeground,
+                      Text(
+                        client.email,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: vcare.mutedForeground,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                LucideIcons.chevronRight,
-                size: 16,
-                color: vcare.mutedForeground,
-              ),
-            ],
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: vcare.mutedForeground,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -397,27 +397,35 @@ class _IdentityCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: vcare.muted.withValues(alpha: 0.6),
+          gradient: VCareColors.primaryTint,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: vcare.border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: VCareCachedImage(
-                    imageUrl: detail.avatarUrl,
-                    fit: BoxFit.cover,
-                    errorWidget: ColoredBox(
-                      color: vcare.muted,
-                      child: Center(
-                        child: Text(
-                          clientInitials(detail.fullName),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: VCareColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: vcare.border),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: VCareCachedImage(
+                      imageUrl: detail.avatarUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: ColoredBox(
+                        color: vcare.muted,
+                        child: Center(
+                          child: Text(
+                            clientInitials(detail.fullName),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                     ),
@@ -493,8 +501,10 @@ class _CircleAction extends StatelessWidget {
     final vcare = context.vcare;
 
     return Material(
-      color: filled ? VCareColors.primary : vcare.card,
-      shape: const CircleBorder(),
+      color: filled ? VCareColors.primary : VCareColors.background,
+      shape: CircleBorder(
+        side: filled ? BorderSide.none : BorderSide(color: vcare.border),
+      ),
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),

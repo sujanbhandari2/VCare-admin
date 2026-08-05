@@ -13,6 +13,10 @@ project 'Runner', {
   'Release-qa' => :release,
   'Release-uat' => :release,
   'Release-prod' => :release,
+  'Profile-dev' => :release,
+  'Profile-qa' => :release,
+  'Profile-uat' => :release,
+  'Profile-prod' => :release,
 }
 
 def flutter_root

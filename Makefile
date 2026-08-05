@@ -9,6 +9,7 @@ APP_NAME = vcare_admin
 # Support multiple possible script locations
 FIREBASE_SCRIPT_PATHS = ./scripts/update_firebase_config.sh ./scripts/setup_firebase_config.sh ./update_firebase_config.sh ./setup_firebase_config.sh
 FIREBASE_SCRIPT = $(firstword $(wildcard $(FIREBASE_SCRIPT_PATHS)))
+CONFIGURE_SCRIPT = ./scripts/configure_flavor.sh
 
 # Default target
 help:
@@ -180,24 +181,26 @@ sync-all:
 
 configure-dev:
 	@echo "⚙️ Configuring DEV flavor..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	@echo "✅ Environment for dev flavor configured"
 
 configure-qa:
+	@echo "⚙️ Configuring QA flavor..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
+	@echo "✅ Environment for qa flavor configured"
+
 configure-uat:
-	@echo "⚙️ Configuring STAGING flavor..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	@echo "⚙️ Configuring UAT flavor..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
 	@echo "✅ Environment for uat flavor configured"
 
 configure-prod:
 	@echo "⚙️ Configuring PROD flavor..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	@echo "✅ Environment for production flavor configured"
 
 # ============================================
@@ -206,33 +209,34 @@ configure-prod:
 
 run-dev: setup-env
 	@echo "🚀 Running DEV flavor..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	flutter clean
-	flutter pub get
 	@$(MAKE) gen-code
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
 	flutter run --flavor dev
 
 run-qa: setup-env
-run-uat: setup-env
-	@echo "🚀 Running STAGING flavor..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
+	@echo "🚀 Running QA flavor..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
 	flutter clean
-	flutter pub get
 	@$(MAKE) gen-code
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	flutter run --flavor qa
+
+run-uat: setup-env
+	@echo "🚀 Running UAT flavor..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
+	flutter clean
+	@$(MAKE) gen-code
 	flutter run --flavor uat
 
 run-prod: setup-env
 	@echo "🚀 Running PROD flavor..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	flutter clean
-	flutter pub get
 	@$(MAKE) gen-code
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
 	flutter run --flavor prod
 
 # ============================================
@@ -241,36 +245,38 @@ run-prod: setup-env
 
 run-dev-ios: setup-env
 	@echo "🚀 Running DEV flavor (iOS)..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	flutter clean
-	flutter pub get
 	@$(MAKE) gen-code
 	cd ios && pod install && cd ..
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
 	flutter run --flavor dev
 
 run-qa-ios: setup-env
-run-uat-ios: setup-env
-	@echo "🚀 Running STAGING flavor (iOS)..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
+	@echo "🚀 Running QA flavor (iOS)..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
 	flutter clean
-	flutter pub get
 	@$(MAKE) gen-code
 	cd ios && pod install && cd ..
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	flutter run --flavor qa
+
+run-uat-ios: setup-env
+	@echo "🚀 Running UAT flavor (iOS)..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
+	flutter clean
+	@$(MAKE) gen-code
+	cd ios && pod install && cd ..
 	flutter run --flavor uat
 
 run-prod-ios: setup-env
 	@echo "🚀 Running PROD flavor (iOS)..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	flutter clean
-	flutter pub get
 	@$(MAKE) gen-code
 	cd ios && pod install && cd ..
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
 	flutter run --flavor prod
 
 # ============================================
@@ -279,32 +285,33 @@ run-prod-ios: setup-env
 
 build-apk-dev:
 	@echo "🤖 Building Android APK for DEV..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	flutter clean
-	flutter pub get
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
 	flutter build apk --flavor dev --release
 	@echo "✅ APK: build/app/outputs/flutter-apk/app-dev-release.apk"
 
 build-apk-qa:
-build-apk-uat:
-	@echo "🤖 Building Android APK for STAGING..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
+	@echo "🤖 Building Android APK for QA..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
 	flutter clean
-	flutter pub get
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	flutter build apk --flavor qa --release
+	@echo "✅ APK: build/app/outputs/flutter-apk/app-qa-release.apk"
+
+build-apk-uat:
+	@echo "🤖 Building Android APK for UAT..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
+	flutter clean
 	flutter build apk --flavor uat --release
 	@echo "✅ APK: build/app/outputs/flutter-apk/app-uat-release.apk"
 
 build-apk-prod:
 	@echo "🤖 Building Android APK for PROD..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	flutter clean
-	flutter pub get
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
 	flutter build apk --flavor prod --release
 	@echo "✅ APK: build/app/outputs/flutter-apk/app-prod-release.apk"
 
@@ -314,32 +321,33 @@ build-apk-prod:
 
 build-appbundle-dev:
 	@echo "🤖 Building App Bundle for DEV..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	flutter clean
-	flutter pub get
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
 	flutter build appbundle --flavor dev --release
 	@echo "✅ AAB: build/app/outputs/bundle/devRelease/app-dev-release.aab"
 
 build-appbundle-qa:
-build-appbundle-uat:
-	@echo "🤖 Building App Bundle for STAGING..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
+	@echo "🤖 Building App Bundle for QA..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
 	flutter clean
-	flutter pub get
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	flutter build appbundle --flavor qa --release
+	@echo "✅ AAB: build/app/outputs/bundle/qaRelease/app-qa-release.aab"
+
+build-appbundle-uat:
+	@echo "🤖 Building App Bundle for UAT..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
+	flutter clean
 	flutter build appbundle --flavor uat --release
 	@echo "✅ AAB: build/app/outputs/bundle/uatRelease/app-uat-release.aab"
 
 build-appbundle-prod:
 	@echo "🤖 Building App Bundle for PROD..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	flutter clean
-	flutter pub get
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
 	flutter build appbundle --flavor prod --release
 	@echo "✅ AAB: build/app/outputs/bundle/prodRelease/app-prod-release.aab"
 
@@ -349,35 +357,37 @@ build-appbundle-prod:
 
 build-ios-dev:
 	@echo "🍎 Building iOS for DEV..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	flutter clean
-	flutter pub get
 	cd ios && pod install && cd ..
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
 	flutter build ios --flavor dev --release --no-codesign
 	@echo "✅ iOS build complete"
 
 build-ios-qa:
-build-ios-uat:
-	@echo "🍎 Building iOS for STAGING..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
+	@echo "🍎 Building iOS for QA..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
 	flutter clean
-	flutter pub get
 	cd ios && pod install && cd ..
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	flutter build ios --flavor qa --release --no-codesign
+	@echo "✅ iOS build complete"
+
+build-ios-uat:
+	@echo "🍎 Building iOS for UAT..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
+	flutter clean
+	cd ios && pod install && cd ..
 	flutter build ios --flavor uat --release --no-codesign
 	@echo "✅ iOS build complete"
 
 build-ios-prod:
 	@echo "🍎 Building iOS for PROD..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	flutter clean
-	flutter pub get
 	cd ios && pod install && cd ..
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
 	flutter build ios --flavor prod --release --no-codesign
 	@echo "✅ iOS build complete"
 
@@ -387,34 +397,36 @@ build-ios-prod:
 
 build-ipa-dev:
 	@echo "🍎 Building IPA for DEV..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) dev
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) dev
 	flutter clean
-	flutter pub get
 	cd ios && pod install && cd ..
-	@if [ -f .env.dev ]; then cp .env.dev .env; fi
 	flutter build ipa --flavor dev --release
 	@echo "✅ IPA: build/ios/ipa"
 
 build-ipa-qa:
-build-ipa-uat:
-	@echo "🍎 Building IPA for STAGING..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) uat
+	@echo "🍎 Building IPA for QA..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) qa
 	flutter clean
-	flutter pub get
 	cd ios && pod install && cd ..
-	@if [ -f .env.uat ]; then cp .env.uat .env; fi
+	flutter build ipa --flavor qa --release
+	@echo "✅ IPA: build/ios/ipa"
+
+build-ipa-uat:
+	@echo "🍎 Building IPA for UAT..."
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) uat
+	flutter clean
+	cd ios && pod install && cd ..
 	flutter build ipa --flavor uat --release
 	@echo "✅ IPA: build/ios/ipa"
 
 build-ipa-prod:
 	@echo "🍎 Building IPA for PROD..."
-	@chmod +x $(FIREBASE_SCRIPT) 2>/dev/null || true
-	@$(FIREBASE_SCRIPT) prod
+	@chmod +x $(CONFIGURE_SCRIPT) $(FIREBASE_SCRIPT) 2>/dev/null || true
+	@$(CONFIGURE_SCRIPT) prod
 	flutter clean
-	flutter pub get
 	cd ios && pod install && cd ..
-	@if [ -f .env.prod ]; then cp .env.prod .env; fi
 	flutter build ipa --flavor prod --release
 	@echo "✅ IPA: build/ios/ipa"
