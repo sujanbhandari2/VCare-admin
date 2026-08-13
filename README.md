@@ -89,6 +89,20 @@ HIVE_BOX_NAME=FlutterTemplateApp
 
 ## IDE Setup
 
+### Cursor / VS Code
+
+1. Open the **project root** (`vcare2.0-admin`).
+2. Install the **Flutter** and **Dart** extensions.
+3. First-time setup: run `make setup-env` and edit `.env.dev`, `.env.qa`, `.env.uat`, `.env.prod`.
+4. Select a device/emulator from the status bar (Android or iOS).
+5. Open **Run and Debug** (`⇧⌘D`) and pick a flavor config:
+   - `dev`, `qa`, `uat`, `prod` (debug)
+   - `dev (profile)`, `qa (profile)`, … for profile mode
+   - `dev (release)`, `qa (release)`, … for release mode
+6. Press **F5** (or the green play button). Each config runs `./scripts/configure_flavor.sh` first to sync `.env` and Firebase files.
+
+Configs live in `.vscode/launch.json` and `.vscode/tasks.json`.
+
 ### Android Studio
 
 1. Open the **project root** (`vcare2.0-admin`), not the `android/` subfolder.
