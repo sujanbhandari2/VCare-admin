@@ -1,7 +1,11 @@
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_tenant.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_user.dart';
 import 'package:vcare_admin/features/profile/domain/entities/auth_me.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
-import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/reset_password_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 import 'package:vcare_admin/features/notifications/domain/entities/fcm_device_added_or_updated_response.dart';
 import 'package:vcare_admin/features/notifications/domain/entities/fcm_device_check_response.dart';
@@ -50,15 +54,49 @@ class RepositoryFixtures {
     tenantId: tenantId,
   );
 
+  static AdminAuthSession adminAuthSession({
+    String accessToken = 'access_token',
+    String refreshToken = 'refresh_token',
+    String userId = 'd06cf672-9e6c-4bcc-bb37-ccf13ff35c4a',
+    String email = 'admin@example.com',
+    String firstName = 'Admin',
+    String lastName = 'User',
+    String tenantId = 'tenant-id',
+    String tenantSlug = 'default',
+    String tenantName = 'Default Tenant',
+    List<String> currentRoles = const ['ADMIN'],
+    List<String> menu = const ['dashboard', 'clients'],
+  }) => AdminAuthSession(
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+    user: AdminAuthUser(
+      id: userId,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      currentTenant: AdminAuthTenant(
+        id: tenantId,
+        slug: tenantSlug,
+        name: tenantName,
+      ),
+      currentRoles: currentRoles,
+    ),
+    menu: menu,
+  );
+
   static RegisterResponse registerResponse({
     bool success = true,
     String message = 'Registered',
   }) => RegisterResponse(success: success, message: message);
 
-  static ForgotPasswordResponse forgotPasswordResponse({
-    bool success = true,
-    String message = 'Reset link sent',
-  }) => ForgotPasswordResponse(success: success, message: message);
+  static ForgotPasswordResult forgotPasswordResult({
+    bool sent = true,
+    List<ForgotPasswordAccount> accounts = const [],
+  }) => ForgotPasswordResult(sent: sent, accounts: accounts);
+
+  static ResetPasswordResult resetPasswordResult({
+    String message = 'Password updated',
+  }) => ResetPasswordResult(message: message);
 
   static FcmDeviceCheckResponse fcmDeviceCheckResponse({
     bool hasFcmToken = true,

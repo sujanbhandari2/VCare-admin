@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
@@ -24,9 +23,21 @@ import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class DocumentsScreen extends ConsumerStatefulWidget {
-  const DocumentsScreen({super.key});
+  const DocumentsScreen({
+    super.key,
+    this.initialDocumentId,
+    this.initialDocumentSource,
+    this.openDocumentOnLoad = false,
+    this.initialFileName,
+  });
+
+  final String? initialDocumentId;
+  final String? initialDocumentSource;
+  final bool openDocumentOnLoad;
+  final String? initialFileName;
 
   @override
   ConsumerState<DocumentsScreen> createState() => _DocumentsScreenState();
@@ -40,14 +51,41 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   final _scrollController = ScrollController();
   bool _isLoadMoreRequested = false;
   String? _busyDocumentId;
+  bool _handledInitialOpen = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(documentsListStateProvider.notifier).loadInitial();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(documentsListStateProvider.notifier).loadInitial();
+      if (mounted) {
+        await _maybeOpenInitialDocument();
+      }
     });
+  }
+
+  Future<void> _maybeOpenInitialDocument() async {
+    if (!widget.openDocumentOnLoad || _handledInitialOpen) return;
+
+    final listState = ref.read(documentsListStateProvider);
+    if (listState.isInitialLoading || listState.isInitialError) return;
+
+    final shouldResolveCard =
+        widget.initialDocumentSource?.trim().toLowerCase() == 'card' ||
+        widget.initialDocumentId?.trim().isNotEmpty == true ||
+        widget.initialFileName?.trim().isNotEmpty == true;
+    if (!shouldResolveCard) return;
+
+    final target = findReferralCardDocument(
+      _allItems(),
+      documentId: widget.initialDocumentId,
+      fileName: widget.initialFileName,
+    );
+    if (target == null) return;
+
+    _handledInitialOpen = true;
+    await _openDocument(target);
   }
 
   @override
@@ -340,15 +378,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                             vertical: 12,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: VCareRadius.lgAll,
                             borderSide: BorderSide(color: vcare.border),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: VCareRadius.lgAll,
                             borderSide: BorderSide(color: vcare.border),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: VCareRadius.lgAll,
                             borderSide: BorderSide(color: vcare.border),
                           ),
                           filled: true,
@@ -411,7 +449,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                             context,
                             message: listState.loadMoreErrorMessage,
                           ),
-                          style: TextStyle(color: VCareColors.primary),
+                          style: TextStyle(color: context.vcare.primary),
                         ),
                       ),
                     ),

@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_floating_bottom_sheet.dart';
 
 class ImagePickerSourceSelectionBottomSheet extends StatefulWidget {
   final VoidCallback? onGalleryPick;
   final VoidCallback? onCameraPick;
-  final EdgeInsetsGeometry margin;
   final bool showDragLine;
 
   const ImagePickerSourceSelectionBottomSheet({
     super.key,
     this.onGalleryPick,
     this.onCameraPick,
-    this.margin = .zero,
     this.showDragLine = false,
   });
 
@@ -21,7 +20,7 @@ class ImagePickerSourceSelectionBottomSheet extends StatefulWidget {
     BuildContext context, {
     VoidCallback? onGalleryPick,
     VoidCallback? onCameraPick,
-    EdgeInsetsGeometry margin = .zero,
+    EdgeInsetsGeometry? margin,
     bool showDragLine = false,
   }) {
     return context.showBottomSheet<T>(
@@ -29,14 +28,13 @@ class ImagePickerSourceSelectionBottomSheet extends StatefulWidget {
         return ImagePickerSourceSelectionBottomSheet(
           onCameraPick: onCameraPick,
           onGalleryPick: onGalleryPick,
-          margin: margin,
           showDragLine: showDragLine,
         );
       },
-      useRootNavigator: true,
-      isScrollControlled: false,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(),
+      enableDrag: false,
+      margin: margin ?? vcareCompactBottomSheetMargin(context),
+      topRadius: 12,
+      showDragHandle: showDragLine,
     );
   }
 
@@ -50,50 +48,27 @@ class _ImagePickerSourceSelectionBottomSheetState
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: .only(
-        left: 16.0,
-        right: 16.0,
-        top: 16.0,
-        bottom: context.padding.bottom + 16.0,
+      padding: EdgeInsets.only(
+        left: 8,
+        right: 8,
+        top: widget.showDragLine ? 0 : 8,
+        bottom: 8,
       ),
-      child: Material(
-        color: context.theme.scaffoldBackgroundColor,
-        borderRadius: .circular(12.0),
-        clipBehavior: .antiAlias,
-        child: Padding(
-          padding: widget.showDragLine ? .zero : const .all(8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.showDragLine)
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const .all(8.0),
-                    child: Container(
-                      width: 55.0,
-                      height: 7.0,
-                      decoration: BoxDecoration(
-                        borderRadius: .circular(4.0),
-                        color: context.theme.dividerColor,
-                      ),
-                    ),
-                  ),
-                ),
-              _ui4Item(
-                icon: Icons.camera_enhance_outlined,
-                label: context.appLocalization.camera,
-                onClick: widget.onCameraPick,
-              ),
-              _ui4Item(
-                icon: Icons.image_outlined,
-                label: context.appLocalization.gallery,
-                onClick: widget.onGalleryPick,
-              ),
-            ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ui4Item(
+            icon: Icons.camera_enhance_outlined,
+            label: context.appLocalization.camera,
+            onClick: widget.onCameraPick,
           ),
-        ),
+          _ui4Item(
+            icon: Icons.image_outlined,
+            label: context.appLocalization.gallery,
+            onClick: widget.onGalleryPick,
+          ),
+        ],
       ),
     );
   }

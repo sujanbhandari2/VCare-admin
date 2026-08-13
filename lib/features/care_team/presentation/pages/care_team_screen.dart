@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/care_team/presentation/widgets/care_team_empty_state.dart';
@@ -12,6 +11,7 @@ import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class CareTeamScreen extends ConsumerStatefulWidget {
   const CareTeamScreen({super.key});
@@ -94,7 +94,7 @@ class _CareTeamScreenState extends ConsumerState<CareTeamScreen> {
                             .read(careTeamStateProvider.notifier)
                             .refresh(),
                         style: FilledButton.styleFrom(
-                          backgroundColor: VCareColors.primary,
+                          backgroundColor: context.vcare.primary,
                         ),
                         child: const Text('Try again'),
                       ),

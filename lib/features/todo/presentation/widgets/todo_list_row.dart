@@ -8,6 +8,7 @@ import 'package:vcare_admin/features/home/presentation/widgets/home_activity_sta
 import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
 import 'package:vcare_admin/features/todo/utils/failed_payment_copy.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class TodoListRow extends StatelessWidget {
   const TodoListRow({super.key, required this.item, this.onTap});
@@ -22,7 +23,7 @@ class TodoListRow extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         side: BorderSide(color: vcare.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -71,7 +72,7 @@ class _PaymentFailedRow extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: error.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
           ),
           child: Icon(LucideIcons.alertTriangle, size: 20, color: error),
         ),
@@ -156,7 +157,7 @@ class _W9FormRow extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: _orange.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
           ),
           child: const Icon(LucideIcons.fileText, size: 20, color: _orange),
         ),
@@ -234,7 +235,7 @@ class _CompleteProfileRow extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: _orange.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
           ),
           child: const Icon(LucideIcons.userCircle, size: 20, color: _orange),
         ),
@@ -310,7 +311,7 @@ class _GenericRow extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: vcare.muted,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
           ),
           child: Icon(
             LucideIcons.listChecks,

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
@@ -14,6 +13,7 @@ import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class MedicareProviderDetailScreen extends ConsumerStatefulWidget {
   const MedicareProviderDetailScreen({
@@ -54,10 +54,7 @@ class _MedicareProviderDetailScreenState
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverVcarePageHeader(
-              title: 'Medicare directory',
-              showBack: true,
-            ),
+            SliverVcarePageHeader(title: 'Medicare directory', showBack: true),
             const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
@@ -73,10 +70,7 @@ class _MedicareProviderDetailScreenState
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverVcarePageHeader(
-              title: 'Medicare directory',
-              showBack: true,
-            ),
+            SliverVcarePageHeader(title: 'Medicare directory', showBack: true),
             const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(child: CircularProgressIndicator()),
@@ -91,10 +85,7 @@ class _MedicareProviderDetailScreenState
       return Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverVcarePageHeader(
-              title: 'Medicare directory',
-              showBack: true,
-            ),
+            SliverVcarePageHeader(title: 'Medicare directory', showBack: true),
             const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
@@ -213,7 +204,7 @@ class _HeroCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: vcare.card,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: VCareRadius.xxlAll,
             border: Border.all(color: vcare.border),
           ),
           child: Column(
@@ -225,7 +216,7 @@ class _HeroCard extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.8,
-                  color: VCareColors.primary,
+                  color: context.vcare.primary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -299,9 +290,7 @@ class _ContactActions extends StatelessWidget {
             label: const Text('Call'),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: VCareRadius.xlAll),
             ),
           ),
         ),
@@ -316,9 +305,7 @@ class _ContactActions extends StatelessWidget {
             label: const Text('Email'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: VCareRadius.xlAll),
             ),
           ),
         ),
@@ -340,7 +327,7 @@ class _LocationCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Row(
@@ -369,7 +356,7 @@ class _FieldsPanel extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Column(

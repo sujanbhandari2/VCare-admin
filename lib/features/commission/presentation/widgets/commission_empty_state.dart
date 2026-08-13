@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/referral_share_sheet.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
@@ -29,12 +29,12 @@ class CommissionEmptyState extends ConsumerWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                VCareColors.primary.withValues(alpha: 0.1),
+                vcare.primary.withValues(alpha: 0.1),
                 vcare.card,
-                VCareColors.success.withValues(alpha: 0.05),
+                vcare.success.withValues(alpha: 0.05),
               ],
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: VCareRadius.xxlAll,
             border: Border.all(color: vcare.border),
           ),
           child: Column(
@@ -43,8 +43,8 @@ class CommissionEmptyState extends ConsumerWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: VCareColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
+                  color: vcare.primary.withValues(alpha: 0.1),
+                  borderRadius: VCareRadius.xlAll,
                 ),
                 child: Stack(
                   alignment: Alignment.center,
@@ -52,7 +52,7 @@ class CommissionEmptyState extends ConsumerWidget {
                     Icon(
                       LucideIcons.trendingUp,
                       size: 28,
-                      color: VCareColors.primary,
+                      color: vcare.primary,
                     ),
                     Positioned(
                       right: 14,
@@ -60,7 +60,7 @@ class CommissionEmptyState extends ConsumerWidget {
                       child: Icon(
                         LucideIcons.sparkles,
                         size: 14,
-                        color: VCareColors.success,
+                        color: vcare.success,
                       ),
                     ),
                   ],
@@ -91,7 +91,6 @@ class CommissionEmptyState extends ConsumerWidget {
                     horizontal: 20,
                     vertical: 10,
                   ),
-                  shape: const StadiumBorder(),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -140,14 +139,14 @@ class _InviteTipCard extends StatelessWidget {
     final vcare = context.vcare;
 
     return Material(
-      color: VCareColors.primary.withValues(alpha: 0.06),
+      color: vcare.primary.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: VCareColors.primary.withValues(alpha: 0.2)),
+        borderRadius: VCareRadius.xlAll,
+        side: BorderSide(color: vcare.primary.withValues(alpha: 0.2)),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -157,14 +156,10 @@ class _InviteTipCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: VCareColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: vcare.primary.withValues(alpha: 0.15),
+                  borderRadius: VCareRadius.mdAll,
                 ),
-                child: Icon(
-                  LucideIcons.users,
-                  size: 16,
-                  color: VCareColors.primary,
-                ),
+                child: Icon(LucideIcons.users, size: 16, color: vcare.primary),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -183,26 +178,18 @@ class _InviteTipCard extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(
-                    LucideIcons.share2,
-                    size: 14,
-                    color: VCareColors.primary,
-                  ),
+                  Icon(LucideIcons.share2, size: 14, color: vcare.primary),
                   const SizedBox(width: 6),
                   Text(
                     'Share link',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: VCareColors.primary,
+                      color: vcare.primary,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    LucideIcons.arrowRight,
-                    size: 14,
-                    color: VCareColors.primary,
-                  ),
+                  Icon(LucideIcons.arrowRight, size: 14, color: vcare.primary),
                 ],
               ),
             ],
@@ -232,7 +219,7 @@ class _TipCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +229,7 @@ class _TipCard extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: vcare.card,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: VCareRadius.mdAll,
               border: Border.all(color: vcare.border.withValues(alpha: 0.6)),
             ),
             child: Icon(icon, size: 16, color: vcare.mutedForeground),

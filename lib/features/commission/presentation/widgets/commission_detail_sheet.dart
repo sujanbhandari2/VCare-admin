@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_history_item.dart';
 import 'package:vcare_admin/features/commission/domain/entities/sales_history_item.dart';
 import 'package:vcare_admin/features/commission/utils/commission_utils.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class CommissionDetailViewData {
   const CommissionDetailViewData({
@@ -59,15 +60,8 @@ Future<void> showCommissionDetailSheet(
   BuildContext context,
   CommissionDetailViewData data,
 ) {
-  return showModalBottomSheet<void>(
-    context: context,
+  return context.showBottomSheet<void>(
     isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-    barrierColor: Theme.of(context).dividerColor.withValues(alpha: 0.2),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
     builder: (sheetContext) => CommissionDetailSheet(data: data),
   );
 }
@@ -92,16 +86,6 @@ class CommissionDetailSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: vcare.muted,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
             const SizedBox(height: 14),
             Text(
               data.isAgencySale ? 'Sale details' : 'Commission details',
@@ -130,8 +114,8 @@ class CommissionDetailSheet extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    VCareColors.muted.withValues(alpha: 0.9),
-                    VCareColors.muted.withValues(alpha: 0.4),
+                    vcare.muted.withValues(alpha: 0.9),
+                    vcare.muted.withValues(alpha: 0.4),
                   ],
                 ),
               )
@@ -149,8 +133,8 @@ class CommissionDetailSheet extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          VCareColors.muted.withValues(alpha: 0.9),
-                          VCareColors.muted.withValues(alpha: 0.4),
+                          vcare.muted.withValues(alpha: 0.9),
+                          vcare.muted.withValues(alpha: 0.4),
                         ],
                       ),
                     ),
@@ -168,13 +152,13 @@ class CommissionDetailSheet extends StatelessWidget {
                       subtitle: hasCommission
                           ? null
                           : 'Paid to your agency group.',
-                      valueColor: hasCommission ? VCareColors.success : null,
+                      valueColor: hasCommission ? vcare.success : null,
                       accent: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          VCareColors.success.withValues(alpha: 0.15),
-                          VCareColors.success.withValues(alpha: 0.05),
+                          vcare.success.withValues(alpha: 0.15),
+                          vcare.success.withValues(alpha: 0.05),
                         ],
                       ),
                     ),
@@ -186,7 +170,7 @@ class CommissionDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: vcare.card,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: VCareRadius.xlAll,
                 border: Border.all(color: vcare.border),
               ),
               child: Column(
@@ -245,7 +229,7 @@ class _AmountCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: accent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(

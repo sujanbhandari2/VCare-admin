@@ -1,11 +1,26 @@
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/features/cases/utils/request_attachments.dart';
 import 'package:vcare_admin/features/documents/domain/entities/agent_file.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_filter.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_type_option.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
 import 'package:vcare_admin/shared/utils/date_format_utils.dart';
+
+bool isRequestAudioAttachment(String dataUrl, String name) {
+  if (dataUrl.startsWith('data:audio/')) return true;
+  return RegExp(
+    r'\.(mp3|m4a|wav|webm|ogg|aac)$',
+    caseSensitive: false,
+  ).hasMatch(name);
+}
+
+bool isRequestImageAttachment(String dataUrl, String name) {
+  if (dataUrl.startsWith('data:image/')) return true;
+  return RegExp(
+    r'\.(png|jpe?g|gif|webp|heic)$',
+    caseSensitive: false,
+  ).hasMatch(name);
+}
 
 DocumentKind documentKindOf(String dataUrl, String name) {
   if (isDocumentImage(dataUrl, name)) {
@@ -224,6 +239,37 @@ bool canManageDocument({
   final uploader = (createdBy ?? userId)?.trim();
   if (uploader == null || uploader.isEmpty) return false;
   return uploader == current;
+}
+
+DocumentItem? findReferralCardDocument(
+  List<DocumentItem> items, {
+  String? documentId,
+  String? fileName,
+}) {
+  if (documentId != null && documentId.trim().isNotEmpty) {
+    for (final item in items) {
+      if (item.id == documentId.trim()) {
+        return item;
+      }
+    }
+  }
+
+  final cardItems = items
+      .where((item) => item.source == DocumentSource.card)
+      .toList(growable: false);
+  if (cardItems.isEmpty) return null;
+
+  final normalizedFileName = fileName?.trim().toLowerCase();
+  if (normalizedFileName != null && normalizedFileName.isNotEmpty) {
+    for (final item in cardItems) {
+      if (item.name.toLowerCase().contains(normalizedFileName)) {
+        return item;
+      }
+    }
+  }
+
+  cardItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return cardItems.first;
 }
 
 const _allowedRenameExtensions = <String>{

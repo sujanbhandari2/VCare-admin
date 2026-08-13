@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -9,9 +8,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/services/storage/storage_keys.dart';
 import '../../../../core/services/storage/storage_service_provider.dart';
-import '../../../../shared/utils/logger.dart';
+import 'package:vcare_admin/core/services/notifications/notification_router.dart';
+import 'package:vcare_admin/shared/utils/logger.dart';
 import '../../../auth/presentation/providers/logged_in_user_id_provider.dart';
-import 'notification_repository_provider.dart';
 
 part 'fcm_notification_init_provider.g.dart';
 
@@ -38,6 +37,12 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
         onOpened: _handleNotificationNavigation,
         onNotificationTapped: _handleNotificationTap,
       );
+
+      final launchResponse =
+          await _notificationService.getLaunchNotificationResponse();
+      if (launchResponse != null) {
+        _handleNotificationTap(launchResponse);
+      }
 
       final granted = await _notificationService.requestPermission();
       if (!granted) {
@@ -126,31 +131,32 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
     // );
   }
 
-  Future<void> _registerOrUpdateToken({
-    required String token,
-    required int? userId,
-    required bool useUpdate,
-    required Map<String, dynamic> payloads,
-  }) async {
-    final repository = ref.read(notificationRepositoryProvider);
-    final response = useUpdate
-        ? await repository.updateDeviceToken(payloads: payloads)
-        : await repository.registerDeviceToken(payloads: payloads);
-
-    response.when(
-      failure: (error) {
-        Logger.logError('[FCM] Token sync failed: ${error.message}');
-      },
-      success: (_) {
-        if (!ref.mounted) return;
-        final storageService = ref.read(storageServiceProvider);
-        storageService.set(StorageKeys.lastSyncedFcmToken, token);
-        if (userId != null) {
-          storageService.set(StorageKeys.lastSyncedFcmUserId, userId);
-        }
-      },
-    );
-  }
+  // TODO: Re-enable when FCM device APIs are available.
+  // Future<void> _registerOrUpdateToken({
+  //   required String token,
+  //   required int? userId,
+  //   required bool useUpdate,
+  //   required Map<String, dynamic> payloads,
+  // }) async {
+  //   final repository = ref.read(notificationRepositoryProvider);
+  //   final response = useUpdate
+  //       ? await repository.updateDeviceToken(payloads: payloads)
+  //       : await repository.registerDeviceToken(payloads: payloads);
+  //
+  //   response.when(
+  //     failure: (error) {
+  //       Logger.logError('[FCM] Token sync failed: ${error.message}');
+  //     },
+  //     success: (_) {
+  //       if (!ref.mounted) return;
+  //       final storageService = ref.read(storageServiceProvider);
+  //       storageService.set(StorageKeys.lastSyncedFcmToken, token);
+  //       if (userId != null) {
+  //         storageService.set(StorageKeys.lastSyncedFcmUserId, userId);
+  //       }
+  //     },
+  //   );
+  // }
 
   int? _parseUserId(dynamic value) {
     if (value is int) return value;
@@ -165,7 +171,6 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
   void _handleNotificationTap(NotificationResponse response) {
     final payload = response.payload;
     if (payload == null || payload.isEmpty) {
-      _handleNotificationData(const {}, source: 'local');
       return;
     }
 
@@ -180,11 +185,8 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
           Map<String, dynamic>.from(decoded),
           source: 'local',
         );
-        return;
       }
     } catch (_) {}
-
-    _handleNotificationData(const {}, source: 'local');
   }
 
   void _handleNotificationData(
@@ -197,5 +199,6 @@ class FcmNotificationInitNotifier extends _$FcmNotificationInitNotifier {
     }
 
     Logger.logMessage('[FCM] Notification data received from $source: $data');
+    NotificationRouter.navigateFromPayload(data);
   }
 }

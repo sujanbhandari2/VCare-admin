@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/app_colors.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/common_icon.dart';
@@ -53,6 +52,7 @@ class CommonChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(36.0);
+    final onPrimary = context.theme.colorScheme.onPrimary;
 
     return Padding(
       padding: margin,
@@ -82,7 +82,7 @@ class CommonChip extends StatelessWidget {
                     (leading is IconData || leading is String))
                   CommonIcon(
                     icon: leading,
-                    color: leadingColor ?? AppColors.white,
+                    color: leadingColor ?? onPrimary,
                     size: (16.0 / 36.0) * height,
                   ),
                 Flexible(
@@ -97,7 +97,7 @@ class CommonChip extends StatelessWidget {
                     (trailing is IconData || trailing is String))
                   CommonIcon(
                     icon: trailing,
-                    color: trailingColor ?? AppColors.white,
+                    color: trailingColor ?? onPrimary,
                     size: (16.0 / 36.0) * height,
                   ),
               ],

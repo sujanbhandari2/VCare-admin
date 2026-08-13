@@ -49,9 +49,7 @@ class FindCareCurrentLocationStateNotifier
             .read(findCareSearchLocationProvider.notifier)
             .setFromCurrentLocation(location);
         if (ref.mounted) {
-          state = state.success(
-            location.copyWith(fromCurrentLocation: true),
-          );
+          state = state.success(location.copyWith(fromCurrentLocation: true));
         }
         return result;
       case CurrentLocationFailure(:final userMessage, :final reason):

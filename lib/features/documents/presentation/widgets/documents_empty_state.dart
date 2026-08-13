@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class DocumentsEmptyState extends StatelessWidget {
   const DocumentsEmptyState({super.key});
@@ -13,7 +14,7 @@ class DocumentsEmptyState extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         side: BorderSide(color: vcare.border),
       ),
       child: Padding(

@@ -21,17 +21,11 @@ class AppUpdateSheet extends StatelessWidget {
 
     _isAlreadyShowing = true;
 
-    return showModalBottomSheet<T>(
-      context: context,
-      barrierColor: context.isDarkTheme ? Colors.white12 : Colors.black26,
+    return context.showBottomSheet<T>(
       isDismissible: false,
       enableDrag: false,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      topRadius: 20,
       builder: (_) => AppUpdateSheet._(info: info),
     ).whenComplete(() => _isAlreadyShowing = false);
   }
@@ -41,37 +35,31 @@ class AppUpdateSheet extends StatelessWidget {
     return PopScope(
       canPop: false,
       child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          bottom: MediaQuery.paddingOf(context).bottom,
-        ),
-        child: Material(
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.appLocalization.update_available,
-                  style: context.textTheme.titleLarge,
-                  textScaler: const TextScaler.linear(0.85),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  context.appLocalization.update_available_desc,
-                  style: context.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
-                AppUpdateSheetAppInfoRow(info: info),
-                const SizedBox(height: 24),
-                Flexible(child: AppUpdateSheetReleaseNotesTile(info: info)),
-                AppUpdateSheetUpdateActionButtons(info: info),
-              ],
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              context.appLocalization.update_available,
+              style: context.textTheme.titleLarge,
+              textScaler: const TextScaler.linear(0.85),
             ),
-          ),
+            const SizedBox(height: 12),
+            Text(
+              context.appLocalization.update_available_desc,
+              style: context.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+            AppUpdateSheetAppInfoRow(info: info),
+            const SizedBox(height: 24),
+            Flexible(
+              child: SingleChildScrollView(
+                child: AppUpdateSheetReleaseNotesTile(info: info),
+              ),
+            ),
+            AppUpdateSheetUpdateActionButtons(info: info),
+          ],
         ),
       ),
     );

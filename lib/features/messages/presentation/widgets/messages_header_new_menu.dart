@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Header action used on Messages and Live Chat tabs.
@@ -27,8 +26,8 @@ class MessagesHeaderNewMenu extends StatelessWidget {
           onTap: onNewChat,
           child: MessagesHeaderNewMenuOption(
             icon: LucideIcons.userPlus,
-            iconBackground: VCareColors.primary.withValues(alpha: 0.12),
-            iconColor: VCareColors.primary,
+            iconBackground: context.vcare.primary.withValues(alpha: 0.12),
+            iconColor: context.vcare.primary,
             title: 'New chat',
             subtitle: 'Start a 1:1 conversation',
           ),
@@ -47,14 +46,14 @@ class MessagesHeaderNewMenu extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.plus, size: 16, color: VCareColors.primary),
+          Icon(LucideIcons.plus, size: 16, color: context.vcare.primary),
           const SizedBox(width: 4),
           Text(
             'New',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: VCareColors.primary,
+              color: context.vcare.primary,
             ),
           ),
         ],

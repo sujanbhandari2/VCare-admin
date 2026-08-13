@@ -13,6 +13,7 @@ import 'package:vcare_admin/features/saved_providers/presentation/providers/save
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class SavedProvidersScreen extends ConsumerStatefulWidget {
   const SavedProvidersScreen({super.key});
@@ -136,7 +137,7 @@ class _SavedProvidersEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Column(
@@ -146,7 +147,7 @@ class _SavedProvidersEmptyState extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               color: vcare.accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
             ),
             child: Icon(LucideIcons.heart, color: vcare.accent, size: 24),
           ),
@@ -171,7 +172,6 @@ class _SavedProvidersEmptyState extends StatelessWidget {
             onPressed: onFindCare,
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: const StadiumBorder(),
             ),
             child: const Text('Go to providers'),
           ),

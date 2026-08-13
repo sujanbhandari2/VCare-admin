@@ -91,8 +91,6 @@ class ShellMockData {
     return formatWhen(iso);
   }
 
-  static List<CareRequest> allRequests() => HomeMockData.requests();
-
   static int _hashId(String id) {
     int h = 0;
     for (int i = 0; i < id.length; i++) {

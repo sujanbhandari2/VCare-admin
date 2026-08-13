@@ -114,7 +114,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'tip':
         context.go(AppRouter.profile);
       default:
-        context.pushNamed(AppRouter.requests.toPathName);
+        context.pushNamed(AppRouter.cases.toPathName);
     }
   }
 }
@@ -124,15 +124,11 @@ class _NotificationsMessagePanel extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.actionLabel,
-    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
-  final String? actionLabel;
-  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -150,10 +146,6 @@ class _NotificationsMessagePanel extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(color: context.vcare.mutedForeground),
           ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 16),
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
-          ],
         ],
       ),
     );

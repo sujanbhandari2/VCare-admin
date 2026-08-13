@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class DocumentsDocRow extends StatelessWidget {
   const DocumentsDocRow({
@@ -43,7 +43,7 @@ class DocumentsDocRow extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         side: BorderSide(color: vcare.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -55,7 +55,7 @@ class DocumentsDocRow extends StatelessWidget {
               children: [
                 InkWell(
                   onTap: item.canOpen ? onOpen : null,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: VCareRadius.lgAll,
                   child: _DocumentThumbnail(item: item),
                 ),
                 const SizedBox(width: 12),
@@ -91,10 +91,10 @@ class DocumentsDocRow extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: VCareColors.primary.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(999),
+                              color: context.vcare.primary.withValues(alpha: 0.05),
+                              borderRadius: VCareRadius.fullAll,
                               border: Border.all(
-                                color: VCareColors.primary.withValues(
+                                color: context.vcare.primary.withValues(
                                   alpha: 0.3,
                                 ),
                               ),
@@ -104,7 +104,7 @@ class DocumentsDocRow extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: VCareColors.primary,
+                                color: context.vcare.primary,
                               ),
                             ),
                           ),
@@ -227,7 +227,7 @@ class _DocumentThumbnail extends StatelessWidget {
         item.kind == DocumentKind.image && item.imagePreviewUrl.isNotEmpty;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: VCareRadius.lgAll,
       child: Container(
         width: 56,
         height: 56,
@@ -347,7 +347,7 @@ class _SourceLabel extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: VCareColors.primary,
+                  color: context.vcare.primary,
                 ),
               ),
             ),
@@ -355,7 +355,7 @@ class _SourceLabel extends StatelessWidget {
             Icon(
               LucideIcons.externalLink,
               size: 12,
-              color: VCareColors.primary,
+              color: context.vcare.primary,
             ),
           ],
         ),

@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/state/client_documents_loadable_state.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_add_payment_method_sheet.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_contact_card.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_create_case_sheet.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_carousel.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
@@ -23,6 +23,7 @@ import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class ClientMembershipsTab extends StatelessWidget {
   const ClientMembershipsTab({
@@ -30,6 +31,7 @@ class ClientMembershipsTab extends StatelessWidget {
     required this.memberships,
     required this.dependents,
     required this.onMembershipInfo,
+    this.affiliateAgents = const [],
     this.isLoading = false,
     this.error,
     this.onRetry,
@@ -40,6 +42,7 @@ class ClientMembershipsTab extends StatelessWidget {
 
   final List<ClientMembership> memberships;
   final List<ClientDependent> dependents;
+  final List<ClientAffiliateAgent> affiliateAgents;
   final ValueChanged<ClientMembership> onMembershipInfo;
   final bool isLoading;
   final String? error;
@@ -80,7 +83,7 @@ class ClientMembershipsTab extends StatelessWidget {
           )
         else
           ClientDetailCarousel(
-            height: 148,
+            height: 156,
             itemWidth: membershipWidth,
             itemCount: memberships.length,
             itemBuilder: (context, index) {
@@ -91,6 +94,14 @@ class ClientMembershipsTab extends StatelessWidget {
               );
             },
           ),
+        if (affiliateAgents.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          // const ClientDetailSectionHeading('Affiliates'),
+          for (var i = 0; i < affiliateAgents.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            ClientAffiliateCard(agent: affiliateAgents[i]),
+          ],
+        ],
         const SizedBox(height: 24),
         ClientDetailSectionHeading('Dependents'),
         if (isLoadingDependents && dependents.isEmpty)
@@ -117,6 +128,23 @@ class ClientMembershipsTab extends StatelessWidget {
             },
           ),
       ],
+    );
+  }
+}
+
+class ClientAffiliateCard extends StatelessWidget {
+  const ClientAffiliateCard({super.key, required this.agent});
+
+  final ClientAffiliateAgent agent;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClientContactCard(
+      name: agent.name,
+      subtitle: agent.email ?? agent.roleLabel,
+      avatarUrl: agent.avatarUrl,
+      phone: agent.phone,
+      email: agent.email,
     );
   }
 }
@@ -278,7 +306,7 @@ class _ClientBillingTabState extends ConsumerState<ClientBillingTab> {
             icon: const Icon(LucideIcons.plus, size: 14),
             label: const Text('Add'),
             style: TextButton.styleFrom(
-              foregroundColor: VCareColors.primary,
+              foregroundColor: context.vcare.primary,
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -506,7 +534,7 @@ class _ClientCasesTabState extends State<ClientCasesTab> {
             icon: const Icon(LucideIcons.plus, size: 14),
             label: const Text('New request'),
             style: TextButton.styleFrom(
-              foregroundColor: VCareColors.primary,
+              foregroundColor: context.vcare.primary,
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -634,7 +662,7 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
             icon: const Icon(LucideIcons.upload, size: 14),
             label: const Text('Upload'),
             style: TextButton.styleFrom(
-              foregroundColor: VCareColors.primary,
+              foregroundColor: context.vcare.primary,
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -659,7 +687,7 @@ class _ClientDocumentsTabState extends State<ClientDocumentsTab> {
                 Text(
                   'Uploading document...',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -712,9 +740,9 @@ class ClientUpcomingBillingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: VCareColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VCareColors.primary.withValues(alpha: 0.2)),
+        color: context.vcare.primary.withValues(alpha: 0.05),
+        borderRadius: VCareRadius.xlAll,
+        border: Border.all(color: context.vcare.primary.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -727,13 +755,13 @@ class ClientUpcomingBillingCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: VCareColors.primary.withValues(alpha: 0.15),
+                    color: context.vcare.primary.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     LucideIcons.calendarClock,
                     size: 14,
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -743,7 +771,7 @@ class ClientUpcomingBillingCard extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.8,
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                   ),
                 ),
               ],
@@ -761,7 +789,7 @@ class ClientUpcomingBillingCard extends StatelessWidget {
                         '•',
                         style: TextStyle(
                           fontSize: 12,
-                          color: VCareColors.primary,
+                          color: context.vcare.primary,
                           height: 1.4,
                         ),
                       ),
@@ -827,7 +855,7 @@ class ClientMembershipCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -961,7 +989,7 @@ class ClientDependentCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -1042,7 +1070,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -1053,10 +1081,10 @@ class ClientPaymentMethodCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: VCareColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: context.vcare.primary.withValues(alpha: 0.1),
+                borderRadius: VCareRadius.lgAll,
               ),
-              child: Icon(_iconForType(), size: 16, color: VCareColors.primary),
+              child: Icon(_iconForType(), size: 16, color: context.vcare.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1091,7 +1119,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
                     Icon(
                       LucideIcons.checkCircle2,
                       size: 12,
-                      color: VCareColors.primary,
+                      color: context.vcare.primary,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -1099,7 +1127,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: VCareColors.primary,
+                        color: context.vcare.primary,
                       ),
                     ),
                   ],
@@ -1113,7 +1141,7 @@ class ClientPaymentMethodCard extends StatelessWidget {
                 color: vcare.mutedForeground,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: VCareRadius.lgAll,
               ),
               onSelected: (value) {
                 if (value == 'primary') {
@@ -1170,7 +1198,7 @@ class ClientTransactionRow extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         side: BorderSide(color: vcare.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -1242,7 +1270,7 @@ class ClientCaseCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -1254,13 +1282,13 @@ class ClientCaseCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: VCareColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: context.vcare.primary.withValues(alpha: 0.1),
+                borderRadius: VCareRadius.lgAll,
               ),
               child: Icon(
                 LucideIcons.fileText,
                 size: 16,
-                color: VCareColors.primary,
+                color: context.vcare.primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -1341,7 +1369,7 @@ class ClientDocumentRow extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -1349,11 +1377,11 @@ class ClientDocumentRow extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: VCareRadius.lgAll,
               child: Container(
                 width: 40,
                 height: 40,
-                color: VCareColors.primary.withValues(alpha: 0.1),
+                color: context.vcare.primary.withValues(alpha: 0.1),
                 child: isImage
                     ? VCareCachedImage(
                         imageUrl: file.url,
@@ -1364,13 +1392,13 @@ class ClientDocumentRow extends StatelessWidget {
                         errorWidget: Icon(
                           LucideIcons.fileText,
                           size: 16,
-                          color: VCareColors.primary,
+                          color: context.vcare.primary,
                         ),
                       )
                     : Icon(
                         LucideIcons.fileText,
                         size: 16,
-                        color: VCareColors.primary,
+                        color: context.vcare.primary,
                       ),
               ),
             ),
@@ -1407,7 +1435,7 @@ class ClientDocumentRow extends StatelessWidget {
                 color: vcare.mutedForeground,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: VCareRadius.lgAll,
               ),
               itemBuilder: (context) => [
                 if (isImage)

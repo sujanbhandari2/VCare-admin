@@ -1,11 +1,24 @@
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 
 String clientInitials(String fullName) => profileInitials(fullName);
 
-String buildClientsSubtitle(int totalCount, {bool isLoading = false}) {
-  if (isLoading) return 'Loading clients…';
+String buildClientsSubtitle(
+  int totalCount, {
+  bool isLoading = false,
+  ClientListType clientType = ClientListType.individual,
+}) {
+  if (isLoading) {
+    return clientType == ClientListType.group
+        ? 'Loading groups…'
+        : 'Loading clients…';
+  }
+  if (clientType == ClientListType.group) {
+    final label = totalCount == 1 ? 'group' : 'groups';
+    return '$totalCount $label';
+  }
   final label = totalCount == 1 ? 'client' : 'clients';
   return '$totalCount active $label';
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/medicare_provider_lookup_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/medicare_provider_result_card.dart';
@@ -10,6 +9,7 @@ import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class MedicareProviderLookupScreen extends ConsumerStatefulWidget {
   const MedicareProviderLookupScreen({super.key});
@@ -77,7 +77,7 @@ class _MedicareProviderLookupScreenState
                           child: Text(
                             'Medicare Physician & Other Practitioners',
                             style: TextStyle(
-                              color: VCareColors.primary,
+                              color: context.vcare.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -116,7 +116,7 @@ class _MedicareProviderLookupScreenState
                 Material(
                   color: vcare.card,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: VCareRadius.xlAll,
                     side: BorderSide(color: vcare.border),
                   ),
                   child: Padding(
@@ -150,7 +150,6 @@ class _MedicareProviderLookupScreenState
                   onPressed: lookupState.loading ? null : notifier.submitSearch,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(44),
-                    shape: const StadiumBorder(),
                   ),
                   child: lookupState.loading && !lookupState.loadingMore
                       ? const Text('Searching…')
@@ -189,7 +188,6 @@ class _MedicareProviderLookupScreenState
                             : notifier.loadMore,
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(44),
-                          shape: const StadiumBorder(),
                         ),
                         child: Text(
                           lookupState.loadingMore ? 'Loading…' : 'Load more',
@@ -242,7 +240,7 @@ class _LookupField extends StatelessWidget {
         Material(
           color: vcare.card,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             side: BorderSide(color: vcare.border),
           ),
           child: Padding(
@@ -278,7 +276,7 @@ class _LookupSkeleton extends StatelessWidget {
             height: 120,
             decoration: BoxDecoration(
               color: vcare.muted.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
             ),
           ),
         ),

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_mapper_utils.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_documents_state_provider.dart';
@@ -13,6 +12,7 @@ import 'package:vcare_admin/features/documents/domain/entities/document_upload_c
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_type_picker_sheet.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class ClientUploadDocumentSheet extends StatelessWidget {
   const ClientUploadDocumentSheet({
@@ -184,17 +184,6 @@ class ClientUploadDocumentSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text(
@@ -295,7 +284,7 @@ class _UploadOption extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
@@ -304,10 +293,10 @@ class _UploadOption extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: VCareColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: context.vcare.primary.withValues(alpha: 0.1),
+                  borderRadius: VCareRadius.lgAll,
                 ),
-                child: Icon(icon, size: 16, color: VCareColors.primary),
+                child: Icon(icon, size: 16, color: context.vcare.primary),
               ),
               const SizedBox(width: 12),
               Text(

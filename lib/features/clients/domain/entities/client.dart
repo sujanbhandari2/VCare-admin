@@ -1,3 +1,4 @@
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/shared/models/loadable_list_item.dart';
 
 enum ClientGender { male, female, nonBinary }
@@ -26,6 +27,7 @@ class ClientListItem implements LoadableListItem {
     required this.phone,
     required this.location,
     required this.avatarUrl,
+    this.clientType = ClientListType.individual,
   });
 
   final String id;
@@ -34,6 +36,7 @@ class ClientListItem implements LoadableListItem {
   final String phone;
   final String location;
   final String avatarUrl;
+  final ClientListType clientType;
 
   @override
   bool operator ==(Object other) =>
@@ -86,6 +89,26 @@ class ClientDependent {
   final String name;
   final String relation;
   final String avatarUrl;
+}
+
+/// Agent affiliated with a client, embedded as `affiliateAgents[]` on the
+/// client detail payload.
+class ClientAffiliateAgent {
+  const ClientAffiliateAgent({
+    required this.id,
+    required this.name,
+    required this.roleLabel,
+    required this.avatarUrl,
+    this.email,
+    this.phone,
+  });
+
+  final String id;
+  final String name;
+  final String roleLabel;
+  final String avatarUrl;
+  final String? email;
+  final String? phone;
 }
 
 class ClientPaymentMethod {

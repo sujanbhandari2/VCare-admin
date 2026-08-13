@@ -9,10 +9,9 @@ enum LoginFlowStep {
   activatePassword,
   onboard,
   biometric,
-  forgotIdentify,
-  forgotSelect,
-  forgotVerify,
-  forgotReset,
+  forgotRequest,
+  forgotDisambiguate,
+  forgotSent,
 }
 
 enum LoginFlowMethod { phone, email }

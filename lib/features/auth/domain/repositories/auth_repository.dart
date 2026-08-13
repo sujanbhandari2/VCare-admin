@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
-import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/reset_password_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
@@ -54,6 +56,26 @@ abstract class AuthRepository {
     CancelToken? cancelToken,
   });
 
+  /// Admin console login — returns a session or tenant selection.
+  Future<EitherResponseOrException<AdminLoginOutcome>> adminLogin({
+    required String email,
+    required String password,
+    String? tenantSlug,
+    CancelToken? cancelToken,
+  });
+
+  /// Rotates access and refresh tokens.
+  Future<EitherResponseOrException<AuthRefreshTokens>> refreshAuthTokens({
+    required String refreshToken,
+    CancelToken? cancelToken,
+  });
+
+  /// Invalidates the refresh token on the server.
+  Future<EitherResponseOrException<void>> logoutSession({
+    required String refreshToken,
+    CancelToken? cancelToken,
+  });
+
   /// Password login — returns a session or a 2FA challenge.
   Future<EitherResponseOrException<AuthLoginOutcome>> login({
     required Map<String, dynamic> payloads,
@@ -82,10 +104,19 @@ abstract class AuthRepository {
     CancelToken? cancelToken,
   });
 
-  /// Method to handle forgot password
-  ///
-  Future<EitherResponseOrException<ForgotPasswordResponse>> forgetPassword({
-    required Map<String, dynamic> payloads,
+  /// Sends a password reset link for the given identifier.
+  Future<EitherResponseOrException<ForgotPasswordResult>> forgotPassword({
+    required String identifier,
+    String? accountId,
+    String? dob,
+    String? zipCode,
+    CancelToken? cancelToken,
+  });
+
+  /// Completes password reset using a token from the reset link.
+  Future<EitherResponseOrException<ResetPasswordResult>> resetPassword({
+    required String token,
+    required String password,
     CancelToken? cancelToken,
   });
 

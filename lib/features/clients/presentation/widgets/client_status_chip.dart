@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/core/styles/vcare_spacing.dart';
+import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 
 class ClientStatusChip extends StatelessWidget {
@@ -131,13 +133,19 @@ class ClientStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _resolveColors(tone ?? ClientChipTone.muted);
+    final colors = VCareStatusColors.of(
+      context,
+      _toStatusTone(tone ?? ClientChipTone.muted),
+    );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VCareSpacing.s2,
+        vertical: VCareSpacing.s1,
+      ),
       decoration: BoxDecoration(
         color: colors.background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VCareRadius.fullAll,
         border: Border.all(color: colors.border),
       ),
       child: Text(
@@ -151,52 +159,15 @@ class ClientStatusChip extends StatelessWidget {
     );
   }
 
-  _ChipColors _resolveColors(ClientChipTone tone) {
-    switch (tone) {
-      case ClientChipTone.success:
-        return const _ChipColors(
-          background: Color(0x0D16A34A),
-          foreground: Color(0xFF15803D),
-          border: Color(0x6616A34A),
-        );
-      case ClientChipTone.warning:
-        return const _ChipColors(
-          background: Color(0x0DEAB308),
-          foreground: Color(0xFFA16207),
-          border: Color(0x66EAB308),
-        );
-      case ClientChipTone.destructive:
-        return const _ChipColors(
-          background: Color(0x0DDC2626),
-          foreground: Color(0xFFB91C1C),
-          border: Color(0x66DC2626),
-        );
-      case ClientChipTone.info:
-        return _ChipColors(
-          background: VCareColors.primary.withValues(alpha: 0.05),
-          foreground: VCareColors.primary,
-          border: VCareColors.primary.withValues(alpha: 0.4),
-        );
-      case ClientChipTone.muted:
-        return const _ChipColors(
-          background: Color(0x0D000000),
-          foreground: Color(0xFF64748B),
-          border: Color(0x40000000),
-        );
-    }
+  static VCareStatusTone _toStatusTone(ClientChipTone tone) {
+    return switch (tone) {
+      ClientChipTone.success => VCareStatusTone.success,
+      ClientChipTone.warning => VCareStatusTone.warning,
+      ClientChipTone.destructive => VCareStatusTone.danger,
+      ClientChipTone.info => VCareStatusTone.info,
+      ClientChipTone.muted => VCareStatusTone.neutral,
+    };
   }
 }
 
 enum ClientChipTone { success, warning, destructive, info, muted }
-
-class _ChipColors {
-  const _ChipColors({
-    required this.background,
-    required this.foreground,
-    required this.border,
-  });
-
-  final Color background;
-  final Color foreground;
-  final Color border;
-}

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 // import 'package:vcare_admin/features/ava/presentation/providers/ava_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/cases_list_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
 // Sales tab refresh — restore with NavItem.sales.
 // import 'package:vcare_admin/features/commission/presentation/providers/commission_history_state_provider.dart';
@@ -19,12 +20,15 @@ Future<void> refreshTabData(WidgetRef ref, NavItem tab) async {
   switch (tab) {
     case NavItem.clients:
       await ref.read(clientsListStateProvider.notifier).refresh();
-    case NavItem.provider:
-      if (ref.read(userLoggedInStateProvider)) {
-        await ref
-            .read(savedProvidersStateProvider.notifier)
-            .fetchSavedProviders(forceRefresh: true);
-      }
+    case NavItem.cases:
+      await ref.read(casesListStateProvider.notifier).refresh();
+    // Providers tab replaced by Cases.
+    // case NavItem.provider:
+    //   if (ref.read(userLoggedInStateProvider)) {
+    //     await ref
+    //         .read(savedProvidersStateProvider.notifier)
+    //         .fetchSavedProviders(forceRefresh: true);
+    //   }
     // case NavItem.sales:
     //   final agencyGroupId = ref
     //       .read(localProfileStateProvider)

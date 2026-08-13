@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
 import 'package:vcare_admin/features/home/data/home_mock_data.dart';
@@ -10,6 +9,7 @@ import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart'
 import 'package:vcare_admin/features/profile/domain/entities/profile_address.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/user_profile_avatar.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Parity with vcareapp ProfileSummaryCard.
 class ProfileSummaryCard extends ConsumerWidget {
@@ -38,7 +38,7 @@ class ProfileSummaryCard extends ConsumerWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         side: BorderSide(color: vcare.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -76,7 +76,7 @@ class ProfileSummaryCard extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: VCareColors.primary,
+                            color: context.vcare.primary,
                           ),
                         ),
                       ],
@@ -156,7 +156,7 @@ class _AddressDetailRow extends StatelessWidget {
     if (address == null) {
       return InkWell(
         onTap: onAddressTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: VCareRadius.mdAll,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(
@@ -169,7 +169,7 @@ class _AddressDetailRow extends StatelessWidget {
                     Icon(
                       LucideIcons.plus,
                       size: 12,
-                      color: VCareColors.primary,
+                      color: context.vcare.primary,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -179,7 +179,7 @@ class _AddressDetailRow extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: VCareColors.primary,
+                        color: context.vcare.primary,
                       ),
                     ),
                   ],

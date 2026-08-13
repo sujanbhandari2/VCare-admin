@@ -178,6 +178,48 @@ Response (unwrapped `data`):
 
 On success, `accessToken`, `refreshToken`, `user.id` (profile id), email, and username are persisted to local storage. The user navigates to Home.
 
+### 6. Forgot password
+
+Called from the password step when the user taps **Forgot password?**
+
+```bash
+curl --location 'https://dev-api-v4.vitafyhealth.com/api/v1/auth/forgot-password' \
+  --header 'Content-Type: application/json' \
+  --header 'x-user-type: AGENT' \
+  --data-raw '{"identifier": "user@example.com"}'
+```
+
+When multiple accounts share an identifier, the API may return `accounts[]`. The client re-posts with either `accountId` or `dob` + `zipCode`:
+
+```json
+{
+  "success": true,
+  "message": "...",
+  "data": {
+    "sent": true,
+    "accounts": [
+      { "accountId": "...", "displayName": "Jane Doe" }
+    ]
+  }
+}
+```
+
+- Non-empty `accounts` → disambiguation step in `VcareLoginScreen`
+- Otherwise → confirmation step; user receives an email/SMS reset link
+
+### 7. Reset password
+
+Opened from the reset link at `/reset-password?token=...`
+
+```bash
+curl --location 'https://dev-api-v4.vitafyhealth.com/api/v1/auth/reset-password' \
+  --header 'Content-Type: application/json' \
+  --header 'x-user-type: AGENT' \
+  --data-raw '{"token": "<reset_token>", "password": "Password1!"}'
+```
+
+On success, the user returns to sign-in with the new password.
+
 ## Sequence
 
 ```mermaid
@@ -265,12 +307,12 @@ Priority order in `AuthLoginNavigationPolicy.resolvePostOtpStep`:
 
 | Layer | Files |
 |-------|-------|
-| Domain | `auth_identify_result.dart`, `auth_identify_account.dart`, `auth_verify_otp_result.dart`, `auth_pre_auth_user.dart`, `auth_setup_account_result.dart`, `auth_login_navigation_policy.dart`, `auth_identifier_normalizer.dart`, `auth_phone_formatter.dart` |
-| Data | `auth_identify_result_model.dart`, `auth_login_result_model.dart`, `auth_verify_otp_result_model.dart`, `auth_pre_auth_user_model.dart`, `auth_setup_account_result_model.dart`, `auth_repository_impl.dart`, `auth_api_headers.dart` |
-| Presentation | `auth_identify_state_provider.dart`, `auth_verify_otp_state_provider.dart`, `auth_pre_auth_user_state_provider.dart`, `auth_setup_account_state_provider.dart`, `login_request_state_provider.dart`, `vcare_login_screen.dart` |
+| Domain | `auth_identify_result.dart`, `auth_identify_account.dart`, `auth_verify_otp_result.dart`, `auth_pre_auth_user.dart`, `auth_setup_account_result.dart`, `forgot_password_result.dart`, `reset_password_result.dart`, `auth_forgot_validators.dart`, `auth_login_navigation_policy.dart`, `auth_identifier_normalizer.dart`, `auth_phone_formatter.dart` |
+| Data | `auth_identify_result_model.dart`, `auth_login_result_model.dart`, `auth_verify_otp_result_model.dart`, `auth_pre_auth_user_model.dart`, `auth_setup_account_result_model.dart`, `forgot_password_result_model.dart`, `reset_password_result_model.dart`, `auth_repository_impl.dart`, `auth_api_headers.dart` |
+| Presentation | `auth_identify_state_provider.dart`, `auth_verify_otp_state_provider.dart`, `auth_pre_auth_user_state_provider.dart`, `auth_setup_account_state_provider.dart`, `login_request_state_provider.dart`, `forgot_password_request_state_provider.dart`, `reset_password_state_provider.dart`, `vcare_login_screen.dart`, `reset_password_screen.dart`, `login_forgot_steps.dart` |
 
 ## Open questions / follow-ups
 
 - Account list source for `disambiguate` and `activate` steps (identify `accounts[]` is parsed but not yet used for those steps).
-- Forgot-password flow in `VcareLoginScreen` still uses mock lookup.
 - Social login buttons still use mock sign-in.
+- Universal links for opening `/reset-password?token=...` from email/SMS on device (route exists; platform deep-link wiring is follow-up).

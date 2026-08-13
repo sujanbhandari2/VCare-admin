@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 Future<void> showVcareSuccessDrawer({
   required BuildContext context,
@@ -11,15 +11,8 @@ Future<void> showVcareSuccessDrawer({
   String actionLabel = 'Done',
   VoidCallback? onAction,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
+  return context.showBottomSheet<void>(
     isScrollControlled: true,
-    useRootNavigator: true,
-    backgroundColor: VCareColors.background,
-    barrierColor: Colors.black.withValues(alpha: 0.2),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
     builder: (sheetContext) => _VcareSuccessDrawer(
       title: title,
       description: description,
@@ -45,81 +38,69 @@ class _VcareSuccessDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 8, 20, bottomInset + 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: vcare.secondary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 16),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: VCareColors.secondary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                LucideIcons.checkCircle2,
-                size: 32,
-                color: VCareColors.secondary,
-              ),
+            child: Icon(
+              LucideIcons.checkCircle2,
+              size: 32,
+              color: vcare.secondary,
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (description != null) ...[
+            const SizedBox(height: 6),
             Text(
-              title,
+              description!,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (description != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                description!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: vcare.mutedForeground,
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: FilledButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onAction?.call();
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: VCareColors.primary,
-                  foregroundColor: VCareColors.primaryForeground,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  actionLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+              style: TextStyle(
+                fontSize: 14,
+                color: vcare.mutedForeground,
               ),
             ),
           ],
-        ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onAction?.call();
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Text(
+                actionLabel,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

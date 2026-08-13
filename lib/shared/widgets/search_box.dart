@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vcare_admin/core/styles/app_colors.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/common_icon.dart';
@@ -61,6 +60,9 @@ class _SearchBoxState extends State<SearchBox> {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor =
+        widget.borderColor ?? context.theme.colorScheme.outline;
+
     return Padding(
       padding: widget.margin,
       child: TextFormField(
@@ -94,11 +96,11 @@ class _SearchBoxState extends State<SearchBox> {
           ),
           border: OutlineInputBorder(
             borderRadius: .circular(8.0),
-            borderSide: BorderSide(color: widget.borderColor ?? AppColors.grey),
+            borderSide: BorderSide(color: borderColor),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: .circular(8.0),
-            borderSide: BorderSide(color: widget.borderColor ?? AppColors.grey),
+            borderSide: BorderSide(color: borderColor),
           ),
           filled: widget.filled,
           fillColor: widget.fillColor,

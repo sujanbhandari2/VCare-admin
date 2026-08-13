@@ -1,6 +1,7 @@
-import 'client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 
-/// Client profile returned by `GET agents/clients/:id`.
+/// Client profile from `GET /clients/:id` or `GET /clients/groups/:id`.
 class ClientDetail {
   const ClientDetail({
     required this.id,
@@ -14,8 +15,10 @@ class ClientDetail {
     required this.ssn,
     required this.status,
     required this.allowTextNotification,
+    this.clientType = ClientListType.individual,
     this.cardLast4,
     this.cardBrand,
+    this.affiliateAgents = const [],
   });
 
   final String id;
@@ -29,6 +32,8 @@ class ClientDetail {
   final String ssn;
   final String status;
   final bool allowTextNotification;
+  final ClientListType clientType;
   final String? cardLast4;
   final String? cardBrand;
+  final List<ClientAffiliateAgent> affiliateAgents;
 }

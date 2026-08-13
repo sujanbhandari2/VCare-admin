@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Matches vcareapp `LocationBar` — location row plus optional [actions] below.
 class FindCareLocationBar extends StatelessWidget {
@@ -32,7 +33,7 @@ class FindCareLocationBar extends StatelessWidget {
         Material(
           color: vcare.accent.withValues(alpha: 0.08),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             side: BorderSide(color: vcare.accent.withValues(alpha: 0.25)),
           ),
           child: Padding(
@@ -130,12 +131,12 @@ class FindCareLocationBar extends StatelessWidget {
           Material(
             color: vcare.muted.withValues(alpha: 0.65),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: VCareRadius.lgAll,
               side: BorderSide(color: vcare.border),
             ),
             child: InkWell(
               onTap: onClearCurrentLocation,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: VCareRadius.lgAll,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -160,11 +161,7 @@ class FindCareLocationBar extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(
-                      LucideIcons.rotateCcw,
-                      size: 14,
-                      color: vcare.accent,
-                    ),
+                    Icon(LucideIcons.rotateCcw, size: 14, color: vcare.accent),
                   ],
                 ),
               ),

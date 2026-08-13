@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
@@ -22,9 +23,9 @@ class ClientRow extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Ink(
         decoration: BoxDecoration(
-          gradient: VCareColors.primaryTint,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: vcare.border),
+          gradient: VCareColors.cardTint,
+          borderRadius: VCareRadius.xlAll,
+          border: Border.all(color: VCareColors.cardTintBorder),
         ),
         child: InkWell(
           onTap: onTap,
@@ -33,7 +34,7 @@ class ClientRow extends StatelessWidget {
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: VCareRadius.xlAll,
                   child: SizedBox(
                     width: 40,
                     height: 40,

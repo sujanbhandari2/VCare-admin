@@ -54,7 +54,10 @@ class ClientContactModel {
   factory ClientContactModel.fromJson(Map<String, dynamic> json) {
     return ClientContactModel(
       email: json['email']?.toString(),
-      phoneNumber: json['phoneNumber']?.toString(),
+      phoneNumber:
+          json['phoneNumber']?.toString() ??
+          json['cellPhone']?.toString() ??
+          json['phone']?.toString(),
       allowTextNotification: json['allowTextNotification'] == true,
     );
   }

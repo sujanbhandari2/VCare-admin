@@ -38,10 +38,16 @@ class NotificationServiceConfig {
         channelId: 'vcare_admin_default',
         channelName: 'VCare Notifications',
         channelDescription: 'Notifications for VCare Admin app',
-        androidSmallIcon: '@drawable/notification_icon',
+        androidSmallIcon: '@mipmap/ic_launcher',
         maxRetriesForApnsToken: 5,
         retryDelayForApnsToken: Duration(seconds: 2),
       );
+
+  static const String downloadChannelId = 'vcare_downloads';
+  static const String downloadChannelName = 'Downloads';
+  static const String downloadChannelDescription =
+      'Notifications when files are saved or downloaded';
+  static const int referralCardDownloadNotificationId = 9001;
 }
 
 class FirebaseNotificationService {
@@ -57,6 +63,7 @@ class FirebaseNotificationService {
   late NotificationServiceConfig _config;
 
   AndroidNotificationChannel? _channel;
+  AndroidNotificationChannel? _downloadChannel;
 
   bool _initialized = false;
 
@@ -244,6 +251,114 @@ class FirebaseNotificationService {
     }
   }
 
+  Future<bool> showDownloadNotification({
+    required String title,
+    required String body,
+    required Map<String, dynamic> payload,
+    int? notificationId,
+  }) async {
+    if (kIsWeb) return false;
+
+    if (!_initialized) {
+      await initialize();
+    }
+    _ensureInitialized();
+
+    final canShow = await _ensureLocalNotificationPermission();
+    if (!canShow) return false;
+
+    try {
+      await _ensureDownloadChannel();
+
+      await _localNotifications.show(
+        id: notificationId ??
+            DateTime.now().millisecondsSinceEpoch.remainder(100000),
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            _downloadChannel!.id,
+            _downloadChannel!.name,
+            channelDescription: _downloadChannel!.description,
+            icon: _config.androidSmallIcon,
+            largeIcon: const DrawableResourceAndroidBitmap(
+              '@mipmap/ic_launcher',
+            ),
+            importance: Importance.max,
+            priority: Priority.max,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: jsonEncode(payload),
+      );
+      return true;
+    } catch (e) {
+      debugPrint('Download notification failed: $e');
+      return false;
+    }
+  }
+
+  Future<NotificationResponse?> getLaunchNotificationResponse() async {
+    _ensureInitialized();
+
+    final launchDetails =
+        await _localNotifications.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp != true) {
+      return null;
+    }
+    return launchDetails?.notificationResponse;
+  }
+
+  Future<bool> _ensureLocalNotificationPermission() async {
+    if (kIsWeb) return false;
+
+    if (Platform.isAndroid) {
+      final android = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final enabled = await android?.areNotificationsEnabled() ?? false;
+      if (enabled) return true;
+
+      final granted = await android?.requestNotificationsPermission();
+      return granted ?? false;
+    }
+
+    if (Platform.isIOS) {
+      final ios = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      final granted = await ios?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return granted ?? false;
+    }
+
+    return false;
+  }
+
+  Future<void> _ensureDownloadChannel() async {
+    _downloadChannel ??= AndroidNotificationChannel(
+      NotificationServiceConfig.downloadChannelId,
+      NotificationServiceConfig.downloadChannelName,
+      description: NotificationServiceConfig.downloadChannelDescription,
+      importance: Importance.max,
+    );
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_downloadChannel!);
+  }
+
   Future<void> showNotification(RemoteMessage message) async {
     _ensureInitialized();
 
@@ -261,6 +376,9 @@ class FirebaseNotificationService {
             _channel!.name,
             channelDescription: _channel!.description,
             icon: _config.androidSmallIcon,
+            largeIcon: const DrawableResourceAndroidBitmap(
+              '@mipmap/ic_launcher',
+            ),
             importance: Importance.max,
             priority: Priority.max,
           ),

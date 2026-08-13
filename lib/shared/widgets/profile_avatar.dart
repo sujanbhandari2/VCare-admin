@@ -22,6 +22,7 @@ class ProfileAvatar extends StatelessWidget {
     this.borderRadius = 16,
     this.circular = false,
     this.initialsFontSize,
+    this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
     this.onPhotoError,
@@ -34,6 +35,7 @@ class ProfileAvatar extends StatelessWidget {
   final double borderRadius;
   final bool circular;
   final double? initialsFontSize;
+  final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
   final VoidCallback? onPhotoError;
@@ -57,6 +59,7 @@ class ProfileAvatar extends StatelessWidget {
                 borderRadius: radius,
                 name: name,
                 initialsFontSize: initialsFontSize,
+                initialsFontWeight: initialsFontWeight,
                 emptyIconSize: emptyIconSize,
                 initialsColor: initialsColor,
                 onPhotoError: onPhotoError,
@@ -65,6 +68,7 @@ class ProfileAvatar extends StatelessWidget {
                 name: name,
                 size: size,
                 initialsFontSize: initialsFontSize,
+                initialsFontWeight: initialsFontWeight,
                 emptyIconSize: emptyIconSize,
                 initialsColor: initialsColor,
               ),
@@ -81,6 +85,7 @@ class _ProfilePhoto extends StatefulWidget {
     required this.borderRadius,
     required this.name,
     this.initialsFontSize,
+    this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
     this.onPhotoError,
@@ -92,6 +97,7 @@ class _ProfilePhoto extends StatefulWidget {
   final double borderRadius;
   final String name;
   final double? initialsFontSize;
+  final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
   final VoidCallback? onPhotoError;
@@ -125,6 +131,7 @@ class _ProfilePhotoState extends State<_ProfilePhoto> {
       name: widget.name,
       size: widget.size,
       initialsFontSize: widget.initialsFontSize,
+      initialsFontWeight: widget.initialsFontWeight,
       emptyIconSize: widget.emptyIconSize,
       initialsColor: widget.initialsColor,
     );
@@ -235,6 +242,7 @@ class _InitialsAvatar extends StatelessWidget {
     required this.name,
     required this.size,
     this.initialsFontSize,
+    this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
   });
@@ -242,6 +250,7 @@ class _InitialsAvatar extends StatelessWidget {
   final String name;
   final double size;
   final double? initialsFontSize;
+  final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
 
@@ -263,7 +272,7 @@ class _InitialsAvatar extends StatelessWidget {
                 initials,
                 style: TextStyle(
                   fontSize: initialsFontSize ?? size * 0.35,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: initialsFontWeight ?? FontWeight.w600,
                   color: initialsColor ?? vcare.mutedForeground,
                 ),
               ),

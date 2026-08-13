@@ -15,6 +15,7 @@ class UserProfileAvatar extends ConsumerWidget {
     this.borderRadius = 16,
     this.circular = false,
     this.initialsFontSize,
+    this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
   });
@@ -24,6 +25,7 @@ class UserProfileAvatar extends ConsumerWidget {
   final double borderRadius;
   final bool circular;
   final double? initialsFontSize;
+  final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
 
@@ -39,6 +41,7 @@ class UserProfileAvatar extends ConsumerWidget {
       borderRadius: borderRadius,
       circular: circular,
       initialsFontSize: initialsFontSize,
+      initialsFontWeight: initialsFontWeight,
       emptyIconSize: emptyIconSize,
       initialsColor: initialsColor,
       onPhotoError: () {

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_floating_bottom_sheet.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Bottom sheet that loads document types and returns the selected **label**.
 class DocumentsTypePickerSheet extends ConsumerStatefulWidget {
@@ -21,7 +22,8 @@ class DocumentsTypePickerSheet extends ConsumerStatefulWidget {
     required bool includeW9,
   }) {
     return context.showBottomSheet<String>(
-      isScrollControlled: true,
+      maxHeightFactor: 0.55,
+      margin: vcareCompactBottomSheetMargin(context),
       builder: (sheetContext) => DocumentsTypePickerSheet(includeW9: includeW9),
     );
   }
@@ -81,105 +83,87 @@ class _DocumentsTypePickerSheetState
       return defaultDocumentTypeLabelFrom(options);
     }();
 
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.55;
-
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 8, 20, bottomInset + 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: vcare.muted,
-                  borderRadius: BorderRadius.circular(999),
-                ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Document type',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Choose a type, then select files to upload.',
+            style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
+          ),
+          const SizedBox(height: 12),
+          if (typesState.requesting && options.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          else if (typesState.hasError && options.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                typesState.error ?? 'Failed to load document types',
+                style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Document type',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Choose a type, then select files to upload.',
-              style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
-            ),
-            const SizedBox(height: 12),
-            if (typesState.requesting && options.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              )
-            else if (typesState.hasError && options.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  typesState.error ?? 'Failed to load document types',
-                  style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
-                ),
-              )
-            else if (options.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'No document types',
-                  style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
-                ),
-              )
-            else
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxHeight),
-                child: RadioGroup<String>(
-                  groupValue: selected,
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _selectedLabel = value);
+            )
+          else if (options.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'No document types',
+                style: TextStyle(fontSize: 14, color: vcare.mutedForeground),
+              ),
+            )
+          else
+            Flexible(
+              child: RadioGroup<String>(
+                groupValue: selected,
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _selectedLabel = value);
+                },
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options[index];
+                    return RadioListTile<String>(
+                      value: option.label,
+                      title: Text(
+                        option.label,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    );
                   },
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options[index];
-                      return RadioListTile<String>(
-                        value: option.label,
-                        title: Text(
-                          option.label,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                      );
-                    },
-                  ),
                 ),
               ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: selected == null || selected.isEmpty
-                  ? null
-                  : () => Navigator.of(context).pop(selected),
-              style: FilledButton.styleFrom(
-                backgroundColor: VCareColors.primary,
-                foregroundColor: VCareColors.primaryForeground,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Choose files'),
             ),
-          ],
-        ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: selected == null || selected.isEmpty
+                ? null
+                : () => Navigator.of(context).pop(selected),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.vcare.primary,
+              foregroundColor: context.theme.colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: VCareRadius.lgAll,
+              ),
+            ),
+            child: const Text('Choose files'),
+          ),
+        ],
       ),
     );
   }

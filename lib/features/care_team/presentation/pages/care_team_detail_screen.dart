@@ -6,7 +6,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/care_team/presentation/widgets/care_avatar.dart';
@@ -15,6 +14,7 @@ import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class CareTeamDetailScreen extends ConsumerStatefulWidget {
   const CareTeamDetailScreen({super.key, required this.memberId});
@@ -241,7 +241,7 @@ class _DetailProfileCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: vcare.muted.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
             ),
             child: Row(
               children: [
@@ -280,7 +280,7 @@ class _DetailProfileCard extends StatelessWidget {
                     if (member.phone != null)
                       _CircularButton(
                         icon: LucideIcons.phone,
-                        color: VCareColors.primary,
+                        color: context.vcare.primary,
                         onTap: () => launchUrlString('tel:${member.phone}'),
                       ),
                     if (!isOrg && member.email != null) ...[
@@ -316,18 +316,18 @@ class _DetailProfileCard extends StatelessWidget {
             Material(
               color: vcare.card,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: VCareRadius.lgAll,
                 side: BorderSide(color: vcare.border),
               ),
               child: InkWell(
                 onTap: () => launchUrlString(member.website!),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: VCareRadius.lgAll,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(LucideIcons.globe, size: 16, color: VCareColors.foreground),
+                      Icon(LucideIcons.globe, size: 16, color: context.vcare.foreground),
                       const SizedBox(width: 6),
                       const Text(
                         'Visit website',
@@ -367,7 +367,7 @@ class _CircularButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: VCareRadius.fullAll,
       child: Container(
         width: 36,
         height: 36,
@@ -486,7 +486,7 @@ class _MessageList extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: isMe ? VCareColors.primary : vcare.muted,
+                        color: isMe ? context.vcare.primary : vcare.muted,
                         borderRadius: BorderRadius.only(
                           topLeft: const Radius.circular(16),
                           topRight: const Radius.circular(16),
@@ -531,7 +531,7 @@ class _MessageActionsMenu extends StatelessWidget {
         size: 16,
         color: context.vcare.mutedForeground.withValues(alpha: 0.4),
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: VCareRadius.xlAll),
       offset: const Offset(-8, 24),
       onSelected: (value) {
         if (value == 'edit') onEdit();
@@ -555,12 +555,12 @@ class _MessageActionsMenu extends StatelessWidget {
               Icon(
                 LucideIcons.trash2,
                 size: 16,
-                color: VCareColors.destructive,
+                color: context.vcare.destructive,
               ),
               const SizedBox(width: 8),
               Text(
                 'Delete',
-                style: TextStyle(fontSize: 14, color: VCareColors.destructive),
+                style: TextStyle(fontSize: 14, color: context.vcare.destructive),
               ),
             ],
           ),
@@ -580,7 +580,7 @@ class _SmallCareAvatar extends StatelessWidget {
     final vcare = context.vcare;
     if (member.photoAsset != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: VCareRadius.mdAll,
         child: Image.asset(
           member.photoAsset!,
           width: 28,
@@ -590,7 +590,7 @@ class _SmallCareAvatar extends StatelessWidget {
       );
     } else if (member.photoUrl != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: VCareRadius.mdAll,
         child: VCareCachedImage(
           imageUrl: member.photoUrl!,
           width: 28,
@@ -617,7 +617,7 @@ class _DefaultAvatar extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         color: vcare.accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: VCareRadius.mdAll,
       ),
       alignment: Alignment.center,
       child: Text(
@@ -733,7 +733,7 @@ class _ChatComposer extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Material(
-                  color: VCareColors.primary,
+                  color: context.vcare.primary,
                   shape: const CircleBorder(),
                   child: InkWell(
                     onTap: onSend,
@@ -818,7 +818,7 @@ class _OrgInfoBody extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: vcare.card,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             border: Border.all(color: vcare.border),
           ),
           clipBehavior: Clip.antiAlias,

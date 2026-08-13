@@ -8,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
@@ -19,6 +18,7 @@ import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/logger.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 const String _w9BlankFormFileName = 'fw9.pdf';
 
@@ -33,13 +33,8 @@ class TodoW9FormSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       isDismissible: false,
       enableDrag: false,
-      builder: (sheetContext) {
-        final height = MediaQuery.sizeOf(sheetContext).height * 0.78;
-        return SizedBox(
-          height: height,
-          child: TodoW9FormSheet(item: item),
-        );
-      },
+      maxHeightFactor: 0.78,
+      builder: (sheetContext) => TodoW9FormSheet(item: item),
     );
   }
 
@@ -245,17 +240,6 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
             child: Text(
@@ -314,11 +298,11 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                     footer: FilledButton(
                       onPressed: _busy ? null : _pickAndUploadPdf,
                       style: FilledButton.styleFrom(
-                        backgroundColor: VCareColors.primary,
-                        foregroundColor: VCareColors.primaryForeground,
+                        backgroundColor: context.vcare.primary,
+                        foregroundColor: context.theme.colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: VCareRadius.lgAll,
                         ),
                       ),
                       child: Row(
@@ -330,7 +314,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: VCareColors.primaryForeground,
+                                color: context.theme.colorScheme.onPrimary,
                               ),
                             )
                           else
@@ -367,7 +351,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: VCareColors.primary,
+                                color: context.vcare.primary,
                               ),
                             ),
                           ),
@@ -391,7 +375,7 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: VCareRadius.lgAll,
                 ),
               ),
               child: const Text(
@@ -433,24 +417,24 @@ class _StepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     final borderColor = emphasized
-        ? VCareColors.primary.withValues(alpha: 0.25)
+        ? context.vcare.primary.withValues(alpha: 0.25)
         : vcare.border;
     final background = emphasized
-        ? VCareColors.primary.withValues(alpha: 0.05)
+        ? context.vcare.primary.withValues(alpha: 0.05)
         : muted
         ? vcare.muted.withValues(alpha: 0.3)
         : vcare.card;
     final badgeBg = emphasized
-        ? VCareColors.primary
+        ? context.vcare.primary
         : muted
         ? vcare.muted
-        : VCareColors.primary.withValues(alpha: 0.1);
+        : context.vcare.primary.withValues(alpha: 0.1);
     final badgeFg = emphasized
-        ? VCareColors.primaryForeground
+        ? context.theme.colorScheme.onPrimary
         : muted
         ? vcare.mutedForeground
-        : VCareColors.primary;
-    final iconColor = emphasized ? VCareColors.primary : vcare.mutedForeground;
+        : context.vcare.primary;
+    final iconColor = emphasized ? context.vcare.primary : vcare.mutedForeground;
 
     final content = Padding(
       padding: const EdgeInsets.all(14),
@@ -531,7 +515,7 @@ class _StepCard extends StatelessWidget {
     return Material(
       color: background,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         side: BorderSide(color: borderColor),
       ),
       clipBehavior: Clip.antiAlias,

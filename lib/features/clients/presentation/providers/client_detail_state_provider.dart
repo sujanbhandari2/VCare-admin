@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/state/client_detail_state.dart';
 import 'package:vcare_admin/shared/network/stale_while_revalidate.dart';
@@ -16,6 +17,7 @@ class ClientDetailState extends _$ClientDetailState {
   ClientDetailStateData build(String clientId) => const ClientDetailStateData();
 
   Future<void> fetchDetail({
+    ClientListType clientType = ClientListType.individual,
     bool forceRefresh = true,
     CancelToken? cancelToken,
   }) async {
@@ -33,6 +35,7 @@ class ClientDetailState extends _$ClientDetailState {
           .read(clientRepositoryProvider)
           .fetchClientDetail(
             clientId,
+            clientType: clientType,
             cancelToken: cancelToken,
             forceRefresh: forceRefresh,
           ),

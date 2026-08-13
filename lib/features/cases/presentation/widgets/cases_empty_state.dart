@@ -1,123 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
-/// Empty cases list — parity with vcareapp RequestsEmptyState.
+/// Empty cases list — parity with [ClientsEmptyState].
 class CasesEmptyState extends StatelessWidget {
-  const CasesEmptyState({super.key});
+  const CasesEmptyState({
+    super.key,
+    this.title = 'No cases found',
+    this.description =
+        'Try adjusting filters or search by client, case number, or type.',
+  });
+
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: vcare.card,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: vcare.border, style: BorderStyle.solid),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: VCareColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  LucideIcons.inbox,
-                  color: VCareColors.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'No requests yet',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Tell your advocate what you need — bills, providers, benefits, appeals — and we'll take it from here.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: vcare.mutedForeground,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Row(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: vcare.card,
+        borderRadius: VCareRadius.xxlAll,
+        border: Border.all(color: vcare.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
           children: [
-            Icon(LucideIcons.sparkles, size: 12, color: vcare.mutedForeground),
-            const SizedBox(width: 6),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: vcare.primary.withValues(alpha: 0.1),
+                borderRadius: VCareRadius.xlAll,
+              ),
+              child: Icon(
+                LucideIcons.briefcase,
+                color: vcare.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
-              'TRY ONE OF THESE',
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              description,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
+                fontSize: 14,
                 color: vcare.mutedForeground,
+                height: 1.35,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 1.55,
-          children: ShellMockData.quickCaseIdeas.map((idea) {
-            return Material(
-              color: vcare.card,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: vcare.border),
-              ),
-              child: InkWell(
-                onTap: () => context.pushNamed(
-                  AppRouter.requestNewName,
-                  queryParameters: {'prompt': idea},
-                ),
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      idea,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+      ),
     );
   }
 }

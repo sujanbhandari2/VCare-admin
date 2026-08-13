@@ -9,6 +9,7 @@ import 'package:vcare_admin/features/messages/presentation/providers/health_mess
 import 'package:vcare_admin/features/messages/presentation/providers/live_chat_mobile_thread_visible_provider.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
+import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
@@ -43,6 +44,13 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
     (item) => widget.state.matchedLocation.startsWith(item.path),
   );
 
+  /// Case detail hosts a pinned note composer — shell inset would leave a
+  /// large empty band above the floating nav (same as Live Chat threads).
+  bool get _isCaseDetailRoute {
+    final location = widget.state.matchedLocation;
+    return RegExp(r'^/cases/[^/]+$').hasMatch(location);
+  }
+
   NavItem get _currentNavItem =>
       NavItem.fromBranchIndex(widget.shell.currentIndex);
 
@@ -59,6 +67,9 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
     // Conversation thread handles its own composer clearance; keeping the
     // shell inset would leave a large empty gap above the floating nav.
     if (liveChatThreadOpen && _currentNavItem == NavItem.messages) {
+      return false;
+    }
+    if (_isCaseDetailRoute) {
       return false;
     }
     return true;
@@ -92,7 +103,10 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
   }
 
   Future<void> _bootstrapAuthenticatedSession() async {
-    await ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true);
+    await Future.wait([
+      ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
+      ref.read(tenantBrandingStateProvider.notifier).refreshFromApi(),
+    ]);
     if (!mounted) return;
     try {
       await ref.read(healthMessengerSessionProvider.notifier).ensureStarted();

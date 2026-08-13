@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_category_search_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_current_location_state_provider.dart';
@@ -14,6 +13,7 @@ import 'package:vcare_admin/features/find_care/utils/find_care_category_utils.da
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class FindCareCategoryScreen extends ConsumerStatefulWidget {
   const FindCareCategoryScreen({super.key, required this.slug});
@@ -149,8 +149,7 @@ class _FindCareCategoryScreenState
                       FilledButton(
                         onPressed: searchState.loading ? null : _runSearch,
                         style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: const StadiumBorder(),
+                          minimumSize: const Size.fromHeight(44),
                         ),
                         child: searchState.loading && !searchState.loadingMore
                             ? Row(
@@ -161,7 +160,8 @@ class _FindCareCategoryScreenState
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: VCareColors.primaryForeground,
+                                      color:
+                                          context.theme.colorScheme.onPrimary,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -221,7 +221,6 @@ class _FindCareCategoryScreenState
                     onPressed: searchState.loadingMore ? null : _loadMore,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(44),
-                      shape: const StadiumBorder(),
                     ),
                     child: Text(
                       searchState.loadingMore ? 'Loading…' : 'Load more',
@@ -255,7 +254,7 @@ class _MedicareNameSearchField extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VCareRadius.fullAll,
         side: BorderSide(color: vcare.border),
       ),
       child: Padding(
@@ -313,7 +312,7 @@ class _SearchEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Column(
@@ -353,7 +352,7 @@ class _ResultsSkeleton extends StatelessWidget {
             height: 120,
             decoration: BoxDecoration(
               color: vcare.muted.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
             ),
           ),
         ),

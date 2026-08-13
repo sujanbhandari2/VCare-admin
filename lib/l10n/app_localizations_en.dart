@@ -305,11 +305,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_select_app_language => 'Select app language';
 
   @override
-  String get settings_theme_and_color_scheme => 'Theme & Color Scheme';
+  String get settings_theme_and_color_scheme => 'Organization Branding';
 
   @override
   String get settings_theme_and_seed_color =>
-      'Theme mode, text scale, and contrast';
+      'Colors, fonts, logos, and text size';
 
   @override
   String get theme_mode => 'Theme Mode';
@@ -372,6 +372,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contrast_mode_high => 'High';
+
+  @override
+  String get branding_colors_section => 'Brand colors';
+
+  @override
+  String get branding_fonts_section => 'Font theme';
+
+  @override
+  String get branding_logos_section => 'Logos';
+
+  @override
+  String get branding_primary_color => 'Primary';
+
+  @override
+  String get branding_secondary_color => 'Secondary';
+
+  @override
+  String get branding_accent_color => 'Accent';
+
+  @override
+  String get branding_primary_logo => 'Primary logo';
+
+  @override
+  String get branding_icon_mark => 'Icon mark';
+
+  @override
+  String get branding_upload => 'Upload';
+
+  @override
+  String get branding_remove => 'Remove';
+
+  @override
+  String get branding_save => 'Save colors';
+
+  @override
+  String get branding_reset => 'Reset to defaults';
+
+  @override
+  String get branding_preview => 'Live preview';
+
+  @override
+  String get branding_saved => 'Branding updated';
+
+  @override
+  String get branding_save_failed => 'Could not update branding';
+
+  @override
+  String get branding_font_updated => 'Font theme updated';
+
+  @override
+  String get branding_invalid_color => 'Enter a valid 6-digit hex color';
+
+  @override
+  String get branding_custom_colors => 'Custom colors';
+
+  @override
+  String get branding_loading => 'Loading branding…';
 
   @override
   String get english => 'English';

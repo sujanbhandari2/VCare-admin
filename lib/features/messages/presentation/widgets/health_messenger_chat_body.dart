@@ -13,6 +13,7 @@ import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messeng
 import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_add_group_members_sheet.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_group_info_sheet.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_start_new_chat_presenter.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/messages_empty_state.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_conversation_list_item.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_empty_inbox_pane.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
@@ -127,6 +128,7 @@ class _HealthMessengerChatBodyState
       return Listenable.merge([
         inbox.unreadByConversation,
         inbox.conversationOrder,
+        session.remotePresence.onlineByUserId,
       ]);
     } on StateError {
       return null;
@@ -180,6 +182,9 @@ class _HealthMessengerChatBodyState
               for (final conversation in conversations)
                 conversation.id: conversation.effectiveActivityAt,
             };
+            final associatedUsers = notifier.uiUsers;
+            final showFullEmptyInbox =
+                conversations.isEmpty && associatedUsers.isEmpty;
             final openingInFlight =
                 (chatState.loadingConversationId?.trim().isNotEmpty ?? false) ||
                 (chatState.suggestedPeopleOpeningUserId.trim().isNotEmpty);
@@ -189,7 +194,7 @@ class _HealthMessengerChatBodyState
                 currentUserId: chatState.currentUser?.id ?? '',
                 currentUserName: chatState.currentUser?.displayName ?? 'User',
                 conversations: conversations,
-                users: notifier.uiUsers,
+                users: associatedUsers,
                 selectedConversationId: chatState.selectedConversationId,
                 messages: notifier.activeMessages,
                 composerController: _composerController,
@@ -277,6 +282,15 @@ class _HealthMessengerChatBodyState
                 startNewChatPresenter: vcarePresentStartNewChat,
                 emptyConversationsMessage:
                     'No conversations yet. Start one from the people list.',
+                emptyConversationsBuilder: conversations.isEmpty
+                    ? (context) => const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: MessagesEmptyState(
+                            subtitle:
+                                'Start a chat with someone from the people list below.',
+                          ),
+                        )
+                    : null,
                 emptyUsersMessage:
                     'No users yet. Pull to refresh or check your network.',
                 userListItemBuilder: (
@@ -300,11 +314,39 @@ class _HealthMessengerChatBodyState
                 showHeaderTitle: false,
                 theme: VcareMessengerThreadTheme.fromContext(context),
                 threadViewOverrides: vcareMessengerThreadOverrides(context),
-                emptyInboxBuilder: (context) => VcareMessengerEmptyInboxPane(
-                  isRefreshing: chatState.isConversationListLoading ||
-                      chatState.isBootstrapping,
-                  onRefresh: () => notifier.refreshAll(),
-                ),
+                // Full empty pane only when there are no chats and no people.
+                // Otherwise show associated users below the conversation list.
+                emptyInboxBuilder: showFullEmptyInbox
+                    ? (context) => VcareMessengerEmptyInboxPane(
+                          isRefreshing: chatState.isConversationListLoading ||
+                              chatState.isBootstrapping,
+                          onRefresh: () => notifier.refreshAll(),
+                        )
+                    : null,
+                showAvailablePeopleOnMobileInbox: !showFullEmptyInbox,
+                availablePeopleUsers: associatedUsers,
+                availablePeopleItemBuilder: (context, data) {
+                  return VcareMessengerConversationListItem(
+                    data: MessengerUserListItemData(
+                      user: data.user,
+                      isSelected: false,
+                      hasUnread: false,
+                      isOpening: data.isOpening,
+                      messagePreview: null,
+                      onTap: data.onTap,
+                      showOnlinePresence: false,
+                      displayTitle: data.user.username.trim().isEmpty
+                          ? data.user.id
+                          : data.user.username,
+                      subtitle: data.user.email.trim().isNotEmpty
+                          ? data.user.email.trim()
+                          : data.user.roleLabel.trim(),
+                      roleLabel: data.user.roleLabel.trim(),
+                    ),
+                    vcare: vcare,
+                  );
+                },
+                availablePeopleEmptyMessage: '',
               ),
             );
           },

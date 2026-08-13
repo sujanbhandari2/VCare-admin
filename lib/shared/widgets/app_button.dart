@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/styles/app_theme.dart';
+import '../../core/styles/vcare_button_styles.dart';
+import '../../core/styles/vcare_theme.dart';
 import '../utils/extension_functions.dart';
 
 class AppButton extends StatelessWidget {
@@ -28,7 +30,7 @@ class AppButton extends StatelessWidget {
     this.color,
     this.onButtonColor,
     this.onPressed,
-    this.iconSize = 18.0,
+    this.iconSize = VCareButtonStyles.iconSize,
     this.loading = false,
     this.uppercase = false,
     this.type = .elevated,
@@ -45,7 +47,7 @@ class AppButton extends StatelessWidget {
     BorderRadius? borderRadius,
     Color? color,
     Color? onButtonColor,
-    double iconSize = 18.0,
+    double iconSize = VCareButtonStyles.iconSize,
     bool loading = false,
     bool uppercase = false,
     double? fontSize,
@@ -80,7 +82,7 @@ class AppButton extends StatelessWidget {
     BorderRadius? borderRadius,
     Color? color,
     Color? onButtonColor,
-    double iconSize = 18.0,
+    double iconSize = VCareButtonStyles.iconSize,
     bool loading = false,
     bool uppercase = false,
     double? fontSize,
@@ -115,7 +117,7 @@ class AppButton extends StatelessWidget {
     BorderRadius? borderRadius,
     Color? color,
     Color? onButtonColor,
-    double iconSize = 18.0,
+    double iconSize = VCareButtonStyles.iconSize,
     bool loading = false,
     bool uppercase = false,
     double? fontSize,
@@ -145,139 +147,118 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultRadius = borderRadius ?? BorderRadius.circular(8.0);
-    final isDisabled = onPressed == null;
-
-    final color = isDisabled && !loading
-        ? type != .elevated
-              ? Colors.grey
-              : (this.color ?? context.theme.colorScheme.primary)
-        : (this.color ?? context.theme.colorScheme.primary);
-
-    final onButtonColor = isDisabled && !loading
-        ? Colors.grey
-        : (this.onButtonColor ??
-              (type == .elevated
-                  ? context.theme.colorScheme.onPrimary
-                  : context.theme.colorScheme.primary));
-
     return SizedBox(
       width: width,
-      height: height ?? 48,
-      child: _buildButton(
-        context,
-        color,
-        onButtonColor,
-        defaultRadius,
-        loading ? null : onPressed,
-      ),
+      height: height ?? VCareButtonSize.md.height,
+      child: _buildButton(context),
     );
   }
 
-  Widget _buildButton(
-    BuildContext context,
-    Color color,
-    Color onButtonColor,
-    BorderRadius borderRadius,
-    VoidCallback? onPressed,
-  ) {
-    final textStyle = context.textTheme.semibold14?.copyWith(
-      color: onButtonColor,
-      fontSize: fontSize,
+  Widget _buildButton(BuildContext context) {
+    final vcare = context.vcare;
+    final labelStyle = context.textTheme.medium14;
+    final spinnerColor = onButtonColor ?? _spinnerColor(context, vcare);
+
+    final style = switch (type) {
+      AppButtonType.elevated => VCareButtonStyles.filled(
+        background: color ?? vcare.primary,
+        foreground: onButtonColor ?? context.theme.colorScheme.onPrimary,
+        size: VCareButtonSize.md,
+        labelStyle: labelStyle,
+        fontSize: fontSize,
+        borderRadius: borderRadius,
+        padding: padding,
+        dimWhenDisabled: !loading,
+      ),
+      // A caller-supplied colour means an intentionally tinted outline; the
+      // default is the neutral web `variant="outline"` used for Cancel/Back.
+      AppButtonType.outlined when color != null =>
+        VCareButtonStyles.outlinedTinted(
+          color: onButtonColor ?? color!,
+          size: VCareButtonSize.md,
+          labelStyle: labelStyle,
+          fontSize: fontSize,
+          borderRadius: borderRadius,
+          padding: padding,
+          dimWhenDisabled: !loading,
+        ),
+      AppButtonType.outlined => VCareButtonStyles.outlined(
+        foreground: onButtonColor ?? vcare.foreground,
+        border: vcare.input,
+        background: vcare.background,
+        hoverBackground: vcare.accent,
+        hoverForeground: vcare.accentForeground,
+        size: VCareButtonSize.md,
+        labelStyle: labelStyle,
+        fontSize: fontSize,
+        borderRadius: borderRadius,
+        padding: padding,
+        dimWhenDisabled: !loading,
+      ),
+      AppButtonType.text => VCareButtonStyles.ghost(
+        foreground: onButtonColor ?? color ?? vcare.primary,
+        hoverBackground: vcare.accent,
+        size: VCareButtonSize.md,
+        labelStyle: labelStyle,
+        fontSize: fontSize,
+        borderRadius: borderRadius,
+        padding: padding,
+        dimWhenDisabled: !loading,
+      ),
+    };
+
+    final leading = loading
+        ? SizedBox(
+            width: VCareButtonStyles.iconSize,
+            height: VCareButtonStyles.iconSize,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: spinnerColor,
+            ),
+          )
+        : icon != null
+        ? Icon(icon, size: iconSize)
+        : null;
+
+    final label = Text(
+      uppercase ? text.uppercase : text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
 
-    return type == .elevated
-        ? FilledButton.icon(
-            onPressed: onPressed,
-            style: FilledButton.styleFrom(
-              backgroundColor: color,
-              disabledBackgroundColor: loading ? color : null,
-              shape: RoundedRectangleBorder(borderRadius: borderRadius),
-              padding: padding,
-              textStyle: textStyle,
-            ),
-            icon: loading
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: onButtonColor,
-                    ),
-                  )
-                : icon != null
-                ? Icon(icon, size: iconSize, color: onButtonColor)
-                : null,
-            label: Text(
-              uppercase ? text.uppercase : text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textStyle,
-            ),
-            iconAlignment: iconAlignment,
-          )
-        : type == .outlined
-        ? OutlinedButton.icon(
-            onPressed: onPressed,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: color,
-              disabledForegroundColor: color,
-              iconColor: onButtonColor,
-              shape: RoundedRectangleBorder(borderRadius: borderRadius),
-              side: BorderSide(color: color, width: 1),
-              padding: padding,
-              textStyle: textStyle,
-            ),
-            icon: loading
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: onButtonColor,
-                    ),
-                  )
-                : icon != null
-                ? Icon(icon, size: iconSize, color: onButtonColor)
-                : null,
-            label: Text(
-              uppercase ? text.uppercase : text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textStyle,
-            ),
-            iconAlignment: iconAlignment,
-          )
-        : TextButton.icon(
-            onPressed: onPressed,
-            style: TextButton.styleFrom(
-              foregroundColor: color,
-              disabledForegroundColor: color,
-              iconColor: onButtonColor,
-              shape: RoundedRectangleBorder(borderRadius: borderRadius),
-              padding: padding,
-              textStyle: textStyle,
-            ),
-            icon: loading
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: onButtonColor,
-                    ),
-                  )
-                : icon != null
-                ? Icon(icon, size: iconSize, color: onButtonColor)
-                : null,
-            label: Text(
-              uppercase ? text.uppercase : text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textStyle,
-            ),
-            iconAlignment: iconAlignment,
-          );
+    final effectiveOnPressed = loading ? null : onPressed;
+
+    return switch (type) {
+      AppButtonType.elevated => FilledButton.icon(
+        onPressed: effectiveOnPressed,
+        style: style,
+        icon: leading,
+        label: label,
+        iconAlignment: iconAlignment,
+      ),
+      AppButtonType.outlined => OutlinedButton.icon(
+        onPressed: effectiveOnPressed,
+        style: style,
+        icon: leading,
+        label: label,
+        iconAlignment: iconAlignment,
+      ),
+      AppButtonType.text => TextButton.icon(
+        onPressed: effectiveOnPressed,
+        style: style,
+        icon: leading,
+        label: label,
+        iconAlignment: iconAlignment,
+      ),
+    };
+  }
+
+  Color _spinnerColor(BuildContext context, VCareThemeExtension vcare) {
+    return switch (type) {
+      AppButtonType.elevated => context.theme.colorScheme.onPrimary,
+      AppButtonType.outlined => color ?? vcare.foreground,
+      AppButtonType.text => color ?? vcare.primary,
+    };
   }
 }
 

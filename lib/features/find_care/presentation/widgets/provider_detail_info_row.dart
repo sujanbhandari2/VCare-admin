@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class ProviderDetailInfoRow extends StatelessWidget {
@@ -24,7 +23,7 @@ class ProviderDetailInfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: VCareColors.primary),
+          Icon(icon, size: 20, color: context.vcare.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

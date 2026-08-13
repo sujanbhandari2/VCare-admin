@@ -1,4 +1,3 @@
-import 'package:vcare_admin/features/cases/data/requests_mock_data.dart';
 import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
 
 import 'home_models.dart';
@@ -249,10 +248,6 @@ class HomeMockData {
       ),
     ],
   };
-
-  static List<CareRequest> requests() => RequestsMockData.seed();
-
-  static CareRequest? requestById(String id) => RequestsMockData.byId(id);
 
   static const notifications = <AppNotification>[
     AppNotification(read: false),

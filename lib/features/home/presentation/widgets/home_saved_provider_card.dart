@@ -3,9 +3,67 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
+
+TextStyle _savedProviderTypeStyle({Color? color}) {
+  return TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.8,
+    color: color,
+  );
+}
+
+const _savedProviderNameStyle = TextStyle(
+  fontSize: 14,
+  fontWeight: FontWeight.w600,
+  height: 1.2,
+);
+
+List<Widget> _savedProviderTitleSection(
+  BuildContext context,
+  SavedProviderItem item,
+) {
+  final vcare = context.vcare;
+  if (item.kind == HomeSavedProviderKind.mock) {
+    return [
+      Text(
+        item.tag.toUpperCase(),
+        style: _savedProviderTypeStyle(color: vcare.primary),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      const SizedBox(height: 2),
+      Text(
+        item.name,
+        style: _savedProviderNameStyle.copyWith(color: vcare.foreground),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    ];
+  }
+
+  final providerType = item.providerSubtitle?.trim();
+  return [
+    Text(
+      item.name,
+      style: _savedProviderNameStyle.copyWith(color: vcare.foreground),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    ),
+    if (providerType != null && providerType.isNotEmpty) ...[
+      const SizedBox(height: 2),
+      Text(
+        providerType.toUpperCase(),
+        style: _savedProviderTypeStyle(color: vcare.foreground),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    ],
+  ];
+}
 
 /// Compact carousel card — parity with web [HomeSavedProviderCard].
 class HomeSavedProviderCard extends StatelessWidget {
@@ -32,40 +90,19 @@ class HomeSavedProviderCard extends StatelessWidget {
         Material(
           color: vcare.card,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             side: BorderSide(color: vcare.border),
           ),
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 40, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    item.tag.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                      color: VCareColors.primary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ..._savedProviderTitleSection(context, item),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -153,47 +190,20 @@ class SavedProviderListCard extends StatelessWidget {
         Material(
           color: vcare.card,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             side: BorderSide(color: vcare.border),
           ),
           elevation: 0,
-          shadowColor: VCareColors.primary.withValues(alpha: 0.08),
+          shadowColor: vcare.primary.withValues(alpha: 0.08),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 56, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.tag.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                      color: VCareColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                  if (!isMock && item.providerSubtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      item.providerSubtitle!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: vcare.mutedForeground,
-                      ),
-                    ),
-                  ],
+                  ..._savedProviderTitleSection(context, item),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -313,13 +323,13 @@ class SavedProviderRemoveButton extends StatelessWidget {
                         height: iconSize,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: VCareColors.destructive,
+                          color: vcare.destructive,
                         ),
                       )
                     : Icon(
                         Icons.favorite,
                         size: iconSize,
-                        color: VCareColors.destructive,
+                        color: vcare.destructive,
                       ),
               ),
             ),
@@ -337,8 +347,9 @@ class _CallChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = context.vcare.primary;
     return Material(
-      color: VCareColors.primary.withValues(alpha: 0.1),
+      color: primary.withValues(alpha: 0.1),
       shape: const StadiumBorder(),
       child: InkWell(
         onTap: onTap,
@@ -348,14 +359,14 @@ class _CallChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.phone, size: 12, color: VCareColors.primary),
+              Icon(LucideIcons.phone, size: 12, color: primary),
               const SizedBox(width: 4),
               Text(
                 'Call',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: VCareColors.primary,
+                  color: primary,
                 ),
               ),
             ],
@@ -379,16 +390,16 @@ class _NetworkChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: inNetwork
-            ? VCareColors.primary.withValues(alpha: 0.1)
+            ? vcare.primary.withValues(alpha: 0.1)
             : vcare.muted,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VCareRadius.fullAll,
       ),
       child: Text(
         inNetwork ? 'In-network' : 'Out-of-network',
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,
-          color: inNetwork ? VCareColors.primary : vcare.mutedForeground,
+          color: inNetwork ? vcare.primary : vcare.mutedForeground,
         ),
       ),
     );

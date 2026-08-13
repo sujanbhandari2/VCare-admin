@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class ProfileNavItem {
   const ProfileNavItem({
@@ -68,7 +68,7 @@ class ProfileSettingsNav extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         side: BorderSide(color: vcare.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -103,7 +103,7 @@ class _ProfileNavRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(item.icon, size: 20, color: VCareColors.primary),
+                Icon(item.icon, size: 20, color: context.vcare.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

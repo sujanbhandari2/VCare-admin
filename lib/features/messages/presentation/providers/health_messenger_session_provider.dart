@@ -8,6 +8,7 @@ import 'package:health_messenger_ui/lib/health_messenger_push.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/messages/health_messenger/health_messenger_bootstrap_config.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_state.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
@@ -50,12 +51,29 @@ class HealthMessengerSession extends _$HealthMessengerSession
     try {
       final storage = ref.read(storageServiceProvider);
       final profile = ref.read(userProfileStateProvider).profile;
-      final currentTenantId =
+      final adminUser = ref.read(adminAuthSessionProvider).user;
+      final authMeTenantId =
           ref.read(authMeStateProvider).data?.user.currentTenant?.id;
+      final adminTenantId = adminUser?.currentTenant.id.trim();
+      final currentTenantId =
+          (adminTenantId != null && adminTenantId.isNotEmpty)
+              ? adminTenantId
+              : authMeTenantId;
+      final sessionExternalUserId = adminUser?.id;
+      final sessionEmail = adminUser?.email;
+      final sessionDisplayName = adminUser?.displayName;
+      final externalUserRole = adminUser?.currentRoles
+              .map((role) => role.trim())
+              .firstWhere((role) => role.isNotEmpty, orElse: () => '') ??
+          HealthMessengerBootstrapConfig.defaultExternalUserRole;
       final config = HealthMessengerBootstrapConfig.tryBuild(
         storage: storage,
         profile: profile,
         currentTenantId: currentTenantId,
+        sessionExternalUserId: sessionExternalUserId,
+        sessionEmail: sessionEmail,
+        sessionDisplayName: sessionDisplayName,
+        externalUserRole: externalUserRole,
       );
 
       if (config == null) {
@@ -64,6 +82,9 @@ class HealthMessengerSession extends _$HealthMessengerSession
             storage: storage,
             profile: profile,
             currentTenantId: currentTenantId,
+            sessionExternalUserId: sessionExternalUserId,
+            sessionEmail: sessionEmail,
+            sessionDisplayName: sessionDisplayName,
           ),
         );
       }
@@ -200,6 +221,7 @@ class HealthMessengerSession extends _$HealthMessengerSession
   }
 
   @override
+  // ignore: avoid_renaming_method_parameters
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
     state.session?.handleAppLifecycleState(lifecycleState);
   }

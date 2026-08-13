@@ -49,10 +49,7 @@ class FindCareCategorySearchStateNotifier
 
     return response.when(
       failure: (error) {
-        state = state.copyWith(
-          loading: false,
-          error: error.userMessage ?? 'Request failed',
-        );
+        state = state.copyWith(loading: false, error: error.userMessage);
         return false;
       },
       success: (result) {
@@ -91,10 +88,7 @@ class FindCareCategorySearchStateNotifier
 
     return response.when(
       failure: (error) {
-        state = state.copyWith(
-          loadingMore: false,
-          error: error.userMessage ?? 'Request failed',
-        );
+        state = state.copyWith(loadingMore: false, error: error.userMessage);
         return false;
       },
       success: (result) {

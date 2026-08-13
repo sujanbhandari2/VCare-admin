@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_button_styles.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
@@ -129,7 +129,7 @@ class _CardEditScreenState extends State<CardEditScreen> {
                           const SizedBox(height: 12),
                           _SecondaryButton(
                             label: 'Delete card',
-                            color: VCareColors.destructive,
+                            color: context.vcare.destructive,
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                         ],
@@ -221,10 +221,10 @@ class _ChoiceTile extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: VCareColors.primary.withValues(alpha: 0.1),
+                  color: context.vcare.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, color: VCareColors.primary, size: 24),
+                child: Icon(icon, color: context.vcare.primary, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -591,20 +591,8 @@ class _PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: VCareColors.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-      ),
+      height: VCareButtonSize.md.height,
+      child: FilledButton(onPressed: onPressed, child: Text(label)),
     );
   }
 }
@@ -624,19 +612,11 @@ class _SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: VCareButtonSize.md.height,
       child: TextButton(
         onPressed: onPressed,
-        style: TextButton.styleFrom(
-          foregroundColor: color,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
+        style: TextButton.styleFrom(foregroundColor: color),
+        child: Text(label),
       ),
     );
   }

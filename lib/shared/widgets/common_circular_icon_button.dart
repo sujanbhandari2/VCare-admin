@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/app_colors.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/common_icon.dart';
 
@@ -51,7 +50,7 @@ class CommonCircularIconButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: .circular(size),
             border: hasBorder
-                ? .all(width: 1.0, color: AppColors.greyLight)
+                ? .all(width: 1.0, color: context.theme.colorScheme.outline)
                 : null,
           ),
           child: Stack(

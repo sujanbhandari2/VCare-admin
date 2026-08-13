@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/ava/presentation/widgets/ava_layout.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Matches vcareapp [AvaComposer] — `px-5 pt-1 pb-0`, pill input + send.
 class AvaComposer extends StatelessWidget {
@@ -55,7 +55,7 @@ class AvaComposer extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: vcare.muted.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: VCareRadius.mdAll,
                 ),
                 child: Row(
                   children: [
@@ -75,7 +75,7 @@ class AvaComposer extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: VCareColors.primary,
+                          color: context.vcare.primary,
                         ),
                       ),
                     ),
@@ -87,7 +87,7 @@ class AvaComposer extends StatelessWidget {
             Material(
               color: vcare.card,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: VCareRadius.fullAll,
                 side: BorderSide(color: vcare.border),
               ),
               child: Padding(
@@ -127,8 +127,8 @@ class AvaComposer extends StatelessWidget {
                     ),
                     Material(
                       color: canSend
-                          ? VCareColors.primary
-                          : VCareColors.primary.withValues(alpha: 0.35),
+                          ? context.vcare.primary
+                          : context.vcare.primary.withValues(alpha: 0.35),
                       shape: const CircleBorder(),
                       child: InkWell(
                         onTap: canSend ? onSend : null,
@@ -139,7 +139,7 @@ class AvaComposer extends StatelessWidget {
                           child: Icon(
                             LucideIcons.send,
                             size: 16,
-                            color: VCareColors.primaryForeground,
+                            color: context.theme.colorScheme.onPrimary,
                           ),
                         ),
                       ),

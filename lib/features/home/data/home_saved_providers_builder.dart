@@ -16,7 +16,7 @@ List<SavedProviderItem> buildHomeSavedProviders({
           key: 'c-${savedProvider.provider.npi}',
           medicareNpi: savedProvider.provider.npi,
           name: formatMedicareProviderName(row),
-          tag: 'CMS · Medicare',
+          tag: '',
           providerSubtitle: savedProvider.provider.type.isNotEmpty
               ? savedProvider.provider.type
               : 'Provider',

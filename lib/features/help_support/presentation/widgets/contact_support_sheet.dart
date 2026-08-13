@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/help_support/domain/entities/contact_support_attachment.dart';
 import 'package:vcare_admin/features/help_support/presentation/providers/help_support_state_provider.dart';
@@ -28,16 +28,11 @@ class ContactSupportSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final height = MediaQuery.sizeOf(sheetContext).height * 0.85;
-        return SizedBox(
-          height: height,
-          child: ContactSupportSheet(
-            subject: subject,
-            contextPayload: contextPayload,
-          ),
-        );
-      },
+      maxHeightFactor: 0.85,
+      builder: (sheetContext) => ContactSupportSheet(
+        subject: subject,
+        contextPayload: contextPayload,
+      ),
     );
   }
 
@@ -142,31 +137,14 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
     final messageTrimmed = _messageController.text.trim();
     final canSubmit =
         messageTrimmed.length >= contactSupportMinMessageLength && !submitting;
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(VCareLayout.sheetTopRadius),
-      ),
+      borderRadius: VCareRadius.sheetTop(),
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: vcare.muted,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            Padding(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 12, 12),
               child: Row(
                 children: [
@@ -215,7 +193,7 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
                       fontSize: 13,
                       height: 1.35,
                       fontWeight: FontWeight.w500,
-                      color: VCareColors.foreground,
+                      color: context.vcare.foreground,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -230,16 +208,16 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
                       filled: true,
                       fillColor: vcare.muted.withValues(alpha: 0.35),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: VCareRadius.lgAll,
                         borderSide: BorderSide(color: vcare.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: VCareRadius.lgAll,
                         borderSide: BorderSide(color: vcare.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: VCareColors.primary),
+                        borderRadius: VCareRadius.lgAll,
+                        borderSide: BorderSide(color: context.vcare.primary),
                       ),
                     ),
                   ),
@@ -249,7 +227,7 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: VCareColors.foreground,
+                      color: context.vcare.foreground,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -320,7 +298,6 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 }

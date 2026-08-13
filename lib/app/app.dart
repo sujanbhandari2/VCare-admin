@@ -7,11 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/app/router/app_router_provider.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_scroll_behavior.dart';
 import 'package:vcare_admin/core/styles/text_scale_provider.dart';
-import 'package:vcare_admin/core/styles/theme_appearance_provider.dart';
-import 'package:vcare_admin/core/styles/theme_mode_provider.dart';
+import 'package:vcare_admin/shared/widgets/vcare_keyboard_dismiss_scope.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
+import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
 import 'package:vcare_admin/l10n/app_localizations.dart';
 import 'package:vcare_admin/l10n/l10n.dart';
 
@@ -52,42 +53,49 @@ class _MyAppState extends ConsumerState<MyApp> {
       if (previous == next) return;
       if (previous == true && next == false) {
         AppRouter.refreshNotifier.refresh();
+        // Keep slug-keyed branding cache; reset active theme to default tenant.
+        unawaited(
+          ref
+              .read(tenantBrandingStateProvider.notifier)
+              .resetActiveToDefaultTenant(),
+        );
+      }
+      if (previous == false && next == true) {
+        unawaited(
+          ref.read(tenantBrandingStateProvider.notifier).refreshFromApi(),
+        );
       }
     });
 
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeStateProvider);
-    final themeMode = ref.watch(themeModeProvider);
-    final themeAppearance = ref.watch(themeAppearanceProvider);
     final textScale = ref.watch(textScaleProvider);
+    final brandingState = ref.watch(tenantBrandingStateProvider);
+    final theme = AppTheme.light(input: brandingState.branding.themeInput);
 
     return MaterialApp.router(
       // Rebuild the whole tree when the session router is swapped so no element
       // is carried over from the previous session.
       key: ValueKey(router),
-      title: "VCare client",
+      title: 'VCare Admin',
+      scrollBehavior: VcareScrollBehavior(),
       debugShowCheckedModeBanner: false,
-      themeMode: themeMode,
-      theme: AppTheme.light(
-        seedColor: themeAppearance.seedColor,
-        dynamicSchemeVariant: themeAppearance.colorSchemeStyle.variant,
-        contrastLevel: themeAppearance.contrastMode.level,
-      ),
-      darkTheme: AppTheme.dark(
-        seedColor: themeAppearance.seedColor,
-        dynamicSchemeVariant: themeAppearance.colorSchemeStyle.variant,
-        contrastLevel: themeAppearance.contrastMode.level,
-      ),
+      // Light-only — matches web console (dark mode not wired).
+      themeMode: ThemeMode.light,
+      theme: theme,
+      darkTheme: theme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: locale,
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);
-        return MediaQuery(
-          data: mediaQuery.copyWith(
-            textScaler: TextScaler.linear(textScale.factor),
+        return VcareKeyboardDismissScope(
+          child: MediaQuery(
+            data: mediaQuery.copyWith(
+              textScaler: TextScaler.linear(textScale.factor),
+            ),
+            child: child ?? const SizedBox.shrink(),
           ),
-          child: child ?? const SizedBox.shrink(),
         );
       },
       routerConfig: router,

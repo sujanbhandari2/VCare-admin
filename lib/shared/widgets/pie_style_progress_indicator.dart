@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-import 'package:vcare_admin/core/styles/app_colors.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class PieStyleProgressIndicator extends StatelessWidget {
@@ -34,7 +33,8 @@ class PieStyleProgressIndicator extends StatelessWidget {
         progress: progress,
         secondaryProgress: secondaryProgress,
         progressColor: progressColor ?? context.theme.primaryColor,
-        secondaryProgressColor: secondaryProgressColor ?? AppColors.grey,
+        secondaryProgressColor:
+            secondaryProgressColor ?? context.theme.colorScheme.outline,
         outline: outline,
         secondaryProgressAbovePrimary: secondaryProgressAbovePrimary,
         background: background,

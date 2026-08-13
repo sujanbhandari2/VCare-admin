@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class ClientsEmptyState extends StatelessWidget {
@@ -32,12 +31,12 @@ class ClientsEmptyState extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: VCareColors.primary.withValues(alpha: 0.1),
+                color: vcare.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 LucideIcons.users,
-                color: VCareColors.primary,
+                color: vcare.primary,
                 size: 24,
               ),
             ),

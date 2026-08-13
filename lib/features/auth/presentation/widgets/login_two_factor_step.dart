@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// parity: vcare-agent-app-2.0/src/features/auth/components/TwoFactorStep.tsx
 class LoginTwoFactorStep extends StatelessWidget {
@@ -54,7 +54,7 @@ class LoginTwoFactorStep extends StatelessWidget {
                   text: destination,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: VCareColors.foreground,
+                    color: context.vcare.foreground,
                   ),
                 ),
               ],
@@ -83,17 +83,17 @@ class LoginTwoFactorStep extends StatelessWidget {
             child: Text(
               error!,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+              style: TextStyle(fontSize: 12, color: context.vcare.destructive),
             ),
           ),
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Material(
             color: vcare.muted.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: VCareRadius.lgAll,
             child: InkWell(
               onTap: () => onRememberMeChanged(!rememberMe),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: VCareRadius.lgAll,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -165,7 +165,7 @@ class LoginTwoFactorStep extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: resendIn > 0 || resendLoading
                             ? vcare.mutedForeground
-                            : VCareColors.primary,
+                            : context.vcare.primary,
                       ),
                     ),
                   ),

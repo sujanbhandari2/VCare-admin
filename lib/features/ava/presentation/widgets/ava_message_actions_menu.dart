@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Matches vcareapp [MessageActionsMenu].
 class AvaMessageActionsMenu extends StatelessWidget {
@@ -19,7 +19,7 @@ class AvaMessageActionsMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       padding: EdgeInsets.zero,
       offset: const Offset(0, -4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: VCareRadius.lgAll),
       onSelected: (value) {
         if (value == 'edit') onEdit?.call();
         if (value == 'delete') onDelete?.call();
@@ -44,12 +44,12 @@ class AvaMessageActionsMenu extends StatelessWidget {
                 Icon(
                   LucideIcons.trash2,
                   size: 14,
-                  color: VCareColors.destructive,
+                  color: context.vcare.destructive,
                 ),
                 SizedBox(width: 8),
                 Text(
                   'Delete',
-                  style: TextStyle(color: VCareColors.destructive),
+                  style: TextStyle(color: context.vcare.destructive),
                 ),
               ],
             ),

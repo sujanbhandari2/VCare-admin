@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class VcareEmptyStateCard extends StatelessWidget {
@@ -74,9 +73,8 @@ class VcareEmptyStateCardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final ic = iconColor ?? VCareColors.primary;
-    final icBg =
-        iconBackgroundColor ?? VCareColors.primary.withValues(alpha: 0.1);
+    final ic = iconColor ?? vcare.primary;
+    final icBg = iconBackgroundColor ?? vcare.primary.withValues(alpha: 0.1);
 
     return Column(
       children: [

@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Toast variants — parity with vcare-agent-app-2.0 [toast.tsx].
 enum VcareToastVariant {
@@ -27,42 +28,47 @@ class _VcareToastColors {
   final Color foreground;
   final IconData icon;
 
-  static Color _hsl(double h, double s, double l) =>
-      HSLColor.fromAHSL(1, h, s / 100, l / 100).toColor();
-
-  factory _VcareToastColors.forVariant(VcareToastVariant variant) {
+  factory _VcareToastColors.forVariant(
+    BuildContext context,
+    VcareToastVariant variant,
+  ) {
+    final vcare = context.vcare;
     return switch (variant) {
-      VcareToastVariant.success => _VcareToastColors(
-        background: _hsl(140, 55, 94),
-        border: _hsl(145, 45, 75),
-        foreground: _hsl(150, 55, 22),
-        icon: LucideIcons.checkCircle2,
+      VcareToastVariant.success => _fromStatus(
+        VCareStatusColors.of(context, VCareStatusTone.success),
+        LucideIcons.checkCircle2,
       ),
-      VcareToastVariant.info => _VcareToastColors(
-        background: _hsl(215, 85, 95),
-        border: _hsl(215, 75, 82),
-        foreground: _hsl(220, 70, 35),
-        icon: LucideIcons.info,
+      VcareToastVariant.info => _fromStatus(
+        VCareStatusColors.of(context, VCareStatusTone.info),
+        LucideIcons.info,
       ),
-      VcareToastVariant.destructive => _VcareToastColors(
-        background: _hsl(0, 75, 96),
-        border: _hsl(0, 70, 85),
-        foreground: _hsl(0, 60, 38),
-        icon: LucideIcons.xCircle,
+      VcareToastVariant.destructive => _fromStatus(
+        VCareStatusColors.of(context, VCareStatusTone.danger),
+        LucideIcons.xCircle,
       ),
-      VcareToastVariant.warning => _VcareToastColors(
-        background: _hsl(48, 95, 92),
-        border: _hsl(45, 80, 75),
-        foreground: _hsl(35, 70, 30),
-        icon: LucideIcons.alertTriangle,
+      VcareToastVariant.warning => _fromStatus(
+        VCareStatusColors.of(context, VCareStatusTone.warning),
+        LucideIcons.alertTriangle,
       ),
       VcareToastVariant.defaultVariant => _VcareToastColors(
-        background: VCareColors.muted,
-        border: VCareColors.border,
-        foreground: VCareColors.foreground,
+        background: vcare.muted,
+        border: vcare.border,
+        foreground: vcare.foreground,
         icon: LucideIcons.info,
       ),
     };
+  }
+
+  static _VcareToastColors _fromStatus(
+    VCareStatusColors status,
+    IconData icon,
+  ) {
+    return _VcareToastColors(
+      background: status.background,
+      border: status.border,
+      foreground: status.foreground,
+      icon: icon,
+    );
   }
 }
 
@@ -81,7 +87,7 @@ class VcareToastContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VcareToastColors.forVariant(variant);
+    final colors = _VcareToastColors.forVariant(context, variant);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -152,6 +158,7 @@ extension VcareToastExt on BuildContext {
     String? description,
     VcareToastVariant variant = VcareToastVariant.defaultVariant,
     Duration duration = const Duration(seconds: 4),
+    VoidCallback? onTap,
   }) {
     _VcareToastManager.show(
       this,
@@ -159,6 +166,7 @@ extension VcareToastExt on BuildContext {
       description: description,
       variant: variant,
       duration: duration,
+      onTap: onTap,
     );
   }
 }
@@ -173,6 +181,7 @@ class _VcareToastManager {
     String? description,
     required VcareToastVariant variant,
     required Duration duration,
+    VoidCallback? onTap,
   }) {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
@@ -186,6 +195,7 @@ class _VcareToastManager {
         description: description,
         variant: variant,
         duration: duration,
+        onTap: onTap,
         onDismissed: () {
           if (_entry == entry) {
             _entry = null;
@@ -211,6 +221,7 @@ class _VcareToastOverlayWidget extends StatefulWidget {
     required this.variant,
     required this.duration,
     required this.onDismissed,
+    this.onTap,
   });
 
   final String title;
@@ -218,6 +229,7 @@ class _VcareToastOverlayWidget extends StatefulWidget {
   final VcareToastVariant variant;
   final Duration duration;
   final VoidCallback onDismissed;
+  final VoidCallback? onTap;
 
   @override
   State<_VcareToastOverlayWidget> createState() =>
@@ -275,7 +287,10 @@ class _VcareToastOverlayWidgetState extends State<_VcareToastOverlayWidget>
               child: Material(
                 type: MaterialType.transparency,
                 child: GestureDetector(
-                  onTap: _hide,
+                  onTap: () {
+                    widget.onTap?.call();
+                    _hide();
+                  },
                   child: VcareToastContent(
                     title: widget.title,
                     description: widget.description,

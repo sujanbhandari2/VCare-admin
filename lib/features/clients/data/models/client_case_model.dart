@@ -4,6 +4,7 @@ class ClientCaseModel {
     this.status,
     this.title,
     this.type,
+    this.caseNumber,
     this.createdAt,
     this.updatedAt,
   });
@@ -12,6 +13,7 @@ class ClientCaseModel {
   final String? status;
   final String? title;
   final String? type;
+  final String? caseNumber;
   final String? createdAt;
   final String? updatedAt;
 
@@ -21,6 +23,7 @@ class ClientCaseModel {
       status: json['status']?.toString(),
       title: json['title']?.toString(),
       type: json['type']?.toString(),
+      caseNumber: json['caseNumber']?.toString(),
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
     );

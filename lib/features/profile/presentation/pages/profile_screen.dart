@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// App Settings row temporarily hidden.
-// import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-// import 'package:vcare_admin/core/styles/vcare_colors.dart';
-// import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
-// My Family disabled — restore when family members return to Profile.
-// import 'package:vcare_admin/features/profile/data/mappers/family_member_mapper.dart';
+import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/account/data/mappers/account_mapper.dart';
+import 'package:vcare_admin/features/account/presentation/widgets/account_actions_card.dart';
+import 'package:vcare_admin/features/account/presentation/widgets/account_details_section.dart';
+import 'package:vcare_admin/features/account/presentation/widgets/account_header_card.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
-// import 'package:vcare_admin/features/profile/presentation/providers/family_members_state_provider.dart';
-import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
-// import 'package:vcare_admin/features/profile/presentation/widgets/profile_family_section.dart';
-import 'package:vcare_admin/features/profile/presentation/widgets/profile_settings_nav.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_sign_out_footer.dart';
-import 'package:vcare_admin/features/profile/presentation/widgets/profile_summary_card.dart';
+import 'package:vcare_admin/shared/session/user_session_cleanup.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
@@ -32,7 +28,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onRefresh();
     });
@@ -42,67 +37,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!mounted) {
       return;
     }
-
-    // My Family disabled — restore when family members return to Profile.
-    // await Future.wait([
-    //   ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
-    //   ref.read(familyMembersStateProvider.notifier).fetchFamilyMembers(),
-    // ]);
     await ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true);
   }
 
   Future<void> _signOut() async {
-    await VcareMockAuth.signOut(ref);
-    if (!mounted) {
-      return;
-    }
-    context.goNamed(AppRouter.login.toPathName);
+    await clearUserSession(ref, navigateToLogin: true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(localProfileStateProvider);
-    // My Family disabled — restore when family members return to Profile.
-    // final familyState = ref.watch(familyMembersStateProvider);
-    // final family =
-    //     familyState.members.map((member) => member.toProfileFamilyMember()).toList();
+    final authMeState = ref.watch(authMeStateProvider);
+    final user = authMeState.user;
+    final fetching = authMeState.fetching && user == null;
+    final error = authMeState.error;
 
     return Scaffold(
       body: VcareRefreshScrollView(
         onRefresh: _onRefresh,
         slivers: [
-          const SliverVcarePageHeader(title: 'Profile', showBack: false),
+          const SliverVcarePageHeader(title: 'My Account', showBack: false),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                ProfileSummaryCard(
-                  profile: profile,
-                  onEdit: () => context.pushNamed(AppRouter.profileEditName),
-                  onAddressTap: () =>
-                      context.pushNamed(AppRouter.profileAddressName),
-                ),
-                // My Family disabled — restore when family members return to Profile.
-                // const SizedBox(height: 20),
-                // ProfileFamilySection(
-                //   family: family,
-                //   fetching: familyState.fetching,
-                //   error: familyState.error,
-                //   onAdd: () => context.pushNamed(AppRouter.familyMemberNewName),
-                //   onMemberTap: (id) => context.pushNamed(
-                //     AppRouter.familyMemberEditName,
-                //     pathParameters: {'id': id},
-                //   ),
-                // ),
-                const SizedBox(height: 20),
-                const ProfileSettingsNav(),
-                // App Settings temporarily hidden.
-                // const SizedBox(height: 20),
-                // _AppSettingsRow(
-                //   onTap: () => context.pushNamed(AppRouter.settings.toPathName),
-                // ),
-                const SizedBox(height: 20),
-                ProfileSignOutFooter(onSignOut: _signOut),
+                if (fetching)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (user == null)
+                  _AccountLoadError(
+                    message: error ?? 'Could not load your account.',
+                    onRetry: _onRefresh,
+                  )
+                else ...[
+                  AccountHeaderCard(user: user),
+                  const SizedBox(height: 16),
+                  AccountDetailsSection(user: user),
+                  const SizedBox(height: 16),
+                  AccountActionsCard(
+                    onEditProfile: () =>
+                        context.pushNamed(AppRouter.profileEditName),
+                    onChangePassword: () =>
+                        context.pushNamed(AppRouter.profilePasswordName),
+                  ),
+                  if (isSsoAccount(user)) ...[
+                    const SizedBox(height: 12),
+                    const _SsoPasswordHint(),
+                  ],
+                  const SizedBox(height: 24),
+                  ProfileSignOutFooter(onSignOut: _signOut),
+                ],
               ]),
             ),
           ),
@@ -112,46 +97,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-// App Settings temporarily hidden.
-// class _AppSettingsRow extends StatelessWidget {
-//   const _AppSettingsRow({required this.onTap});
-//
-//   final VoidCallback onTap;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final vcare = context.vcare;
-//
-//     return Material(
-//       color: vcare.card,
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.circular(24),
-//         side: BorderSide(color: vcare.border),
-//       ),
-//       clipBehavior: Clip.antiAlias,
-//       child: InkWell(
-//         onTap: onTap,
-//         child: Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-//           child: Row(
-//             children: [
-//               Icon(LucideIcons.settings, size: 20, color: VCareColors.primary),
-//               const SizedBox(width: 12),
-//               const Expanded(
-//                 child: Text(
-//                   'App Settings',
-//                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-//                 ),
-//               ),
-//               Icon(
-//                 LucideIcons.chevronRight,
-//                 size: 16,
-//                 color: vcare.mutedForeground,
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+class _AccountLoadError extends StatelessWidget {
+  const _AccountLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+    final danger = VCareStatusColors.of(context, VCareStatusTone.danger);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: danger.background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: danger.border),
+      ),
+      child: Column(
+        children: [
+          Icon(LucideIcons.alertCircle, color: danger.foreground),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: danger.foreground),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: onRetry,
+            child: Text('Try again', style: TextStyle(color: vcare.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SsoPasswordHint extends StatelessWidget {
+  const _SsoPasswordHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final info = VCareStatusColors.of(context, VCareStatusTone.info);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: info.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: info.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(LucideIcons.shield, size: 16, color: info.foreground),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Your organization uses single sign-on. Password changes are managed by your identity provider.',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: info.foreground,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

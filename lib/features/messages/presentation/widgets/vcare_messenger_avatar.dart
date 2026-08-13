@@ -18,6 +18,8 @@ class VcareMessengerAvatar extends StatelessWidget {
     this.isGroup = false,
     this.size = 48,
     this.borderRadius = 16,
+    this.showOnlineIndicator = false,
+    this.isOnline = false,
   });
 
   final String displayTitle;
@@ -25,6 +27,8 @@ class VcareMessengerAvatar extends StatelessWidget {
   final bool isGroup;
   final double size;
   final double borderRadius;
+  final bool showOnlineIndicator;
+  final bool isOnline;
 
   @override
   Widget build(BuildContext context) {
@@ -59,25 +63,60 @@ class VcareMessengerAvatar extends StatelessWidget {
     // Skip non-http(s) values (storage keys / relative paths) so we never sit
     // on a loading placeholder waiting for an unresolvable URL.
     if (trimmedUrl != null && trimmedUrl.isNotEmpty && trimmedUrl.isUrl) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: VCareCachedImage(
-          imageUrl: trimmedUrl,
-          cacheKey: stableImageCacheKey(
-            prefix: 'messenger-avatar',
+      return _withOnlineIndicator(
+        context,
+        ClipRRect(
+          borderRadius: radius,
+          child: VCareCachedImage(
             imageUrl: trimmedUrl,
+            cacheKey: stableImageCacheKey(
+              prefix: 'messenger-avatar',
+              imageUrl: trimmedUrl,
+            ),
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            fadeInDuration: Duration.zero,
+            placeholder: initials,
+            errorWidget: initials,
           ),
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          fadeInDuration: Duration.zero,
-          placeholder: initials,
-          errorWidget: initials,
         ),
       );
     }
 
-    return initials;
+    return _withOnlineIndicator(context, initials);
+  }
+
+  Widget _withOnlineIndicator(BuildContext context, Widget avatar) {
+    if (!showOnlineIndicator || isGroup) {
+      return avatar;
+    }
+
+    final vcare = context.vcare;
+    final dotSize = size * 0.29;
+    final dotColor = isOnline
+        ? vcare.success
+        : vcare.mutedForeground.withValues(alpha: 0.6);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        avatar,
+        Positioned(
+          right: -2,
+          bottom: -2,
+          child: Container(
+            width: dotSize,
+            height: dotSize,
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: vcare.card, width: 2.5),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

@@ -8,7 +8,6 @@ import 'package:vcare_admin/core/services/payment/card_connect_field_validators.
 import 'package:vcare_admin/core/services/payment/card_connect_tokenizer_client.dart';
 import 'package:vcare_admin/core/services/payment/card_connect_types.dart';
 import 'package:vcare_admin/core/services/payment/card_number_input_formatter.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/data/mappers/client_payment_method_mapper.dart';
 import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_method_request.dart';
@@ -17,6 +16,7 @@ import 'package:vcare_admin/features/clients/presentation/providers/client_payme
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class _AddMethodOption {
   const _AddMethodOption({
@@ -88,17 +88,11 @@ class ClientAddPaymentMethodSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-        return Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: ClientAddPaymentMethodSheet(
-            clientId: clientId,
-            submitLabel: submitLabel,
-            onAdded: onAdded,
-          ),
-        );
-      },
+      builder: (sheetContext) => ClientAddPaymentMethodSheet(
+        clientId: clientId,
+        submitLabel: submitLabel,
+        onAdded: onAdded,
+      ),
     );
   }
 
@@ -395,17 +389,6 @@ class _ClientAddPaymentMethodSheetState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: vcare.muted,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Text(
@@ -428,7 +411,7 @@ class _ClientAddPaymentMethodSheetState
                           option.type == 'BANK')
                         InkWell(
                           onTap: () => _onSelectType(option.type),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: VCareRadius.lgAll,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -440,7 +423,7 @@ class _ClientAddPaymentMethodSheetState
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: VCareColors.primary.withValues(
+                                    color: context.vcare.primary.withValues(
                                       alpha: 0.1,
                                     ),
                                     borderRadius: BorderRadius.circular(10),
@@ -448,7 +431,7 @@ class _ClientAddPaymentMethodSheetState
                                   child: Icon(
                                     option.icon,
                                     size: 16,
-                                    color: VCareColors.primary,
+                                    color: context.vcare.primary,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -661,7 +644,7 @@ class _ClientAddPaymentMethodSheetState
                             text: 'Back',
                             height: 44,
                             width: null,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: VCareRadius.lgAll,
                             fontSize: 16,
                           ),
                         ),
@@ -679,11 +662,11 @@ class _ClientAddPaymentMethodSheetState
                                       ? widget.submitLabel!.trim()
                                       : 'Add method'),
                             loading: _isSubmitting,
-                            color: VCareColors.primary,
-                            onButtonColor: VCareColors.primaryForeground,
+                            color: context.vcare.primary,
+                            onButtonColor: context.theme.colorScheme.onPrimary,
                             height: 44,
                             width: null,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: VCareRadius.lgAll,
                             fontSize: 16,
                           ),
                         ),
@@ -711,19 +694,19 @@ class _ClientAddPaymentMethodSheetState
       filled: true,
       fillColor: vcare.card,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         borderSide: BorderSide(color: vcare.border),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         borderSide: BorderSide(color: vcare.border),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
       ),
     );
@@ -748,7 +731,7 @@ class _FieldLabel extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: VCareColors.foreground,
+            color: context.vcare.foreground,
           ),
         ),
         if (hint != null)
@@ -787,23 +770,23 @@ class _ExpiryDropdown<T> extends StatelessWidget {
         fillColor: vcare.card,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: VCareRadius.lgAll,
           borderSide: BorderSide(color: vcare.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: VCareRadius.lgAll,
           borderSide: BorderSide(color: vcare.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: VCareColors.primary),
+          borderRadius: VCareRadius.lgAll,
+          borderSide: BorderSide(color: context.vcare.primary),
         ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
           isExpanded: true,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: VCareRadius.lgAll,
           hint: Text(
             hint,
             style: TextStyle(color: vcare.mutedForeground, fontSize: 14),

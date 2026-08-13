@@ -56,7 +56,7 @@ class FindCareSearchStateNotifier extends _$FindCareSearchStateNotifier {
         state = state.copyWith(
           loading: false,
           loadingMore: false,
-          error: error.userMessage ?? 'Request failed',
+          error: error.userMessage,
           items: loadMore ? state.items : [],
           hasMore: false,
         );

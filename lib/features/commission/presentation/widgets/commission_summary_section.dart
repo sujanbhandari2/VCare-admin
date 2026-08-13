@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_summary.dart';
 import 'package:vcare_admin/features/home/utils/home_stats_utils.dart';
@@ -214,16 +214,17 @@ class _CompactMetricCell extends StatelessWidget {
     final Color valueColor;
     switch (tone) {
       case _MetricTone.upcoming:
-        bg = const Color(0x14F97316);
-        valueColor = const Color(0xFF9A3412);
+        final status = VCareStatusColors.of(context, VCareStatusTone.warning);
+        bg = status.background;
+        valueColor = status.foreground;
       case _MetricTone.attention:
-        bg = VCareColors.destructive.withValues(alpha: 0.08);
-        valueColor = VCareColors.destructive;
+        final status = VCareStatusColors.of(context, VCareStatusTone.danger);
+        bg = status.background;
+        valueColor = status.foreground;
       case _MetricTone.normal:
-        bg = highlighted
-            ? VCareColors.success.withValues(alpha: 0.06)
-            : Colors.transparent;
-        valueColor = VCareColors.foreground;
+        final status = VCareStatusColors.of(context, VCareStatusTone.success);
+        bg = highlighted ? status.background : Colors.transparent;
+        valueColor = vcare.foreground;
     }
 
     return ColoredBox(

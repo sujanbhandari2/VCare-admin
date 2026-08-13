@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/app_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class TapHereAnimation extends StatefulWidget {
   const TapHereAnimation({
     super.key,
-    this.rippleColor = AppColors.lightGreen,
-    this.handColor = AppColors.green,
+    this.rippleColor,
+    this.handColor,
     this.handSize = 24.0,
     this.size = 48.0,
     this.background,
     this.onTap,
   });
 
-  final Color rippleColor;
-  final Color handColor;
+  final Color? rippleColor;
+  final Color? handColor;
   final double handSize;
   final double size;
   final Color? background;
@@ -59,6 +59,8 @@ class _TapHereAnimationState extends State<TapHereAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final handColor = widget.handColor ?? context.vcare.success;
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -75,8 +77,11 @@ class _TapHereAnimationState extends State<TapHereAnimation>
               return Stack(
                 alignment: .center,
                 children: [
-                  if (isRippleVisible) _buildRipple(),
-                  Align(alignment: .bottomCenter, child: _buildHand()),
+                  if (isRippleVisible) _buildRipple(handColor),
+                  Align(
+                    alignment: .bottomCenter,
+                    child: _buildHand(handColor),
+                  ),
                 ],
               );
             },
@@ -88,26 +93,26 @@ class _TapHereAnimationState extends State<TapHereAnimation>
 
   /// Helper function to build ripple effect ui
   ///
-  Widget _buildRipple() {
+  Widget _buildRipple(Color handColor) {
     return Container(
       width: widget.size * _rippleAnimation.value,
       height: widget.size * _rippleAnimation.value,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: widget.handColor.withValues(alpha: 1 - _rippleAnimation.value),
+        color: handColor.withValues(alpha: 1 - _rippleAnimation.value),
       ),
     );
   }
 
   /// Helper function to build hand ui
   ///
-  Widget _buildHand() {
+  Widget _buildHand(Color handColor) {
     return Transform.scale(
       scale: _scaleAnimation.value,
       child: Icon(
         Icons.pan_tool_alt_outlined,
         size: widget.handSize,
-        color: widget.handColor,
+        color: handColor,
       ),
     );
   }

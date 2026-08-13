@@ -7,10 +7,18 @@ class AuthIdentityMapper {
   const AuthIdentityMapper({
     required this.storage,
     this.profile,
+    this.sessionExternalUserId,
+    this.sessionEmail,
+    this.sessionDisplayName,
   });
 
   final StorageService storage;
   final UserProfile? profile;
+
+  /// Prefer in-memory admin session user id (web parity with `user.id`).
+  final String? sessionExternalUserId;
+  final String? sessionEmail;
+  final String? sessionDisplayName;
 
   String get externalUserId {
     final uuid = storage.get(
@@ -19,6 +27,19 @@ class AuthIdentityMapper {
     );
     if (uuid is String && uuid.trim().isNotEmpty) {
       return uuid.trim();
+    }
+
+    final fromSession = sessionExternalUserId?.trim() ?? '';
+    if (fromSession.isNotEmpty) {
+      return fromSession;
+    }
+
+    final profileId = storage.get(
+      StorageKeys.loggedInUserProfileId,
+      defaultValue: '',
+    );
+    if (profileId is String && profileId.trim().isNotEmpty) {
+      return profileId.trim();
     }
 
     final legacyId = storage.get(StorageKeys.loggedInUserId);
@@ -49,6 +70,12 @@ class AuthIdentityMapper {
     if (fromStorage is String && fromStorage.trim().isNotEmpty) {
       return fromStorage.trim();
     }
+
+    final fromSession = sessionEmail?.trim() ?? '';
+    if (fromSession.isNotEmpty) {
+      return fromSession;
+    }
+
     return profile?.email?.trim() ?? '';
   }
 
@@ -56,6 +83,11 @@ class AuthIdentityMapper {
     final profileName = _profileDisplayName();
     if (profileName.isNotEmpty) {
       return profileName;
+    }
+
+    final fromSession = sessionDisplayName?.trim() ?? '';
+    if (fromSession.isNotEmpty) {
+      return fromSession;
     }
 
     final username = storage.get(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Presentation model for a family member row in the profile section.
 class ProfileFamilyMember {
@@ -73,7 +73,7 @@ class ProfileFamilySection extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                   ),
                 ),
               ),
@@ -86,14 +86,14 @@ class ProfileFamilySection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               error!,
-              style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+              style: TextStyle(fontSize: 12, color: context.vcare.destructive),
             ),
           ),
         ],
         Material(
           color: vcare.card,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: VCareRadius.xxlAll,
             side: BorderSide(color: vcare.border),
           ),
           clipBehavior: Clip.antiAlias,
@@ -165,7 +165,7 @@ class _FamilyMemberRow extends StatelessWidget {
                   circular: true,
                   initialsFontSize: 14,
                   emptyIconSize: 16,
-                  initialsColor: VCareColors.foreground.withValues(alpha: 0.8),
+                  initialsColor: context.vcare.foreground.withValues(alpha: 0.8),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

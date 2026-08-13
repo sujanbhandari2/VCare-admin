@@ -25,7 +25,7 @@ void main() {
       ProviderScope(
         overrides: [todoRepositoryProvider.overrideWith((ref) => repository)],
         child: MaterialApp(
-          theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+          theme: ThemeData(extensions: [VCareThemeExtension.light]),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeActivityScreen(),
@@ -62,7 +62,7 @@ void main() {
       ProviderScope(
         overrides: [todoRepositoryProvider.overrideWith((ref) => repository)],
         child: MaterialApp(
-          theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+          theme: ThemeData(extensions: [VCareThemeExtension.light]),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeActivityScreen(),
@@ -97,7 +97,7 @@ void main() {
           clientRepositoryProvider.overrideWith((ref) => clients),
         ],
         child: MaterialApp(
-          theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+          theme: ThemeData(extensions: [VCareThemeExtension.light]),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeActivityScreen(),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 
@@ -50,7 +49,7 @@ class LoginVerifyStep extends StatelessWidget {
                   text: destination,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: VCareColors.foreground,
+                    color: context.vcare.foreground,
                   ),
                 ),
               ],
@@ -71,7 +70,7 @@ class LoginVerifyStep extends StatelessWidget {
             child: Text(
               error!,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+              style: TextStyle(fontSize: 12, color: context.vcare.destructive),
             ),
           ),
         Padding(
@@ -108,7 +107,7 @@ class LoginVerifyStep extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: resendIn > 0 || resendLoading
                             ? vcare.mutedForeground
-                            : VCareColors.primary,
+                            : context.vcare.primary,
                       ),
                     ),
                   ),

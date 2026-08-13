@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_current_location_state_provider.dart';
@@ -15,6 +14,8 @@ import 'package:vcare_admin/features/find_care/presentation/widgets/find_care_lo
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class FindCareScreen extends ConsumerStatefulWidget {
   const FindCareScreen({super.key});
@@ -132,10 +133,10 @@ class _FindCareScreenState extends ConsumerState<FindCareScreen> {
                                 ? null
                                 : _openSearch,
                             style: FilledButton.styleFrom(
-                              backgroundColor: VCareColors.primary,
-                              foregroundColor: VCareColors.primaryForeground,
-                              shape: const StadiumBorder(),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              backgroundColor: context.vcare.primary,
+                              foregroundColor:
+                                  context.theme.colorScheme.onPrimary,
+                              minimumSize: const Size.fromHeight(44),
                             ),
                             child: const Text('Search providers'),
                           );
@@ -194,7 +195,7 @@ class _NameSearchField extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VCareRadius.fullAll,
         side: BorderSide(color: vcare.border),
       ),
       child: Padding(
@@ -239,14 +240,14 @@ class _CategoryCard extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         side: BorderSide(color: vcare.border),
       ),
       shadowColor: Colors.black12,
       elevation: 1,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(

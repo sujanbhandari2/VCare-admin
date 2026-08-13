@@ -5,19 +5,21 @@ import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
 
 abstract class ClientRepository {
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
   fetchClients(
-    PaginatedListRequest request, {
+    ClientsListRequest request, {
     CancelToken? cancelToken,
     bool forceRefresh = false,
   });
 
   Future<EitherResponseOrException<ClientDetail>> fetchClientDetail(
     String clientId, {
+    ClientListType clientType = ClientListType.individual,
     CancelToken? cancelToken,
     bool forceRefresh = false,
   });
@@ -110,6 +112,11 @@ abstract class ClientRepository {
   Future<EitherResponseOrException<void>> renameClientDocument({
     required String documentId,
     required String name,
+    CancelToken? cancelToken,
+  });
+
+  Future<EitherResponseOrException<void>> deleteClientDocument({
+    required String documentId,
     CancelToken? cancelToken,
   });
 }

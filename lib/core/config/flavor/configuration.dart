@@ -1,3 +1,5 @@
+import 'package:vcare_admin/core/config/env/env.dart';
+import 'package:vcare_admin/core/config/env/env_keys.dart';
 import 'package:vcare_admin/core/config/flavor/configuration/development_configuration.dart';
 import 'package:vcare_admin/core/config/flavor/configuration/production_configuration.dart';
 import 'package:vcare_admin/core/config/flavor/configuration/qa_configuration.dart';
@@ -34,6 +36,13 @@ abstract class Configuration {
   String get apiBaseUrlV3 => "$baseUrl$apiV3";
 
   String get apiBaseUrl;
+
+  /// Default tenant slug for admin login (web: VITE_DEFAULT_TENANT_SLUG).
+  String get defaultTenantSlug {
+    final slug =
+        Env.instance.valueOf(EnvKeys.defaultTenantSlug)?.trim() ?? '';
+    return slug.isEmpty ? 'vcare-advocacy' : slug;
+  }
 
   /// Getter for flavor
   ///

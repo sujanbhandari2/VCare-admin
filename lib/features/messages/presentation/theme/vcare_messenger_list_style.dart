@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// VCare conversation list styling tokens for [MessengerChatShell].
@@ -34,7 +33,7 @@ class VcareMessengerListStyle {
         height: 1.2,
       ),
       trailingIconColor: vcare.mutedForeground,
-      unreadDotColor: VCareColors.primary,
+      unreadDotColor: context.vcare.primary,
     );
   }
 }

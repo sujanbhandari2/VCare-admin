@@ -44,9 +44,7 @@ class FindCareSearchLocation extends _$FindCareSearchLocation {
 
   /// Applies a GPS-resolved search area and marks it as current location.
   Future<void> setFromCurrentLocation(SearchLocation location) async {
-    await setLocation(
-      location.copyWith(fromCurrentLocation: true),
-    );
+    await setLocation(location.copyWith(fromCurrentLocation: true));
   }
 
   /// Restores the search area to the user's profile city/state.

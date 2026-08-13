@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/app_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_button_styles.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
@@ -15,7 +17,9 @@ import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
 import 'package:vcare_admin/features/todo/utils/failed_payment_copy.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/shimmer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Recovery sheet for `PAYMENT_FAILED` todos — parity with web `FailedPaymentSheet`.
 class TodoTransactionDetailSheet extends ConsumerStatefulWidget {
@@ -23,16 +27,12 @@ class TodoTransactionDetailSheet extends ConsumerStatefulWidget {
 
   final TodoItem item;
 
-  static Future<void> show(BuildContext context, {required TodoItem item}) {
-    return context.showBottomSheet<void>(
+  /// Resolves to `true` when the charge succeeded, otherwise `null`/`false`.
+  static Future<bool?> show(BuildContext context, {required TodoItem item}) {
+    return context.showBottomSheet<bool>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final height = MediaQuery.sizeOf(sheetContext).height * 0.92;
-        return SizedBox(
-          height: height,
-          child: TodoTransactionDetailSheet(item: item),
-        );
-      },
+      maxHeightFactor: 0.92,
+      builder: (sheetContext) => TodoTransactionDetailSheet(item: item),
     );
   }
 
@@ -43,6 +43,7 @@ class TodoTransactionDetailSheet extends ConsumerStatefulWidget {
 
 class _TodoTransactionDetailSheetState
     extends ConsumerState<TodoTransactionDetailSheet> {
+  final _scrollController = ScrollController();
   String? _selectedCardId;
   String? _chargingId;
   String? _chargeError;
@@ -80,6 +81,12 @@ class _TodoTransactionDetailSheetState
           .read(clientPaymentMethodsStateProvider(_payerId).notifier)
           .fetchPaymentMethods();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -122,17 +129,6 @@ class _TodoTransactionDetailSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
             child: Text(
@@ -145,10 +141,15 @@ class _TodoTransactionDetailSheetState
           Divider(height: 1, color: vcare.border),
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_chargeError != null) ...[
+                    _ChargeErrorBanner(message: _chargeError!),
+                    const SizedBox(height: 12),
+                  ],
                   _FailureBanner(
                     amountLabel: _amountLabel,
                     shortLabel: _copy.shortLabel,
@@ -210,18 +211,18 @@ class _TodoTransactionDetailSheetState
                               ),
                               const SizedBox(height: 8),
                             ],
-                            OutlinedButton(
-                              onPressed: _isBusy || _selectedCardId == null
-                                  ? null
-                                  : () => _chargeSelected(otherCards),
-                              style: _recoveryButtonStyle(),
-                              child: Text(
-                                _chargingId != null &&
-                                        _chargingId == _selectedCardId
-                                    ? 'Processing…'
-                                    : 'Charge $_amountLabel',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                            SizedBox(
+                              height: VCareButtonSize.md.height,
+                              child: FilledButton(
+                                onPressed: _isBusy || _selectedCardId == null
+                                    ? null
+                                    : () => _chargeSelected(otherCards),
+                                style: _recoveryButtonStyle(),
+                                child: Text(
+                                  _chargingId != null &&
+                                          _chargingId == _selectedCardId
+                                      ? 'Processing…'
+                                      : 'Charge $_amountLabel',
                                 ),
                               ),
                             ),
@@ -234,12 +235,12 @@ class _TodoTransactionDetailSheetState
                       title: 'Add a card',
                       subtitle:
                           'Saved to $_payerName\'s account and charged $_amountLabel.',
-                      child: OutlinedButton(
-                        onPressed: _isBusy ? null : _openAddCard,
-                        style: _recoveryButtonStyle(),
-                        child: const Text(
-                          'Add card & charge',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                      child: SizedBox(
+                        height: VCareButtonSize.md.height,
+                        child: FilledButton(
+                          onPressed: _isBusy ? null : _openAddCard,
+                          style: _recoveryButtonStyle(),
+                          child: const Text('Add card & charge'),
                         ),
                       ),
                     ),
@@ -254,17 +255,17 @@ class _TodoTransactionDetailSheetState
                           children: [
                             _CardSummaryTile(method: primary),
                             const SizedBox(height: 12),
-                            OutlinedButton(
-                              onPressed: _isBusy
-                                  ? null
-                                  : () => _retryPrimary(primary),
-                              style: _recoveryButtonStyle(),
-                              child: Text(
-                                _chargingId == primary.id && _isBusy
-                                    ? 'Processing…'
-                                    : 'Retry payment',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                            SizedBox(
+                              height: VCareButtonSize.md.height,
+                              child: FilledButton(
+                                onPressed: _isBusy
+                                    ? null
+                                    : () => _retryPrimary(primary),
+                                style: _recoveryButtonStyle(),
+                                child: Text(
+                                  _chargingId == primary.id && _isBusy
+                                      ? 'Processing…'
+                                      : 'Retry payment',
                                 ),
                               ),
                             ),
@@ -272,32 +273,6 @@ class _TodoTransactionDetailSheetState
                         ),
                       ),
                     ],
-                  ],
-                  if (_chargeError != null) ...[
-                    const SizedBox(height: 16),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: VCareColors.destructive.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: VCareColors.destructive.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Text(
-                          _chargeError!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.35,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                   const SizedBox(height: 20),
                   Text.rich(
@@ -319,7 +294,7 @@ class _TodoTransactionDetailSheetState
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: VCareColors.primary,
+                                color: context.vcare.primary,
                               ),
                             ),
                           ),
@@ -337,13 +312,15 @@ class _TodoTransactionDetailSheetState
     );
   }
 
+  /// Solid brand teal, deliberately not tenant-branded — parity with the web
+  /// failed payments CTAs (`bg-[#009b9d] h-10 w-full text-white`).
   ButtonStyle _recoveryButtonStyle() {
-    return OutlinedButton.styleFrom(
-      foregroundColor: VCareColors.primary,
-      backgroundColor: VCareColors.primary.withValues(alpha: 0.1),
-      side: BorderSide(color: VCareColors.primary.withValues(alpha: 0.3)),
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return VCareButtonStyles.filled(
+      background: VCareColors.paymentRecoveryCta,
+      foreground: Colors.white,
+      hoverBackground: VCareColors.paymentRecoveryCtaHover,
+      pressedBackground: VCareColors.paymentRecoveryCtaActive,
+      labelStyle: context.textTheme.medium14,
     );
   }
 
@@ -367,12 +344,11 @@ class _TodoTransactionDetailSheetState
       if (!mounted) return;
       _finishSuccess();
     } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _chargeError = error is _ChargeFailedException
-            ? error.message
-            : "Card was saved, but the payment didn't go through. Try retrying or another card.";
-      });
+      _handleChargeFailure(
+        error,
+        fallback:
+            "Card was saved, but the payment didn't go through. Try retrying or another card.",
+      );
     }
   }
 
@@ -397,13 +373,11 @@ class _TodoTransactionDetailSheetState
       if (!mounted) return;
       _finishSuccess();
     } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _chargeError = error is _ChargeFailedException
-            ? error.message
-            : "Payment didn't go through. Try a different card on the client's file.";
-        _chargingId = null;
-      });
+      _handleChargeFailure(
+        error,
+        fallback:
+            "Payment didn't go through. Try a different card on the client's file.",
+      );
     }
   }
 
@@ -422,13 +396,39 @@ class _TodoTransactionDetailSheetState
       if (!mounted) return;
       _finishSuccess();
     } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _chargeError = error is _ChargeFailedException
-            ? error.message
-            : "Payment didn't go through. Try another of the client's cards.";
-        _chargingId = null;
-      });
+      _handleChargeFailure(
+        error,
+        fallback:
+            "Payment didn't go through. Try another of the client's cards.",
+      );
+    }
+  }
+
+  /// Surfaces a charge failure as a toast plus a banner pinned to the top of
+  /// the sheet, so the decline reason is visible without scrolling.
+  void _handleChargeFailure(Object error, {required String fallback}) {
+    if (!mounted) return;
+
+    final message = error is _ChargeFailedException ? error.message : fallback;
+
+    setState(() {
+      _chargeError = message;
+      _chargingId = null;
+      _settingPrimary = false;
+    });
+
+    context.showVcareToast(
+      title: 'Payment failed',
+      description: message,
+      variant: VcareToastVariant.destructive,
+    );
+
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -495,7 +495,7 @@ class _TodoTransactionDetailSheetState
       title: 'Payment of $_amountLabel went through',
       variant: VcareToastVariant.success,
     );
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(true);
   }
 
   void _contactSupport() {
@@ -520,6 +520,45 @@ class _ChargeFailedException implements Exception {
   final String message;
 }
 
+class _ChargeErrorBanner extends StatelessWidget {
+  const _ChargeErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final destructive = context.vcare.destructive;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: destructive.withValues(alpha: 0.05),
+        borderRadius: VCareRadius.xlAll,
+        border: Border.all(color: destructive.withValues(alpha: 0.3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(LucideIcons.xCircle, size: 16, color: destructive),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.35,
+                  color: destructive,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _FailureBanner extends StatelessWidget {
   const _FailureBanner({
     required this.amountLabel,
@@ -540,7 +579,7 @@ class _FailureBanner extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: error.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: error.withValues(alpha: 0.2)),
       ),
       child: Padding(
@@ -600,25 +639,73 @@ class _FailureBanner extends StatelessWidget {
   }
 }
 
+/// Placeholder for the recovery paths while the client's cards load. The shape
+/// mirrors the real layout so the sheet barely shifts once they arrive.
 class _MethodsSkeleton extends StatelessWidget {
   const _MethodsSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    final muted = context.vcare.muted.withValues(alpha: 0.5);
-    return Column(
-      children: [
-        for (final height in [112.0, 96.0, 96.0]) ...[
-          Container(
-            height: height,
-            decoration: BoxDecoration(
-              color: muted,
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          const SizedBox(height: 12),
+    return const Shimmer(
+      loading: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SkeletonBar(width: 132, height: 10),
+          SizedBox(height: 8),
+          _SkeletonBar(width: 232, height: 10),
+          SizedBox(height: 18),
+          _SkeletonRecoveryCard(tileCount: 1),
+          SizedBox(height: 22),
+          _SkeletonRecoveryCard(),
+          SizedBox(height: 22),
+          _SkeletonRecoveryCard(tileCount: 1),
         ],
+      ),
+    );
+  }
+}
+
+class _SkeletonRecoveryCard extends StatelessWidget {
+  const _SkeletonRecoveryCard({this.tileCount = 0});
+
+  /// Saved-card rows to stand in for, above the action button.
+  final int tileCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SkeletonBar(width: 152, height: 12),
+        const SizedBox(height: 8),
+        const _SkeletonBar(width: 208, height: 10),
+        const SizedBox(height: 14),
+        for (var i = 0; i < tileCount; i++) ...[
+          const _SkeletonBar(height: 44, radius: 12),
+          const SizedBox(height: 8),
+        ],
+        const _SkeletonBar(height: 46, radius: 12),
       ],
+    );
+  }
+}
+
+class _SkeletonBar extends StatelessWidget {
+  const _SkeletonBar({this.width, required this.height, this.radius});
+
+  final double? width;
+  final double height;
+  final double? radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.loadingContainer(
+      context,
+      width: width ?? double.infinity,
+      height: height,
+      radius: radius ?? height / 2,
+      opacity: 0.3,
     );
   }
 }
@@ -635,7 +722,7 @@ class _MethodsError extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: error.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: error.withValues(alpha: 0.3)),
       ),
       child: Padding(
@@ -686,7 +773,7 @@ class _RecoveryCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -762,13 +849,13 @@ class _CardSelectTile extends StatelessWidget {
     final vcare = context.vcare;
     return Material(
       color: selected
-          ? VCareColors.primary.withValues(alpha: 0.05)
+          ? context.vcare.primary.withValues(alpha: 0.05)
           : Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         side: BorderSide(
           color: selected
-              ? VCareColors.primary.withValues(alpha: 0.4)
+              ? context.vcare.primary.withValues(alpha: 0.4)
               : vcare.border,
         ),
       ),
@@ -787,7 +874,7 @@ class _CardSelectTile extends StatelessWidget {
                   border: Border.all(
                     width: 2,
                     color: selected
-                        ? VCareColors.primary
+                        ? context.vcare.primary
                         : vcare.mutedForeground.withValues(alpha: 0.4),
                   ),
                 ),
@@ -797,7 +884,7 @@ class _CardSelectTile extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: VCareColors.primary,
+                            color: context.vcare.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -824,7 +911,7 @@ class _CardSummaryTile extends StatelessWidget {
     final vcare = context.vcare;
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         border: Border.all(color: vcare.border),
       ),
       child: Padding(
@@ -868,7 +955,7 @@ class _CardSummaryContent extends StatelessWidget {
           height: 32,
           decoration: BoxDecoration(
             color: vcare.muted,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: VCareRadius.mdAll,
           ),
           child: Icon(
             LucideIcons.creditCard,

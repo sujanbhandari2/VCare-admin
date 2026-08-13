@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/app_theme.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
@@ -83,13 +82,15 @@ class VcareHeaderActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = context.vcare.primary;
+
     return SizedBox(
       height: 36,
       child: TextButton(
         onPressed: loading ? null : onPressed,
         style: TextButton.styleFrom(
-          foregroundColor: VCareColors.primary,
-          disabledForegroundColor: VCareColors.primary.withValues(alpha: 0.45),
+          foregroundColor: primary,
+          disabledForegroundColor: primary.withValues(alpha: 0.45),
           padding: const EdgeInsets.symmetric(horizontal: 8),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -100,15 +101,15 @@ class VcareHeaderActionButton extends StatelessWidget {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: VCareColors.primary,
+                  color: primary,
                 ),
               )
             : Text(
                 label,
                 style: context.textTheme.semibold14?.copyWith(
                   color: onPressed == null
-                      ? VCareColors.primary.withValues(alpha: 0.45)
-                      : VCareColors.primary,
+                      ? primary.withValues(alpha: 0.45)
+                      : primary,
                 ),
               ),
       ),
@@ -329,10 +330,10 @@ class VcarePageHeader extends StatelessWidget {
                         width: 10,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: VCareColors.destructive,
+                          color: context.vcare.destructive,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: VCareColors.background,
+                            color: context.vcare.background,
                             width: 2,
                           ),
                         ),

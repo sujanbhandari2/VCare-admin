@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 
 class HomeStatusBadge extends StatelessWidget {
@@ -20,7 +21,7 @@ class HomeStatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VCareRadius.fullAll,
         border: border != null ? Border.all(color: border) : null,
       ),
       child: Text(
@@ -36,30 +37,31 @@ class HomeStatusBadge extends StatelessWidget {
   }
 
   (Color bg, Color fg, Color? border) _colors(BuildContext context) {
+    final vcare = context.vcare;
     switch (variant) {
       case StatusBadgeVariant.primary:
         return (
-          VCareColors.primary.withValues(alpha: 0.1),
-          VCareColors.primary,
-          VCareColors.primary.withValues(alpha: 0.3),
+          vcare.primary.withValues(alpha: 0.1),
+          vcare.primary,
+          vcare.primary.withValues(alpha: 0.3),
         );
       case StatusBadgeVariant.secondary:
         return (
-          VCareColors.muted,
-          VCareColors.mutedForeground,
-          VCareColors.border,
+          vcare.muted,
+          vcare.mutedForeground,
+          vcare.border,
         );
       case StatusBadgeVariant.destructive:
         return (
-          VCareColors.destructive.withValues(alpha: 0.1),
-          VCareColors.destructive,
-          VCareColors.destructive.withValues(alpha: 0.3),
+          vcare.destructive.withValues(alpha: 0.1),
+          vcare.destructive,
+          vcare.destructive.withValues(alpha: 0.3),
         );
       case StatusBadgeVariant.outline:
         return (
-          VCareColors.primary.withValues(alpha: 0.1),
-          VCareColors.primary,
-          VCareColors.primary.withValues(alpha: 0.3),
+          vcare.primary.withValues(alpha: 0.1),
+          vcare.primary,
+          vcare.primary.withValues(alpha: 0.3),
         );
     }
   }

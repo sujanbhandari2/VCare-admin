@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Heart toggle for save / unsave. Shows a filled heart when saved, and a
@@ -26,7 +25,7 @@ class ProviderFavoriteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final activeColor = VCareColors.destructive;
+    final activeColor = context.vcare.destructive;
     final idleColor = vcare.mutedForeground;
 
     return IconButton(

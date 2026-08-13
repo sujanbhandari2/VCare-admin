@@ -20,11 +20,14 @@ String _clientLabel(String? payerName) {
 FailedPaymentCopy getFailedPaymentCopy(
   String? failureReason, [
   String? payerName,
+  String? failureMessage,
 ]) {
   final reason = _normalize(failureReason);
   final name = _clientLabel(payerName);
+  final message = failureMessage?.trim();
 
-  if (reason.contains('insufficient') ||
+  if (reason == 'insufficient_funds' ||
+      reason.contains('insufficient') ||
       reason.contains('funds') ||
       reason.contains('balance') ||
       reason.contains('nsf')) {
@@ -34,7 +37,8 @@ FailedPaymentCopy getFailedPaymentCopy(
     );
   }
 
-  if (reason.contains('expired') ||
+  if (reason == 'expired_card' ||
+      reason.contains('expired') ||
       reason.contains('expir') ||
       reason.contains('invalid card') ||
       reason.contains('do not honor') ||
@@ -43,18 +47,26 @@ FailedPaymentCopy getFailedPaymentCopy(
       reason.contains('pick up') ||
       reason.contains('restricted')) {
     return FailedPaymentCopy(
-      shortLabel: 'Card problem',
+      shortLabel: 'Card expired',
       explanation: "This card couldn't be charged for $name.",
     );
   }
 
-  if (reason.contains('declined') ||
+  if (reason == 'card_declined' ||
+      reason.contains('declined') ||
       reason.contains('refuse') ||
       reason.contains('denied') ||
       reason.contains('reject')) {
     return FailedPaymentCopy(
       shortLabel: 'Card declined',
       explanation: "$name's bank declined this charge.",
+    );
+  }
+
+  if (message != null && message.isNotEmpty) {
+    return FailedPaymentCopy(
+      shortLabel: 'Payment failed',
+      explanation: message.endsWith('.') ? message : '$message.',
     );
   }
 

@@ -6,11 +6,14 @@ import 'package:vcare_admin/app/router/app_router.dart';
 /// Primary bottom navigation items (vcare [MobileShell] mobile tab order).
 enum NavItem {
   clients(path: AppRouter.clients, label: 'Clients', icon: LucideIcons.users),
-  provider(
-    path: AppRouter.findCare,
-    label: 'Providers',
-    icon: LucideIcons.search,
-  ),
+  // Providers tab replaced by Cases — find-care remains reachable via Home
+  // and profile saved-providers routes.
+  // provider(
+  //   path: AppRouter.findCare,
+  //   label: 'Providers',
+  //   icon: LucideIcons.search,
+  // ),
+  cases(path: AppRouter.cases, label: 'Cases', icon: LucideIcons.briefcase),
   // Sales tab replaced by Provider — commission/sales remain on Home metrics
   // via [AppRouter.homeSalesName].
   // sales(
@@ -45,10 +48,11 @@ enum NavItem {
   final IconData icon;
   final bool isCenter;
 
-  /// Mobile bottom bar order: Clients, Provider, Home, Messages, Profile.
+  /// Mobile bottom bar order: Clients, Cases, Home, Messages, Profile.
   static const List<NavItem> mobileTabs = [
     NavItem.clients,
-    NavItem.provider,
+    // NavItem.provider,
+    NavItem.cases,
     // NavItem.sales,
     NavItem.home,
     NavItem.messages,

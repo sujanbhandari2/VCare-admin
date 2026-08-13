@@ -5,6 +5,7 @@ import 'package:vcare_admin/features/clients/domain/entities/add_client_payment_
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_memberships_result.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/features/clients/domain/repositories/client_repository.dart';
 import 'package:vcare_admin/shared/pagination/paginated_list_request.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
@@ -116,6 +117,10 @@ class FakeClientRepository implements ClientRepository {
     null,
   );
 
+  EitherResponseOrException<void> deleteClientDocumentResult = const Success(
+    null,
+  );
+
   EitherResponseOrException<ClientCase> createClientCaseResult = Success(
     const ClientCase(
       id: 'case-new',
@@ -136,15 +141,17 @@ class FakeClientRepository implements ClientRepository {
 
   String? lastRenameDocumentId;
   String? lastRenameName;
+  String? lastDeleteDocumentId;
 
   String? lastCreateCaseClientId;
   String? lastCreateCaseTitle;
   String? lastCreateCaseDescription;
 
-  PaginatedListRequest? lastClientsRequest;
+  ClientsListRequest? lastClientsRequest;
   bool? lastClientsForceRefresh;
   Future<void>? fetchClientsPage2Delay;
   String? lastClientId;
+  ClientListType? lastClientType;
   PaginatedListRequest? lastTransactionsRequest;
   PaginatedListRequest? lastCasesRequest;
   bool? lastCasesForceRefresh;
@@ -155,13 +162,14 @@ class FakeClientRepository implements ClientRepository {
   bool? lastDependentsForceRefresh;
   PaginatedListRequest? lastDependentsRequest;
   bool? lastPaymentMethodsForceRefresh;
+  Future<void>? fetchPaymentMethodsDelay;
   bool? lastTransactionsForceRefresh;
   String? lastChargeTransactionId;
 
   @override
   Future<EitherResponseOrException<PaginatedResult<ClientListItem>>>
   fetchClients(
-    PaginatedListRequest request, {
+    ClientsListRequest request, {
     CancelToken? cancelToken,
     bool forceRefresh = false,
   }) async {
@@ -203,10 +211,12 @@ class FakeClientRepository implements ClientRepository {
   @override
   Future<EitherResponseOrException<ClientDetail>> fetchClientDetail(
     String clientId, {
+    ClientListType clientType = ClientListType.individual,
     CancelToken? cancelToken,
     bool forceRefresh = false,
   }) async {
     lastClientId = clientId;
+    lastClientType = clientType;
     lastDetailForceRefresh = forceRefresh;
     return fetchDetailResult;
   }
@@ -246,6 +256,11 @@ class FakeClientRepository implements ClientRepository {
   }) async {
     lastClientId = clientId;
     lastPaymentMethodsForceRefresh = forceRefresh;
+
+    if (fetchPaymentMethodsDelay != null) {
+      await fetchPaymentMethodsDelay;
+    }
+
     return fetchPaymentMethodsResult;
   }
 
@@ -370,5 +385,14 @@ class FakeClientRepository implements ClientRepository {
     lastRenameDocumentId = documentId;
     lastRenameName = name;
     return renameClientDocumentResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> deleteClientDocument({
+    required String documentId,
+    CancelToken? cancelToken,
+  }) async {
+    lastDeleteDocumentId = documentId;
+    return deleteClientDocumentResult;
   }
 }

@@ -302,11 +302,10 @@ class AppLocalizationsNe extends AppLocalizations {
   String get settings_select_app_language => 'एप भाषा चयन गर्नुहोस्';
 
   @override
-  String get settings_theme_and_color_scheme => 'थिम र रङ योजना';
+  String get settings_theme_and_color_scheme => 'संगठन ब्रान्डिङ';
 
   @override
-  String get settings_theme_and_seed_color =>
-      'थिम मोड, अक्षर आकार र कन्ट्रास्ट';
+  String get settings_theme_and_seed_color => 'रङ, फन्ट, लोगो र अक्षर आकार';
 
   @override
   String get theme_mode => 'थिम मोड';
@@ -367,6 +366,63 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get contrast_mode_high => 'उच्च';
+
+  @override
+  String get branding_colors_section => 'ब्रान्ड रङहरू';
+
+  @override
+  String get branding_fonts_section => 'फन्ट थिम';
+
+  @override
+  String get branding_logos_section => 'लोगोहरू';
+
+  @override
+  String get branding_primary_color => 'प्राथमिक';
+
+  @override
+  String get branding_secondary_color => 'द्वितीय';
+
+  @override
+  String get branding_accent_color => 'एक्सेन्ट';
+
+  @override
+  String get branding_primary_logo => 'मुख्य लोगो';
+
+  @override
+  String get branding_icon_mark => 'आइकन चिन्ह';
+
+  @override
+  String get branding_upload => 'अपलोड';
+
+  @override
+  String get branding_remove => 'हटाउनुहोस्';
+
+  @override
+  String get branding_save => 'रङ बचत गर्नुहोस्';
+
+  @override
+  String get branding_reset => 'पूर्वनिर्धारितमा रिसेट';
+
+  @override
+  String get branding_preview => 'प्रिभ्यू';
+
+  @override
+  String get branding_saved => 'ब्रान्डिङ अपडेट भयो';
+
+  @override
+  String get branding_save_failed => 'ब्रान्डिङ अपडेट गर्न सकिएन';
+
+  @override
+  String get branding_font_updated => 'फन्ट थिम अपडेट भयो';
+
+  @override
+  String get branding_invalid_color => 'मान्य ६ अंकको हेक्स रङ लेख्नुहोस्';
+
+  @override
+  String get branding_custom_colors => 'कस्टम रङहरू';
+
+  @override
+  String get branding_loading => 'ब्रान्डिङ लोड हुँदैछ…';
 
   @override
   String get english => 'अङ्ग्रेजी';

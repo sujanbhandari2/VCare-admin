@@ -302,11 +302,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get settings_select_app_language => 'অ্যাপের ভাষা নির্বাচন করুন';
 
   @override
-  String get settings_theme_and_color_scheme => 'থিম ও রঙের স্কিম';
+  String get settings_theme_and_color_scheme => 'সংস্থার ব্র্যান্ডিং';
 
   @override
-  String get settings_theme_and_seed_color =>
-      'থিম মোড, লেখার আকার এবং কনট্রাস্ট';
+  String get settings_theme_and_seed_color => 'রঙ, ফন্ট, লোগো এবং লেখার আকার';
 
   @override
   String get theme_mode => 'থিম মোড';
@@ -369,6 +368,63 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get contrast_mode_high => 'উচ্চ';
+
+  @override
+  String get branding_colors_section => 'ব্র্যান্ড রঙ';
+
+  @override
+  String get branding_fonts_section => 'ফন্ট থিম';
+
+  @override
+  String get branding_logos_section => 'লোগো';
+
+  @override
+  String get branding_primary_color => 'প্রাইমারি';
+
+  @override
+  String get branding_secondary_color => 'সেকেন্ডারি';
+
+  @override
+  String get branding_accent_color => 'অ্যাকসেন্ট';
+
+  @override
+  String get branding_primary_logo => 'প্রাইমারি লোগো';
+
+  @override
+  String get branding_icon_mark => 'আইকন মার্ক';
+
+  @override
+  String get branding_upload => 'আপলোড';
+
+  @override
+  String get branding_remove => 'সরান';
+
+  @override
+  String get branding_save => 'রঙ সংরক্ষণ';
+
+  @override
+  String get branding_reset => 'ডিফল্টে রিসেট';
+
+  @override
+  String get branding_preview => 'লাইভ প্রিভিউ';
+
+  @override
+  String get branding_saved => 'ব্র্যান্ডিং আপডেট হয়েছে';
+
+  @override
+  String get branding_save_failed => 'ব্র্যান্ডিং আপডেট করা যায়নি';
+
+  @override
+  String get branding_font_updated => 'ফন্ট থিম আপডেট হয়েছে';
+
+  @override
+  String get branding_invalid_color => 'বৈধ ৬ অঙ্কের হেক্স রঙ লিখুন';
+
+  @override
+  String get branding_custom_colors => 'কাস্টম রঙ';
+
+  @override
+  String get branding_loading => 'ব্র্যান্ডিং লোড হচ্ছে…';
 
   @override
   String get english => 'ইংরেজি';

@@ -105,7 +105,7 @@ class _AvaScreenState extends ConsumerState<AvaScreen> {
                 onEdit: _startEdit,
                 onDelete: _deleteMessage,
                 onHumanRequest: () =>
-                    context.pushNamed(AppRouter.requestNewName),
+                    context.pushNamed(AppRouter.caseCreateName),
               ),
             ),
           ),

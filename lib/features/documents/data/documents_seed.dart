@@ -78,7 +78,7 @@ abstract final class DocumentsSeed {
         createdAt: document.createdAt,
         sourceRouteName: document.sourceLabel.contains('Referral')
             ? AppRouter.idCardName
-            : AppRouter.requestDetailName,
+            : AppRouter.caseDetailName,
         sourceRouteParameters: document.sourceLabel.contains('Referral')
             ? null
             : const {'id': 'r-001'},

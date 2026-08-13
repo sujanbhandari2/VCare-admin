@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_thread_composer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
@@ -40,19 +40,25 @@ Widget _buildHeader(BuildContext context, MessengerThreadHeaderData data) {
 
   final overflow = _buildOverflowAction(context, data, conversation);
   final avatarUrl = conversation.avatarUrl?.trim();
-  final showAvatar = !conversation.isGroup &&
-      avatarUrl != null &&
-      avatarUrl.isNotEmpty;
+  final showOnlinePresence =
+      !conversation.isGroup && conversation.isOnline != null;
+  final showAvatar = !conversation.isGroup;
 
   return VcareStickyPageHeader(
     title: conversation.title,
-    subtitle: conversation.isGroup ? 'Shared care-team conversation' : null,
+    subtitle: conversation.isGroup
+        ? 'Shared care-team conversation'
+        : showOnlinePresence
+            ? (conversation.isOnline! ? 'Online' : 'Offline')
+            : null,
     leading: showAvatar
         ? VcareMessengerAvatar(
             displayTitle: conversation.title,
-            imageUrl: avatarUrl,
+            imageUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : null,
             size: 40,
             borderRadius: 12,
+            showOnlineIndicator: showOnlinePresence,
+            isOnline: conversation.isOnline ?? false,
           )
         : null,
     showBack: data.isMobile,
@@ -215,7 +221,7 @@ class _VcareDeleteChatDialogState extends State<_VcareDeleteChatDialog> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: VCareColors.destructive,
+              backgroundColor: context.vcare.destructive,
             ),
             onPressed: _deleting ? null : () => unawaited(_onDeletePressed()),
             child: _deleting

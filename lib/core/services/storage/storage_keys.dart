@@ -8,6 +8,17 @@ class StorageKeys {
   static const String loggedInUserEmail = 'logged_in_user_email';
   static const String loggedInUserUsername = 'logged_in_user_username';
 
+  /// Admin auth session (mirrors web vcare-auth-store).
+  static const String authUser = 'auth_user';
+  static const String authMenu = 'auth_menu';
+  static const String authUrls = 'auth_urls';
+  static const String authTenantSlug = 'auth_tenant_slug';
+
+  /// Tenant branding cache (keyed by slug; survives logout for no-flash paint).
+  static const String tenantBrandingActiveSlug = 'vcare.branding.active_slug';
+  static String tenantBranding(String slug) => 'vcare.branding.$slug';
+  static String tenantFontTheme(String slug) => 'vcare.fontTheme.$slug';
+
   /// Stable install device id for 2FA remember-device (survives logout).
   static const String deviceId = 'vcare.device-id';
   static const String locale = 'language_locale';

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/notifications/domain/entities/notification_item.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class NotificationInboxTile extends StatelessWidget {
   const NotificationInboxTile({
@@ -20,14 +20,14 @@ class NotificationInboxTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: context.vcare.card,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: VCareRadius.xlAll,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             border: Border.all(color: context.vcare.border),
           ),
           child: Row(
@@ -37,10 +37,10 @@ class NotificationInboxTile extends StatelessWidget {
                 icon: _notificationIcon(notification.type),
                 background: notification.read
                     ? context.vcare.muted
-                    : VCareColors.primary.withValues(alpha: 0.1),
+                    : context.vcare.primary.withValues(alpha: 0.1),
                 color: notification.read
                     ? context.vcare.mutedForeground
-                    : VCareColors.primary,
+                    : context.vcare.primary,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -75,7 +75,7 @@ class NotificationInboxTile extends StatelessWidget {
                   height: 8,
                   margin: const EdgeInsets.only(top: 4),
                   decoration: BoxDecoration(
-                    color: VCareColors.destructive,
+                    color: context.vcare.destructive,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -118,7 +118,7 @@ class _NotificationIconBubble extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
       ),
       child: Icon(icon, size: 18, color: color),
     );

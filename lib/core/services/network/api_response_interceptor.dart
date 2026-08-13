@@ -60,6 +60,14 @@ class ApiResponseInterceptor extends Interceptor {
               Map<String, dynamic>.from(pagination);
         }
 
+        final metrics = map['metrics'];
+        if (metrics is Map<String, dynamic>) {
+          response.extra[PaginatedResponseParser.metricsExtraKey] = metrics;
+        } else if (metrics is Map) {
+          response.extra[PaginatedResponseParser.metricsExtraKey] =
+              Map<String, dynamic>.from(metrics);
+        }
+
         if (map.containsKey('data')) {
           final d = map['data'];
 

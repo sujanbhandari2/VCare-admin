@@ -2,7 +2,11 @@ import 'package:vcare_admin/features/auth/data/models/auth_identify_result_model
     as model;
 import 'package:vcare_admin/features/auth/data/models/auth_verify_otp_result_model.dart'
     as model;
-import 'package:vcare_admin/features/auth/data/models/forgot_password_response_model.dart'
+import 'package:vcare_admin/features/auth/data/models/forgot_password_account_model.dart'
+    as model;
+import 'package:vcare_admin/features/auth/data/models/forgot_password_result_model.dart'
+    as model;
+import 'package:vcare_admin/features/auth/data/models/reset_password_result_model.dart'
     as model;
 import 'package:vcare_admin/features/auth/data/models/login_response_model.dart'
     as model;
@@ -13,7 +17,8 @@ import 'package:vcare_admin/features/auth/data/models/auth_identify_account_mode
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_account.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
-import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/reset_password_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/data/models/auth_login_result_model.dart'
     as model;
@@ -126,17 +131,26 @@ extension RegisterResponseEntityMapper on RegisterResponse {
   }
 }
 
-extension ForgotPasswordResponseMapper on model.ForgotPasswordResponseModel {
-  ForgotPasswordResponse toEntity() {
-    return ForgotPasswordResponse(message: message, success: success);
+extension ForgotPasswordAccountMapper on model.ForgotPasswordAccountModel {
+  ForgotPasswordAccount toEntity() {
+    return ForgotPasswordAccount(
+      accountId: accountId,
+      displayName: displayName,
+    );
   }
 }
 
-extension ForgotPasswordResponseEntityMapper on ForgotPasswordResponse {
-  model.ForgotPasswordResponseModel toModel() {
-    return model.ForgotPasswordResponseModel(
-      message: message,
-      success: success,
+extension ForgotPasswordResultMapper on model.ForgotPasswordResultModel {
+  ForgotPasswordResult toEntity() {
+    return ForgotPasswordResult(
+      sent: sent,
+      accounts: accounts.map((account) => account.toEntity()).toList(),
     );
+  }
+}
+
+extension ResetPasswordResultMapper on model.ResetPasswordResultModel {
+  ResetPasswordResult toEntity() {
+    return ResetPasswordResult(message: message);
   }
 }

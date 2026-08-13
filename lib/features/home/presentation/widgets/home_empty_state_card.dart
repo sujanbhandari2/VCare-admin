@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/widgets/vcare_empty_state_card.dart';
 
@@ -66,15 +66,15 @@ class HomeEmptyStateCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: VCareColors.primary,
-                    borderRadius: BorderRadius.circular(999),
+                    color: context.vcare.primary,
+                    borderRadius: VCareRadius.fullAll,
                   ),
                   child: Text(
                     ctaLabel,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: VCareColors.primaryForeground,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                 ),

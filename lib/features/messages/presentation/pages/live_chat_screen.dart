@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_chat_body.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_new_chat_sheet.dart';
-import 'package:vcare_admin/features/messages/presentation/widgets/messages_header_new_menu.dart';
+// TODO: Re-enable when new chat / new group creation is ready.
+// import 'package:vcare_admin/features/messages/presentation/widgets/messages_header_new_menu.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_scaffold.dart';
@@ -100,19 +100,18 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
     return VcareStickyTabScaffold(
       header: VcarePageHeader(
         title: 'Messages',
         subtitle: 'Chat with your care team',
-        action: MessagesHeaderNewMenu(
-          vcare: vcare,
-          onNewChat: () =>
-              _startNewChatController.openDirectChatPicker(context),
-          onNewGroup: () =>
-              _startNewChatController.openGroupChatPicker(context),
-        ),
+        // TODO: Re-enable when new chat / new group creation is ready.
+        // action: MessagesHeaderNewMenu(
+        //   vcare: vcare,
+        //   onNewChat: () =>
+        //       _startNewChatController.openDirectChatPicker(context),
+        //   onNewGroup: () =>
+        //       _startNewChatController.openGroupChatPicker(context),
+        // ),
       ),
       search: VcareStickySearchField(
         controller: _searchController,

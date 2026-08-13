@@ -49,6 +49,7 @@ class HomePageHeader extends ConsumerWidget {
                     name: profile.fullName,
                     size: avatarSize,
                     circular: true,
+                    initialsFontWeight: FontWeight.w400,
                   ),
                   DecoratedBox(
                     decoration: BoxDecoration(
@@ -91,6 +92,7 @@ class HomePageHeader extends ConsumerWidget {
                               : Theme.of(context).textTheme.headlineMedium)
                           ?.copyWith(
                             fontSize: compact ? 16 : 20,
+                            fontWeight: FontWeight.w500,
                             height: 1.1,
                           ) ??
                       const TextStyle(),

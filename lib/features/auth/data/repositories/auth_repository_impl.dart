@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
 import 'package:vcare_admin/core/services/network/models/form_file.dart';
 import 'package:vcare_admin/core/services/network/models/request_body.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
@@ -15,22 +16,27 @@ import 'package:vcare_admin/core/config/api_endpoints.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/features/auth/data/auth_api_headers.dart';
 import 'package:vcare_admin/features/auth/data/mappers/auth_mappers.dart';
+import 'package:vcare_admin/features/auth/domain/admin_login_payload_builder.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
-import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/reset_password_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
 
+import '../models/admin_login_result_model.dart';
 import '../models/auth_pre_auth_user_model.dart';
 import '../models/auth_login_result_model.dart';
 import '../models/auth_identify_result_model.dart';
 import '../models/auth_setup_account_result_model.dart';
 import '../models/auth_verify_otp_result_model.dart';
-import '../models/forgot_password_response_model.dart';
+import '../models/forgot_password_result_model.dart';
+import '../models/reset_password_result_model.dart';
 import '../models/login_response_model.dart';
 import '../models/register_response_model.dart';
 
@@ -38,9 +44,10 @@ class AuthRepositoryImpl extends AuthRepository {
   /// API Client Instance
   final ApiClient apiClient;
   final StorageService storage;
+  final Configuration configuration;
 
   /// Constructor
-  AuthRepositoryImpl(this.apiClient, this.storage);
+  AuthRepositoryImpl(this.apiClient, this.storage, this.configuration);
 
   @override
   Future<EitherResponseOrException<AuthIdentifyResult>> identify({
@@ -189,6 +196,82 @@ class AuthRepositoryImpl extends AuthRepository {
         dataValidator: (data) => data is Map,
       );
       return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AdminLoginOutcome>> adminLogin({
+    required String email,
+    required String password,
+    String? tenantSlug,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final payload = AdminLoginPayloadBuilder(
+        defaultTenantSlug: configuration.defaultTenantSlug,
+      ).build(
+        email: email,
+        password: password,
+        tenantSlug: tenantSlug,
+      );
+
+      final response = await apiClient.post(
+        ApiEndpoints.login,
+        JsonRequestBody(payload),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.admin,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AdminLoginResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+
+      return model.toOutcome();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthRefreshTokens>> refreshAuthTokens({
+    required String refreshToken,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authRefresh,
+        JsonRequestBody({'refreshToken': refreshToken}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.admin,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AuthRefreshTokensModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> logoutSession({
+    required String refreshToken,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authLogout,
+        JsonRequestBody({'refreshToken': refreshToken}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.admin,
+      );
+
+      ResponseValidator.ensureValid(response);
     });
   }
 
@@ -409,27 +492,69 @@ class AuthRepositoryImpl extends AuthRepository {
     });
   }
 
-  /// Method to handle forgot password
-  ///
   @override
-  Future<EitherResponseOrException<ForgotPasswordResponse>> forgetPassword({
-    required Map<String, dynamic> payloads,
+  Future<EitherResponseOrException<ForgotPasswordResult>> forgotPassword({
+    required String identifier,
+    String? accountId,
+    String? dob,
+    String? zipCode,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final body = <String, dynamic>{
+        'identifier': identifier,
+        if (accountId != null && accountId.trim().isNotEmpty)
+          'accountId': accountId.trim(),
+        if (dob != null && dob.trim().isNotEmpty) 'dob': dob.trim(),
+        if (zipCode != null && zipCode.trim().isNotEmpty)
+          'zipCode': zipCode.trim(),
+      };
+
+      final response = await apiClient.post(
+        ApiEndpoints.authForgotPassword,
+        JsonRequestBody(body),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => ForgotPasswordResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+
+      return model.toEntity();
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<ResetPasswordResult>> resetPassword({
+    required String token,
+    required String password,
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
       final response = await apiClient.post(
-        ApiEndpoints.forgetPassword,
-        JsonRequestBody(payloads),
+        ApiEndpoints.authResetPassword,
+        JsonRequestBody({'token': token, 'password': password}),
         cancelToken: cancelToken,
         isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.agent,
       );
 
-      final forgetPasswordResponseModel = ResponseValidator.parse(
+      final model = ResponseValidator.parse(
         response,
-        (data) => ForgotPasswordResponseModel.fromJson(data),
+        (data) {
+          if (data is Map<String, dynamic>) {
+            return ResetPasswordResultModel.fromJson(data);
+          }
+          return const ResetPasswordResultModel();
+        },
+        dataValidator: (data) => data == null || data is Map,
       );
 
-      return forgetPasswordResponseModel.toEntity();
+      return model.toEntity();
     });
   }
 }

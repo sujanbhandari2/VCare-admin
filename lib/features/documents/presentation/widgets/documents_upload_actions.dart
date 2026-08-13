@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_type_picker_sheet.dart';
@@ -14,6 +13,7 @@ import 'package:vcare_admin/features/home/presentation/providers/agent_stats_sta
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class DocumentsUploadActions extends ConsumerStatefulWidget {
   const DocumentsUploadActions({super.key});
@@ -159,6 +159,12 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
     }
 
     final action = await context.showBottomSheet<_UploadAction>(
+      margin: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        MediaQuery.paddingOf(context).bottom + 16,
+      ),
       builder: (sheetContext) => _DocumentsSourceSheet(
         onSelected: (value) => Navigator.of(sheetContext).pop(value),
       ),
@@ -176,11 +182,11 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: VCareColors.primary,
-      borderRadius: BorderRadius.circular(12),
+      color: context.vcare.primary,
+      borderRadius: VCareRadius.lgAll,
       child: InkWell(
         onTap: _isUploading ? null : _startUploadFlow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
@@ -192,14 +198,14 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: VCareColors.primaryForeground,
+                    color: context.theme.colorScheme.onPrimary,
                   ),
                 )
               else
                 Icon(
                   LucideIcons.upload,
                   size: 16,
-                  color: VCareColors.primaryForeground,
+                  color: context.theme.colorScheme.onPrimary,
                 ),
               const SizedBox(width: 6),
               Text(
@@ -207,7 +213,7 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: VCareColors.primaryForeground,
+                  color: context.theme.colorScheme.onPrimary,
                 ),
               ),
             ],
@@ -227,40 +233,23 @@ class _DocumentsSourceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset + 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: vcare.muted,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _UploadMenuRow(
-              icon: LucideIcons.paperclip,
-              label: 'Choose files',
-              onTap: () => onSelected(_UploadAction.chooseFiles),
-            ),
-            _UploadMenuRow(
-              icon: LucideIcons.camera,
-              label: 'Take photo',
-              onTap: () => onSelected(_UploadAction.takePhoto),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _UploadMenuRow(
+            icon: LucideIcons.paperclip,
+            label: 'Choose files',
+            onTap: () => onSelected(_UploadAction.chooseFiles),
+          ),
+          _UploadMenuRow(
+            icon: LucideIcons.camera,
+            label: 'Take photo',
+            onTap: () => onSelected(_UploadAction.takePhoto),
+          ),
+        ],
       ),
     );
   }
@@ -283,7 +272,7 @@ class _UploadMenuRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(

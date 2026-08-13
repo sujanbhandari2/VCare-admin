@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Matches vcareapp [ChatDateSeparator].
 class AvaDateChip extends StatelessWidget {
@@ -18,7 +19,7 @@ class AvaDateChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           decoration: BoxDecoration(
             color: vcare.muted.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: VCareRadius.fullAll,
           ),
           child: Text(
             label.toUpperCase(),

@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
 
 /// VCare-styled conversation composer for Live Chat thread overrides.
@@ -140,7 +140,7 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                         data.isRecording ? LucideIcons.square : LucideIcons.mic,
                         size: 18,
                         color: data.isRecording
-                            ? VCareColors.destructive
+                            ? context.vcare.destructive
                             : vcare.mutedForeground,
                       ),
                       visualDensity: VisualDensity.compact,
@@ -148,8 +148,8 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                     const SizedBox(width: 4),
                     Material(
                       color: canSend
-                          ? VCareColors.primary
-                          : VCareColors.primary.withValues(alpha: 0.35),
+                          ? context.vcare.primary
+                          : context.vcare.primary.withValues(alpha: 0.35),
                       shape: const CircleBorder(),
                       child: InkWell(
                         onTap: canSend ? data.onSend : null,
@@ -208,73 +208,73 @@ class VcareMessengerThreadComposer extends StatelessWidget {
     BuildContext context,
     MessengerComposerData data,
   ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+    await context.showBottomSheet<void>(
+      margin: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        MediaQuery.paddingOf(context).bottom + 16,
       ),
+      topRadius: 18,
       builder: (sheetContext) {
         final vcare = context.vcare;
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    data.attachmentSheetTitle,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  data.attachmentSheetTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              // Order / labels match web CareTeamDetailComposer attach menu.
-              if (data.onPickCamera != null)
-                _AttachmentOptionTile(
-                  icon: LucideIcons.camera,
-                  label: 'Take photo',
-                  mutedColor: vcare.mutedForeground,
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    data.onPickCamera!();
-                  },
-                ),
+            ),
+            // Order / labels match web CareTeamDetailComposer attach menu.
+            if (data.onPickCamera != null)
               _AttachmentOptionTile(
-                icon: LucideIcons.image,
-                label: 'Photo library',
+                icon: LucideIcons.camera,
+                label: 'Take photo',
                 mutedColor: vcare.mutedForeground,
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  data.onPickImage();
+                  data.onPickCamera!();
                 },
               ),
-              if (data.onPickDocument != null)
-                _AttachmentOptionTile(
-                  icon: LucideIcons.fileText,
-                  label: 'File',
-                  mutedColor: vcare.mutedForeground,
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    data.onPickDocument!();
-                  },
-                ),
+            _AttachmentOptionTile(
+              icon: LucideIcons.image,
+              label: 'Photo library',
+              mutedColor: vcare.mutedForeground,
+              onTap: () {
+                Navigator.pop(sheetContext);
+                data.onPickImage();
+              },
+            ),
+            if (data.onPickDocument != null)
               _AttachmentOptionTile(
-                icon: LucideIcons.mic,
-                label: 'Audio file',
+                icon: LucideIcons.fileText,
+                label: 'File',
                 mutedColor: vcare.mutedForeground,
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  data.onPickAudio();
+                  data.onPickDocument!();
                 },
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
+            _AttachmentOptionTile(
+              icon: LucideIcons.mic,
+              label: 'Audio file',
+              mutedColor: vcare.mutedForeground,
+              onTap: () {
+                Navigator.pop(sheetContext);
+                data.onPickAudio();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
         );
       },
     );
@@ -330,12 +330,12 @@ class _RecordingBanner extends StatelessWidget {
               icon: Icon(
                 LucideIcons.trash2,
                 size: 18,
-                color: VCareColors.destructive,
+                color: context.vcare.destructive,
               ),
               tooltip: 'Discard recording',
               visualDensity: VisualDensity.compact,
             ),
-            Icon(LucideIcons.mic, size: 16, color: VCareColors.primary),
+            Icon(LucideIcons.mic, size: 16, color: context.vcare.primary),
             const SizedBox(width: 6),
             const Expanded(
               child: Text(
@@ -434,7 +434,7 @@ class _PendingAttachmentsRow extends StatelessWidget {
                 'Attachments exceed the size limit. Remove some to send.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: VCareColors.destructive,
+                  color: context.vcare.destructive,
                   fontWeight: FontWeight.w600,
                 ),
               ),

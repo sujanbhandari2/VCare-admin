@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_dependents_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_detail_state_provider.dart';
@@ -15,6 +15,7 @@ import 'package:vcare_admin/features/clients/presentation/providers/client_docum
 import 'package:vcare_admin/features/clients/presentation/providers/client_memberships_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_transactions_state_provider.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/client_contact_card.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tab_bar.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_tabs.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_details_drawer.dart';
@@ -22,7 +23,6 @@ import 'package:vcare_admin/features/clients/presentation/widgets/client_documen
 import 'package:vcare_admin/features/clients/presentation/widgets/client_transaction_detail_sheet.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
@@ -30,9 +30,14 @@ import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// Client detail — parity with vcareapp [ClientDetailPage].
 class ClientDetailScreen extends ConsumerStatefulWidget {
-  const ClientDetailScreen({super.key, required this.clientId});
+  const ClientDetailScreen({
+    super.key,
+    required this.clientId,
+    this.clientType = ClientListType.individual,
+  });
 
   final String clientId;
+  final ClientListType clientType;
 
   @override
   ConsumerState<ClientDetailScreen> createState() => _ClientDetailScreenState();
@@ -54,7 +59,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
   Future<void> _onRefresh() async {
     final clientId = widget.clientId;
     await Future.wait([
-      ref.read(clientDetailStateProvider(clientId).notifier).fetchDetail(),
+      ref
+          .read(clientDetailStateProvider(clientId).notifier)
+          .fetchDetail(clientType: widget.clientType),
       ref
           .read(clientMembershipsStateProvider(clientId).notifier)
           .fetchMemberships(),
@@ -178,6 +185,7 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
               ClientMembershipsTab(
                 memberships: membershipsState.data?.memberships ?? const [],
                 dependents: dependentsState.dependents,
+                affiliateAgents: detail.affiliateAgents,
                 isLoading: membershipsState.fetching,
                 error: membershipsState.error,
                 isLoadingDependents: dependentsState.fetching,
@@ -378,9 +386,25 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
 
     if (confirmed != true) return;
 
-    ref
+    final result = await ref
         .read(clientDocumentsStateProvider(clientId).notifier)
-        .removeLocalFile(file.id);
+        .deleteDocument(documentId: file.id);
+
+    if (!context.mounted) return;
+
+    if (result.success) {
+      context.showVcareToast(
+        title: 'Document deleted',
+        description: file.name,
+        variant: VcareToastVariant.info,
+      );
+    } else {
+      context.showVcareToast(
+        title: 'Could not delete document',
+        description: result.error,
+        variant: VcareToastVariant.destructive,
+      );
+    }
   }
 }
 
@@ -391,132 +415,15 @@ class _IdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: VCareColors.primaryTint,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: vcare.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: VCareColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: vcare.border),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: VCareCachedImage(
-                      imageUrl: detail.avatarUrl,
-                      fit: BoxFit.cover,
-                      errorWidget: ColoredBox(
-                        color: vcare.muted,
-                        child: Center(
-                          child: Text(
-                            clientInitials(detail.fullName),
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'CLIENT',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.1,
-                        color: vcare.accent,
-                      ),
-                    ),
-                    Text(
-                      detail.fullName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      detail.email,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: vcare.mutedForeground,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              _CircleAction(
-                icon: LucideIcons.phone,
-                filled: true,
-                onTap: () => launchUrlString('tel:${detail.phone}'),
-              ),
-              const SizedBox(width: 8),
-              _CircleAction(
-                icon: LucideIcons.mail,
-                onTap: () => launchUrlString('mailto:${detail.email}'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CircleAction extends StatelessWidget {
-  const _CircleAction({
-    required this.icon,
-    required this.onTap,
-    this.filled = false,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return Material(
-      color: filled ? VCareColors.primary : VCareColors.background,
-      shape: CircleBorder(
-        side: filled ? BorderSide.none : BorderSide(color: vcare.border),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 36,
-          height: 36,
-          child: Icon(
-            icon,
-            size: 16,
-            color: filled ? Colors.white : vcare.mutedForeground,
-          ),
-        ),
+      child: ClientContactCard(
+        label: 'CLIENT',
+        name: detail.fullName,
+        subtitle: detail.email,
+        avatarUrl: detail.avatarUrl,
+        phone: detail.phone,
+        email: detail.email,
       ),
     );
   }

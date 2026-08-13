@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
 import 'package:vcare_admin/features/home/data/vcare_assets.dart';
@@ -173,10 +173,10 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: vcare.gradientCard,
-                borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
+                borderRadius: BorderRadius.circular(VCareRadius.xxl),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(VCareLayout.cardRadius3xl),
+                borderRadius: BorderRadius.circular(VCareRadius.xxl),
                 child: Stack(
                   clipBehavior: Clip.hardEdge,
                   children: [
@@ -391,7 +391,7 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
         DecoratedBox(
           decoration: BoxDecoration(
             color: vcare.card,
-            borderRadius: BorderRadius.circular(VCareLayout.cardRadius2xl),
+            borderRadius: BorderRadius.circular(VCareRadius.xl),
             border: Border.all(color: vcare.border),
           ),
           child: Padding(
@@ -422,7 +422,7 @@ class _VcareReferralCardState extends ConsumerState<VcareReferralCard> {
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          foregroundColor: VCareColors.primary,
+                          foregroundColor: context.vcare.primary,
                         ),
                       ),
                   ],
@@ -598,7 +598,7 @@ class _LinkBarAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     return Material(
-      color: filled ? VCareColors.primary : vcare.card,
+      color: filled ? vcare.primary : vcare.card,
       child: InkWell(
         onTap: onPressed,
         child: Container(
@@ -649,7 +649,7 @@ class _LinkBarIconButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: filled ? VCareColors.primary : Colors.transparent,
+        color: filled ? vcare.primary : Colors.transparent,
         child: InkWell(
           onTap: onPressed,
           child: Container(

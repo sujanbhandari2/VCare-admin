@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/core/styles/vcare_spacing.dart';
+import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
 
 /// Compact role pill shown next to a messenger display name.
 class VcareMessengerRoleBadge extends StatelessWidget {
@@ -23,16 +25,16 @@ class VcareMessengerRoleBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final colors = _colorsFor(label, context.vcare);
+    final colors = VCareStatusColors.of(context, _toneFor(label));
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 6 : 8,
-        vertical: compact ? 2 : 3,
+        horizontal: compact ? 6 : VCareSpacing.s2,
+        vertical: compact ? VCareSpacing.s0_5 : 3,
       ),
       decoration: BoxDecoration(
         color: colors.background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: VCareRadius.fullAll,
         border: Border.all(color: colors.border),
       ),
       child: Text(
@@ -67,44 +69,12 @@ class VcareMessengerRoleBadge extends StatelessWidget {
     return label;
   }
 
-  static _RoleBadgeColors _colorsFor(String label, VCareThemeExtension vcare) {
-    switch (label) {
-      case 'CLIENT':
-        return const _RoleBadgeColors(
-          background: Color(0xFFE8F5E9),
-          foreground: Color(0xFF1B5E20),
-          border: Color(0xFFA5D6A7),
-        );
-      case 'ADMIN':
-        return const _RoleBadgeColors(
-          background: Color(0xFFFFF3E0),
-          foreground: Color(0xFFBF360C),
-          border: Color(0xFFFFCC80),
-        );
-      case 'AGENT':
-        return const _RoleBadgeColors(
-          background: Color(0xFFE3F2FD),
-          foreground: Color(0xFF1565C0),
-          border: Color(0xFF90CAF9),
-        );
-      default:
-        return _RoleBadgeColors(
-          background: vcare.muted.withValues(alpha: 0.55),
-          foreground: vcare.mutedForeground,
-          border: vcare.border,
-        );
-    }
+  static VCareStatusTone _toneFor(String label) {
+    return switch (label) {
+      'CLIENT' => VCareStatusTone.success,
+      'ADMIN' => VCareStatusTone.warning,
+      'AGENT' => VCareStatusTone.info,
+      _ => VCareStatusTone.neutral,
+    };
   }
-}
-
-class _RoleBadgeColors {
-  const _RoleBadgeColors({
-    required this.background,
-    required this.foreground,
-    required this.border,
-  });
-
-  final Color background;
-  final Color foreground;
-  final Color border;
 }

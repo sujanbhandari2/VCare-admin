@@ -14,6 +14,14 @@ class PaginatedResponseParser {
   PaginatedResponseParser._();
 
   static const String paginationExtraKey = 'pagination';
+  static const String metricsExtraKey = 'metrics';
+
+  static Map<String, dynamic>? extractMetrics(Response<dynamic> response) {
+    final raw = response.extra[metricsExtraKey];
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return null;
+  }
 
   static PaginatedResult<T> parse<T>(
     Response<dynamic> response,

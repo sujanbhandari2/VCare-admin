@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Multi-select sheet to add associated users to an existing group conversation.
 class HealthMessengerAddGroupMembersSheet extends ConsumerStatefulWidget {
@@ -21,11 +21,9 @@ class HealthMessengerAddGroupMembersSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required MessengerConversation conversation,
   }) {
-    return showModalBottomSheet<void>(
-      context: context,
+    return context.showBottomSheet<void>(
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => HealthMessengerAddGroupMembersSheet(
         conversation: conversation,
       ),
@@ -120,95 +118,74 @@ class _HealthMessengerAddGroupMembersSheetState
     final filtered = _filtered;
     final selected = _selectedUsers;
     final isLoading = chatState.isSuggestedUsersLoading;
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
     final canSubmit = selected.isNotEmpty && !_isSubmitting;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Material(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: vcare.muted,
-                    borderRadius: BorderRadius.circular(999),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Add people',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Add people',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(LucideIcons.x, color: vcare.mutedForeground),
-                      ),
-                    ],
-                  ),
-                ),
-                if (selected.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                    child: SizedBox(
-                      height: 40,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: selected.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final user = selected[index];
-                          final name = user.username.trim().isEmpty
-                              ? user.id
-                              : user.username.trim();
-                          return InputChip(
-                            label: Text(name),
-                            onDeleted: () => _toggle(user.id),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  child: TextField(
-                    controller: _queryController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: 'Search people',
-                      prefixIcon: Icon(
-                        LucideIcons.search,
-                        color: vcare.mutedForeground,
-                      ),
-                      filled: true,
-                      fillColor: vcare.muted.withValues(alpha: 0.4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: vcare.border),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(LucideIcons.x, color: vcare.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+        if (selected.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+            child: SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: selected.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final user = selected[index];
+                  final name = user.username.trim().isEmpty
+                      ? user.id
+                      : user.username.trim();
+                  return InputChip(
+                    label: Text(name),
+                    onDeleted: () => _toggle(user.id),
+                  );
+                },
+              ),
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: TextField(
+            controller: _queryController,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Search people',
+              prefixIcon: Icon(
+                LucideIcons.search,
+                color: vcare.mutedForeground,
+              ),
+              filled: true,
+              fillColor: vcare.muted.withValues(alpha: 0.4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: vcare.border),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
                   child: isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : filtered.isEmpty
@@ -283,7 +260,7 @@ class _HealthMessengerAddGroupMembersSheetState
                                               ? LucideIcons.checkCircle
                                               : LucideIcons.circle,
                                           color: isSelected
-                                              ? VCareColors.primary
+                                              ? context.vcare.primary
                                               : vcare.mutedForeground,
                                         ),
                                       ],
@@ -294,48 +271,44 @@ class _HealthMessengerAddGroupMembersSheetState
                             );
                           },
                         ),
-                ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: vcare.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${selected.length} selected',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: vcare.mutedForeground,
-                          ),
-                        ),
-                      ),
-                      OutlinedButton(
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: canSubmit ? _submit : null,
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Add people'),
-                      ),
-                    ],
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: vcare.border)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${selected.length} selected',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: vcare.mutedForeground,
                   ),
                 ),
-              ],
-            ),
+              ),
+              OutlinedButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: canSubmit ? _submit : null,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Add people'),
+              ),
+            ],
           ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vcare_admin/core/styles/app_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
@@ -30,9 +30,9 @@ class BottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       backgroundColor: context.theme.scaffoldBackgroundColor,
-      unselectedItemColor: AppColors.grey,
+      unselectedItemColor: context.vcare.mutedForeground,
       selectedItemColor: !context.isDarkTheme
-          ? context.theme.primaryColor
+          ? context.theme.colorScheme.primary
           : context.theme.colorScheme.onSurface,
       elevation: 5.0,
       showSelectedLabels: true,

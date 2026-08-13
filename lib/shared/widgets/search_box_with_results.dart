@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/app_colors.dart';
 import 'package:vcare_admin/shared/utils/debouncer.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
@@ -59,12 +58,14 @@ class _SearchBoxWithResultsState extends State<SearchBoxWithResults> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+
     return SearchBox(
       key: _boxKey,
       controller: widget.controller,
       hint: widget.hint,
-      borderColor: AppColors.grey,
-      fillColor: context.isDarkTheme ? Colors.black87 : Colors.white,
+      borderColor: scheme.outline,
+      fillColor: scheme.surface,
       filled: true,
       showClearButton: true,
       onChanged: (s) {
@@ -107,7 +108,7 @@ class _SearchBoxWithResultsState extends State<SearchBoxWithResults> {
           margin: .only(top: 8.0, left: 16.0, right: 16.0),
           padding: widget.resultsPadding,
           decoration: BoxDecoration(
-            color: context.isDarkTheme ? Colors.black45 : Colors.white70,
+            color: context.theme.colorScheme.surface.withValues(alpha: 0.95),
             borderRadius: .circular(8.0),
           ),
           // child: widget.results,

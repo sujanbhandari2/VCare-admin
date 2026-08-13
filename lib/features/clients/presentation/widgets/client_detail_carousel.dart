@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Horizontal carousel with dot indicators — parity with vcareapp [Carousel].
 class ClientDetailCarousel extends StatefulWidget {
@@ -65,10 +66,14 @@ class _ClientDetailCarouselState extends State<ClientDetailCarousel> {
   Widget build(BuildContext context) {
     if (widget.itemCount == 0) return const SizedBox.shrink();
 
+    // Card content grows with the user's font scale, so the fixed track height
+    // has to grow with it too.
+    final height = MediaQuery.textScalerOf(context).scale(widget.height);
+
     return Column(
       children: [
         SizedBox(
-          height: widget.height,
+          height: height,
           child: ListView.separated(
             controller: _controller,
             scrollDirection: Axis.horizontal,
@@ -97,9 +102,9 @@ class _ClientDetailCarouselState extends State<ClientDetailCarousel> {
                   height: 6,
                   decoration: BoxDecoration(
                     color: active
-                        ? VCareColors.primary
-                        : VCareColors.mutedForeground.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(999),
+                        ? context.vcare.primary
+                        : context.vcare.mutedForeground.withValues(alpha: 0.3),
+                    borderRadius: VCareRadius.fullAll,
                   ),
                 ),
               );

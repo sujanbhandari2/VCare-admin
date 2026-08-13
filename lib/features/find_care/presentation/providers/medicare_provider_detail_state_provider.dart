@@ -43,7 +43,7 @@ class MedicareProviderDetailStateNotifier
       failure: (error) {
         state = state.copyWith(
           lookupLoading: false,
-          lookupError: error.userMessage ?? 'Request failed',
+          lookupError: error.userMessage,
         );
       },
       success: (result) {
@@ -96,7 +96,7 @@ class MedicareProviderDetailStateNotifier
         state = state.copyWith(
           servicesLoading: false,
           servicesLoadingMore: false,
-          servicesError: error.userMessage ?? 'Request failed',
+          servicesError: error.userMessage,
           serviceLines: reset ? [] : state.serviceLines,
         );
       },

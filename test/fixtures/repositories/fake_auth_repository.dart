@@ -1,19 +1,32 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_verify_otp_result.dart';
-import 'package:vcare_admin/features/auth/domain/entities/forgot_password_response.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/domain/entities/reset_password_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/register_response.dart';
 import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
 
 import '../repository_fixtures.dart';
 
 class FakeAuthRepository implements AuthRepository {
+  EitherResponseOrException<AdminLoginOutcome> adminLoginResult = Success(
+    AdminLoginAuthenticated(RepositoryFixtures.adminAuthSession()),
+  );
+  EitherResponseOrException<AuthRefreshTokens> refreshAuthTokensResult =
+      Success(
+    const AuthRefreshTokens(
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+    ),
+  );
+  EitherResponseOrException<void> logoutSessionResult = const Success(null);
   EitherResponseOrException<AuthLoginOutcome> loginResult = Success(
     AuthLoginSessionOutcome(RepositoryFixtures.authSession()),
   );
@@ -30,8 +43,10 @@ class FakeAuthRepository implements AuthRepository {
   EitherResponseOrException<RegisterResponse> registerResult = Success(
     RepositoryFixtures.registerResponse(),
   );
-  EitherResponseOrException<ForgotPasswordResponse> forgotPasswordResult =
-      Success(RepositoryFixtures.forgotPasswordResponse());
+  EitherResponseOrException<ForgotPasswordResult> forgotPasswordResult =
+      Success(RepositoryFixtures.forgotPasswordResult());
+  EitherResponseOrException<ResetPasswordResult> resetPasswordResult =
+      Success(RepositoryFixtures.resetPasswordResult());
   EitherResponseOrException<AuthIdentifyResult> identifyResult = Success(
     const AuthIdentifyResult(
       userExists: true,
@@ -56,9 +71,19 @@ class FakeAuthRepository implements AuthRepository {
     RepositoryFixtures.authPreAuthUser(),
   );
 
+  String? lastAdminLoginEmail;
+  String? lastAdminLoginPassword;
+  String? lastAdminLoginTenantSlug;
+  String? lastLogoutRefreshToken;
+
   Map<String, dynamic>? lastLoginPayloads;
   Map<String, dynamic>? lastRegisterPayloads;
-  Map<String, dynamic>? lastForgotPasswordPayloads;
+  String? lastForgotPasswordIdentifier;
+  String? lastForgotPasswordAccountId;
+  String? lastForgotPasswordDob;
+  String? lastForgotPasswordZipCode;
+  String? lastResetPasswordToken;
+  String? lastResetPasswordPassword;
   String? lastIdentifyIdentifier;
   String? lastRequestOtpIdentifier;
   String? lastVerifyOtpIdentifier;
@@ -81,6 +106,36 @@ class FakeAuthRepository implements AuthRepository {
   String get path4Login => '/auth/login/';
 
   String get path4Register => '/auth/register/';
+
+  @override
+  Future<EitherResponseOrException<AdminLoginOutcome>> adminLogin({
+    required String email,
+    required String password,
+    String? tenantSlug,
+    CancelToken? cancelToken,
+  }) async {
+    lastAdminLoginEmail = email;
+    lastAdminLoginPassword = password;
+    lastAdminLoginTenantSlug = tenantSlug;
+    return adminLoginResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<AuthRefreshTokens>> refreshAuthTokens({
+    required String refreshToken,
+    CancelToken? cancelToken,
+  }) async {
+    return refreshAuthTokensResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<void>> logoutSession({
+    required String refreshToken,
+    CancelToken? cancelToken,
+  }) async {
+    lastLogoutRefreshToken = refreshToken;
+    return logoutSessionResult;
+  }
 
   @override
   Future<EitherResponseOrException<AuthIdentifyResult>> identify({
@@ -151,12 +206,29 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<EitherResponseOrException<ForgotPasswordResponse>> forgetPassword({
-    required Map<String, dynamic> payloads,
+  Future<EitherResponseOrException<ForgotPasswordResult>> forgotPassword({
+    required String identifier,
+    String? accountId,
+    String? dob,
+    String? zipCode,
     CancelToken? cancelToken,
   }) async {
-    lastForgotPasswordPayloads = payloads;
+    lastForgotPasswordIdentifier = identifier;
+    lastForgotPasswordAccountId = accountId;
+    lastForgotPasswordDob = dob;
+    lastForgotPasswordZipCode = zipCode;
     return forgotPasswordResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<ResetPasswordResult>> resetPassword({
+    required String token,
+    required String password,
+    CancelToken? cancelToken,
+  }) async {
+    lastResetPasswordToken = token;
+    lastResetPasswordPassword = password;
+    return resetPasswordResult;
   }
 
   @override

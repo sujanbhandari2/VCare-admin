@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_row.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/clients_empty_state.dart';
+import 'package:vcare_admin/features/clients/presentation/widgets/clients_type_filter_bar.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
@@ -15,7 +17,7 @@ import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_search_bar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
-/// Clients list — parity with vcareapp [ClientsPage].
+/// Clients list — Individuals / Groups filter parity with web admin console.
 class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
 
@@ -38,7 +40,11 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(clientsListStateProvider.notifier).loadInitial();
+      ref.read(clientsListStateProvider.notifier).loadInitial(
+        extras: const {
+          ClientsListState.clientTypeExtraKey: ClientListType.individual,
+        },
+      );
     });
   }
 
@@ -78,6 +84,12 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     });
   }
 
+  Future<void> _onClientTypeChanged(ClientListType type) async {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    await ref.read(clientsListStateProvider.notifier).setClientType(type);
+  }
+
   Future<void> _onRefresh() async {
     await ref.read(clientsListStateProvider.notifier).refresh();
   }
@@ -93,10 +105,22 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   @override
   Widget build(BuildContext context) {
     final listState = ref.watch(clientsListStateProvider);
+    final clientType = ref.watch(
+      clientsListStateProvider.select(
+        (state) {
+          final value = state.extras?[ClientsListState.clientTypeExtraKey];
+          return value is ClientListType
+              ? value
+              : ClientListType.individual;
+        },
+      ),
+    );
     final clients = listState.items;
+    final isGroups = clientType == ClientListType.group;
     final subtitle = buildClientsSubtitle(
       listState.totalItems,
       isLoading: listState.isInitialLoading,
+      clientType: clientType,
     );
     final safeTop = MediaQuery.paddingOf(context).top;
     final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
@@ -119,6 +143,13 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           ),
           SliverPersistentHeader(
             pinned: true,
+            delegate: ClientsTypeFilterHeaderDelegate(
+              selected: clientType,
+              onChanged: _onClientTypeChanged,
+            ),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
             delegate: VcareStickySearchHeaderDelegate(
               scrolled: _scrolled,
               focused: _searchFocused,
@@ -129,7 +160,9 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   setState(() => _searchFocused = focused);
                 }
               },
-              placeholder: 'Search clients by name, email or city',
+              placeholder: isGroups
+                  ? 'Search by company or contact'
+                  : 'Search clients by name, email or city',
             ),
           ),
           if (listState.isInitialLoading)
@@ -141,7 +174,9 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
             SliverFillRemaining(
               hasScrollBody: false,
               child: VcareErrorStatePanel(
-                title: 'Unable to load clients',
+                title: isGroups
+                    ? 'Unable to load groups'
+                    : 'Unable to load clients',
                 message: listState.operation.errorMessage,
                 actionLabel: context.appLocalization.retry,
                 onAction: () =>
@@ -149,7 +184,14 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               ),
             )
           else if (listState.isEmpty)
-            const SliverToBoxAdapter(child: ClientsEmptyState())
+            SliverToBoxAdapter(
+              child: ClientsEmptyState(
+                title: isGroups ? 'No groups found' : 'No clients found',
+                description: isGroups
+                    ? 'Try a different company or contact name.'
+                    : 'Try a different name, email or city.',
+              ),
+            )
           else
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -170,6 +212,9 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     onTap: () => context.pushNamed(
                       AppRouter.clientDetailName,
                       pathParameters: {'id': client.id},
+                      queryParameters: {
+                        'clientType': client.clientType.apiValue,
+                      },
                     ),
                   );
                 },

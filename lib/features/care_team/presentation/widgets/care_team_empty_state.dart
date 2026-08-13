@@ -3,8 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class CareTeamEmptyState extends StatelessWidget {
   const CareTeamEmptyState({super.key});
@@ -18,7 +19,7 @@ class CareTeamEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Column(
@@ -28,13 +29,13 @@ class CareTeamEmptyState extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: VCareColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              color: context.vcare.primary.withValues(alpha: 0.1),
+              borderRadius: VCareRadius.xlAll,
             ),
             child: Icon(
               LucideIcons.users,
               size: 24,
-              color: VCareColors.primary,
+              color: context.vcare.primary,
             ),
           ),
           const SizedBox(height: 12),
@@ -56,15 +57,11 @@ class CareTeamEmptyState extends StatelessWidget {
           FilledButton(
             onPressed: () => context.pushNamed(AppRouter.careTeamNewName),
             style: FilledButton.styleFrom(
-              backgroundColor: VCareColors.primary,
-              foregroundColor: VCareColors.primaryForeground,
+              backgroundColor: context.vcare.primary,
+              foregroundColor: context.theme.colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              shape: const StadiumBorder(),
             ),
-            child: const Text(
-              'Add a contact',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
+            child: const Text('Add a contact'),
           ),
         ],
       ),

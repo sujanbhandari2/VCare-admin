@@ -21,6 +21,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   StreamSubscription<ChatSocketEvent>? _socketSubscription;
   StreamSubscription<MessengerPushEvent>? _pushEventsSubscription;
   VoidCallback? _remotePresenceListener;
+  Map<String, bool> _remotePresenceByUserId = const {};
   Timer? _slowConversationHintTimer;
   bool _attachedToSession = false;
 
@@ -234,6 +235,8 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       if (!state.isSocketConnected) {
         await ensureSocketConnected();
       }
+
+      _syncRemotePresenceFromStore();
     } catch (error, stackTrace) {
       _log(
         'Refresh failed',
@@ -1552,11 +1555,118 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   }
 
   void _bindRemotePresenceListener(ChatSession activeSession) {
+    _remotePresenceByUserId =
+        Map<String, bool>.from(activeSession.remotePresence.onlineByUserId.value);
     _remotePresenceListener = () {
-      // Presence updates flow through conversation participants on refresh.
+      final store = activeSession.remotePresence;
+      final next = store.onlineByUserId.value;
+      final prev = _remotePresenceByUserId;
+
+      for (final entry in next.entries) {
+        final userId = entry.key;
+        final nextOnline = entry.value;
+        if (prev[userId] == nextOnline) {
+          continue;
+        }
+        _applyPresenceUpdate(userId, nextOnline);
+      }
+
+      for (final userId in prev.keys) {
+        if (!next.containsKey(userId)) {
+          _applyPresenceUpdate(userId, false);
+        }
+      }
+
+      _remotePresenceByUserId = Map<String, bool>.from(next);
     };
     activeSession.remotePresence.onlineByUserId
         .addListener(_remotePresenceListener!);
+  }
+
+  void _syncRemotePresenceFromStore() {
+    final store = _session?.remotePresence;
+    if (store == null) {
+      return;
+    }
+    for (final entry in store.onlineByUserId.value.entries) {
+      _applyPresenceUpdate(entry.key, entry.value);
+    }
+    _remotePresenceByUserId =
+        Map<String, bool>.from(store.onlineByUserId.value);
+  }
+
+  void _applyPresenceUpdate(String userId, bool isOnline) {
+    if (!ref.mounted) {
+      return;
+    }
+
+    final updatedUsers = state.users
+        .map(
+          (user) => user.id == userId
+              ? TenantUser(
+                  id: user.id,
+                  tenantId: user.tenantId,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  isOnline: isOnline,
+                  createdAt: user.createdAt,
+                  externalUserRole: user.externalUserRole,
+                  avatarUrl: user.avatarUrl,
+                  status: user.status,
+                  accessToken: user.accessToken,
+                  tokenType: user.tokenType,
+                  providerUserId: user.providerUserId,
+                )
+              : user,
+        )
+        .toList(growable: false);
+
+    final updatedConversations = state.conversations
+        .map(
+          (conversation) => Conversation(
+            id: conversation.id,
+            tenantId: conversation.tenantId,
+            type: conversation.type,
+            title: conversation.title,
+            createdBy: conversation.createdBy,
+            createdAt: conversation.createdAt,
+            updatedAt: conversation.updatedAt,
+            participants: conversation.participants
+                .map(
+                  (participant) => participant.user.id == userId
+                      ? ConversationParticipant(
+                          id: participant.id,
+                          userId: participant.userId,
+                          conversationId: participant.conversationId,
+                          user: ConversationParticipantUser(
+                            id: participant.user.id,
+                            username: participant.user.username,
+                            role: participant.user.role,
+                            externalUserRole: participant.user.externalUserRole,
+                            email: participant.user.email,
+                            avatarUrl: participant.user.avatarUrl,
+                            status: participant.user.status,
+                            isOnline: isOnline,
+                          ),
+                        )
+                      : participant,
+                )
+                .toList(growable: false),
+            unreadCount: conversation.unreadCount,
+            latestMessage: conversation.latestMessage,
+            latestMessageId: conversation.latestMessageId,
+            latestReaction: conversation.latestReaction,
+            messageState: conversation.messageState,
+            messageStatusByUserId: conversation.messageStatusByUserId,
+          ),
+        )
+        .toList(growable: false);
+
+    state = state.copyWith(
+      users: updatedUsers,
+      conversations: updatedConversations,
+    );
   }
 
   void _unbindRemotePresenceListener() {
@@ -1566,6 +1676,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       activeSession.remotePresence.onlineByUserId.removeListener(listener);
     }
     _remotePresenceListener = null;
+    _remotePresenceByUserId = const {};
   }
 
   void _scheduleSlowConversationHint(String conversationId) {

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/referral_qr_code.dart';
 import 'package:vcare_admin/features/home/utils/referral_actions.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/home/utils/referral_card_download_feedback.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 Future<void> showReferralShareSheet(
@@ -92,22 +93,9 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
 
     setState(() => _isDownloadingCard = true);
     try {
-      final saved = await _actions.downloadCardToGallery();
+      final result = await _actions.downloadCardToGallery();
       if (!mounted) return;
-
-      if (saved) {
-        context.showVcareToast(
-          title: 'Referral card saved',
-          description: 'Saved to your gallery',
-          variant: VcareToastVariant.success,
-        );
-      } else {
-        context.showVcareToast(
-          title: "Couldn't save referral card",
-          description: 'Check photo library permissions and try again',
-          variant: VcareToastVariant.destructive,
-        );
-      }
+      await ReferralCardDownloadFeedback.showSuccess(context, result: result);
     } finally {
       if (mounted) {
         setState(() => _isDownloadingCard = false);
@@ -118,37 +106,34 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
     final shareText = _actions.shareText;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Share your referral',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Share your referral',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LucideIcons.x, size: 20),
-                ),
-              ],
-            ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(LucideIcons.x, size: 20),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
                 Center(
                   child: ReferralQrCode(
                     data: _actions.referralUrl,
@@ -274,10 +259,10 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
                           _isDownloadingCard ? 'Saving...' : 'Save card',
                         ),
                         style: FilledButton.styleFrom(
-                          backgroundColor: VCareColors.primary,
+                          backgroundColor: context.vcare.primary,
                           minimumSize: const Size(0, 44),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: VCareRadius.lgAll,
                           ),
                         ),
                       ),
@@ -287,8 +272,7 @@ class _ReferralShareSheetState extends State<_ReferralShareSheet> {
               ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -302,11 +286,11 @@ class _CopyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: VCareColors.primary,
-      borderRadius: BorderRadius.circular(8),
+      color: context.vcare.primary,
+      borderRadius: VCareRadius.mdAll,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: VCareRadius.mdAll,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(

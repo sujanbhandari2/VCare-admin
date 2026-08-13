@@ -211,6 +211,24 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     );
   }
 
+  Future<({bool success, String? error})> deleteDocument({
+    required String documentId,
+  }) async {
+    final response = await ref
+        .read(clientRepositoryProvider)
+        .deleteClientDocument(documentId: documentId);
+
+    return response.when(
+      failure: (error) => (success: false, error: error.userMessage),
+      success: (_) {
+        if (ref.mounted) {
+          removeLocalFile(documentId);
+        }
+        return (success: true, error: null);
+      },
+    );
+  }
+
   void removeLocalFile(String id) {
     if (!ref.mounted) return;
 

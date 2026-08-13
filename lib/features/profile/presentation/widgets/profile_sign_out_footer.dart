@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class ProfileSignOutFooter extends StatelessWidget {
@@ -32,13 +31,13 @@ class ProfileSignOutFooter extends StatelessWidget {
                   Icon(
                     LucideIcons.logOut,
                     size: 16,
-                    color: VCareColors.destructive,
+                    color: context.vcare.destructive,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Sign out',
                     style: TextStyle(
-                      color: VCareColors.destructive,
+                      color: context.vcare.destructive,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

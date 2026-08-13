@@ -1,9 +1,7 @@
 import 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
 export 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
 
-enum RequestStatus { newRequest, inReview, actionNeeded, resolved }
-
-enum ActivityKind { request, message, transaction }
+enum ActivityKind { message, transaction }
 
 enum StatusBadgeVariant { primary, secondary, destructive, outline }
 
@@ -89,61 +87,6 @@ class ChatMessage {
   final String body;
   final DateTime createdAt;
   final String sender; // 'me' or 'them'
-}
-
-class RequestAttachment {
-  const RequestAttachment({
-    required this.id,
-    required this.name,
-    required this.dataUrl,
-    required this.size,
-  });
-
-  final String id;
-  final String name;
-  final String dataUrl;
-  final int size;
-}
-
-class RequestMessage {
-  const RequestMessage({
-    required this.id,
-    required this.sender,
-    required this.body,
-    required this.createdAt,
-    this.attachments,
-  });
-
-  /// `me` or `advocate` (parity with vcareapp requests-store).
-  final String id;
-  final String sender;
-  final String body;
-  final DateTime createdAt;
-  final List<RequestAttachment>? attachments;
-}
-
-class CareRequest {
-  const CareRequest({
-    required this.id,
-    required this.type,
-    required this.title,
-    required this.status,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.lastMessageBody,
-    required this.description,
-    required this.messages,
-  });
-
-  final String id;
-  final String type;
-  final String title;
-  final RequestStatus status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final String lastMessageBody;
-  final String description;
-  final List<RequestMessage> messages;
 }
 
 class AppNotification {

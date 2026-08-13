@@ -12,9 +12,20 @@ import 'package:vcare_admin/core/services/network/http_cache_utils.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/logged_in_user_id_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/logged_in_user_profile_id_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_assignees_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_creation_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_detail_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_files_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_notes_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_other_cases_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_tasks_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/cases_list_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_dependents_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_detail_state_provider.dart';
@@ -44,7 +55,7 @@ import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
-const _sessionStorageKeys = <String>[
+const _sessionStorageKeys = <String>{
   StorageKeys.loggedInUserToken,
   StorageKeys.loggedInUserRefreshToken,
   StorageKeys.loggedInUserId,
@@ -56,7 +67,27 @@ const _sessionStorageKeys = <String>[
   StorageKeys.tokenRefreshedDate,
   StorageKeys.lastSyncedFcmToken,
   StorageKeys.lastSyncedFcmUserId,
-];
+  StorageKeys.authUser,
+  StorageKeys.authMenu,
+  StorageKeys.authUrls,
+  StorageKeys.authTenantSlug,
+};
+
+/// Best-effort server logout before clearing the access token.
+Future<void> logoutSessionBestEffort({
+  required StorageService storage,
+  required AuthRepository authRepository,
+}) async {
+  final refreshToken =
+      storage.get(StorageKeys.loggedInUserRefreshToken)?.toString() ?? '';
+  if (refreshToken.trim().isEmpty) {
+    return;
+  }
+
+  try {
+    await authRepository.logoutSession(refreshToken: refreshToken);
+  } catch (_) {}
+}
 
 /// Best-effort FCM deregistration before clearing the access token.
 Future<void> deregisterFcmDeviceBestEffort({
@@ -124,6 +155,14 @@ void invalidateUserScopedProviders({
   invalidate(clientsListStateProvider);
   invalidate(clientDetailStateProvider);
   invalidate(clientCasesStateProvider);
+  invalidate(casesListStateProvider);
+  invalidate(caseDetailStateProvider);
+  invalidate(caseNotesStateProvider);
+  invalidate(caseFilesStateProvider);
+  invalidate(caseTasksStateProvider);
+  invalidate(caseOtherCasesStateProvider);
+  invalidate(caseAssigneesStateProvider);
+  invalidate(caseCreationStateProvider);
   invalidate(clientDocumentsStateProvider);
   invalidate(clientDependentsStateProvider);
   invalidate(clientMembershipsStateProvider);
@@ -141,6 +180,7 @@ void invalidateUserScopedProviders({
   invalidate(medicareProviderLookupStateProvider);
   invalidate(providerFavoritesProvider);
   invalidate(networkFetchSessionProvider);
+  invalidate(adminAuthSessionProvider);
 }
 
 /// Clears all user session data, caches, and in-memory provider state.
@@ -150,10 +190,18 @@ Future<void> clearUserSession(
 }) async {
   final storage = ref.read(storageServiceProvider);
   final apiBaseUrl = ref.read(flavorConfigurationProvider).apiBaseUrl;
+  final authRepository = ref.read(authRepositoryProvider);
 
   unawaited(_tearDownMessengerBestEffort(ref));
+  unawaited(
+    logoutSessionBestEffort(
+      storage: storage,
+      authRepository: authRepository,
+    ),
+  );
 
   await clearUserSessionStorage(storage: storage, apiBaseUrl: apiBaseUrl);
+  await ref.read(adminAuthSessionProvider.notifier).clearSession();
   invalidateUserScopedProviders(ref: ref);
   ref.read(networkFetchSessionProvider.notifier).resetSession();
   ref.invalidate(userLoggedInStateProvider);

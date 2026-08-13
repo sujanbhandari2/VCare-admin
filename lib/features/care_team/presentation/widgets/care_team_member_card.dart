@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/care_team/domain/entities/care_team_member.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/care_team/presentation/widgets/care_avatar.dart';
 import 'package:vcare_admin/features/care_team/presentation/widgets/care_team_member_actions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class CareTeamMemberCard extends ConsumerWidget {
   const CareTeamMemberCard({
@@ -42,7 +42,7 @@ class CareTeamMemberCard extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(
               'Remove',
-              style: TextStyle(color: VCareColors.destructive),
+              style: TextStyle(color: context.vcare.destructive),
             ),
           ),
         ],
@@ -81,7 +81,7 @@ class CareTeamMemberCard extends ConsumerWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         side: BorderSide(color: vcare.border),
       ),
       clipBehavior: Clip.antiAlias,

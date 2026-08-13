@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/data/find_care_mock_data.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
@@ -175,7 +174,7 @@ class _ProviderHeroCard extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.8,
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -220,7 +219,7 @@ class _ProviderHeroCard extends StatelessWidget {
               isFavorite ? Icons.favorite : Icons.favorite_border,
               size: 20,
               color: isFavorite
-                  ? VCareColors.destructive
+                  ? context.vcare.destructive
                   : vcare.mutedForeground,
             ),
           ),

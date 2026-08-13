@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_filter.dart';
 
@@ -54,10 +53,11 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = context.vcare.primary;
     return Material(
-      color: selected ? VCareColors.primary : vcare.card,
+      color: selected ? primary : vcare.card,
       shape: StadiumBorder(
-        side: BorderSide(color: selected ? VCareColors.primary : vcare.border),
+        side: BorderSide(color: selected ? primary : vcare.border),
       ),
       child: InkWell(
         onTap: onTap,
@@ -70,7 +70,7 @@ class _FilterChip extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: selected
-                  ? VCareColors.primaryForeground
+                  ? Theme.of(context).colorScheme.onPrimary
                   : vcare.mutedForeground,
             ),
           ),

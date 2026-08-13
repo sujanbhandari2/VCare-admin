@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 import 'package:vcare_admin/features/find_care/presentation/widgets/provider_favorite_button.dart';
 import 'package:vcare_admin/features/saved_providers/presentation/providers/saved_providers_state_provider.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
   const MedicareProviderResultCardWithFavorite({super.key, required this.item});
@@ -31,11 +31,11 @@ class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
         Material(
           color: vcare.card,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             side: BorderSide(color: vcare.border),
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
             onTap: () => context.pushNamed(
               AppRouter.medicareProviderDetailName,
               pathParameters: {'npi': row.npi},
@@ -51,7 +51,7 @@ class MedicareProviderResultCardWithFavorite extends ConsumerWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.8,
-                      color: VCareColors.primary,
+                      color: context.vcare.primary,
                     ),
                   ),
                   const SizedBox(height: 4),

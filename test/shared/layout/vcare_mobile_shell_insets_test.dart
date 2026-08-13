@@ -34,7 +34,7 @@ void main() {
             },
           ),
           GoRoute(
-            path: '/find-care/search',
+            path: '/cases',
             builder: (context, state) {
               padding = vcareMobileBottomNavContentPadding(context);
               return const SizedBox();
@@ -66,7 +66,7 @@ void main() {
       return padding;
     }
 
-    testWidgets('android phone on tab route uses 75px content padding', (
+    testWidgets('android phone on tab route uses 90px content padding', (
       WidgetTester tester,
     ) async {
       final padding = await pumpAndReadPadding(
@@ -88,7 +88,7 @@ void main() {
         tester: tester,
         width: 390,
         bottomSafeArea: 34,
-        initialLocation: '/find-care/search',
+        initialLocation: '/cases',
         platform: TargetPlatform.iOS,
       );
 

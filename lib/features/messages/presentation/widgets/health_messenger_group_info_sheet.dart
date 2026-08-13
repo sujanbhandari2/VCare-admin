@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Group info: rename, member list, and remove members.
 class HealthMessengerGroupInfoSheet extends ConsumerStatefulWidget {
@@ -23,11 +23,9 @@ class HealthMessengerGroupInfoSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required MessengerConversation conversation,
   }) {
-    return showModalBottomSheet<void>(
-      context: context,
+    return context.showBottomSheet<void>(
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => HealthMessengerGroupInfoSheet(
         conversation: conversation,
       ),
@@ -137,7 +135,7 @@ class _HealthMessengerGroupInfoSheetState
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: VCareColors.destructive,
+              backgroundColor: context.vcare.destructive,
             ),
             child: const Text('Remove'),
           ),
@@ -169,100 +167,79 @@ class _HealthMessengerGroupInfoSheetState
     final vcare = context.vcare;
     final chatState = ref.watch(healthMessengerChatProvider);
     final currentUserId = chatState.currentUser?.id.trim() ?? '';
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
     final members = _members ?? const <ConversationParticipant>[];
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Material(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: vcare.muted,
-                    borderRadius: BorderRadius.circular(999),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Group info',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Group info',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(LucideIcons.x, color: vcare.mutedForeground),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _nameController,
-                          decoration: InputDecoration(
-                            labelText: 'Group name',
-                            filled: true,
-                            fillColor: vcare.muted.withValues(alpha: 0.4),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: vcare.border),
-                            ),
-                          ),
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => unawaited(_rename()),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _isRenaming ? null : () => unawaited(_rename()),
-                        child: _isRenaming
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Save'),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Members (${members.length})',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: vcare.mutedForeground,
-                      ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(LucideIcons.x, color: vcare.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Group name',
+                    filled: true,
+                    fillColor: vcare.muted.withValues(alpha: 0.4),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: vcare.border),
                     ),
                   ),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => unawaited(_rename()),
                 ),
-                Expanded(
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: _isRenaming ? null : () => unawaited(_rename()),
+                child: _isRenaming
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Members (${members.length})',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: vcare.mutedForeground,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _loadError != null
@@ -365,7 +342,7 @@ class _HealthMessengerGroupInfoSheetState
                                                 )
                                               : Icon(
                                                   LucideIcons.userMinus,
-                                                  color: VCareColors.destructive,
+                                                  color: context.vcare.destructive,
                                                 ),
                                         ),
                                     ],
@@ -375,12 +352,8 @@ class _HealthMessengerGroupInfoSheetState
                             );
                           },
                         ),
-                ),
-              ],
-            ),
-          ),
         ),
-      ),
+      ],
     );
   }
 }

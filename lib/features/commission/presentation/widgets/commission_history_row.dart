@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/commission/domain/entities/commission_history_item.dart';
@@ -92,7 +91,7 @@ class CommissionHistoryRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isFailed ? VCareColors.destructive : null,
+                    color: isFailed ? vcare.destructive : null,
                   ),
                 ),
               ),
@@ -110,9 +109,7 @@ class CommissionHistoryRow extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isFailed
-                            ? VCareColors.destructive
-                            : VCareColors.success,
+                        color: isFailed ? vcare.destructive : vcare.success,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -159,7 +156,7 @@ class _ClientAvatar extends StatelessWidget {
             ? Image.network(
                 url,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _InitialsBubble(
+                errorBuilder: (_, _, _) => _InitialsBubble(
                   initials: initials,
                   background: vcare.muted,
                   foreground: vcare.mutedForeground,

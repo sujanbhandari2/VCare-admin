@@ -8,6 +8,7 @@ import 'package:vcare_admin/features/home/utils/referral_actions.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
+import 'package:vcare_admin/features/home/utils/referral_card_download_feedback.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// My Referral detail — parity with vcareapp [/id-card].
@@ -53,22 +54,9 @@ class _IdCardScreenState extends ConsumerState<IdCardScreen> {
 
     setState(() => _isDownloading = true);
     try {
-      final saved = await actions.downloadCardToGallery();
+      final result = await actions.downloadCardToGallery();
       if (!mounted) return;
-
-      if (saved) {
-        context.showVcareToast(
-          title: 'Referral card saved',
-          description: 'Saved to your gallery',
-          variant: VcareToastVariant.success,
-        );
-      } else {
-        context.showVcareToast(
-          title: "Couldn't save referral card",
-          description: 'Check photo library permissions and try again',
-          variant: VcareToastVariant.destructive,
-        );
-      }
+      await ReferralCardDownloadFeedback.showSuccess(context, result: result);
     } finally {
       if (mounted) {
         setState(() => _isDownloading = false);

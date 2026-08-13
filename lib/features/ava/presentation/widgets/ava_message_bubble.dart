@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/ava/domain/entities/ava_message.dart';
 import 'package:vcare_admin/features/ava/presentation/widgets/ava_layout.dart';
 import 'package:vcare_admin/features/ava/presentation/widgets/ava_message_actions_menu.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Matches vcareapp [AvaChatMessage].
 class AvaMessageBubble extends StatelessWidget {
@@ -46,7 +46,7 @@ class AvaMessageBubble extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             padding: AvaLayout.bubblePadding,
             decoration: BoxDecoration(
-              color: isMe ? VCareColors.primary : vcare.muted,
+              color: isMe ? context.vcare.primary : vcare.muted,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(AvaLayout.bubbleRadius),
                 topRight: const Radius.circular(AvaLayout.bubbleRadius),
@@ -64,7 +64,7 @@ class AvaMessageBubble extends StatelessWidget {
                 fontSize: AvaLayout.bubbleFontSize,
                 height: 1.35,
                 color: isMe
-                    ? VCareColors.primaryForeground
+                    ? context.theme.colorScheme.onPrimary
                     : Theme.of(context).colorScheme.onSurface,
               ),
             ),
@@ -89,14 +89,14 @@ class _AvaAvatar extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [VCareColors.primary, vcare.accent],
+          colors: [context.vcare.primary, vcare.accent],
         ),
         shape: BoxShape.circle,
       ),
       child: Icon(
         LucideIcons.sparkles,
         size: AvaLayout.avatarIconSize,
-        color: VCareColors.primaryForeground,
+        color: context.theme.colorScheme.onPrimary,
       ),
     );
   }

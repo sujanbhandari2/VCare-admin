@@ -15,6 +15,7 @@ import 'package:vcare_admin/features/clients/data/models/client_membership_model
 import 'package:vcare_admin/features/clients/data/models/client_payment_method_model.dart';
 import 'package:vcare_admin/features/clients/data/models/client_transaction_model.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 
 void main() {
   group('Client mappers', () {
@@ -41,6 +42,33 @@ void main() {
       expect(entity.fullName, 'Aspen Kristen Tillman Michael');
       expect(entity.email, 'arjun+vakitaha@vitafyhealth.com');
       expect(entity.location, 'Et ut sed provident, Id impedit id quo');
+    });
+
+    test('ClientListItemModel maps GROUP list payload', () {
+      final entity = ClientListItemModel.fromJson({
+        'id': 'group-1',
+        'clientType': 'GROUP',
+        'companyName': 'Acme Health LLC',
+        'name': {
+          'companyName': 'Acme Health LLC',
+          'contactFirstName': 'Jane',
+          'contactLastName': 'Doe',
+        },
+        'contact': {
+          'email': 'billing@acmehealth.com',
+          'cellPhone': '+15551234567',
+        },
+        'address': {
+          'city': 'Austin',
+          'state': 'TX',
+        },
+      }).toEntity();
+
+      expect(entity.id, 'group-1');
+      expect(entity.fullName, 'Acme Health LLC');
+      expect(entity.email, 'billing@acmehealth.com');
+      expect(entity.phone, '+15551234567');
+      expect(entity.location, 'Austin, TX');
     });
 
     test('ClientDetailModel maps detail payload', () {
@@ -74,6 +102,107 @@ void main() {
       expect(entity.gender, ClientGender.male);
       expect(entity.ssn, '***-**-2342');
       expect(entity.allowTextNotification, isFalse);
+      expect(entity.clientType, ClientListType.individual);
+    });
+
+    test('ClientDetailModel maps web individual payload', () {
+      final entity = ClientDetailModel.fromJson({
+        'id': 'ind-1',
+        'clientType': 'INDIVIDUAL',
+        'status': 'ACTIVE',
+        'basicInfo': {
+          'firstName': 'Jane',
+          'lastName': 'Doe',
+          'dateOfBirth': '1990-01-02',
+          'gender': 'FEMALE',
+          'ssnLast4': '1234',
+        },
+        'contactInfo': {
+          'email': 'jane@example.com',
+          'cellPhone': '+15550001111',
+          'allowTextNotification': true,
+        },
+        'address': {'city': 'Austin', 'state': 'TX'},
+      }).toEntity();
+
+      expect(entity.id, 'ind-1');
+      expect(entity.fullName, 'Jane Doe');
+      expect(entity.email, 'jane@example.com');
+      expect(entity.phone, '+15550001111');
+      expect(entity.gender, ClientGender.female);
+      expect(entity.clientType, ClientListType.individual);
+    });
+
+    test('ClientDetailModel maps group payload', () {
+      final entity = ClientDetailModel.fromJson({
+        'id': 'group-1',
+        'clientType': 'GROUP',
+        'companyName': 'Acme Health LLC',
+        'contactFirstName': 'Jane',
+        'contactLastName': 'Doe',
+        'email': 'billing@acmehealth.com',
+        'phone': '+15551234567',
+        'status': 'ACTIVE',
+        'address': {'city': 'Austin', 'state': 'TX'},
+      }).toEntity();
+
+      expect(entity.id, 'group-1');
+      expect(entity.fullName, 'Acme Health LLC');
+      expect(entity.email, 'billing@acmehealth.com');
+      expect(entity.phone, '+15551234567');
+      expect(entity.clientType, ClientListType.group);
+    });
+
+    test('ClientDetailModel maps embedded affiliate agents', () {
+      final entity = ClientDetailModel.fromJson({
+        'id': 'ind-1',
+        'clientType': 'INDIVIDUAL',
+        'basicInfo': {'firstName': 'Jane', 'lastName': 'Doe'},
+        'contactInfo': {'email': 'jane@example.com'},
+        'affiliateAgents': [
+          {
+            'id': 'agent-1',
+            'agentType': 'INDIVIDUAL',
+            'agentCode': 'AG-100',
+            'name': {'firstName': 'Sam', 'lastName': 'Rivera'},
+            'contact': {
+              'email': 'sam@example.com',
+              'phoneNumber': '+15552223333',
+            },
+          },
+          {
+            'id': 'agent-2',
+            'agentType': 'AGENCY_GROUP',
+            'agencyGroup': {'name': 'Northwind Agency'},
+            'name': {'firstName': 'Ada', 'lastName': 'Lopez'},
+          },
+          {'agentCode': 'AG-404'},
+        ],
+      }).toEntity();
+
+      expect(entity.affiliateAgents, hasLength(2));
+
+      final individual = entity.affiliateAgents.first;
+      expect(individual.name, 'Sam Rivera');
+      expect(individual.roleLabel, 'Agent · AG-100');
+      expect(individual.email, 'sam@example.com');
+      expect(individual.phone, '+15552223333');
+
+      final agencyAgent = entity.affiliateAgents.last;
+      expect(agencyAgent.roleLabel, 'Northwind Agency');
+      expect(agencyAgent.email, isNull);
+      expect(agencyAgent.phone, isNull);
+    });
+
+    test('ClientDetailModel defaults affiliate agents to empty', () {
+      final entity = ClientDetailModel.fromJson({
+        'id': 'ind-2',
+        'clientType': 'INDIVIDUAL',
+        'basicInfo': {'firstName': 'Jane', 'lastName': 'Doe'},
+        'contactInfo': {'email': 'jane@example.com'},
+      }).toEntity();
+
+      expect(entity.affiliateAgents, isEmpty);
     });
 
     test('ClientMembershipsResultModel maps memberships payload', () {

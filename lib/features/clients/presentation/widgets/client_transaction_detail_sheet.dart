@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_transactions_state_provider.dart';
@@ -11,6 +10,7 @@ import 'package:vcare_admin/features/clients/presentation/widgets/client_transac
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class ClientTransactionDetailSheet extends ConsumerStatefulWidget {
   const ClientTransactionDetailSheet({
@@ -44,21 +44,16 @@ class ClientTransactionDetailSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final height = MediaQuery.sizeOf(sheetContext).height * 0.92;
-        return SizedBox(
-          height: height,
-          child: ClientTransactionDetailSheet(
-            clientId: clientId,
-            transaction: transaction,
-            clientName: clientName,
-            clientEmail: clientEmail,
-            dependents: dependents,
-            localNote: localNote,
-            onNoteSaved: onNoteSaved,
-          ),
-        );
-      },
+      maxHeightFactor: 0.92,
+      builder: (sheetContext) => ClientTransactionDetailSheet(
+        clientId: clientId,
+        transaction: transaction,
+        clientName: clientName,
+        clientEmail: clientEmail,
+        dependents: dependents,
+        localNote: localNote,
+        onNoteSaved: onNoteSaved,
+      ),
     );
   }
 
@@ -91,17 +86,6 @@ class _ClientTransactionDetailSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
             child: Text(
@@ -350,7 +334,7 @@ class _ClientTransactionDetailSheetState
         .read(clientTransactionsStateProvider(widget.clientId).notifier)
         .reprocessCharge(
           transactionId: widget.transaction.id,
-          onCompleted: (success, _) {
+          onCompleted: (success, error) {
             if (!mounted) return;
 
             setState(() => _reprocessing = false);
@@ -363,9 +347,12 @@ class _ClientTransactionDetailSheetState
               );
               Navigator.of(context).pop();
             } else {
+              final message = error?.trim();
               context.showVcareToast(
                 title: 'Reprocess failed',
-                description: 'Try using a different payment method.',
+                description: message == null || message.isEmpty
+                    ? 'Try using a different payment method.'
+                    : message,
                 variant: VcareToastVariant.destructive,
               );
             }
@@ -423,7 +410,7 @@ class _InfoCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -470,7 +457,7 @@ class _DateCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -520,7 +507,9 @@ class _BreakdownCard extends StatelessWidget {
     final per = (total / covered.length * 100).floor() / 100;
     final parts = List.generate(covered.length, (index) {
       final amount = index == covered.length - 1
-          ? double.parse((total - per * (covered.length - 1)).toStringAsFixed(2))
+          ? double.parse(
+              (total - per * (covered.length - 1)).toStringAsFixed(2),
+            )
           : per;
       return (part: covered[index], amount: amount);
     });
@@ -528,7 +517,7 @@ class _BreakdownCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -627,7 +616,7 @@ class _TxnActionButton extends StatelessWidget {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: VCareRadius.lgAll),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -651,13 +640,7 @@ class _AddNoteSheet extends StatefulWidget {
   static Future<String?> show(BuildContext context) {
     return context.showBottomSheet<String>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-        return Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: const _AddNoteSheet(),
-        );
-      },
+      builder: (sheetContext) => const _AddNoteSheet(),
     );
   }
 
@@ -691,17 +674,6 @@ class _AddNoteSheetState extends State<_AddNoteSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
             child: Text(
@@ -722,11 +694,11 @@ class _AddNoteSheetState extends State<_AddNoteSheet> {
                 filled: true,
                 fillColor: vcare.card,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: VCareRadius.lgAll,
                   borderSide: BorderSide(color: vcare.border),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: VCareRadius.lgAll,
                   borderSide: BorderSide(color: vcare.border),
                 ),
               ),
@@ -743,7 +715,7 @@ class _AddNoteSheetState extends State<_AddNoteSheet> {
                   child: AppButton.outlined(
                     text: 'Cancel',
                     height: 44,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: VCareRadius.lgAll,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -752,9 +724,9 @@ class _AddNoteSheetState extends State<_AddNoteSheet> {
                   child: AppButton.elevated(
                     text: 'Save note',
                     height: 44,
-                    borderRadius: BorderRadius.circular(12),
-                    color: VCareColors.primary,
-                    onButtonColor: VCareColors.primaryForeground,
+                    borderRadius: VCareRadius.lgAll,
+                    color: context.vcare.primary,
+                    onButtonColor: context.theme.colorScheme.onPrimary,
                     onPressed: _save,
                   ),
                 ),
@@ -778,13 +750,7 @@ class _EmailReceiptSheet extends StatefulWidget {
   }) {
     return context.showBottomSheet<String>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-        return Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: _EmailReceiptSheet(initialEmail: initialEmail),
-        );
-      },
+      builder: (sheetContext) => _EmailReceiptSheet(initialEmail: initialEmail),
     );
   }
 
@@ -820,17 +786,6 @@ class _EmailReceiptSheetState extends State<_EmailReceiptSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
             child: Text(
@@ -869,11 +824,11 @@ class _EmailReceiptSheetState extends State<_EmailReceiptSheet> {
                     filled: true,
                     fillColor: vcare.card,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                       borderSide: BorderSide(color: vcare.border),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                       borderSide: BorderSide(color: vcare.border),
                     ),
                   ),
@@ -892,7 +847,7 @@ class _EmailReceiptSheetState extends State<_EmailReceiptSheet> {
                   child: AppButton.outlined(
                     text: 'Cancel',
                     height: 44,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: VCareRadius.lgAll,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -901,9 +856,9 @@ class _EmailReceiptSheetState extends State<_EmailReceiptSheet> {
                   child: AppButton.elevated(
                     text: 'Confirm & send',
                     height: 44,
-                    borderRadius: BorderRadius.circular(12),
-                    color: VCareColors.primary,
-                    onButtonColor: VCareColors.primaryForeground,
+                    borderRadius: VCareRadius.lgAll,
+                    color: context.vcare.primary,
+                    onButtonColor: context.theme.colorScheme.onPrimary,
                     onPressed: _send,
                   ),
                 ),

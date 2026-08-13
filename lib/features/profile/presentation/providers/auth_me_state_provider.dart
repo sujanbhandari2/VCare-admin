@@ -202,4 +202,25 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
       },
     );
   }
+
+  /// Applies name/email from a self-service `PATCH users/:id` into cached auth/me.
+  void applyAccountProfileUpdate({
+    required String firstName,
+    required String lastName,
+    required String email,
+  }) {
+    final current = state.data;
+    if (current == null || !ref.mounted) {
+      return;
+    }
+
+    final patched = current.copyWith(
+      user: current.user.copyWith(
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+      ),
+    );
+    state = state.success(patched);
+  }
 }

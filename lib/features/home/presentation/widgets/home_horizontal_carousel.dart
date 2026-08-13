@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 class HomeHorizontalCarousel extends StatefulWidget {
   const HomeHorizontalCarousel({
@@ -95,9 +96,9 @@ class _HomeHorizontalCarouselState extends State<HomeHorizontalCarousel> {
                   height: 6,
                   decoration: BoxDecoration(
                     color: active
-                        ? VCareColors.primary
-                        : VCareColors.mutedForeground.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(999),
+                        ? context.vcare.primary
+                        : context.vcare.mutedForeground.withValues(alpha: 0.3),
+                    borderRadius: VCareRadius.fullAll,
                   ),
                 ),
               );
@@ -238,9 +239,9 @@ class _HomeHorizontalCarouselWithHeightState
                   height: 6,
                   decoration: BoxDecoration(
                     color: active
-                        ? VCareColors.primary
-                        : VCareColors.mutedForeground.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(999),
+                        ? context.vcare.primary
+                        : context.vcare.mutedForeground.withValues(alpha: 0.3),
+                    borderRadius: VCareRadius.fullAll,
                   ),
                 ),
               );

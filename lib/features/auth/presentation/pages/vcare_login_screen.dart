@@ -8,12 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router_provider.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_auth.dart';
 import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
+import 'package:vcare_admin/features/auth/domain/auth_forgot_validators.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/forgot_password_request_state_provider.dart';
 import 'package:vcare_admin/features/auth/domain/auth_identifier_normalizer.dart';
 import 'package:vcare_admin/features/auth/domain/auth_login_navigation_policy.dart';
 import 'package:vcare_admin/features/auth/domain/auth_national_phone_input_formatter.dart';
@@ -41,6 +43,7 @@ import 'package:vcare_admin/features/auth/presentation/widgets/login_verify_step
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/field_validator.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 // TODO: Restore when social login is enabled.
 // import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
@@ -56,10 +59,9 @@ enum _LoginStep {
   activatePassword,
   onboard,
   biometric,
-  forgotIdentify,
-  forgotSelect,
-  forgotVerify,
-  forgotReset,
+  forgotRequest,
+  forgotDisambiguate,
+  forgotSent,
 }
 
 /// Login flow — parity with vcareapp [/login] + auth feature.
@@ -90,13 +92,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   final _onboardPhoneController = TextEditingController();
   final _primaryCityController = TextEditingController();
   final _primaryStateController = TextEditingController();
-  final _forgotEmailController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmNewPasswordController = TextEditingController();
   final _identifyFocusNode = FocusNode();
 
-  List<LoginClientRecord> _forgotAccounts = [];
-  LoginClientRecord? _forgotSelected;
+  List<ForgotPasswordAccount> _forgotAccounts = [];
+  String? _selectedForgotAccountId;
 
   String? _loadingKey;
   String? _error;
@@ -130,9 +129,6 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
     _onboardPhoneController.dispose();
     _primaryCityController.dispose();
     _primaryStateController.dispose();
-    _forgotEmailController.dispose();
-    _newPasswordController.dispose();
-    _confirmNewPasswordController.dispose();
     _identifyFocusNode.dispose();
     super.dispose();
   }
@@ -356,10 +352,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       LoginFlowStep.activatePassword => _LoginStep.activatePassword,
       LoginFlowStep.onboard => _LoginStep.onboard,
       LoginFlowStep.biometric => _LoginStep.biometric,
-      LoginFlowStep.forgotIdentify => _LoginStep.forgotIdentify,
-      LoginFlowStep.forgotSelect => _LoginStep.forgotSelect,
-      LoginFlowStep.forgotVerify => _LoginStep.forgotVerify,
-      LoginFlowStep.forgotReset => _LoginStep.forgotReset,
+      LoginFlowStep.forgotRequest => _LoginStep.forgotRequest,
+      LoginFlowStep.forgotDisambiguate => _LoginStep.forgotDisambiguate,
+      LoginFlowStep.forgotSent => _LoginStep.forgotSent,
     };
   }
 
@@ -691,14 +686,12 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           _step = _branch is LoginLookupNew
               ? _LoginStep.onboard
               : _LoginStep.activateDetails;
-        case _LoginStep.forgotIdentify:
+        case _LoginStep.forgotRequest:
           _step = _LoginStep.password;
-        case _LoginStep.forgotSelect:
-          _step = _LoginStep.forgotIdentify;
-        case _LoginStep.forgotVerify:
-          _step = _LoginStep.forgotSelect;
-        case _LoginStep.forgotReset:
-          _step = _LoginStep.forgotVerify;
+        case _LoginStep.forgotDisambiguate:
+          _step = _LoginStep.forgotRequest;
+        case _LoginStep.forgotSent:
+          break;
         case _LoginStep.identify:
           break;
       }
@@ -1032,110 +1025,175 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
   void _startForgotPassword() {
     setState(() {
       _error = null;
-      _forgotEmailController.text = _method == _LoginMethod.email
-          ? _emailController.text
-          : '';
       _forgotAccounts = [];
-      _forgotSelected = null;
-      _newPasswordController.clear();
-      _confirmNewPasswordController.clear();
-      _step = _LoginStep.forgotIdentify;
+      _selectedForgotAccountId = null;
+      _onboardDobController.clear();
+      _zipController.clear();
+      _step = _LoginStep.forgotRequest;
     });
   }
 
-  Future<void> _submitForgotIdentify() async {
-    setState(() => _error = null);
-    final email = _forgotEmailController.text.trim();
-    if (!RegExp(r'^\S+@\S+\.\S+$').hasMatch(email)) {
-      setState(() => _error = 'Enter a valid email address.');
-      return;
+  bool _isForgotIdentifierValid() {
+    if (_method == _LoginMethod.phone) {
+      return AuthPhoneValidator.validate(
+            _phoneController.text,
+            country: _phoneCountry,
+            context: context,
+          ) ==
+          null;
     }
-    setState(() => _loadingKey = 'forgot-lookup');
-    final accounts = await VcareMockLookup.accountsByEmail(email);
-    if (!mounted) return;
-    if (accounts.isEmpty) {
+    return RegExp(r'^\S+@\S+\.\S+$').hasMatch(_emailController.text.trim());
+  }
+
+  void _handleForgotPasswordResult(ForgotPasswordResult result) {
+    if (result.requiresDisambiguation) {
       setState(() {
         _loadingKey = null;
-        _error = "We couldn't find any accounts for that email.";
+        _forgotAccounts = result.accounts;
+        _selectedForgotAccountId = null;
+        _step = _LoginStep.forgotDisambiguate;
       });
       return;
     }
+
     setState(() {
       _loadingKey = null;
-      _forgotAccounts = accounts;
-      _step = _LoginStep.forgotSelect;
+      _step = _LoginStep.forgotSent;
     });
   }
 
-  Future<void> _selectForgotAccount(LoginClientRecord account) async {
-    setState(() {
-      _error = null;
-      _forgotSelected = account;
-      _loadingKey = 'forgot-send';
-    });
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-    setState(() {
-      _otpController.clear();
-      _loadingKey = null;
-      _step = _LoginStep.forgotVerify;
-    });
-    _startResendTimer();
-  }
+  Future<void> _submitForgotRequest() async {
+    setState(() => _error = null);
 
-  Future<void> _verifyForgotCode(String value) async {
-    if (value.length < 6) return;
-    setState(() {
-      _error = null;
-      _loadingKey = 'forgot-verify';
-    });
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    if (!mounted) return;
-    if (value != VcareMockLookup.demoOtp && value != '000000') {
+    if (!_isForgotIdentifierValid()) {
       setState(() {
-        _error = 'Invalid code. Try 123456 for the demo.';
-        _loadingKey = null;
-        _otpController.clear();
+        _error = _method == _LoginMethod.phone
+            ? 'Enter a valid phone number.'
+            : 'Enter a valid email address.';
       });
       return;
     }
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    if (!mounted) return;
-    setState(() {
-      _loadingKey = null;
-      _step = _LoginStep.forgotReset;
-    });
+
+    setState(() => _loadingKey = 'forgot');
+
+    await ref
+        .read(forgotPasswordRequestStateProvider.notifier)
+        .forgotPassword(
+          identifier: _normalizedIdentifier,
+          onCompleted: (result) {
+            if (!mounted) return;
+            if (result == null) {
+              setState(() {
+                _loadingKey = null;
+                _error =
+                    ref.read(forgotPasswordRequestStateProvider).operation
+                        .errorMessage ??
+                    'Unable to send reset link.';
+              });
+              return;
+            }
+            _handleForgotPasswordResult(result);
+          },
+        );
   }
 
-  Future<void> _resendForgotCode() async {
-    if (_forgotSelected == null) return;
-    setState(() => _loadingKey = 'forgot-send');
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    if (!mounted) return;
-    setState(() {
-      _otpController.clear();
-      _loadingKey = null;
-    });
-    _startResendTimer();
-  }
-
-  Future<void> _submitForgotReset() async {
-    setState(() => _error = null);
-    if (_newPasswordController.text.length < 8) {
-      setState(() => _error = 'Password must be at least 8 characters.');
-      return;
-    }
-    if (_newPasswordController.text != _confirmNewPasswordController.text) {
-      setState(() => _error = "Passwords don't match.");
-      return;
-    }
-    setState(() => _loadingKey = 'forgot-reset');
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    if (!mounted) return;
-    await _finishSignIn(
-      name: _forgotSelected?.fullName,
-      email: _forgotEmailController.text.trim(),
+  Future<void> _pickForgotDob() async {
+    final initial = _onboardDobController.text.isNotEmpty
+        ? parseProfileDob(_onboardDobController.text)
+        : null;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial ?? DateTime(1990, 1, 15),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
     );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _onboardDobController.text = formatProfileDob(
+        '${picked.year}-${picked.month.toString().padLeft(2, '0')}-'
+        '${picked.day.toString().padLeft(2, '0')}',
+      );
+      _selectedForgotAccountId = null;
+    });
+  }
+
+  Future<void> _submitForgotDisambiguation() async {
+    setState(() => _error = null);
+
+    if (_selectedForgotAccountId != null) {
+      setState(() => _loadingKey = 'forgot');
+      await ref
+          .read(forgotPasswordRequestStateProvider.notifier)
+          .forgotPassword(
+            identifier: _normalizedIdentifier,
+            accountId: _selectedForgotAccountId,
+            onCompleted: (result) {
+              if (!mounted) return;
+              if (result == null) {
+                setState(() {
+                  _loadingKey = null;
+                  _error =
+                      ref.read(forgotPasswordRequestStateProvider).operation
+                          .errorMessage ??
+                      'Unable to send reset link.';
+                });
+                return;
+              }
+              _handleForgotPasswordResult(result);
+            },
+          );
+      return;
+    }
+
+    final dobIso = profileDobToIso(_onboardDobController.text.trim());
+    final dobError = AuthForgotDobValidator.validate(dobIso);
+    if (dobError != null) {
+      setState(() => _error = dobError);
+      return;
+    }
+
+    final zipError = AuthForgotZipValidator.validate(_zipController.text);
+    if (zipError != null) {
+      setState(() => _error = zipError);
+      return;
+    }
+
+    setState(() => _loadingKey = 'forgot');
+    await ref
+        .read(forgotPasswordRequestStateProvider.notifier)
+        .forgotPassword(
+          identifier: _normalizedIdentifier,
+          dob: dobIso,
+          zipCode: _zipController.text.trim(),
+          onCompleted: (result) {
+            if (!mounted) return;
+            if (result == null) {
+              setState(() {
+                _loadingKey = null;
+                _error =
+                    ref.read(forgotPasswordRequestStateProvider).operation
+                        .errorMessage ??
+                    'Unable to send reset link.';
+              });
+              return;
+            }
+            _handleForgotPasswordResult(result);
+          },
+        );
+  }
+
+  void _returnToSignInFromForgot() {
+    setState(() {
+      _error = null;
+      _forgotAccounts = [];
+      _selectedForgotAccountId = null;
+      _onboardDobController.clear();
+      _zipController.clear();
+      _passwordController.clear();
+      _step = _LoginStep.identify;
+    });
   }
 
   @override
@@ -1149,7 +1207,9 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       ),
       child: Scaffold(
         body: LoginShell(
-          onBack: _step == _LoginStep.identify ? null : _goBack,
+          onBack: _step == _LoginStep.identify || _step == _LoginStep.forgotSent
+              ? null
+              : _goBack,
           body: switch (_step) {
             _LoginStep.identify => _buildIdentifyStep(context),
             _LoginStep.verify => _buildVerifyStep(context),
@@ -1175,39 +1235,51 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             _LoginStep.activatePassword => _buildActivatePasswordStep(context),
             _LoginStep.onboard => _buildOnboardStep(context),
             _LoginStep.biometric => _buildBiometricStep(context),
-            _LoginStep.forgotIdentify => LoginForgotIdentifyStep(
-              controller: _forgotEmailController,
+            _LoginStep.forgotRequest => LoginForgotRequestStep(
+              destination: _destination,
+              method: _method == _LoginMethod.phone
+                  ? LoginFlowMethod.phone
+                  : LoginFlowMethod.email,
               error: _error,
-              loading: _loadingKey == 'forgot-lookup',
-              onSubmit: _submitForgotIdentify,
+              loading: _loadingKey == 'forgot',
+              onSubmit: _submitForgotRequest,
             ),
-            _LoginStep.forgotSelect => LoginForgotSelectStep(
-              forgotEmail: _forgotEmailController.text.trim(),
+            _LoginStep.forgotDisambiguate => LoginForgotDisambiguateStep(
               accounts: _forgotAccounts,
-              loadingKey: _loadingKey,
-              pendingClientId: _forgotSelected?.clientId,
-              onSelect: _selectForgotAccount,
-            ),
-            _LoginStep.forgotVerify => LoginForgotVerifyStep(
-              forgotEmail: _forgotEmailController.text.trim(),
-              forgotSelected: _forgotSelected,
-              otpController: _otpController,
+              selectedAccountId: _selectedForgotAccountId,
+              dobController: _onboardDobController,
+              zipController: _zipController,
               error: _error,
-              loading: _loadingKey == 'forgot-verify',
-              resendIn: _resendIn,
-              resendLoading: _loadingKey == 'forgot-send',
-              onCompleted: _verifyForgotCode,
-              onVerify: () => _verifyForgotCode(_otpController.text),
-              onResend: _resendForgotCode,
-              onChanged: (_) => setState(() => _error = null),
+              loading: _loadingKey == 'forgot',
+              onSelectAccount: (accountId) {
+                setState(() {
+                  _selectedForgotAccountId = accountId;
+                  _onboardDobController.clear();
+                  _zipController.clear();
+                  _error = null;
+                });
+              },
+              onDobChanged: () {
+                setState(() {
+                  _selectedForgotAccountId = null;
+                  _error = null;
+                });
+              },
+              onZipChanged: () {
+                setState(() {
+                  _selectedForgotAccountId = null;
+                  _error = null;
+                });
+              },
+              onPickDob: _pickForgotDob,
+              onSubmit: _submitForgotDisambiguation,
             ),
-            _LoginStep.forgotReset => LoginForgotResetStep(
-              forgotSelected: _forgotSelected,
-              newPasswordController: _newPasswordController,
-              confirmPasswordController: _confirmNewPasswordController,
-              error: _error,
-              loading: _loadingKey == 'forgot-reset',
-              onSubmit: _submitForgotReset,
+            _LoginStep.forgotSent => LoginForgotSentStep(
+              destination: _destination,
+              method: _method == _LoginMethod.phone
+                  ? LoginFlowMethod.phone
+                  : LoginFlowMethod.email,
+              onReturnToSignIn: _returnToSignInFromForgot,
             ),
           },
         ),
@@ -1257,7 +1329,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: vcare.muted,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: VCareRadius.xlAll,
           ),
           child: Row(
             children: [
@@ -1375,7 +1447,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           const SizedBox(height: 8),
           Text(
             _error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
           ),
         ],
         const SizedBox(height: 12),
@@ -1408,7 +1480,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           const SizedBox(height: 8),
           Text(
             _error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
           ),
         ],
         if (client != null &&
@@ -1423,7 +1495,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: VCareRadius.xlAll,
               ),
             ),
           ),
@@ -1525,7 +1597,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           const SizedBox(height: 8),
           Text(
             _error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
           ),
         ],
         const SizedBox(height: 12),
@@ -1545,7 +1617,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: borderColor),
       ),
       child: DropdownButtonHideUnderline(
@@ -1614,7 +1686,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           const SizedBox(height: 8),
           Text(
             _error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
           ),
         ],
         const SizedBox(height: 12),
@@ -1784,7 +1856,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           const SizedBox(height: 8),
           Text(
             _error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
           ),
         ],
         const SizedBox(height: 12),
@@ -1813,10 +1885,10 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: VCareColors.primary.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
+            color: context.vcare.primary.withValues(alpha: 0.05),
+            borderRadius: VCareRadius.xlAll,
             border: Border.all(
-              color: VCareColors.primary.withValues(alpha: 0.15),
+              color: context.vcare.primary.withValues(alpha: 0.15),
             ),
           ),
           child: Row(
@@ -1825,7 +1897,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
               Icon(
                 LucideIcons.checkCircle2,
                 size: 20,
-                color: VCareColors.primary,
+                color: context.vcare.primary,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1854,7 +1926,7 @@ class _VcareLoginScreenState extends ConsumerState<VcareLoginScreen> {
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
             ),
           ),
           child: _loadingKey == 'biometric-no'
@@ -1890,12 +1962,12 @@ class _MethodTab extends StatelessWidget {
     return Expanded(
       child: Material(
         color: selected ? vcare.card : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         elevation: 0,
 
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: VCareRadius.lgAll,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
@@ -1904,7 +1976,7 @@ class _MethodTab extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: selected ? VCareColors.primary : vcare.mutedForeground,
+                color: selected ? context.vcare.primary : vcare.mutedForeground,
               ),
             ),
           ),

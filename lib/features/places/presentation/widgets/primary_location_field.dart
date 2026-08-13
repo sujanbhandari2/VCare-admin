@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/places/domain/entities/place_prediction.dart';
 import 'package:vcare_admin/features/places/domain/entities/places_autocomplete_type.dart';
@@ -323,7 +322,7 @@ class _PrimaryLocationFieldState extends ConsumerState<PrimaryLocationField>
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: VCareColors.primary.withValues(alpha: 0.4),
+                color: vcare.primary.withValues(alpha: 0.4),
                 width: 2,
               ),
             ),

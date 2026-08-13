@@ -39,12 +39,16 @@ void main() {
   });
 
   group('formatProfileDob', () {
-    test('formats ISO input to US date', () {
-      expect(formatProfileDob('1990-01-15T00:00:00.000Z'), '01/15/1990');
+    test('formats ISO input to display date', () {
+      expect(formatProfileDob('1990-01-15T00:00:00.000Z'), 'Jan 15, 1990');
     });
 
-    test('keeps already formatted US date', () {
-      expect(formatProfileDob('07/01/1995'), '07/01/1995');
+    test('formats US date input to display date', () {
+      expect(formatProfileDob('07/01/1995'), 'Jul 1, 1995');
+    });
+
+    test('keeps already formatted display date', () {
+      expect(formatProfileDob('Jul 1, 1995'), 'Jul 1, 1995');
     });
   });
 

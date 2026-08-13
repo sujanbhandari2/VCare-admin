@@ -1,3 +1,6 @@
+// Parity scaffold — placeholder widgets are kept for future screen migration.
+// ignore_for_file: unused_element, unused_element_parameter
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -415,7 +418,7 @@ class NotificationsScreen extends StatelessWidget {
     } else if (type == 'tip') {
       context.go(AppRouter.profile);
     } else {
-      context.pushNamed(AppRouter.requests.toPathName);
+      context.pushNamed(AppRouter.cases.toPathName);
     }
   }
 }

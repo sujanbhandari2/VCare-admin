@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+
+/// Legacy palette — aliases to web-aligned [VCareColors].
+/// Prefer `context.vcare` / `Theme.of(context).colorScheme` in new code.
 class AppColors {
   AppColors._();
 
-  static const primaryColor = Color(0xff912478);
-  static const secondary = Color(0xffAB869C);
+  static Color get primaryColor => VCareColors.primary;
+  static Color get secondary => VCareColors.secondary;
   static const transparent = Colors.transparent;
   static const white = Color(0xFFFFFFFF);
   static const black = Color(0xFF212121);
-  static const grey = Color(0xFF757575);
-  static const greyLight = Color(0xffD7D7D7);
-  static const red = Color(0xffF83030);
-  static const lightRed = Color(0xFFFFD9D9);
-  static const green = Color(0xff3CC61B);
-  static const lightGreen = Color(0xffD8EDD3);
+  static Color get grey => VCareColors.mutedForeground;
+  static Color get greyLight => VCareColors.border;
+  static Color get red => VCareColors.destructive;
+  static Color get lightRed => VCareColors.destructive.withValues(alpha: 0.12);
+  static Color get green => VCareColors.success;
+  static Color get lightGreen => VCareColors.success.withValues(alpha: 0.12);
 }

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class ClientCreateCaseSheet extends ConsumerStatefulWidget {
   const ClientCreateCaseSheet({super.key, required this.clientId});
@@ -17,13 +17,7 @@ class ClientCreateCaseSheet extends ConsumerStatefulWidget {
   static Future<void> show(BuildContext context, {required String clientId}) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      builder: (sheetContext) {
-        final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-        return Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: ClientCreateCaseSheet(clientId: clientId),
-        );
-      },
+      builder: (sheetContext) => ClientCreateCaseSheet(clientId: clientId),
     );
   }
 
@@ -94,17 +88,6 @@ class _ClientCreateCaseSheetState extends ConsumerState<ClientCreateCaseSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              width: 40,
-              height: 6,
-              decoration: BoxDecoration(
-                color: vcare.muted,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Text(
@@ -129,11 +112,11 @@ class _ClientCreateCaseSheetState extends ConsumerState<ClientCreateCaseSheet> {
                     filled: true,
                     fillColor: vcare.card,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                       borderSide: BorderSide(color: vcare.border),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                       borderSide: BorderSide(color: vcare.border),
                     ),
                   ),
@@ -150,11 +133,11 @@ class _ClientCreateCaseSheetState extends ConsumerState<ClientCreateCaseSheet> {
                     filled: true,
                     fillColor: vcare.card,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                       borderSide: BorderSide(color: vcare.border),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                       borderSide: BorderSide(color: vcare.border),
                     ),
                   ),
@@ -164,10 +147,10 @@ class _ClientCreateCaseSheetState extends ConsumerState<ClientCreateCaseSheet> {
                   onPressed: _isSubmitting ? null : _submit,
                   text: 'Create request',
                   loading: _isSubmitting,
-                  color: VCareColors.primary,
-                  onButtonColor: VCareColors.primaryForeground,
+                  color: context.vcare.primary,
+                  onButtonColor: context.theme.colorScheme.onPrimary,
                   height: 44,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: VCareRadius.lgAll,
                   fontSize: 16,
                 ),
               ],

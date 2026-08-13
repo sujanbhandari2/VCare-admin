@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
@@ -97,7 +98,7 @@ class VcareBottomNavigation extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color:
-                                VCareColors.foreground.withValues(alpha: 0.18),
+                                vcare.foreground.withValues(alpha: 0.18),
                             offset: const Offset(0, 10),
                             blurRadius: 30,
                             spreadRadius: -12,
@@ -167,18 +168,18 @@ class _NavTab extends StatelessWidget {
   final VCareThemeExtension vcare;
   final VoidCallback onTap;
 
-  static final _homeGradient = LinearGradient(
+  static LinearGradient _homeGradient(Color primary) => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      VCareColors.primary,
-      VCareColors.primary.withValues(alpha: 0.8),
+      primary,
+      primary.withValues(alpha: 0.8),
     ],
   );
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? VCareColors.primary : vcare.mutedForeground;
+    final color = isActive ? vcare.primary : vcare.mutedForeground;
 
     if (item.isCenter) {
       // Web: 52px circle with -mt-7 (28). Layout height becomes 24; overflow sits
@@ -213,7 +214,7 @@ class _NavTab extends StatelessWidget {
                         width: _homeFabSize,
                         height: _homeFabSize,
                         decoration: BoxDecoration(
-                          gradient: _homeGradient,
+                          gradient: _homeGradient(vcare.primary),
                           shape: BoxShape.circle,
                           // ring-4 is outside the box (not an inset Border).
                           boxShadow: [
@@ -224,7 +225,7 @@ class _NavTab extends StatelessWidget {
                             ),
                             BoxShadow(
                               color:
-                                  VCareColors.primary.withValues(alpha: 0.55),
+                                  vcare.primary.withValues(alpha: 0.55),
                               offset: const Offset(0, 10),
                               blurRadius: 24,
                               spreadRadius: -8,
@@ -233,7 +234,7 @@ class _NavTab extends StatelessWidget {
                         ),
                         child: Icon(
                           item.icon,
-                          color: VCareColors.primaryForeground,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           size: 22,
                         ),
                       ),
@@ -277,9 +278,9 @@ class _NavTab extends StatelessWidget {
               height: VCareMobileShellInsets.sideIconWellHeight,
               decoration: BoxDecoration(
                 color: isActive
-                    ? VCareColors.primary.withValues(alpha: 0.1)
+                    ? vcare.primary.withValues(alpha: 0.1)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: VCareRadius.lgAll,
               ),
               child: AnimatedScale(
                 scale: isActive ? 1.1 : 1,

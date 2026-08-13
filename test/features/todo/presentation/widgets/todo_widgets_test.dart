@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,13 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
-import 'package:vcare_admin/features/home/presentation/widgets/home_recent_activity_section.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/domain/entities/todo_type.dart';
 import 'package:vcare_admin/features/todo/presentation/widgets/todo_list_row.dart';
 import 'package:vcare_admin/features/todo/presentation/widgets/todo_transaction_detail_sheet.dart';
 import 'package:vcare_admin/features/todo/presentation/widgets/todo_w9_form_sheet.dart';
 import 'package:vcare_admin/l10n/app_localizations.dart';
+import 'package:vcare_admin/shared/widgets/shimmer.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 
 import '../../../../fixtures/repositories/fake_client_repository.dart';
@@ -70,7 +72,7 @@ TodoItem _completeProfileTodo() {
 Widget _wrap(Widget child) {
   return ProviderScope(
     child: MaterialApp(
-      theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+      theme: ThemeData(extensions: [VCareThemeExtension.light]),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: child),
@@ -79,77 +81,6 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
-  group('HomeRecentActivitySection', () {
-    testWidgets('shows empty state when there are no todos', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const HomeRecentActivitySection(items: [])),
-      );
-
-      expect(find.text('No tasks yet'), findsOneWidget);
-      expect(find.text('See all'), findsNothing);
-    });
-
-    testWidgets('shows loading indicator while fetching', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const HomeRecentActivitySection(items: [], isLoading: true)),
-      );
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    });
-
-    testWidgets('shows error panel with retry', (tester) async {
-      var retries = 0;
-      await tester.pumpWidget(
-        _wrap(
-          HomeRecentActivitySection(
-            items: const [],
-            isError: true,
-            errorMessage: 'Boom',
-            onRetry: () => retries += 1,
-          ),
-        ),
-      );
-
-      expect(find.text('Unable to load tasks'), findsOneWidget);
-      await tester.tap(find.textContaining('Retry'));
-      await tester.pump();
-      expect(retries, 1);
-    });
-
-    testWidgets('shows preview rows and see all when items exist', (
-      tester,
-    ) async {
-      var seeAllTaps = 0;
-      var itemTaps = 0;
-      final items = [
-        _paymentFailedTodo(),
-        _paymentFailedTodo(id: 'payment-failed:txn-2', transactionId: 'txn-2'),
-      ];
-
-      await tester.pumpWidget(
-        _wrap(
-          HomeRecentActivitySection(
-            items: items,
-            onSeeAll: () => seeAllTaps += 1,
-            onItemTap: (_) => itemTaps += 1,
-          ),
-        ),
-      );
-
-      expect(find.byType(TodoListRow), findsNWidgets(2));
-      expect(find.text('See all'), findsOneWidget);
-      expect(find.text('Payment failed'), findsNWidgets(2));
-
-      await tester.tap(find.text('See all'));
-      await tester.pump();
-      expect(seeAllTaps, 1);
-
-      await tester.tap(find.byType(TodoListRow).first);
-      await tester.pump();
-      expect(itemTaps, 1);
-    });
-  });
-
   group('TodoListRow', () {
     testWidgets('renders payment failed amount and status', (tester) async {
       await tester.pumpWidget(_wrap(TodoListRow(item: _paymentFailedTodo())));
@@ -180,6 +111,45 @@ void main() {
   });
 
   group('TodoTransactionDetailSheet', () {
+    Widget wrapSheet(FakeClientRepository clients) {
+      return ProviderScope(
+        overrides: [
+          clientRepositoryProvider.overrideWith((ref) => clients),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(extensions: [VCareThemeExtension.light]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: TodoTransactionDetailSheet(item: _paymentFailedTodo()),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('shimmers the recovery paths while the cards load', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      final clients = FakeClientRepository()
+        ..fetchPaymentMethodsDelay = gate.future;
+
+      await tester.pumpWidget(wrapSheet(clients));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(Shimmer), findsOneWidget);
+      expect(find.text('Add a card'), findsNothing);
+      // The failure details come from the todo itself, so they stay visible.
+      expect(find.textContaining('99.50'), findsOneWidget);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Shimmer), findsNothing);
+      expect(find.text('Add a card'), findsOneWidget);
+    });
+
     testWidgets('shows recovery paths for failed payment', (tester) async {
       final clients = FakeClientRepository()
         ..fetchPaymentMethodsResult = Success(const [
@@ -202,21 +172,7 @@ void main() {
           ),
         ]);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            clientRepositoryProvider.overrideWith((ref) => clients),
-          ],
-          child: MaterialApp(
-            theme: ThemeData(extensions: const [VCareThemeExtension.light]),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: TodoTransactionDetailSheet(item: _paymentFailedTodo()),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(wrapSheet(clients));
       await tester.pumpAndSettle();
 
       expect(find.text("We couldn't process this payment"), findsOneWidget);

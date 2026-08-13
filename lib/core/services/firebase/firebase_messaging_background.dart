@@ -61,6 +61,9 @@ Future<void> showBackgroundAndroidNotification(RemoteMessage message) async {
           channel.name,
           channelDescription: channel.description,
           icon: config.androidSmallIcon,
+          largeIcon: const DrawableResourceAndroidBitmap(
+            '@mipmap/ic_launcher',
+          ),
           importance: Importance.max,
           priority: Priority.max,
         ),

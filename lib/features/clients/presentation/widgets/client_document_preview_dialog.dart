@@ -3,10 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class ClientDocumentPreviewDialog extends StatelessWidget {
   const ClientDocumentPreviewDialog({super.key, required this.file});
@@ -40,7 +41,7 @@ class ClientDocumentPreviewDialog extends StatelessWidget {
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: VCareRadius.xlAll),
       clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -164,8 +165,8 @@ class _UnsupportedPreview extends StatelessWidget {
             icon: const Icon(LucideIcons.download, size: 14),
             label: const Text('Close'),
             style: FilledButton.styleFrom(
-              backgroundColor: VCareColors.primary,
-              foregroundColor: VCareColors.primaryForeground,
+              backgroundColor: context.vcare.primary,
+              foregroundColor: context.theme.colorScheme.onPrimary,
             ),
           ),
         ],

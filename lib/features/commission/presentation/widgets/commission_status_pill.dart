@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/core/styles/vcare_spacing.dart';
+import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
 
 /// Compact status pill: colored dot + label (web-style badge).
 class CommissionStatusPill extends StatelessWidget {
@@ -11,16 +12,19 @@ class CommissionStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = _style(label, context.vcare);
+    final colors = VCareStatusColors.of(context, _toneFor(label));
 
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.centerRight,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(
+          horizontal: VCareSpacing.s2,
+          vertical: 3,
+        ),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(999),
+          color: colors.background,
+          borderRadius: VCareRadius.fullAll,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -28,7 +32,10 @@ class CommissionStatusPill extends StatelessWidget {
             Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: colors.foreground,
+                shape: BoxShape.circle,
+              ),
             ),
             const SizedBox(width: 5),
             Text(
@@ -39,7 +46,7 @@ class CommissionStatusPill extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 height: 1.1,
-                color: fg,
+                color: colors.foreground,
               ),
             ),
           ],
@@ -48,28 +55,24 @@ class CommissionStatusPill extends StatelessWidget {
     );
   }
 
-  (Color bg, Color fg) _style(String status, VCareThemeExtension vcare) {
+  static VCareStatusTone _toneFor(String status) {
     final normalized = status.toLowerCase();
 
     if (normalized == 'failed' || normalized == 'rejected') {
-      return (
-        VCareColors.destructive.withValues(alpha: 0.12),
-        VCareColors.destructive,
-      );
+      return VCareStatusTone.danger;
     }
 
     if (normalized == 'earned' ||
         normalized == 'paid' ||
         normalized == 'completed' ||
         normalized == 'successful') {
-      return (VCareColors.success.withValues(alpha: 0.14), VCareColors.success);
+      return VCareStatusTone.success;
     }
 
     if (normalized == 'upcoming' || normalized == 'pending') {
-      const orange = Color(0xFFC2410C);
-      return (const Color(0x1AF97316), orange);
+      return VCareStatusTone.warning;
     }
 
-    return (vcare.muted, vcare.mutedForeground);
+    return VCareStatusTone.neutral;
   }
 }

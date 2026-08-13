@@ -1,10 +1,9 @@
-import 'package:health_messenger_ui/lib/health_messenger_client.dart';
 import 'package:vcare_admin/core/config/env/health_messenger_env.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/features/messages/health_messenger/mappers/auth_identity_mapper.dart';
 import 'package:vcare_admin/features/profile/domain/entities/user_profile.dart';
 
-/// Immutable bootstrap parameters for [ChatSession.bootstrap].
+/// Immutable bootstrap parameters for Health Messenger [ChatSession.bootstrap].
 class HealthMessengerBootstrapConfig {
   const HealthMessengerBootstrapConfig({
     required this.apiBaseUrl,
@@ -87,9 +86,18 @@ class HealthMessengerBootstrapConfig {
     required StorageService storage,
     UserProfile? profile,
     String? currentTenantId,
+    String? sessionExternalUserId,
+    String? sessionEmail,
+    String? sessionDisplayName,
     String externalUserRole = defaultExternalUserRole,
   }) {
-    final identity = AuthIdentityMapper(storage: storage, profile: profile);
+    final identity = AuthIdentityMapper(
+      storage: storage,
+      profile: profile,
+      sessionExternalUserId: sessionExternalUserId,
+      sessionEmail: sessionEmail,
+      sessionDisplayName: sessionDisplayName,
+    );
     final apiBaseUrl = HealthMessengerEnv.apiBaseUrl;
     final socketUrl = HealthMessengerEnv.socketUrl;
     final apiKey = HealthMessengerEnv.apiKey;
@@ -117,19 +125,29 @@ class HealthMessengerBootstrapConfig {
       apiKey: apiKey,
       externalTenantId: externalTenantId,
       externalUserId: externalUserId,
-      externalUserRole: externalUserRole.trim().isEmpty
-          ? kChatUserDefaultExternalRole.toUpperCase()
-          : externalUserRole.trim().toUpperCase(),
+      externalUserRole: resolveExternalUserRole(externalUserRole),
       email: email,
       displayName: displayName,
       profile: profilePicture,
     );
   }
 
+  /// Normalizes host role the same way web identify uses `currentRoles[0]`.
+  static String resolveExternalUserRole(String? role) {
+    final trimmed = role?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return defaultExternalUserRole;
+    }
+    return trimmed.toUpperCase();
+  }
+
   static String describeValidationFailure({
     required StorageService storage,
     UserProfile? profile,
     String? currentTenantId,
+    String? sessionExternalUserId,
+    String? sessionEmail,
+    String? sessionDisplayName,
   }) {
     if (HealthMessengerEnv.apiBaseUrl.isEmpty) {
       return 'Missing VITE_API_URL or HEALTH_MESSENGER_API_BASE_URL in environment.';
@@ -141,7 +159,13 @@ class HealthMessengerBootstrapConfig {
       return 'Missing VITE_WIDGET_ACCESS_KEY or HEALTH_MESSENGER_API_KEY in environment.';
     }
 
-    final identity = AuthIdentityMapper(storage: storage, profile: profile);
+    final identity = AuthIdentityMapper(
+      storage: storage,
+      profile: profile,
+      sessionExternalUserId: sessionExternalUserId,
+      sessionEmail: sessionEmail,
+      sessionDisplayName: sessionDisplayName,
+    );
     final rawTenantId = (currentTenantId?.trim().isNotEmpty ?? false)
         ? currentTenantId!.trim()
         : identity.externalTenantId;

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'package:vcare_admin/features/home/domain/entities/referral_card_download_result.dart';
 import 'package:vcare_admin/features/home/utils/referral_utils.dart';
 import 'package:vcare_admin/features/profile/domain/entities/local_profile.dart';
 import 'package:vcare_admin/shared/utils/qr_code_utils.dart';
@@ -38,15 +39,22 @@ class ReferralActions {
     return WidgetCaptureUtils.capturePng(key);
   }
 
-  Future<bool> downloadCardToGallery() async {
+  Future<ReferralCardDownloadResult> downloadCardToGallery() async {
     final bytes = await captureCardBytes();
     if (bytes == null) {
-      return false;
+      return const ReferralCardDownloadResult(success: false);
     }
 
-    return WidgetCaptureUtils.saveToGallery(
+    final fileName =
+        'vcare-referral-card-${DateTime.now().millisecondsSinceEpoch}';
+    final saved = await WidgetCaptureUtils.saveToGallery(
       bytes,
-      name: 'vcare-referral-card-${DateTime.now().millisecondsSinceEpoch}',
+      name: fileName,
+    );
+
+    return ReferralCardDownloadResult(
+      success: saved,
+      fileName: saved ? fileName : null,
     );
   }
 

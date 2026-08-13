@@ -10,9 +10,9 @@ void main() {
       expect(copy.explanation, "Jane Doe's bank didn't have enough for this charge.");
     });
 
-    test('maps card problem reasons', () {
+    test('maps expired card reasons', () {
       final copy = getFailedPaymentCopy('Card expired', 'Jane');
-      expect(copy.shortLabel, 'Card problem');
+      expect(copy.shortLabel, 'Card expired');
       expect(copy.explanation, "This card couldn't be charged for Jane.");
     });
 

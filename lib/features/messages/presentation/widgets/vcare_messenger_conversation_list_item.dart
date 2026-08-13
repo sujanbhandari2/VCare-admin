@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:intl/intl.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
@@ -60,6 +59,8 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                 displayTitle: data.displayTitle,
                 imageUrl: isGroupRow ? null : data.user.avatarUrl,
                 isGroup: isGroupRow,
+                showOnlineIndicator: data.showOnlinePresence && !isGroupRow,
+                isOnline: data.user.isOnline,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -99,7 +100,7 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: VCareColors.primary.withValues(alpha: 0.8),
+                              color: context.vcare.primary.withValues(alpha: 0.8),
                             ),
                           ),
                         ],
@@ -151,7 +152,7 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: VCareColors.primary,
+                              color: context.vcare.primary,
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,

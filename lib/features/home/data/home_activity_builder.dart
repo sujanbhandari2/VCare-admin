@@ -2,26 +2,6 @@
 // import 'home_mock_data.dart';
 import 'home_models.dart';
 
-const _statusLabels = {
-  RequestStatus.newRequest: 'New',
-  RequestStatus.inReview: 'In Review',
-  RequestStatus.actionNeeded: 'Action Needed',
-  RequestStatus.resolved: 'Resolved',
-};
-
-StatusBadgeVariant statusVariant(RequestStatus status) {
-  switch (status) {
-    case RequestStatus.newRequest:
-      return StatusBadgeVariant.primary;
-    case RequestStatus.inReview:
-      return StatusBadgeVariant.secondary;
-    case RequestStatus.actionNeeded:
-      return StatusBadgeVariant.destructive;
-    case RequestStatus.resolved:
-      return StatusBadgeVariant.outline;
-  }
-}
-
 String formatWhen(DateTime iso) {
   final diff = DateTime.now().difference(iso);
   const hr = Duration(hours: 1);
@@ -54,56 +34,8 @@ String formatWhen(DateTime iso) {
   return '${months[iso.month - 1]} ${iso.day}';
 }
 
-List<ActivityItem> buildRecentActivity({
-  required List<CareRequest> requests,
-  required List<CareTeamMember> careTeam,
-  required Map<String, List<ChatMessage>> messagesByContact,
-}) {
-  final activity = <ActivityItem>[_failedTransaction(), _paidTransaction()];
-
-  for (final r in requests.take(5)) {
-    activity.add(
-      ActivityItem(
-        kind: ActivityKind.request,
-        id: r.id,
-        title: r.title,
-        subtitle: r.lastMessageBody,
-        when: r.updatedAt,
-        statusLabel: _statusLabels[r.status],
-        statusVariant: statusVariant(r.status),
-      ),
-    );
-  }
-
-  for (final c in careTeam) {
-    final msgs = messagesByContact[c.id] ?? [];
-    if (msgs.isEmpty) continue;
-    final last = msgs.last;
-    activity.add(
-      ActivityItem(
-        kind: ActivityKind.message,
-        id: 'msg-${c.id}',
-        title: c.name,
-        subtitle: last.body,
-        when: last.createdAt,
-        photoAsset: c.photoAsset,
-        photoUrl: c.photoUrl,
-        contactId: c.id,
-      ),
-    );
-  }
-
-  activity.sort((a, b) => b.when.compareTo(a.when));
-  return activity.take(3).toList();
-}
-
 List<ActivityItem> defaultRecentActivity() {
   // TODO: Re-enable when todo list API is available.
-  // return buildRecentActivity(
-  //   requests: HomeMockData.requests(),
-  //   careTeam: HomeMockData.careTeam,
-  //   messagesByContact: HomeMockData.messagesByContact,
-  // );
   return const [];
 }
 
@@ -153,3 +85,9 @@ ActivityItem _paidTransaction() {
     ),
   );
 }
+
+/// Kept for callers that still seed demo transaction activity.
+List<ActivityItem> demoTransactionActivity() => [
+  _failedTransaction(),
+  _paidTransaction(),
+];

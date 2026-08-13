@@ -15,7 +15,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: const Scaffold(
           body: CommissionHistoryRow(
             item: CommissionHistoryItem(
@@ -46,7 +46,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: const Scaffold(
           body: CommissionSalesHistoryRow(
             item: SalesHistoryItem(
@@ -71,7 +71,7 @@ void main() {
   testWidgets('failed sales row shows failed-to-collect hint', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: const Scaffold(
           body: CommissionSalesHistoryRow(
             item: SalesHistoryItem(
@@ -96,7 +96,7 @@ void main() {
   testWidgets('sales history empty uses sales copy', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: const Scaffold(body: CommissionSalesHistoryEmptyFilter()),
       ),
     );

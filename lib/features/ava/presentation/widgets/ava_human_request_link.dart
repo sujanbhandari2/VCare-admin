@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 
 /// Matches vcareapp [AvaHumanRequestLink].
 class AvaHumanRequestLink extends StatelessWidget {
@@ -16,7 +16,7 @@ class AvaHumanRequestLink extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Material(
-          color: VCareColors.primary.withValues(alpha: 0.1),
+          color: context.vcare.primary.withValues(alpha: 0.1),
           shape: const StadiumBorder(),
           child: InkWell(
             onTap: onTap,
@@ -31,14 +31,14 @@ class AvaHumanRequestLink extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: VCareColors.primary,
+                      color: context.vcare.primary,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Icon(
                     LucideIcons.arrowRight,
                     size: 12,
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                   ),
                 ],
               ),

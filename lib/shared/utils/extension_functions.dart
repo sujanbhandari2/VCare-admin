@@ -12,6 +12,7 @@ import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 import 'package:vcare_admin/shared/utils/date_format_utils.dart';
 import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
+import 'package:vcare_admin/shared/widgets/vcare_floating_bottom_sheet.dart';
 
 /// BuildContext Extension functions
 extension BuildContextExt on BuildContext {
@@ -76,29 +77,54 @@ extension BuildContextExt on BuildContext {
 
   Future<T?> showBottomSheet<T>({
     required Widget Function(BuildContext context) builder,
-    Color? backgroundColor,
-    ShapeBorder? shape,
-    bool isScrollControlled = false,
+    Color? barrierColor,
+    double maxHeightFactor = 0.9,
+    EdgeInsetsGeometry margin = EdgeInsets.zero,
+    double topRadius = 24,
+    bool isScrollControlled = true,
     bool useRootNavigator = true,
     bool isDismissible = true,
     bool enableDrag = true,
     bool useSafeArea = false,
-  }) => showModalBottomSheet<T>(
-    context: this,
-    builder: builder,
-    backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
-    shape:
-        shape ??
-        const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-        ),
-    barrierColor: theme.dividerColor.withValues(alpha: 0.2),
-    isScrollControlled: isScrollControlled,
-    useRootNavigator: useRootNavigator,
-    isDismissible: isDismissible,
-    enableDrag: enableDrag,
-    useSafeArea: useSafeArea,
-  );
+    bool? showDragHandle,
+  }) {
+    final effectiveShowDragHandle = showDragHandle ?? enableDrag;
+
+    return showModalBottomSheet<T>(
+      context: this,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(),
+      barrierColor:
+          barrierColor ??
+          Colors.black.withValues(alpha: isDarkTheme ? 0.55 : 0.40),
+      isScrollControlled: isScrollControlled,
+      useRootNavigator: useRootNavigator,
+      isDismissible: isDismissible,
+      enableDrag: enableDrag,
+      useSafeArea: useSafeArea,
+      builder: (sheetContext) {
+        final mediaQuery = MediaQuery.of(sheetContext);
+        return SizedBox(
+          width: mediaQuery.size.width,
+          height: mediaQuery.size.height,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: VcareFloatingBottomSheetCard(
+                maxHeightFactor: maxHeightFactor,
+                margin: margin,
+                topRadius: topRadius,
+                showDragHandle: effectiveShowDragHandle,
+                child: builder(sheetContext),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// Extension functions on String

@@ -23,7 +23,7 @@ void main() {
       expect(profile.fullName, 'Jane Doe');
       expect(profile.email, 'sujan@vitafyhealth.com');
       expect(profile.phone, '+15551234567');
-      expect(profile.dob, '01/15/1990');
+      expect(profile.dob, 'Jan 15, 1990');
       expect(profile.photoUrl, 'https://cdn.example.com/jane-preview.jpg');
       expect(
         profile.photoCacheKey,
@@ -228,7 +228,7 @@ void main() {
       expect(profile.fullName, 'Sujan K bhandari');
       expect(profile.email, 'sujan+222@vitafyhealth.com');
       expect(profile.phone, '+13434343434');
-      expect(profile.dob, '07/01/1995');
+      expect(profile.dob, 'Jul 1, 1995');
       expect(profile.gender, 'Male');
       expect(profile.photoUrl, 'https://cdn.example.com/user-preview.jpg');
       expect(

@@ -14,6 +14,20 @@ class AuthMe {
   final AuthMeAgentProfile? agentProfile;
   final AuthMeClientProfile? clientProfile;
 
+  AuthMe copyWith({
+    AuthMeUser? user,
+    List<String>? menu,
+    AuthMeAgentProfile? agentProfile,
+    AuthMeClientProfile? clientProfile,
+  }) {
+    return AuthMe(
+      user: user ?? this.user,
+      menu: menu ?? this.menu,
+      agentProfile: agentProfile ?? this.agentProfile,
+      clientProfile: clientProfile ?? this.clientProfile,
+    );
+  }
+
   /// Best available profile photo URL from user or nested profile payloads.
   String? get profilePhotoUrl {
     final fromUser = user.profilePhotoUrl;
@@ -257,6 +271,54 @@ class AuthMeUser {
     }
 
     return null;
+  }
+
+  AuthMeUser copyWith({
+    String? id,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? dateOfBirth,
+    String? gender,
+    String? email,
+    String? phoneNumber,
+    String? emailVerifiedAt,
+    String? status,
+    String? profileImage,
+    String? profilePreviewLink,
+    bool? mfaEnabled,
+    String? userType,
+    String? createdAt,
+    String? updatedAt,
+    String? agencyGroupId,
+    String? agencyGroupName,
+    AuthMeTenant? currentTenant,
+    List<String>? currentRoles,
+    List<AuthMeTenantAssociation>? tenantAssociations,
+  }) {
+    return AuthMeUser(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      middleName: middleName ?? this.middleName,
+      lastName: lastName ?? this.lastName,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
+      status: status ?? this.status,
+      profileImage: profileImage ?? this.profileImage,
+      profilePreviewLink: profilePreviewLink ?? this.profilePreviewLink,
+      mfaEnabled: mfaEnabled ?? this.mfaEnabled,
+      userType: userType ?? this.userType,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      agencyGroupId: agencyGroupId ?? this.agencyGroupId,
+      agencyGroupName: agencyGroupName ?? this.agencyGroupName,
+      currentTenant: currentTenant ?? this.currentTenant,
+      currentRoles: currentRoles ?? this.currentRoles,
+      tenantAssociations: tenantAssociations ?? this.tenantAssociations,
+    );
   }
 }
 

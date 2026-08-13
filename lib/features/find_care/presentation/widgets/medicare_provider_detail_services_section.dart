@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/find_care/presentation/state/medicare_provider_detail_state.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class MedicareProviderDetailServicesSection extends StatelessWidget {
   const MedicareProviderDetailServicesSection({
@@ -31,7 +31,7 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: vcare.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: VCareRadius.xxlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Column(
@@ -43,7 +43,7 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
               Icon(
                 LucideIcons.clipboardList,
                 size: 20,
-                color: VCareColors.primary,
+                color: context.vcare.primary,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -78,7 +78,7 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
                             TextSpan(
                               text: 'CMS provider detail',
                               style: TextStyle(
-                                color: VCareColors.primary,
+                                color: context.vcare.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -106,7 +106,7 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       color: vcare.muted.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: VCareRadius.lgAll,
                     ),
                   ),
                 ),
@@ -169,7 +169,6 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
                   onPressed: state.servicesLoadingMore ? null : onLoadMore,
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(44),
-                    shape: const StadiumBorder(),
                   ),
                   child: Text(
                     state.servicesLoadingMore

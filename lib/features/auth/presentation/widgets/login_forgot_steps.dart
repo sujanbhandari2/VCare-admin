@@ -1,58 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/features/auth/data/vcare_mock_lookup.dart';
+import 'package:vcare_admin/features/auth/domain/entities/forgot_password_result.dart';
+import 'package:vcare_admin/features/auth/presentation/state/login_flow_state.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
-/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotIdentifyStep.tsx
-class LoginForgotIdentifyStep extends StatelessWidget {
-  const LoginForgotIdentifyStep({
+/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotRequestStep.tsx
+class LoginForgotRequestStep extends StatelessWidget {
+  const LoginForgotRequestStep({
     super.key,
-    required this.controller,
+    required this.destination,
+    required this.method,
     required this.error,
     required this.loading,
     required this.onSubmit,
   });
 
-  final TextEditingController controller;
+  final String destination;
+  final LoginFlowMethod method;
   final String? error;
   final bool loading;
   final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {
+    final viaSms = method == LoginFlowMethod.phone;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const LoginStepHeader(
-          icon: LucideIcons.keyRound,
+        LoginStepHeader(
+          icon: LucideIcons.mail,
           title: 'Reset your password',
-          subtitle: Text(
-            "Enter the email linked to your VCare account(s) and we'll help you choose which one to reset.",
-          ),
-        ),
-        LoginTextField(
-          controller: controller,
-          keyboardType: TextInputType.emailAddress,
-          hint: 'you@example.com',
-          autofocus: true,
-          prefix: const Padding(
-            padding: EdgeInsets.only(left: 16, right: 12),
-            child: Icon(LucideIcons.mail, size: 16),
+          subtitle: Text.rich(
+            TextSpan(
+              style: TextStyle(
+                fontSize: 14,
+                color: context.vcare.mutedForeground,
+                height: 1.45,
+              ),
+              children: [
+                const TextSpan(text: "We'll send a reset link to "),
+                TextSpan(
+                  text: destination,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: context.vcare.foreground,
+                  ),
+                ),
+                TextSpan(text: viaSms ? ' via SMS' : ''),
+                const TextSpan(text: ' if an account exists.'),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
         ),
         if (error != null) ...[
-          const SizedBox(height: 8),
           Text(
             error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
           ),
+          const SizedBox(height: 12),
         ],
-        const SizedBox(height: 12),
         LoginPrimaryButton(
-          label: 'Find my accounts',
+          label: 'Send reset link',
           loading: loading,
           onPressed: onSubmit,
         ),
@@ -61,22 +74,34 @@ class LoginForgotIdentifyStep extends StatelessWidget {
   }
 }
 
-/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotSelectStep.tsx
-class LoginForgotSelectStep extends StatelessWidget {
-  const LoginForgotSelectStep({
+/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotDisambiguateStep.tsx
+class LoginForgotDisambiguateStep extends StatelessWidget {
+  const LoginForgotDisambiguateStep({
     super.key,
-    required this.forgotEmail,
     required this.accounts,
-    required this.loadingKey,
-    required this.pendingClientId,
-    required this.onSelect,
+    required this.selectedAccountId,
+    required this.dobController,
+    required this.zipController,
+    required this.error,
+    required this.loading,
+    required this.onSelectAccount,
+    required this.onDobChanged,
+    required this.onZipChanged,
+    required this.onPickDob,
+    required this.onSubmit,
   });
 
-  final String forgotEmail;
-  final List<LoginClientRecord> accounts;
-  final String? loadingKey;
-  final String? pendingClientId;
-  final ValueChanged<LoginClientRecord> onSelect;
+  final List<ForgotPasswordAccount> accounts;
+  final String? selectedAccountId;
+  final TextEditingController dobController;
+  final TextEditingController zipController;
+  final String? error;
+  final bool loading;
+  final ValueChanged<String> onSelectAccount;
+  final VoidCallback onDobChanged;
+  final VoidCallback onZipChanged;
+  final VoidCallback onPickDob;
+  final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -85,287 +110,162 @@ class LoginForgotSelectStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LoginStepHeader(
+        const LoginStepHeader(
           icon: LucideIcons.users,
-          title: 'Choose an account',
-          subtitle: Text.rich(
-            TextSpan(
-              style: TextStyle(color: vcare.mutedForeground),
-              children: [
-                TextSpan(
-                  text: 'We found ${accounts.length} accounts linked to ',
+          title: 'Which account is yours?',
+          subtitle: Text(
+            'Select your account or verify with your date of birth and ZIP code.',
+          ),
+        ),
+        for (final account in accounts) ...[
+          Material(
+            color: selectedAccountId == account.accountId
+                ? context.vcare.primary.withValues(alpha: 0.05)
+                : vcare.muted.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: VCareRadius.xlAll,
+              side: BorderSide(
+                color: selectedAccountId == account.accountId
+                    ? context.vcare.primary
+                    : vcare.border.withValues(alpha: 0.6),
+              ),
+            ),
+            child: InkWell(
+              onTap: () => onSelectAccount(account.accountId),
+              borderRadius: VCareRadius.xlAll,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                TextSpan(
-                  text: forgotEmail,
-                  style: TextStyle(
-                    color: VCareColors.foreground,
-                    fontWeight: FontWeight.w500,
+                child: Text(
+                  account.displayName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const TextSpan(
-                  text: '. Pick the one whose password you want to reset.',
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        const SizedBox(height: 12),
+        Text(
+          'Or verify with DOB and ZIP',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: onPickDob,
+          child: AbsorbPointer(
+            child: LoginTextField(
+              controller: dobController,
+              hint: 'Date of birth',
+              prefix: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Icon(
+                  LucideIcons.calendar,
+                  size: 16,
+                  color: vcare.mutedForeground,
                 ),
-              ],
+              ),
             ),
           ),
         ),
-        ...accounts.map((account) {
-          final pending =
-              loadingKey == 'forgot-send' &&
-              pendingClientId == account.clientId;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Material(
-              color: vcare.muted.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: vcare.border),
-              ),
-              child: InkWell(
-                onTap: loadingKey != null ? null : () => onSelect(account),
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              account.fullName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${account.memberId} · DOB ${account.dobMasked} · ZIP ${account.zipMasked}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: vcare.mutedForeground,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (pending)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      else
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 16,
-                          color: vcare.mutedForeground,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
+        const SizedBox(height: 12),
+        LoginTextField(
+          controller: zipController,
+          keyboardType: TextInputType.number,
+          hint: 'ZIP code',
+          onChanged: (_) => onZipChanged(),
+        ),
+        if (error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            error!,
+            style: TextStyle(fontSize: 12, color: context.vcare.destructive),
+          ),
+        ],
+        const SizedBox(height: 12),
+        LoginPrimaryButton(
+          label: 'Continue',
+          loading: loading,
+          onPressed: onSubmit,
+        ),
       ],
     );
   }
 }
 
-/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotVerifyStep.tsx
-class LoginForgotVerifyStep extends StatelessWidget {
-  const LoginForgotVerifyStep({
+/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotSentStep.tsx
+class LoginForgotSentStep extends StatelessWidget {
+  const LoginForgotSentStep({
     super.key,
-    required this.forgotEmail,
-    required this.forgotSelected,
-    required this.otpController,
-    required this.error,
-    required this.loading,
-    required this.resendIn,
-    required this.resendLoading,
-    required this.onCompleted,
-    required this.onVerify,
-    required this.onResend,
-    required this.onChanged,
+    required this.destination,
+    required this.method,
+    required this.onReturnToSignIn,
   });
 
-  final String forgotEmail;
-  final LoginClientRecord? forgotSelected;
-  final TextEditingController otpController;
-  final String? error;
-  final bool loading;
-  final int resendIn;
-  final bool resendLoading;
-  final ValueChanged<String> onCompleted;
-  final VoidCallback onVerify;
-  final VoidCallback onResend;
-  final ValueChanged<String> onChanged;
+  final String destination;
+  final LoginFlowMethod method;
+  final VoidCallback onReturnToSignIn;
 
   @override
   Widget build(BuildContext context) {
-    final vcare = context.vcare;
+    final viaSms = method == LoginFlowMethod.phone;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LoginStepHeader(
-          icon: LucideIcons.lock,
-          title: "Verify it's you",
+          icon: LucideIcons.checkCircle2,
+          title: 'Check your inbox',
           subtitle: Text.rich(
             TextSpan(
-              style: TextStyle(color: vcare.mutedForeground),
+              style: TextStyle(
+                fontSize: 14,
+                color: context.vcare.mutedForeground,
+                height: 1.45,
+              ),
               children: [
-                const TextSpan(text: 'We sent a 6-digit code to '),
+                const TextSpan(text: 'If an account exists for '),
                 TextSpan(
-                  text: forgotEmail,
+                  text: destination,
                   style: TextStyle(
-                    color: VCareColors.foreground,
                     fontWeight: FontWeight.w500,
+                    color: context.vcare.foreground,
                   ),
                 ),
-                if (forgotSelected != null) ...[
-                  const TextSpan(text: ' for '),
-                  TextSpan(
-                    text: forgotSelected!.fullName,
-                    style: TextStyle(
-                      color: VCareColors.foreground,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-                const TextSpan(text: '.'),
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: LoginOtpInput(
-            controller: otpController,
-            onChanged: onChanged,
-            onCompleted: onCompleted,
-          ),
-        ),
-        if (error != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              error!,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: VCareColors.destructive),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: LoginPrimaryButton(
-            label: 'Verify',
-            loading: loading,
-            onPressed: otpController.text.length >= 6 ? onVerify : null,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 20),
-          child: Text.rich(
-            TextSpan(
-              style: TextStyle(fontSize: 12, color: vcare.mutedForeground),
-              children: [
-                const TextSpan(text: "Didn't get a code? "),
-                WidgetSpan(
-                  child: TextButton(
-                    onPressed: resendIn > 0 || resendLoading ? null : onResend,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      resendIn > 0 ? 'Resend in ${resendIn}s' : 'Resend code',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: resendIn > 0 || resendLoading
-                            ? vcare.mutedForeground
-                            : VCareColors.primary,
-                      ),
-                    ),
-                  ),
+                TextSpan(
+                  text: viaSms
+                      ? ", you'll receive an SMS"
+                      : ", you'll receive an email",
+                ),
+                const TextSpan(
+                  text: ' with a link to reset your password.',
                 ),
               ],
             ),
             textAlign: TextAlign.center,
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// parity: vcare-agent-app-2.0/src/features/auth/components/ForgotResetStep.tsx
-class LoginForgotResetStep extends StatelessWidget {
-  const LoginForgotResetStep({
-    super.key,
-    required this.forgotSelected,
-    required this.newPasswordController,
-    required this.confirmPasswordController,
-    required this.error,
-    required this.loading,
-    required this.onSubmit,
-  });
-
-  final LoginClientRecord? forgotSelected;
-  final TextEditingController newPasswordController;
-  final TextEditingController confirmPasswordController;
-  final String? error;
-  final bool loading;
-  final VoidCallback onSubmit;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = forgotSelected;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LoginStepHeader(
-          icon: LucideIcons.shieldCheck,
-          title: 'Create a new password',
-          subtitle: Text(
-            selected != null
-                ? "You're resetting the password for ${selected.fullName} (${selected.memberId})."
-                : "Choose a strong password you haven't used before.",
-          ),
-        ),
-        LoginTextField(
-          controller: newPasswordController,
-          obscureText: true,
-          hint: 'New password (min 8 chars)',
-          autofocus: true,
-        ),
-        const SizedBox(height: 12),
-        LoginTextField(
-          controller: confirmPasswordController,
-          obscureText: true,
-          hint: 'Confirm new password',
-        ),
-        if (error != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            error!,
-            style: TextStyle(fontSize: 12, color: VCareColors.destructive),
-          ),
-        ],
-        const SizedBox(height: 12),
         LoginPrimaryButton(
-          label: 'Reset password',
-          loading: loading,
-          onPressed: onSubmit,
+          label: 'Back to sign in',
+          onPressed: onReturnToSignIn,
         ),
       ],
     );
   }
 }
+
+
+
+
+
+
+
+
+
+

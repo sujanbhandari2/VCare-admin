@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_filter.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/features/documents/domain/entities/document_item.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class DocumentsFilters extends StatelessWidget {
   const DocumentsFilters({
@@ -59,10 +59,10 @@ class _FilterChip extends StatelessWidget {
     final vcare = context.vcare;
 
     return Material(
-      color: selected ? VCareColors.primary : vcare.card,
+      color: selected ? context.vcare.primary : vcare.card,
       shape: StadiumBorder(
         side: BorderSide(
-          color: selected ? VCareColors.primary : vcare.border,
+          color: selected ? context.vcare.primary : vcare.border,
         ),
       ),
       child: InkWell(
@@ -76,7 +76,7 @@ class _FilterChip extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: selected
-                  ? VCareColors.primaryForeground
+                  ? context.theme.colorScheme.onPrimary
                   : vcare.mutedForeground,
             ),
           ),

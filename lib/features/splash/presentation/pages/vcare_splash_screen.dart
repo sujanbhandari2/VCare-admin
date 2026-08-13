@@ -9,6 +9,8 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/home/data/vcare_assets.dart';
+import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
+import 'package:vcare_admin/features/tenant_branding/presentation/widgets/tenant_branded_image.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class VcareSplashScreen extends ConsumerStatefulWidget {
@@ -46,13 +48,12 @@ class _VcareSplashScreenState extends ConsumerState<VcareSplashScreen> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final logoUrl = ref.watch(tenantBrandingStateProvider).branding.logoUrl;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
+        statusBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         body: DecoratedBox(
@@ -71,12 +72,10 @@ class _VcareSplashScreenState extends ConsumerState<VcareSplashScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  VCareAssets.logo,
+                TenantBrandedImage(
+                  source: logoUrl,
                   height: 48,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                      Image.asset(VCareAssets.member, width: 56, height: 56),
+                  fallbackAsset: VCareAssets.logo,
                 ),
                 const SizedBox(height: 24),
                 const SizedBox(

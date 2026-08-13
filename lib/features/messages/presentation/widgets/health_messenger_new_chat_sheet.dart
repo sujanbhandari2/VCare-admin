@@ -3,24 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/health_messenger/mappers/associated_user_messenger_mapper.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
 import 'package:vcare_admin/features/users/domain/entities/associated_user.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 class HealthMessengerNewChatSheet extends ConsumerStatefulWidget {
   const HealthMessengerNewChatSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
+    return context.showBottomSheet<void>(
       isScrollControlled: true,
       useSafeArea: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const HealthMessengerNewChatSheet(),
     );
   }
@@ -75,92 +72,70 @@ class _HealthMessengerNewChatSheetState
         .toList(growable: false);
     final isLoading =
         chatState.isBootstrapping || chatState.isSuggestedUsersLoading;
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
-
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Material(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Row(
             children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: vcare.muted,
-                  borderRadius: BorderRadius.circular(999),
+              Icon(LucideIcons.userPlus, color: context.vcare.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'New chat',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  children: [
-                    Icon(LucideIcons.userPlus, color: VCareColors.primary),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'New chat',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: TextField(
-                  controller: _queryController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Search people by name or role',
-                    prefixIcon: Icon(
-                      LucideIcons.search,
-                      color: vcare.mutedForeground,
-                    ),
-                    filled: true,
-                    fillColor: vcare.muted.withValues(alpha: 0.4),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: vcare.border),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : people.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Text(
-                              'No people match your search',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: vcare.mutedForeground),
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                            itemCount: people.length,
-                            itemBuilder: (context, index) {
-                              final user = people[index];
-                              return _ChatPickRow(
-                                user: user,
-                                onTap: () => _openChat(user),
-                              );
-                            },
-                          ),
               ),
             ],
           ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: TextField(
+            controller: _queryController,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Search people by name or role',
+              prefixIcon: Icon(
+                LucideIcons.search,
+                color: vcare.mutedForeground,
+              ),
+              filled: true,
+              fillColor: vcare.muted.withValues(alpha: 0.4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: vcare.border),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : people.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No people match your search',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: vcare.mutedForeground),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      itemCount: people.length,
+                      itemBuilder: (context, index) {
+                        final user = people[index];
+                        return _ChatPickRow(
+                          user: user,
+                          onTap: () => _openChat(user),
+                        );
+                      },
+                    ),
+        ),
+      ],
     );
   }
 }
@@ -241,7 +216,7 @@ class _ChatPickRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: VCareColors.primary,
+                    color: context.vcare.primary,
                   ),
                 ),
               ],

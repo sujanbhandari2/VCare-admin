@@ -106,7 +106,7 @@ class RefreshTokenInterceptor extends Interceptor {
       );
 
       final response = await refreshDio.post(
-        ApiEndpoints.refreshToken,
+        ApiEndpoints.authRefresh,
         data: {'refreshToken': refreshToken},
       );
 

@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/domain/auth_national_phone_input_formatter.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
@@ -33,6 +32,7 @@ import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_
 import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({
@@ -403,7 +403,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
             action: TextButton(
               onPressed: (_loading || _submitting) ? null : _submit,
               style: TextButton.styleFrom(
-                foregroundColor: VCareColors.primary,
+                foregroundColor: context.vcare.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -453,7 +453,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
                           delegate: _TabBarHeaderDelegate(
                             tabBar: TabBar(
                               controller: _tabController,
-                              labelColor: VCareColors.foreground,
+                              labelColor: context.vcare.foreground,
                               unselectedLabelColor: vcare.mutedForeground,
                               indicatorSize: TabBarIndicatorSize.tab,
                               dividerColor: Colors.transparent,
@@ -593,7 +593,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: VCareColors.destructive,
+              backgroundColor: context.vcare.destructive,
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -650,7 +650,7 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
           ),
           child: Material(
             color: context.vcare.muted.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: VCareRadius.lgAll,
             child: tabBar,
           ),
         ),
@@ -794,7 +794,7 @@ class _ProfileTab extends StatelessWidget {
           const SizedBox(height: 8),
           InkWell(
             onTap: () => onAllowTextChanged(!allowTextNotification),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: VCareRadius.mdAll,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
@@ -919,11 +919,11 @@ class _GenderField extends StatelessWidget {
               vertical: 12,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
               borderSide: BorderSide(color: vcare.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
               borderSide: BorderSide(color: vcare.border),
             ),
           ),
@@ -948,7 +948,7 @@ class _AddressSectionHeader extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(LucideIcons.mapPin, size: 14, color: VCareColors.primary),
+        Icon(LucideIcons.mapPin, size: 14, color: context.vcare.primary),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
@@ -1093,7 +1093,7 @@ class _PhotoSection extends StatelessWidget {
           height: 96,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: VCareRadius.xxlAll,
             border: Border.all(color: vcare.border),
           ),
           child: ProfileAvatar(
@@ -1108,7 +1108,7 @@ class _PhotoSection extends StatelessWidget {
           right: -4,
           bottom: -4,
           child: Material(
-            color: VCareColors.primary,
+            color: context.vcare.primary,
             shape: const CircleBorder(),
             elevation: 2,
             child: InkWell(
@@ -1119,7 +1119,7 @@ class _PhotoSection extends StatelessWidget {
                 child: Icon(
                   LucideIcons.camera,
                   size: 16,
-                  color: VCareColors.primaryForeground,
+                  color: context.theme.colorScheme.onPrimary,
                 ),
               ),
             ),
@@ -1141,7 +1141,7 @@ class _ProfileShineNudge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: _amber.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: _amber.withValues(alpha: 0.25)),
       ),
       child: Row(
@@ -1165,7 +1165,7 @@ class _ProfileShineNudge extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.35,
-                color: VCareColors.foreground,
+                color: context.vcare.foreground,
               ),
             ),
           ),
@@ -1216,11 +1216,11 @@ class _BioField extends StatelessWidget {
               vertical: 12,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
               borderSide: BorderSide(color: vcare.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
               borderSide: BorderSide(color: vcare.border),
             ),
             counterText: '',
@@ -1287,7 +1287,7 @@ class _ProfileField extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: VCareColors.foreground,
+                  color: context.vcare.foreground,
                 ),
               ),
               if (isRequired)
@@ -1296,7 +1296,7 @@ class _ProfileField extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: VCareColors.destructive,
+                    color: context.vcare.destructive,
                   ),
                 ),
             ],
@@ -1325,11 +1325,11 @@ class _ProfileField extends StatelessWidget {
                 ? null
                 : const BoxConstraints(minWidth: 0, minHeight: 0),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
               borderSide: BorderSide(color: vcare.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: VCareRadius.xlAll,
               borderSide: BorderSide(color: vcare.border),
             ),
           ),
@@ -1367,7 +1367,7 @@ class _DateField extends StatelessWidget {
         const SizedBox(height: 6),
         InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: VCareRadius.xlAll,
           child: InputDecorator(
             decoration: InputDecoration(
               errorText: errorText,
@@ -1383,11 +1383,11 @@ class _DateField extends StatelessWidget {
                 color: vcare.mutedForeground,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: VCareRadius.xlAll,
                 borderSide: BorderSide(color: vcare.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: VCareRadius.xlAll,
                 borderSide: BorderSide(color: vcare.border),
               ),
             ),

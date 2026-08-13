@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/app_theme.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/family_members_state_provider.dart';
 import 'package:vcare_admin/features/profile/utils/family_member_edit_utils.dart';
@@ -19,6 +18,7 @@ import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_success_drawer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 class FamilyMemberEditScreen extends ConsumerStatefulWidget {
   const FamilyMemberEditScreen({super.key, this.memberId});
@@ -212,7 +212,7 @@ class _FamilyMemberEditScreenState extends ConsumerState<FamilyMemberEditScreen>
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: VCareColors.destructive,
+              backgroundColor: context.vcare.destructive,
             ),
             child: const Text('Remove'),
           ),
@@ -433,15 +433,15 @@ class _FamilyMemberEditScreenState extends ConsumerState<FamilyMemberEditScreen>
                               onPressed: _deleting || _submitting ? null : _confirmDelete,
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size.fromHeight(48),
-                                foregroundColor: VCareColors.destructive,
+                                foregroundColor: context.vcare.destructive,
                                 textStyle: context.textTheme.semibold14,
                                 side: BorderSide(
-                                  color: VCareColors.destructive.withValues(
+                                  color: context.vcare.destructive.withValues(
                                     alpha: 0.3,
                                   ),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: VCareRadius.xlAll,
                                 ),
                               ),
                               icon: _deleting
@@ -450,7 +450,7 @@ class _FamilyMemberEditScreenState extends ConsumerState<FamilyMemberEditScreen>
                                       height: 16,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: VCareColors.destructive,
+                                        color: context.vcare.destructive,
                                       ),
                                     )
                                   : const Icon(LucideIcons.trash2, size: 16),
@@ -487,16 +487,16 @@ InputDecoration _inputDecoration(
     isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: VCareRadius.xlAll,
       borderSide: BorderSide(color: vcare.border),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: VCareRadius.xlAll,
       borderSide: BorderSide(color: vcare.border),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: VCareColors.destructive),
+      borderRadius: VCareRadius.xlAll,
+      borderSide: BorderSide(color: context.vcare.destructive),
     ),
   );
 }
@@ -544,7 +544,7 @@ class _PhotoSection extends StatelessWidget {
               right: -4,
               bottom: -4,
               child: Material(
-                color: VCareColors.primary,
+                color: context.vcare.primary,
                 shape: const CircleBorder(),
                 elevation: 2,
                 child: InkWell(
@@ -557,14 +557,14 @@ class _PhotoSection extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: VCareColors.background,
+                        color: context.vcare.background,
                         width: 2,
                       ),
                     ),
                     child: Icon(
                       LucideIcons.camera,
                       size: 16,
-                      color: VCareColors.primaryForeground,
+                      color: context.theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -671,7 +671,7 @@ class _FamilyDropdown extends StatelessWidget {
       onChanged: onChanged,
       isExpanded: true,
       decoration: _inputDecoration(context, errorText: errorText),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: VCareRadius.xlAll,
       icon: Icon(
         LucideIcons.chevronDown,
         size: 16,
@@ -719,9 +719,9 @@ abstract final class _FamilyFormTypography {
 
   static TextStyle error(BuildContext context) {
     return context.textTheme.regular12?.copyWith(
-          color: VCareColors.destructive,
+          color: context.vcare.destructive,
           height: 1.25,
         ) ??
-        TextStyle(fontSize: 12, color: VCareColors.destructive);
+        TextStyle(fontSize: 12, color: context.vcare.destructive);
   }
 }

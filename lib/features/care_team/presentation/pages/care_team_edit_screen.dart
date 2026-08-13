@@ -9,7 +9,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/auth/domain/auth_national_phone_input_formatter.dart';
 import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
@@ -29,6 +28,7 @@ import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_success_drawer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 const _maxPhotoBytes = maxCareTeamPhotoBytes;
 const _fieldGap = 20.0;
@@ -365,7 +365,7 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(
               'Remove',
-              style: TextStyle(color: VCareColors.destructive),
+              style: TextStyle(color: context.vcare.destructive),
             ),
           ),
         ],
@@ -603,19 +603,19 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
                     icon: Icon(
                       LucideIcons.trash2,
                       size: 16,
-                      color: VCareColors.destructive,
+                      color: context.vcare.destructive,
                     ),
                     label: Text(
                       'Remove contact',
                       style: context.textTheme.semibold14?.copyWith(
-                        color: VCareColors.destructive,
+                        color: context.vcare.destructive,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       backgroundColor: context.vcare.card,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: VCareRadius.xlAll,
                       ),
                       side: BorderSide(color: context.vcare.border),
                     ),
@@ -638,9 +638,9 @@ InputDecoration _inputDecoration(
   bool hasError = false,
 }) {
   final vcare = context.vcare;
-  final borderColor = hasError ? VCareColors.destructive : vcare.border;
+  final borderColor = hasError ? context.vcare.destructive : vcare.border;
   final focusedColor =
-      hasError ? VCareColors.destructive : VCareColors.primary;
+      hasError ? context.vcare.destructive : context.vcare.primary;
 
   return InputDecoration(
     hintText: hintText,
@@ -699,7 +699,7 @@ class _PhotoSection extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 color: vcare.muted,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: VCareRadius.xxlAll,
               ),
               clipBehavior: Clip.antiAlias,
               child: photoUrl != null
@@ -710,7 +710,7 @@ class _PhotoSection extends StatelessWidget {
               right: -4,
               bottom: -4,
               child: Material(
-                color: VCareColors.primary,
+                color: context.vcare.primary,
                 shape: const CircleBorder(),
                 elevation: 1,
                 child: InkWell(
@@ -730,7 +730,7 @@ class _PhotoSection extends StatelessWidget {
                     child: Icon(
                       LucideIcons.camera,
                       size: 14,
-                      color: VCareColors.primaryForeground,
+                      color: context.theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -838,11 +838,11 @@ class _CareTeamField extends StatelessWidget {
           Text(
             errorText!,
             style: context.textTheme.regular12?.copyWith(
-                  color: VCareColors.destructive,
+                  color: context.vcare.destructive,
                 ) ??
                 TextStyle(
                   fontSize: 12,
-                  color: VCareColors.destructive,
+                  color: context.vcare.destructive,
                 ),
           ),
         ],

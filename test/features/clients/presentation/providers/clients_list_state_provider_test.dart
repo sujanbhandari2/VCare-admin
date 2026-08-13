@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
+import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_repository_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
@@ -70,6 +71,22 @@ void main() {
 
       expect(repository.lastClientsRequest?.search, 'Aspen');
       expect(repository.lastClientsRequest?.page, 1);
+    });
+
+    test('setClientType reloads with GROUP request', () async {
+      await container.read(clientsListStateProvider.notifier).loadInitial(
+        extras: const {
+          ClientsListState.clientTypeExtraKey: ClientListType.individual,
+        },
+      );
+
+      await container
+          .read(clientsListStateProvider.notifier)
+          .setClientType(ClientListType.group);
+
+      expect(repository.lastClientsRequest?.clientType, ClientListType.group);
+      expect(repository.lastClientsRequest?.page, 1);
+      expect(repository.lastClientsForceRefresh, isTrue);
     });
 
     test('loadInitial failure stores error', () async {

@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/app_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_button_styles.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/vcare_assets.dart';
+import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
+import 'package:vcare_admin/features/tenant_branding/presentation/widgets/tenant_branded_image.dart';
+import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
 /// Full wordmark above login card — parity: LoginShell.tsx `h-12 w-auto`.
-class LoginWordmark extends StatelessWidget {
+class LoginWordmark extends ConsumerWidget {
   const LoginWordmark({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      VCareAssets.logo,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final logoUrl = ref.watch(tenantBrandingStateProvider).branding.logoUrl;
+    return TenantBrandedImage(
+      source: logoUrl,
       height: 48,
-      fit: BoxFit.contain,
-      semanticLabel: 'VCare Advocacy',
+      fallbackAsset: VCareAssets.logo,
     );
   }
 }
@@ -33,7 +40,7 @@ class LoginShell extends StatelessWidget {
     final vcare = context.vcare;
 
     return ColoredBox(
-      color: VCareColors.background,
+      color: context.vcare.background,
       child: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
@@ -128,7 +135,7 @@ class LoginFooter extends StatelessWidget {
                 TextSpan(
                   text: 'Terms of Service',
                   style: TextStyle(
-                    color: VCareColors.foreground,
+                    color: context.vcare.foreground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -136,7 +143,7 @@ class LoginFooter extends StatelessWidget {
                 TextSpan(
                   text: 'Privacy Policy',
                   style: TextStyle(
-                    color: VCareColors.foreground,
+                    color: context.vcare.foreground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -152,7 +159,7 @@ class LoginFooter extends StatelessWidget {
               Icon(
                 LucideIcons.shieldCheck,
                 size: 14,
-                color: VCareColors.primary,
+                color: context.vcare.primary,
               ),
               const SizedBox(width: 6),
               Text(
@@ -224,10 +231,10 @@ class LoginStepHeader extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: VCareColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              color: context.vcare.primary.withValues(alpha: 0.1),
+              borderRadius: VCareRadius.xlAll,
             ),
-            child: Icon(icon, color: VCareColors.primary, size: 24),
+            child: Icon(icon, color: context.vcare.primary, size: 24),
           ),
           const SizedBox(height: 16),
           Text(
@@ -335,11 +342,10 @@ class _LoginTextFieldState extends State<LoginTextField> {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final borderColor =
-        widget.hasError ? VCareColors.destructive : vcare.border;
+    final borderColor = widget.hasError ? vcare.destructive : vcare.border;
     final focusedBorderColor = widget.hasError
-        ? VCareColors.destructive
-        : VCareColors.primary.withValues(alpha: 0.4);
+        ? vcare.destructive
+        : vcare.primary.withValues(alpha: 0.4);
 
     return TextField(
       controller: widget.controller,
@@ -385,33 +391,28 @@ class _LoginTextFieldState extends State<LoginTextField> {
           vertical: 16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: VCareRadius.xlAll,
           borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: VCareRadius.xlAll,
           borderSide: BorderSide(color: borderColor),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: vcare.border.withValues(alpha: 0.7),
-          ),
+          borderRadius: VCareRadius.xlAll,
+          borderSide: BorderSide(color: vcare.border.withValues(alpha: 0.7)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: focusedBorderColor,
-            width: 2,
-          ),
+          borderRadius: VCareRadius.xlAll,
+          borderSide: BorderSide(color: focusedBorderColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: VCareColors.destructive),
+          borderRadius: VCareRadius.xlAll,
+          borderSide: BorderSide(color: vcare.destructive),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: VCareColors.destructive, width: 2),
+          borderRadius: VCareRadius.xlAll,
+          borderSide: BorderSide(color: vcare.destructive, width: 2),
         ),
       ),
     );
@@ -419,11 +420,7 @@ class _LoginTextFieldState extends State<LoginTextField> {
 }
 
 class LoginFieldGroup extends StatelessWidget {
-  const LoginFieldGroup({
-    super.key,
-    required this.field,
-    this.errorText,
-  });
+  const LoginFieldGroup({super.key, required this.field, this.errorText});
 
   final Widget field;
   final String? errorText;
@@ -440,10 +437,7 @@ class LoginFieldGroup extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4),
             child: Text(
               errorText!,
-              style: TextStyle(
-                fontSize: 12,
-                color: VCareColors.destructive,
-              ),
+              style: TextStyle(fontSize: 12, color: context.vcare.destructive),
             ),
           ),
         ],
@@ -470,15 +464,15 @@ class LoginPrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
+      height: VCareButtonSize.md.height,
       child: FilledButton(
         onPressed: loading ? null : onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: VCareColors.primary,
-          foregroundColor: VCareColors.primaryForeground,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: const StadiumBorder(),
-          elevation: 0,
-          shadowColor: VCareColors.primary.withValues(alpha: 0.5),
+        style: VCareButtonStyles.filled(
+          background: context.vcare.primary,
+          foreground: context.theme.colorScheme.onPrimary,
+          size: VCareButtonSize.md,
+          labelStyle: context.textTheme.medium14,
+          dimWhenDisabled: !loading,
         ),
         child: loading
             ? SizedBox(
@@ -486,22 +480,22 @@ class LoginPrimaryButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: VCareColors.primaryForeground,
+                  color: context.theme.colorScheme.onPrimary,
                 ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 16),
+                    Icon(icon, size: VCareButtonStyles.iconSize),
                     const SizedBox(width: 8),
                   ],
-                  Text(
-                    label,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  Text(label),
                   const SizedBox(width: 8),
-                  const Icon(LucideIcons.arrowRight, size: 16),
+                  const Icon(
+                    LucideIcons.arrowRight,
+                    size: VCareButtonStyles.iconSize,
+                  ),
                 ],
               ),
       ),
@@ -529,12 +523,12 @@ class LoginSocialButton extends StatelessWidget {
     return Material(
       color: vcare.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         side: BorderSide(color: vcare.border),
       ),
       child: InkWell(
         onTap: loading ? null : onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: VCareRadius.lgAll,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           child: loading
@@ -642,17 +636,17 @@ class _LoginOtpInputState extends State<LoginOtpInput>
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: vcare.muted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: VCareRadius.lgAll,
                     border: Border.all(
                       color: isActive
-                          ? VCareColors.primary.withValues(alpha: 0.4)
+                          ? context.vcare.primary.withValues(alpha: 0.4)
                           : vcare.border,
                       width: isActive ? 2 : 1,
                     ),
                     boxShadow: isActive
                         ? [
                             BoxShadow(
-                              color: VCareColors.primary.withValues(
+                              color: context.vcare.primary.withValues(
                                 alpha: 0.12,
                               ),
                               blurRadius: 0,
@@ -675,7 +669,7 @@ class _LoginOtpInputState extends State<LoginOtpInput>
                           child: Container(
                             width: 1,
                             height: 16,
-                            color: VCareColors.foreground,
+                            color: context.vcare.foreground,
                           ),
                         )
                       : null,
@@ -728,7 +722,7 @@ class LoginClientCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: vcare.muted.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: VCareRadius.xlAll,
         border: Border.all(color: vcare.border),
       ),
       child: Column(

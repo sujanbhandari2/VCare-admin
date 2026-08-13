@@ -673,13 +673,13 @@ abstract class AppLocalizations {
   /// No description provided for @settings_theme_and_color_scheme.
   ///
   /// In en, this message translates to:
-  /// **'Theme & Color Scheme'**
+  /// **'Organization Branding'**
   String get settings_theme_and_color_scheme;
 
   /// No description provided for @settings_theme_and_seed_color.
   ///
   /// In en, this message translates to:
-  /// **'Theme mode, text scale, and contrast'**
+  /// **'Colors, fonts, logos, and text size'**
   String get settings_theme_and_seed_color;
 
   /// No description provided for @theme_mode.
@@ -801,6 +801,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'High'**
   String get contrast_mode_high;
+
+  /// No description provided for @branding_colors_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand colors'**
+  String get branding_colors_section;
+
+  /// No description provided for @branding_fonts_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Font theme'**
+  String get branding_fonts_section;
+
+  /// No description provided for @branding_logos_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Logos'**
+  String get branding_logos_section;
+
+  /// No description provided for @branding_primary_color.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get branding_primary_color;
+
+  /// No description provided for @branding_secondary_color.
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary'**
+  String get branding_secondary_color;
+
+  /// No description provided for @branding_accent_color.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent'**
+  String get branding_accent_color;
+
+  /// No description provided for @branding_primary_logo.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary logo'**
+  String get branding_primary_logo;
+
+  /// No description provided for @branding_icon_mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon mark'**
+  String get branding_icon_mark;
+
+  /// No description provided for @branding_upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get branding_upload;
+
+  /// No description provided for @branding_remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get branding_remove;
+
+  /// No description provided for @branding_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save colors'**
+  String get branding_save;
+
+  /// No description provided for @branding_reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get branding_reset;
+
+  /// No description provided for @branding_preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Live preview'**
+  String get branding_preview;
+
+  /// No description provided for @branding_saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Branding updated'**
+  String get branding_saved;
+
+  /// No description provided for @branding_save_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update branding'**
+  String get branding_save_failed;
+
+  /// No description provided for @branding_font_updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Font theme updated'**
+  String get branding_font_updated;
+
+  /// No description provided for @branding_invalid_color.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid 6-digit hex color'**
+  String get branding_invalid_color;
+
+  /// No description provided for @branding_custom_colors.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom colors'**
+  String get branding_custom_colors;
+
+  /// No description provided for @branding_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading branding…'**
+  String get branding_loading;
 
   /// No description provided for @english.
   ///

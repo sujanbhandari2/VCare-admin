@@ -14,7 +14,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: Scaffold(
           body: FindCareLocationBar(
             locationController: controller,
@@ -41,7 +41,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: Scaffold(
           body: FindCareLocationBar(
             locationController: controller,
@@ -64,7 +64,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(extensions: const [VCareThemeExtension.light]),
+        theme: ThemeData(extensions: [VCareThemeExtension.light]),
         home: Scaffold(
           body: FindCareLocationBar(
             locationController: controller,

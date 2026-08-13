@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/utils/client_utils.dart';
 import 'package:vcare_admin/features/commission/domain/entities/sales_history_item.dart';
@@ -21,9 +20,7 @@ class CommissionSalesHistoryRow extends StatelessWidget {
     final vcare = context.vcare;
     final statusLabel = salesTransactionStatusLabel(item.status);
     final isFailed = item.status == SalesTransactionStatus.failed;
-    final amountColor = isFailed
-        ? VCareColors.destructive
-        : VCareColors.foreground;
+    final amountColor = isFailed ? vcare.destructive : vcare.foreground;
 
     return Material(
       color: Colors.transparent,
@@ -82,7 +79,7 @@ class CommissionSalesHistoryRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 10,
-                        color: VCareColors.destructive,
+                        color: vcare.destructive,
                       ),
                     ),
                   ],

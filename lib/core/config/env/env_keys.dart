@@ -1,5 +1,6 @@
 class EnvKeys {
   static const String baseUrl = "BASE_URL";
+  static const String defaultTenantSlug = "DEFAULT_TENANT_SLUG";
   static const String storageBoxName = "HIVE_BOX_NAME";
 
   static const String healthMessengerApiBaseUrl =
