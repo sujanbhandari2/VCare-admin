@@ -40,7 +40,7 @@ jobs:
 
       - name: Commit formatting fixes
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "style: apply dart format"
           commit_user_name: github-actions[bot]
