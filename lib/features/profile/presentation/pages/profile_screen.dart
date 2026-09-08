@@ -14,8 +14,8 @@ import 'package:vcare_admin/features/profile/presentation/providers/auth_me_stat
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_sign_out_footer.dart';
 import 'package:vcare_admin/shared/session/user_session_cleanup.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
+import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -25,12 +25,30 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final _scrollController = ScrollController();
+  bool _scrolled = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onRefresh();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final scrolled = _scrollController.offset > 16;
+    if (scrolled != _scrolled) {
+      setState(() => _scrolled = scrolled);
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -50,12 +68,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = authMeState.user;
     final fetching = authMeState.fetching && user == null;
     final error = authMeState.error;
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
 
     return Scaffold(
       body: VcareRefreshScrollView(
+        controller: _scrollController,
         onRefresh: _onRefresh,
         slivers: [
-          const SliverVcarePageHeader(title: 'My Account', showBack: false),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: VcarePinnedPageTitleDelegate(
+              safeTop: safeTop,
+              textScaleFactor: textScaleFactor,
+              hasSubtitle: false,
+              showBottomBorder: _scrolled,
+              title: vcareTabPageTitle(title: 'My Account'),
+            ),
+          ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
             sliver: SliverList(

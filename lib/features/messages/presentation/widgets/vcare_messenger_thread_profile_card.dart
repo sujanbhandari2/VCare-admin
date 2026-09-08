@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
@@ -48,7 +49,7 @@ class VcareMessengerThreadProfileCard extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
-                      color: context.vcare.secondary,
+                      color: VCareColors.secondary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -70,7 +71,7 @@ class VcareMessengerThreadProfileCard extends StatelessWidget {
               children: [
                 _CircularButton(
                   icon: LucideIcons.phone,
-                  color: context.vcare.primary,
+                  color: VCareColors.primary,
                   onTap: () => _launchPhone(context),
                 ),
                 if (email.isNotEmpty) ...[

@@ -1,4 +1,5 @@
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
+import 'package:vcare_admin/features/messages/health_messenger/mappers/associated_user_messenger_mapper.dart';
 import 'package:vcare_admin/features/users/domain/entities/associated_user.dart';
 
 /// Maps generic-chat API models to package UI models for [MessengerChatShell].
@@ -15,11 +16,85 @@ class HealthMessengerMappers {
   final List<TenantUser> users;
   final List<AssociatedUser> associatedUsers;
 
+  /// Maps a wire id (chat user id or external/provider id) to the tenant chat id.
+  String resolveChatUserId(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    for (final user in users) {
+      if (user.id.trim() == trimmed) {
+        return user.id.trim();
+      }
+      final providerId = user.providerUserId?.trim() ?? '';
+      if (providerId.isNotEmpty && providerId == trimmed) {
+        return user.id.trim();
+      }
+    }
+    return trimmed;
+  }
+
+  String resolveMessageSenderId(ChatMessage message) {
+    final direct = message.senderId.trim();
+    if (direct.isNotEmpty) {
+      return resolveChatUserId(direct);
+    }
+    final fromSender = message.sender?.id.trim() ?? '';
+    if (fromSender.isNotEmpty) {
+      return resolveChatUserId(fromSender);
+    }
+    return '';
+  }
+
+  String resolveReactionUserId(MessageReaction reaction) {
+    for (final candidate in [
+      reaction.userId,
+      reaction.user?.id ?? '',
+    ]) {
+      final resolved = resolveChatUserId(candidate);
+      if (resolved.isNotEmpty) {
+        return resolved;
+      }
+    }
+    return '';
+  }
+
+  String normalizeReactionType(String raw) {
+    final trimmed = raw.trim();
+    return trimmed.isEmpty ? '👍' : trimmed;
+  }
+
+  List<MessengerMessageReaction> mapMessageReactions(
+    List<MessageReaction> reactions,
+  ) {
+    final byUser = <String, MessengerMessageReaction>{};
+    for (final reaction in reactions) {
+      final userId = resolveReactionUserId(reaction);
+      final reactionType = normalizeReactionType(reaction.reactionType);
+      if (userId.isEmpty) {
+        continue;
+      }
+      byUser[userId] = MessengerMessageReaction(
+        userId: userId,
+        reactionType: reactionType,
+      );
+    }
+    return byUser.values.toList(growable: false);
+  }
+
+  bool isMessageFromCurrentUser({required String senderId}) {
+    final selfId = currentUserId.trim();
+    if (selfId.isEmpty) {
+      return false;
+    }
+    return resolveChatUserId(senderId) == selfId;
+  }
+
   MessengerUser mapTenantUser(TenantUser user) {
     return MessengerUser(
       id: user.id,
       username: user.displayName,
-      roleLabel: user.role.label,
+      roleLabel: roleLabelForTenantUser(user),
       email: user.email,
       isOnline: user.isOnline,
       avatarUrl: resolveAvatarUrl(user.avatarUrl),
@@ -53,8 +128,10 @@ class HealthMessengerMappers {
     final previewSource = newestChatMessage(localLatest, restLatest);
     final latestReaction = conversation.latestReaction;
     final reactionIsLatest = latestReaction != null &&
-        (previewSource == null ||
-            latestReaction.createdAt.isAfter(previewSource.createdAt));
+        messengerReactionIsLatestInboxActivity(
+          reactionCreatedAt: latestReaction.createdAt,
+          latestMessageCreatedAt: previewSource?.createdAt,
+        );
     final subtitle = previewSource == null
         ? '${conversation.type} conversation'
         : messagePreview(previewSource);
@@ -67,9 +144,14 @@ class HealthMessengerMappers {
         ? latestActivityCandidate
         : conversation.updatedAt;
     final others = conversation.participants
-        .where((participant) => participant.user.id != currentUserId)
+        .where(
+          (participant) =>
+              resolveChatUserId(participant.user.id) !=
+              resolveChatUserId(currentUserId),
+        )
         .toList();
     final isGroup = isGroupConversation(conversation);
+    final peerUsers = mapConversationPeerUsers(conversation);
     // Direct chats only — groups use the shared Users icon in the list.
     final directAvatarUrl = !isGroup && others.length == 1
         ? avatarForParticipant(others.first)
@@ -86,15 +168,15 @@ class HealthMessengerMappers {
       isGroup: isGroup,
       unreadCount: unreadMap[conversation.id] ?? 0,
       avatarUrl: directAvatarUrl,
-      isOnline: others.any((participant) => participant.user.isOnline),
-      peerUsers:
-          others.map(mapConversationPeerUser).toList(growable: false),
+      isOnline: peerUsers.any((user) => user.isOnline) ||
+          others.any((participant) => participant.user.isOnline),
+      peerUsers: peerUsers,
       apiRank: orderSnapshot.apiRank[conversation.id] ?? fallbackApiRank,
       promotedAt: orderSnapshot.promotedAt[conversation.id],
       latestReaction: reactionIsLatest
           ? MessengerConversationLatestReaction(
-              chatUserId: latestReaction.chatUserId,
-              reactionType: latestReaction.reactionType,
+              chatUserId: resolveChatUserId(latestReaction.chatUserId),
+              reactionType: normalizeReactionType(latestReaction.reactionType),
               userName: displayNameForReaction(conversation, latestReaction),
               createdAt: latestReaction.createdAt,
             )
@@ -114,6 +196,80 @@ class HealthMessengerMappers {
     }
     final titled = conversation.title?.trim().isNotEmpty ?? false;
     return titled && conversation.participants.length > 2;
+  }
+
+  List<MessengerUser> mapConversationPeerUsers(Conversation conversation) {
+    final selfChatId = resolveChatUserId(currentUserId);
+    final peers = <MessengerUser>[];
+    for (final participant in conversation.participants) {
+      final participantChatId = resolveChatUserId(participant.user.id);
+      if (participantChatId.isEmpty || participantChatId == selfChatId) {
+        continue;
+      }
+      peers.add(mapConversationPeerUser(participant));
+    }
+    if (peers.isNotEmpty) {
+      return peers;
+    }
+    if (isGroupConversation(conversation)) {
+      return const [];
+    }
+
+    final title = conversationTitle(conversation);
+    final titleMatches = <AssociatedUser>[];
+    for (final associated in associatedUsers) {
+      final mapped = AssociatedUserMessengerMapper.toMessengerUser(associated);
+      if (_associatedUserMatchesConversationTitle(mapped, title, conversation)) {
+        titleMatches.add(associated);
+      }
+    }
+    if (titleMatches.length != 1) {
+      return const [];
+    }
+    final associated = titleMatches.first;
+    final mapped = AssociatedUserMessengerMapper.toMessengerUser(associated);
+    for (final tenant in users) {
+      final providerId = tenant.providerUserId?.trim() ?? '';
+      if (providerId == associated.id.trim()) {
+        return [mapTenantUser(tenant)];
+      }
+    }
+    return [
+      MessengerUser(
+        id: mapped.id,
+        externalUserId: resolveChatUserId(associated.id),
+        username: mapped.username,
+        roleLabel: mapped.roleLabel,
+        email: mapped.email,
+        isOnline: mapped.isOnline,
+        avatarUrl: mapped.avatarUrl,
+      ),
+    ];
+  }
+
+  bool _associatedUserMatchesConversationTitle(
+    MessengerUser user,
+    String title,
+    Conversation conversation,
+  ) {
+    final username = user.username.trim().toLowerCase();
+    final normalizedTitle = title.trim().toLowerCase();
+    if (username.isEmpty || normalizedTitle.isEmpty) {
+      return false;
+    }
+    final previewSource = conversation.latestMessage;
+    final subtitle = previewSource == null
+        ? ''
+        : messagePreview(previewSource).trim().toLowerCase();
+    final display = user.username
+        .split(RegExp(r'[_\-\s]+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) => part.toLowerCase())
+        .join(' ');
+    return normalizedTitle.contains(username) ||
+        (display.isNotEmpty && normalizedTitle.contains(display)) ||
+        subtitle.contains(username) ||
+        (display.isNotEmpty && subtitle.contains(display));
   }
 
   MessengerChatMessage mapMessage(ChatMessage message) {
@@ -151,7 +307,7 @@ class HealthMessengerMappers {
 
     return MessengerChatMessage(
       id: message.id,
-      senderId: message.senderId,
+      senderId: resolveMessageSenderId(message),
       senderLabel: senderName(message),
       type: uiType,
       content: content,
@@ -160,14 +316,7 @@ class HealthMessengerMappers {
       createdAt: message.createdAt,
       isDeleted: message.isDeleted,
       deliveryStatus: deliveryStatusFor(message),
-      reactions: message.reactions
-          .map(
-            (reaction) => MessengerMessageReaction(
-              userId: reaction.userId,
-              reactionType: reaction.reactionType,
-            ),
-          )
-          .toList(),
+      reactions: mapMessageReactions(message.reactions),
       senderAvatarUrl: avatarForUser(message.senderId),
       quotedReply: quotedReplyFromChat(message),
     );
@@ -180,7 +329,11 @@ class HealthMessengerMappers {
     }
 
     final others = conversation.participants
-        .where((participant) => participant.user.id != currentUserId)
+        .where(
+          (participant) =>
+              resolveChatUserId(participant.user.id) !=
+              resolveChatUserId(currentUserId),
+        )
         .map((participant) => participant.user.username)
         .where((name) => name.trim().isNotEmpty)
         .toList();
@@ -207,7 +360,7 @@ class HealthMessengerMappers {
     return MessengerUser(
       id: mapped.id,
       username: mapped.username,
-      roleLabel: mapped.roleLabel,
+      roleLabel: roleLabelForParticipant(participant),
       email: mapped.email,
       isOnline: mapped.isOnline,
       avatarUrl: avatarForParticipant(participant),
@@ -218,26 +371,111 @@ class HealthMessengerMappers {
     return MessengerUser(
       id: user.id,
       username: user.username,
-      roleLabel: user.role.label,
+      roleLabel: roleLabelForParticipantUser(user),
       email: user.email?.trim() ?? '',
       isOnline: user.isOnline,
       avatarUrl: resolveAvatarUrl(user.avatarUrl),
     );
   }
 
-  String? avatarForParticipant(ConversationParticipant participant) {
-    // Prefer users/associated profilePreviewLink when we can match the peer.
-    final associatedAvatar = avatarFromAssociated(participant);
-    if (associatedAvatar != null && associatedAvatar.isNotEmpty) {
-      return associatedAvatar;
+  /// Prefer VCare associated-user `careTeamRole` (then `userType`), then raw
+  /// chat `externalUserRole`, then the collapsed [AppRole] label.
+  String roleLabelForParticipant(ConversationParticipant participant) {
+    final fromAssociated = associatedRoleFor(
+      chatUserId: participant.user.id,
+      fallbackChatUserId: participant.userId,
+      email: participant.user.email,
+    );
+    if (fromAssociated != null) {
+      return fromAssociated;
     }
+    return roleLabelForParticipantUser(participant.user);
+  }
 
-    final participantAvatar = resolveAvatarUrl(participant.user.avatarUrl);
-    if (participantAvatar != null) {
-      return participantAvatar;
+  String roleLabelForParticipantUser(ConversationParticipantUser user) {
+    final raw = user.externalUserRole?.trim();
+    if (raw != null &&
+        raw.isNotEmpty &&
+        !parseRoleIgnoresMembershipLabel(raw)) {
+      return AssociatedUserMessengerMapper.humanizeRole(raw);
     }
-    return avatarForUser(participant.user.id) ??
-        avatarForUser(participant.userId);
+    return user.role.label;
+  }
+
+  String roleLabelForTenantUser(TenantUser user) {
+    final fromAssociated = associatedRoleForPlatformId(user.providerUserId) ??
+        associatedRoleForEmail(user.email);
+    if (fromAssociated != null) {
+      return fromAssociated;
+    }
+    final raw = user.externalUserRole?.trim();
+    if (raw != null &&
+        raw.isNotEmpty &&
+        !parseRoleIgnoresMembershipLabel(raw)) {
+      return AssociatedUserMessengerMapper.humanizeRole(raw);
+    }
+    return user.role.label;
+  }
+
+  String? associatedRoleFor({
+    required String chatUserId,
+    String? fallbackChatUserId,
+    String? email,
+  }) {
+    for (final candidate in [chatUserId, fallbackChatUserId ?? '']) {
+      final trimmed = candidate.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      for (final user in users) {
+        if (user.id != trimmed) {
+          continue;
+        }
+        final fromPlatform = associatedRoleForPlatformId(user.providerUserId);
+        if (fromPlatform != null) {
+          return fromPlatform;
+        }
+        final fromEmail = associatedRoleForEmail(user.email);
+        if (fromEmail != null) {
+          return fromEmail;
+        }
+      }
+    }
+    return associatedRoleForEmail(email);
+  }
+
+  String? associatedRoleForPlatformId(String? platformId) {
+    final normalized = platformId?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final user in associatedUsers) {
+      if (user.id.trim().toLowerCase() != normalized) {
+        continue;
+      }
+      final role = AssociatedUserMessengerMapper.displayRoleFor(user).trim();
+      if (role.isNotEmpty) {
+        return role;
+      }
+    }
+    return null;
+  }
+
+  String? associatedRoleForEmail(String? email) {
+    final normalized = email?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final user in associatedUsers) {
+      if (user.email.trim().toLowerCase() != normalized) {
+        continue;
+      }
+      final role = AssociatedUserMessengerMapper.displayRoleFor(user).trim();
+      if (role.isNotEmpty) {
+        return role;
+      }
+    }
+    return null;
   }
 
   /// Absolutizes relative chat media paths and drops values that cannot be
@@ -257,66 +495,93 @@ class HealthMessengerMappers {
     return absolute;
   }
 
-  String? avatarFromAssociated(ConversationParticipant participant) {
-    for (final tenant in users) {
-      final matchesChatId = tenant.id == participant.user.id ||
-          tenant.id == participant.userId;
-      if (!matchesChatId) {
-        continue;
-      }
-      final providerId = tenant.providerUserId?.trim().toLowerCase() ?? '';
-      if (providerId.isEmpty) {
-        continue;
-      }
-      final photo = associatedPhotoByPlatformId(providerId);
-      if (photo != null) {
-        return photo;
-      }
+  String? avatarForParticipant(ConversationParticipant participant) {
+    final associatedAvatar = associatedAvatarFor(
+      chatUserId: participant.user.id,
+      fallbackChatUserId: participant.userId,
+      email: participant.user.email,
+    );
+    if (associatedAvatar != null) {
+      return associatedAvatar;
     }
-
-    final email = participant.user.email?.trim().toLowerCase() ?? '';
-    if (email.isEmpty) {
-      return null;
+    final participantAvatar = resolveAvatarUrl(participant.user.avatarUrl);
+    if (participantAvatar != null) {
+      return participantAvatar;
     }
-    return associatedPhotoByEmail(email);
-  }
-
-  String? associatedPhotoByPlatformId(String platformId) {
-    final normalized = platformId.trim().toLowerCase();
-    if (normalized.isEmpty) {
-      return null;
-    }
-    for (final user in associatedUsers) {
-      if (user.id.trim().toLowerCase() == normalized) {
-        return resolveAvatarUrl(user.profilePhotoUrl);
-      }
-    }
-    return null;
-  }
-
-  String? associatedPhotoByEmail(String email) {
-    final normalized = email.trim().toLowerCase();
-    if (normalized.isEmpty) {
-      return null;
-    }
-    for (final user in associatedUsers) {
-      if (user.email.trim().toLowerCase() == normalized) {
-        return resolveAvatarUrl(user.profilePhotoUrl);
-      }
-    }
-    return null;
+    return avatarForUser(participant.user.id) ??
+        avatarForUser(participant.userId);
   }
 
   String? avatarForUser(String userId) {
     for (final user in users) {
       if (user.id == userId) {
-        final providerId = user.providerUserId?.trim() ?? '';
-        final associatedPhoto = associatedPhotoByPlatformId(providerId);
-        if (associatedPhoto != null) {
-          return associatedPhoto;
+        final avatar = resolveAvatarUrl(user.avatarUrl);
+        if (avatar != null) {
+          return avatar;
         }
-        return resolveAvatarUrl(user.avatarUrl);
+        final fromAssociated = associatedAvatarForPlatformId(
+          user.providerUserId,
+        );
+        if (fromAssociated != null) {
+          return fromAssociated;
+        }
+        return associatedAvatarForEmail(user.email);
       }
+    }
+    return null;
+  }
+
+  String? associatedAvatarFor({
+    required String chatUserId,
+    String? fallbackChatUserId,
+    String? email,
+  }) {
+    for (final candidate in [chatUserId, fallbackChatUserId ?? '']) {
+      final trimmed = candidate.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      for (final user in users) {
+        if (user.id != trimmed) {
+          continue;
+        }
+        final fromPlatform = associatedAvatarForPlatformId(user.providerUserId);
+        if (fromPlatform != null) {
+          return fromPlatform;
+        }
+        final fromEmail = associatedAvatarForEmail(user.email);
+        if (fromEmail != null) {
+          return fromEmail;
+        }
+      }
+    }
+    return associatedAvatarForEmail(email);
+  }
+
+  String? associatedAvatarForPlatformId(String? platformId) {
+    final normalized = platformId?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final user in associatedUsers) {
+      if (user.id.trim().toLowerCase() != normalized) {
+        continue;
+      }
+      return resolveAvatarUrl(user.profilePhotoUrl);
+    }
+    return null;
+  }
+
+  String? associatedAvatarForEmail(String? email) {
+    final normalized = email?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final user in associatedUsers) {
+      if (user.email.trim().toLowerCase() != normalized) {
+        continue;
+      }
+      return resolveAvatarUrl(user.profilePhotoUrl);
     }
     return null;
   }
@@ -341,12 +606,13 @@ class HealthMessengerMappers {
     if (reaction.userName.trim().isNotEmpty) {
       return reaction.userName.trim();
     }
+    final chatUserId = resolveChatUserId(reaction.chatUserId);
     for (final participant in conversation.participants) {
-      if (participant.user.id == reaction.chatUserId) {
+      if (participant.user.id == chatUserId) {
         return participant.user.username;
       }
     }
-    return reaction.chatUserId;
+    return chatUserId.isEmpty ? reaction.chatUserId : chatUserId;
   }
 
   MessengerDeliveryStatus deliveryStatusFor(ChatMessage message) {

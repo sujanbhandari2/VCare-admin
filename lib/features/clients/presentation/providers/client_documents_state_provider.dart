@@ -193,16 +193,7 @@ class ClientDocumentsState extends _$ClientDocumentsState {
     final list = state.list;
     final updated = list.items
         .map(
-          (file) => file.id == id
-              ? ClientFile(
-                  id: file.id,
-                  name: trimmed,
-                  size: file.size,
-                  uploadedAt: file.uploadedAt,
-                  url: file.url,
-                  mime: file.mime,
-                )
-              : file,
+          (file) => file.id == id ? file.copyWith(name: trimmed) : file,
         )
         .toList();
 

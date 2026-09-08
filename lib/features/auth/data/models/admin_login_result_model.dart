@@ -159,11 +159,17 @@ class AdminLoginResultModel {
     this.session,
     this.tenants = const [],
     this.requiresTenantSelection = false,
+    this.requiresTwoFactor = false,
+    this.challengeToken,
+    this.expiresIn,
   });
 
   final AdminAuthSession? session;
   final List<TenantOptionModel> tenants;
   final bool requiresTenantSelection;
+  final bool requiresTwoFactor;
+  final String? challengeToken;
+  final int? expiresIn;
 
   factory AdminLoginResultModel.fromJson(Map<String, dynamic> json) {
     if (json['requiresTenantSelection'] == true) {
@@ -176,6 +182,22 @@ class AdminLoginResultModel {
                   .map(TenantOptionModel.fromJson)
                   .toList()
             : const [],
+      );
+    }
+
+    final requiresTwoFactor = json['requiresTwoFactor'] == true;
+    final challengeToken = (json['challengeToken'] as String?)?.trim();
+    if (requiresTwoFactor &&
+        challengeToken != null &&
+        challengeToken.isNotEmpty) {
+      final expiresRaw = json['expiresIn'];
+      final expiresIn = expiresRaw is int
+          ? expiresRaw
+          : int.tryParse(expiresRaw?.toString() ?? '') ?? 0;
+      return AdminLoginResultModel._(
+        requiresTwoFactor: true,
+        challengeToken: challengeToken,
+        expiresIn: expiresIn,
       );
     }
 
@@ -210,12 +232,27 @@ class AdminLoginResultModel {
       );
     }
 
+    if (requiresTwoFactor) {
+      return AdminLoginTwoFactorRequired(
+        challengeToken: challengeToken ?? '',
+        expiresIn: expiresIn ?? 0,
+      );
+    }
+
     final resolvedSession = session;
     if (resolvedSession == null) {
       throw StateError('Admin login response missing session data');
     }
 
     return AdminLoginAuthenticated(resolvedSession);
+  }
+
+  AdminAuthSession toSession() {
+    final outcome = toOutcome();
+    if (outcome is AdminLoginAuthenticated) {
+      return outcome.session;
+    }
+    throw StateError('Admin login result is not an authenticated session');
   }
 }
 

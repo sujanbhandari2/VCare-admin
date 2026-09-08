@@ -10,7 +10,6 @@ import 'package:vcare_admin/features/clients/presentation/state/client_documents
 import 'package:vcare_admin/features/clients/presentation/providers/client_payment_methods_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_add_payment_method_sheet.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_contact_card.dart';
-import 'package:vcare_admin/features/clients/presentation/widgets/client_create_case_sheet.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_carousel.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_detail_section_heading.dart';
 import 'package:vcare_admin/features/clients/presentation/widgets/client_status_chip.dart';
@@ -462,6 +461,7 @@ class ClientCasesTab extends StatefulWidget {
     required this.casesState,
     this.onRetry,
     this.onLoadMore,
+    this.onCreateCase,
   });
 
   final String clientId;
@@ -469,6 +469,7 @@ class ClientCasesTab extends StatefulWidget {
   final LoadableListState<ClientCase> casesState;
   final VoidCallback? onRetry;
   final Future<void> Function()? onLoadMore;
+  final VoidCallback? onCreateCase;
 
   @override
   State<ClientCasesTab> createState() => _ClientCasesTabState();
@@ -529,10 +530,9 @@ class _ClientCasesTabState extends State<ClientCasesTab> {
         ClientDetailSectionHeading(
           'Cases',
           trailing: TextButton.icon(
-            onPressed: () =>
-                ClientCreateCaseSheet.show(context, clientId: widget.clientId),
+            onPressed: widget.onCreateCase,
             icon: const Icon(LucideIcons.plus, size: 14),
-            label: const Text('New request'),
+            label: const Text('New case'),
             style: TextButton.styleFrom(
               foregroundColor: context.vcare.primary,
               padding: EdgeInsets.zero,
@@ -1364,7 +1364,7 @@ class ClientDocumentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final isImage = file.mime.startsWith('image/') && file.url.isUrl;
+    final isImage = file.mime.startsWith('image/') && file.viewUrl.isUrl;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -1384,7 +1384,7 @@ class ClientDocumentRow extends StatelessWidget {
                 color: context.vcare.primary.withValues(alpha: 0.1),
                 child: isImage
                     ? VCareCachedImage(
-                        imageUrl: file.url,
+                        imageUrl: file.viewUrl,
                         cacheKey: 'client-file:${file.id}',
                         width: 40,
                         height: 40,
@@ -1417,7 +1417,10 @@ class ClientDocumentRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    '${file.size} · ${formatClientDateNumeric(file.uploadedAt)}',
+                    [
+                      if (file.size.trim().isNotEmpty) file.size.trim(),
+                      formatClientDateNumeric(file.uploadedAt),
+                    ].where((part) => part.isNotEmpty).join(' · '),
                     style: TextStyle(
                       fontSize: 11,
                       color: vcare.mutedForeground,

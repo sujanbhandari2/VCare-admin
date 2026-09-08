@@ -5,7 +5,6 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/vcare_floating_bottom_sheet.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
 /// Bottom sheet that loads document types and returns the selected **label**.
@@ -23,7 +22,6 @@ class DocumentsTypePickerSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<String>(
       maxHeightFactor: 0.55,
-      margin: vcareCompactBottomSheetMargin(context),
       builder: (sheetContext) => DocumentsTypePickerSheet(includeW9: includeW9),
     );
   }
@@ -84,7 +82,12 @@ class _DocumentsTypePickerSheetState
     }();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        8,
+        20,
+        MediaQuery.paddingOf(context).bottom + 16,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -6,9 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_provider.dart';
+import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_unread_badge_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/live_chat_mobile_thread_visible_provider.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/health_messenger_session_scope.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/fcm_notification_init_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
+import 'package:vcare_admin/features/feature_access/presentation/providers/feature_access_state_provider.dart';
 import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -108,6 +111,12 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
       ref.read(tenantBrandingStateProvider.notifier).refreshFromApi(),
     ]);
     if (!mounted) return;
+
+    // Branding fetch warms the HTTP cache for `/settings`; reuse it here.
+    await ref
+        .read(featureAccessStateProvider.notifier)
+        .refreshFromApi(forceRefresh: false);
+    if (!mounted) return;
     try {
       await ref.read(healthMessengerSessionProvider.notifier).ensureStarted();
     } catch (_) {
@@ -124,6 +133,7 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
     });
     ref.watch(fcmNotificationInitProvider);
     final liveChatThreadOpen = ref.watch(liveChatMobileThreadVisibleProvider);
+    final showMessagesUnreadDot = ref.watch(healthMessengerUnreadBadgeProvider);
     final appliesShellBottomInset = _appliesShellBottomInset(
       context,
       liveChatThreadOpen: liveChatThreadOpen,
@@ -143,17 +153,19 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
         resizeToAvoidBottomInset: false,
         // Do not conditionally wrap [widget.shell] — StatefulNavigationShell's
         // GlobalKey cannot be reparented when chat session bootstrap completes.
-        body: VCareMobileShellScope(
-          // Keep the scope flag stable while the keyboard is open so child
-          // composers do not re-add nav clearance on top of the IME.
-          appliesBottomContentInset: appliesShellBottomInset,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: appliesShellBottomInset && !keyboardOpen
-                  ? vcareMobileBottomNavContentPadding(context)
-                  : 0,
+        body: HealthMessengerSessionScope(
+          child: VCareMobileShellScope(
+            // Keep the scope flag stable while the keyboard is open so child
+            // composers do not re-add nav clearance on top of the IME.
+            appliesBottomContentInset: appliesShellBottomInset,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: appliesShellBottomInset && !keyboardOpen
+                    ? vcareMobileBottomNavContentPadding(context)
+                    : 0,
+              ),
+              child: widget.shell,
             ),
-            child: widget.shell,
           ),
         ),
         extendBody: true,
@@ -163,6 +175,7 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
         bottomNavigationBar: VcareBottomNavigation(
           currentItem: _currentNavItem,
           collapsed: keyboardOpen,
+          showMessagesUnreadDot: showMessagesUnreadDot,
           onSelect: (item) {
             widget.shell.goBranch(
               NavItem.branchIndexFor(item),

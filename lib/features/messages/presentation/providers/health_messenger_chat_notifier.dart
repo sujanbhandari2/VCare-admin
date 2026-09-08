@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:health_messenger_ui/lib/health_messenger_push.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vcare_admin/features/messages/health_messenger/coalesce_in_flight.dart';
+import 'package:vcare_admin/features/messages/health_messenger/health_messenger_bootstrap_config.dart';
+import 'package:vcare_admin/features/messages/health_messenger/health_messenger_connection_recovery.dart';
 import 'package:vcare_admin/features/messages/health_messenger/mappers/associated_user_messenger_mapper.dart';
 import 'package:vcare_admin/features/messages/health_messenger/mappers/health_messenger_mappers.dart';
-import 'package:vcare_admin/features/messages/health_messenger/health_messenger_bootstrap_config.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_state.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_provider.dart';
 import 'package:vcare_admin/features/users/domain/entities/associated_user.dart';
@@ -18,15 +20,38 @@ part 'health_messenger_chat_notifier.g.dart';
 class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   static const String _draftDirectPrefix = '__pending_direct__:';
 
+  /// Upper bound for a conversation open. A hung fetch must surface an error
+  /// instead of leaving [HealthMessengerChatState.loadingConversationId] set,
+  /// which the thread renders as an endless loading placeholder.
+  static const Duration _loadMessagesTimeout = Duration(seconds: 20);
+
+  /// Socket room join / leave are best-effort; never block a thread open on them.
+  static const Duration _socketRoomTimeout = Duration(seconds: 8);
+
+  /// Incremented per conversation open (and on close) so a slow in-flight open
+  /// cannot apply its result over a newer selection.
+  int _selectRequestId = 0;
+
   StreamSubscription<ChatSocketEvent>? _socketSubscription;
   StreamSubscription<MessengerPushEvent>? _pushEventsSubscription;
   VoidCallback? _remotePresenceListener;
   Map<String, bool> _remotePresenceByUserId = const {};
+  RemotePresenceStore? _remotePresenceStore;
+  final ValueNotifier<int> _shellContentRevision = ValueNotifier<int>(0);
+  final Map<String, Map<String, Timer>> _typingExpiryTimers = {};
   Timer? _slowConversationHintTimer;
-  bool _attachedToSession = false;
+  ChatSession? _attachedSession;
+  Future<void>? _bootstrapFuture;
+
+  /// Receipts that arrived before the target message was in local state.
+  final Map<String, List<DeliveredReceipt>> _pendingDeliveredByMessageId = {};
+  final Map<String, List<ReadReceipt>> _pendingReadByMessageId = {};
 
   VoidCallback? onRequestScrollToBottom;
   void Function(String message)? onUserMessage;
+
+  /// Drives [AnimatedBuilder] rebuilds for thread mutations not tied to inbox.
+  Listenable get shellContentListenable => _shellContentRevision;
 
   ChatSession? get _session => ref.read(healthMessengerSessionProvider).session;
 
@@ -43,20 +68,55 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   }
 
   HealthMessengerMappers get _mappers => HealthMessengerMappers(
-        currentUserId: state.currentUser?.id ?? '',
-        mediaBaseUrl: _session?.config.apiBaseUrl.trim() ?? '',
-        users: state.users,
-        associatedUsers: state.associatedUsers,
-      );
+    currentUserId: state.currentUser?.id ?? '',
+    mediaBaseUrl: _session?.config.apiBaseUrl.trim() ?? '',
+    users: state.users,
+    associatedUsers: state.associatedUsers,
+  );
 
   @override
   HealthMessengerChatState build() {
     ref.onDispose(_dispose);
+    ref.listen(healthMessengerSessionProvider, (previous, next) {
+      if (!next.isReady || next.session == null) {
+        return;
+      }
+      if (_bootstrapFuture != null || state.isBootstrapping) {
+        return;
+      }
+      if (identical(_attachedSession, next.session) &&
+          state.bootstrapError == null) {
+        return;
+      }
+      // Same ChatSession with flag-only updates (isBootstrapping, push)
+      // must not re-enter bootstrap. Main wrapper already starts the
+      // session, so opening Messages used to stack-overflow here.
+      if (identical(previous?.session, next.session) &&
+          (previous?.isReady ?? false) &&
+          state.bootstrapError == null) {
+        return;
+      }
+      unawaited(bootstrap());
+    });
     return const HealthMessengerChatState();
   }
 
-  Future<void> bootstrap() async {
-    if (_attachedToSession && _session?.sessionAuth != null) {
+  Future<void> bootstrap() {
+    return coalesceInFlightFuture(
+      read: () => _bootstrapFuture,
+      write: (next) => _bootstrapFuture = next,
+      start: _bootstrapInternal,
+    );
+  }
+
+  Future<void> _bootstrapInternal() async {
+    final alreadyFailed = state.bootstrapError != null;
+    if (identical(_attachedSession, _session) &&
+        _session?.sessionAuth != null &&
+        !alreadyFailed) {
+      if (!state.isSocketConnected) {
+        await ensureSocketConnected();
+      }
       return;
     }
 
@@ -75,14 +135,17 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       final sessionState = ref.read(healthMessengerSessionProvider);
       final activeSession = sessionState.session;
       if (activeSession == null || sessionState.bootstrapConfig == null) {
-        final error = sessionState.bootstrapError ??
+        final error =
+            sessionState.bootstrapError ??
             Exception('Chat session is not available.');
         state = state.copyWith(
           bootstrapError: error,
           isBootstrapping: false,
           initialBootstrapLoad: false,
         );
-        _snack('Chat could not start.');
+        if (!alreadyFailed) {
+          _snack('Chat could not start.');
+        }
         return;
       }
 
@@ -97,7 +160,9 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         isBootstrapping: false,
         isConversationListLoading: true,
       );
-      await refreshAll(selectFirstConversation: true);
+      // Do not auto-select/join the first conversation. On mobile that joined the
+      // room while the list was showing and caused new messages to be marked read.
+      await refreshAll(selectFirstConversation: false);
     } catch (error, stackTrace) {
       _log(
         'Bootstrap failed',
@@ -109,7 +174,9 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         initialBootstrapLoad: false,
         isSocketConnected: false,
       );
-      _snack('Chat could not start. Check logs and configuration.');
+      if (!alreadyFailed) {
+        _snack('Chat could not start. Check logs and configuration.');
+      }
     } finally {
       if (ref.mounted) {
         state = state.copyWith(
@@ -137,20 +204,23 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
 
     state = HealthMessengerChatState(
       currentUser: registeredUser,
-      isSocketConnected: false,
+      isSocketConnected: activeSession.isSocketConnected,
     );
-    _attachedToSession = true;
+    _attachedSession = activeSession;
     _bindRemotePresenceListener(activeSession);
   }
 
   Future<void> detachFromSession() async {
     _cancelSlowConversationHint();
+    _cancelAllTypingExpiryTimers();
     await _socketSubscription?.cancel();
     _socketSubscription = null;
     await _pushEventsSubscription?.cancel();
     _pushEventsSubscription = null;
     _unbindRemotePresenceListener();
-    _attachedToSession = false;
+    _pendingDeliveredByMessageId.clear();
+    _pendingReadByMessageId.clear();
+    _attachedSession = null;
   }
 
   Future<void> refreshAll({bool selectFirstConversation = false}) async {
@@ -173,6 +243,8 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         return;
       }
 
+      final associatedUsersFuture = _loadAssociatedUsers();
+      final usersFuture = client.getUsers(auth);
       final conversations = await client.getConversations(
         auth,
         forUserId: chatUserId,
@@ -195,6 +267,9 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         conversations: conversations,
         selectedConversationId: selectedConversationId,
         clearSelectedConversationId: selectedConversationId == null,
+        // A conversation that disappeared server-side can have an open load;
+        // dropping the selection must drop that loading id with it.
+        clearLoadingConversationId: selectedConversationId == null,
         isConversationListLoading: false,
         initialBootstrapLoad: false,
       );
@@ -207,8 +282,6 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         await selectConversation(conversations.first.id, tryReconnect: false);
       }
 
-      final usersFuture = client.getUsers(auth);
-      final associatedUsersFuture = _loadAssociatedUsers();
       final users = await usersFuture;
       await associatedUsersFuture;
 
@@ -226,17 +299,19 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
 
       state = state.copyWith(
         users: users,
-        currentUser: selectedCurrentUser ??
+        currentUser:
+            selectedCurrentUser ??
             state.currentUser ??
             (users.isNotEmpty ? users.first : null),
         isSuggestedUsersLoading: false,
       );
+      _notifyShellContentChanged();
 
       if (!state.isSocketConnected) {
         await ensureSocketConnected();
       }
 
-      _syncRemotePresenceFromStore();
+      _syncPresenceFromStore();
     } catch (error, stackTrace) {
       _log(
         'Refresh failed',
@@ -271,31 +346,50 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
 
   Future<void> _loadAssociatedUsers() async {
     final repository = ref.read(associatedUsersRepositoryProvider);
-    final result = await repository.fetchAssociatedUsers();
+    final collected = <AssociatedUser>[];
+    var page = 1;
+    var hasNext = true;
+
+    while (hasNext) {
+      final result = await repository.fetchAssociatedUsers(page: page);
+      if (!ref.mounted) {
+        return;
+      }
+
+      var fetchedPage = false;
+      result.when(
+        success: (associatedPage) {
+          collected.addAll(associatedPage.users);
+          hasNext = associatedPage.pagination.hasNext;
+          page = associatedPage.pagination.page + 1;
+          fetchedPage = true;
+        },
+        failure: (error) {
+          _log(
+            'Associated users load failed',
+            data: {'error': error.toString(), 'page': page},
+          );
+          hasNext = false;
+        },
+      );
+      if (!fetchedPage) {
+        break;
+      }
+    }
 
     if (!ref.mounted) {
       return;
     }
 
-    result.when(
-      success: (page) {
-        final currentPlatformUserId = _currentPlatformUserId.trim().toLowerCase();
-        final filtered = page.users
-            .where(
-              (user) =>
-                  user.id.trim().toLowerCase() != currentPlatformUserId,
-            )
-            .toList(growable: false);
-        state = state.copyWith(associatedUsers: filtered);
-      },
-      failure: (error) {
-        _log(
-          'Associated users load failed',
-          data: {'error': error.toString()},
-        );
-      },
-    );
+    final currentPlatformUserId = _currentPlatformUserId.trim().toLowerCase();
+    final filtered = collected
+        .where((user) => user.id.trim().toLowerCase() != currentPlatformUserId)
+        .toList(growable: false);
+    state = state.copyWith(associatedUsers: filtered);
+    _notifyShellContentChanged();
   }
+
+  String get currentPlatformUserId => _currentPlatformUserId;
 
   HealthMessengerBootstrapConfig? get _bootstrapConfig =>
       ref.read(healthMessengerSessionProvider).bootstrapConfig;
@@ -342,34 +436,45 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
 
     if (conversationId.isEmpty) {
       _cancelSlowConversationHint();
+      _selectRequestId++;
       final previousConversationId = state.selectedConversationId;
-      if (previousConversationId != null &&
-          !isDraftConversationId(previousConversationId)) {
-        try {
-          await chatSession.leaveConversation(previousConversationId);
-        } catch (_) {}
-      }
       state = state.copyWith(
         clearSelectedConversationId: true,
         clearLoadingConversationId: true,
         slowConversationHintActive: false,
         clearComposerReplyDraft: true,
+        clearComposerEditDraft: true,
       );
+      if (previousConversationId != null &&
+          !isDraftConversationId(previousConversationId)) {
+        await _leaveConversationRoom(chatSession, previousConversationId);
+      }
       return;
     }
 
-    // Ignore repeated taps on the same conversation while it is still loading.
-    final loadingId = state.loadingConversationId?.trim() ?? '';
-    if (loadingId.isNotEmpty) {
+    // Only repeated taps on the conversation already opening are dropped.
+    // Bailing out for *any* in-flight open would make a stale load block every
+    // later open, so the thread would sit on its loading placeholder forever.
+    if ((state.loadingConversationId?.trim() ?? '') == conversationId) {
       return;
     }
+
+    final requestId = ++_selectRequestId;
+
+    // Revisiting a conversation renders its cached messages right away, so the
+    // refetch below runs without a loading placeholder.
+    final hasCachedMessages = state.messagesByConversation.containsKey(
+      conversationId,
+    );
 
     _cancelSlowConversationHint();
     state = state.copyWith(
       selectedConversationId: conversationId,
-      loadingConversationId: conversationId,
+      loadingConversationId: hasCachedMessages ? null : conversationId,
+      clearLoadingConversationId: hasCachedMessages,
       slowConversationHintActive: false,
       clearComposerReplyDraft: true,
+      clearComposerEditDraft: true,
     );
 
     if (isDraftConversationId(conversationId)) {
@@ -377,20 +482,29 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       return;
     }
 
-    _scheduleSlowConversationHint(conversationId);
+    if (!hasCachedMessages) {
+      _scheduleSlowConversationHint(conversationId);
+    }
 
     try {
-      await _loadMessages(conversationId);
+      await _loadMessages(conversationId).timeout(_loadMessagesTimeout);
+      if (!ref.mounted || requestId != _selectRequestId) {
+        return;
+      }
 
       var connected = state.isSocketConnected;
       if (!connected && tryReconnect) {
         connected = await ensureSocketConnected();
       }
-      if (!connected) {
+      if (!connected || !ref.mounted || requestId != _selectRequestId) {
         return;
       }
 
-      await chatSession.joinConversation(conversationId);
+      // Join only while the thread UI is visible. Joining from the list (or
+      // before the mobile route opens) can make arrivals look read.
+      if (chatSession.inbox.threadVisible) {
+        await _joinConversationRoom(chatSession, conversationId);
+      }
     } catch (error, stackTrace) {
       _log(
         'Select conversation failed',
@@ -400,16 +514,48 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
           'stackTrace': stackTrace.toString(),
         },
       );
-      _snack('Could not open conversation.');
+      if (!hasCachedMessages) {
+        _snack('Could not open conversation.');
+      }
     } finally {
       _cancelSlowConversationHint();
-      if (ref.mounted && state.loadingConversationId == conversationId) {
+      if (ref.mounted &&
+          (state.loadingConversationId?.trim() ?? '') == conversationId) {
         state = state.copyWith(
           clearLoadingConversationId: true,
           slowConversationHintActive: false,
         );
       }
     }
+  }
+
+  /// Joins the realtime room without failing the open: messages already come
+  /// from REST, so a socket problem must not surface as "could not open".
+  Future<void> _joinConversationRoom(
+    ChatSession chatSession,
+    String conversationId,
+  ) async {
+    try {
+      await chatSession
+          .joinConversation(conversationId)
+          .timeout(_socketRoomTimeout);
+    } catch (error) {
+      _log(
+        'Join conversation room failed',
+        data: {'conversationId': conversationId, 'error': error.toString()},
+      );
+    }
+  }
+
+  Future<void> _leaveConversationRoom(
+    ChatSession chatSession,
+    String conversationId,
+  ) async {
+    try {
+      await chatSession
+          .leaveConversation(conversationId)
+          .timeout(_socketRoomTimeout);
+    } catch (_) {}
   }
 
   Future<void> openDirectChat(MessengerUser user) async {
@@ -422,7 +568,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         auth == null ||
         client == null) {
       _snack('Chat is not ready yet.');
-      return;
+      throw StateError('Chat is not ready.');
     }
 
     state = state.copyWith(suggestedPeopleOpeningUserId: user.id.trim());
@@ -432,7 +578,10 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       final peerChatUserId = peerTenantUser?.id.trim() ?? '';
 
       if (peerChatUserId.isNotEmpty) {
-        final existing = _findDirectConversation(currentUser.id, peerChatUserId);
+        final existing = _findDirectConversation(
+          currentUser.id,
+          peerChatUserId,
+        );
         if (existing != null) {
           await selectConversation(existing.id);
           return;
@@ -453,7 +602,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       final bootstrapConfig = _bootstrapConfig;
       if (peerAssociated == null || bootstrapConfig == null) {
         _snack('Unknown person; refresh and try again.');
-        return;
+        throw StateError('Unknown person for direct chat.');
       }
 
       final created = await client.startConversation(
@@ -476,6 +625,8 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         data: {'error': error.toString(), 'stackTrace': stackTrace.toString()},
       );
       _snack('Could not start conversation.');
+      // Rethrow so the mobile shell does not push a stale thread route.
+      rethrow;
     } finally {
       if (ref.mounted) {
         state = state.copyWith(suggestedPeopleOpeningUserId: '');
@@ -597,7 +748,9 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       }
 
       if (isDraftConversationId(conversationId)) {
-        final realId = await _materializeDraftDirectConversation(conversationId);
+        final realId = await _materializeDraftDirectConversation(
+          conversationId,
+        );
         if (realId == null || !ref.mounted) {
           return false;
         }
@@ -610,7 +763,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         content: trimmed,
         replyToMessageId: replyToMessageId,
       );
-      _upsertMessage(conversationId, created);
+      _upsertMessage(conversationId, _normalizeOutgoingMessage(created));
       _session?.inbox.bumpConversation(conversationId);
       state = state.copyWith(clearComposerReplyDraft: true);
       return true;
@@ -631,12 +784,24 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   Future<void> reactToMessage(String messageId, String reactionType) async {
     final client = _client;
     final conversationId = state.selectedConversationId;
-    if (client == null || conversationId == null) {
+    final currentUser = state.currentUser;
+    if (client == null || conversationId == null || currentUser == null) {
       return;
     }
 
     state = state.copyWith(
       pendingReactionRequests: state.pendingReactionRequests + 1,
+    );
+    _applyReaction(
+      conversationId,
+      MessageReaction(
+        id: 'pending-${currentUser.id}-$messageId',
+        messageId: messageId,
+        userId: currentUser.id,
+        reactionType: reactionType,
+        conversationId: conversationId,
+        createdAt: DateTime.now().toUtc(),
+      ),
     );
     try {
       final reaction = await client.reactToMessage(
@@ -646,6 +811,11 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       );
       _applyReaction(conversationId, reaction);
     } catch (error) {
+      _revertReaction(
+        conversationId: conversationId,
+        messageId: messageId,
+        userId: currentUser.id,
+      );
       _snack('Could not add the reaction.');
     } finally {
       if (ref.mounted) {
@@ -667,25 +837,36 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       return;
     }
 
+    final priorReaction = _reactionForUser(
+      conversationId: conversationId,
+      messageId: messageId,
+      userId: currentUser.id,
+    );
+
     state = state.copyWith(
       pendingReactionRequests: state.pendingReactionRequests + 1,
+    );
+    _applyReactionRemoval(
+      conversationId,
+      RemovedReactionEvent(
+        messageId: messageId,
+        conversationId: conversationId,
+        userId: currentUser.id,
+      ),
     );
     try {
       final removed = await client.removeReaction(
         conversationId: conversationId,
         messageId: messageId,
       );
-      if (removed) {
-        _applyReactionRemoval(
-          conversationId,
-          RemovedReactionEvent(
-            messageId: messageId,
-            conversationId: conversationId,
-            userId: currentUser.id,
-          ),
-        );
+      if (!removed && priorReaction != null) {
+        _applyReaction(conversationId, priorReaction);
+        _snack('No reaction was removed.');
       }
     } catch (error) {
+      if (priorReaction != null) {
+        _applyReaction(conversationId, priorReaction);
+      }
       _snack('Could not remove the reaction.');
     } finally {
       if (ref.mounted) {
@@ -709,27 +890,67 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       return;
     }
 
+    final priorMessage = _messageById(conversationId, messageId);
+    _applyDeletedMessage(
+      DeletedMessageEvent(
+        messageId: messageId,
+        conversationId: conversationId,
+        deletedAt: DateTime.now().toUtc(),
+        userId: currentUser.id,
+      ),
+    );
+
+    // Close the confirm dialog immediately; persist on the server in background.
+    unawaited(
+      _persistDeletedMessage(
+        actions: actions,
+        auth: auth,
+        conversationId: conversationId,
+        messageId: messageId,
+        userId: currentUser.id,
+        priorMessage: priorMessage,
+      ),
+    );
+  }
+
+  Future<void> _persistDeletedMessage({
+    required MessengerHostActions actions,
+    required ChatAuth auth,
+    required String conversationId,
+    required String messageId,
+    required String userId,
+    required ChatMessage? priorMessage,
+  }) async {
     try {
       final result = await actions.deleteMessage(
         auth,
         conversationId: conversationId,
         messageId: messageId,
-        userId: currentUser.id,
+        userId: userId,
       );
+      if (!ref.mounted) {
+        return;
+      }
       _applyDeletedMessage(
         DeletedMessageEvent(
           messageId: result.messageId,
           conversationId: result.conversationId,
           deletedAt: result.deletedAt ?? DateTime.now().toUtc(),
-          userId: currentUser.id,
+          userId: userId,
         ),
       );
     } catch (error) {
+      if (!ref.mounted) {
+        return;
+      }
+      if (priorMessage != null) {
+        _upsertMessage(conversationId, priorMessage);
+      }
       _snack('Could not delete the message.');
     }
   }
 
-  Future<void> editMessage(String messageId, String newText) async {
+  Future<bool> editMessage(String messageId, String newText) async {
     final actions = _hostActions;
     final conversationId = state.selectedConversationId;
     final trimmed = newText.trim();
@@ -737,22 +958,97 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         conversationId == null ||
         isDraftConversationId(conversationId) ||
         trimmed.isEmpty) {
-      return;
+      return false;
     }
 
+    final priorMessage = _messageById(conversationId, messageId);
+    if (priorMessage != null) {
+      _upsertMessage(
+        conversationId,
+        priorMessage.copyWith(
+          content: trimmed,
+          editedAt: DateTime.now().toUtc(),
+        ),
+      );
+    }
+
+    unawaited(
+      _persistEditedMessage(
+        actions: actions,
+        conversationId: conversationId,
+        messageId: messageId,
+        content: trimmed,
+        priorMessage: priorMessage,
+      ),
+    );
+    return true;
+  }
+
+  Future<void> _persistEditedMessage({
+    required MessengerHostActions actions,
+    required String conversationId,
+    required String messageId,
+    required String content,
+    required ChatMessage? priorMessage,
+  }) async {
     try {
       final edited = await actions.editMessage(
         conversationId: conversationId,
         messageId: messageId,
-        content: trimmed,
+        content: content,
       );
+      if (!ref.mounted) {
+        return;
+      }
       _upsertMessage(conversationId, edited);
     } catch (error) {
+      if (!ref.mounted) {
+        return;
+      }
+      if (priorMessage != null) {
+        _upsertMessage(conversationId, priorMessage);
+      }
       _snack('Could not edit the message.');
     }
   }
 
-  Future<void> deleteConversation(MessengerConversation conversationView) async {
+  void beginComposerEdit(String messageId) {
+    final trimmedId = messageId.trim();
+    if (trimmedId.isEmpty) {
+      return;
+    }
+    state = state.copyWith(
+      composerEditDraft: MessengerComposerEditDraft(messageId: trimmedId),
+      clearComposerReplyDraft: true,
+    );
+    _notifyShellContentChanged();
+  }
+
+  void clearComposerEdit() {
+    state = state.copyWith(clearComposerEditDraft: true);
+    _notifyShellContentChanged();
+  }
+
+  Future<bool> submitComposerEdit(String newText) async {
+    final draft = state.composerEditDraft;
+    if (draft == null) {
+      return false;
+    }
+    final trimmed = newText.trim();
+    if (trimmed.isEmpty) {
+      _snack('Message cannot be empty.');
+      return false;
+    }
+    final success = await editMessage(draft.messageId, trimmed);
+    if (success && ref.mounted) {
+      clearComposerEdit();
+    }
+    return success;
+  }
+
+  Future<void> deleteConversation(
+    MessengerConversation conversationView,
+  ) async {
     final actions = _hostActions;
     final auth = _sessionAuth;
     final currentUser = state.currentUser;
@@ -780,6 +1076,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
           messagesByConversation: nextMessages,
           clearSelectedConversationId: true,
           clearComposerReplyDraft: true,
+          clearComposerEditDraft: true,
         );
       }
       await refreshAll();
@@ -1007,8 +1304,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     for (final participant in conversation.participants) {
       final participantChatId = participant.user.id.trim().toLowerCase();
       final participantUserId = participant.userId.trim().toLowerCase();
-      if (participantChatId == platformId ||
-          participantUserId == platformId) {
+      if (participantChatId == platformId || participantUserId == platformId) {
         return true;
       }
       if (resolvedChatId.isNotEmpty &&
@@ -1066,14 +1362,32 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     return resolved.isEmpty ? null : resolved;
   }
 
+  /// Joins the selected conversation socket room.
+  ///
+  /// Call when the thread UI is opening (or already visible). Do not call from
+  /// list-only selection — joining in the background can mark messages read.
+  Future<void> joinSelectedConversationRoom() async {
+    final chatSession = _session;
+    final conversationId = state.selectedConversationId?.trim() ?? '';
+    if (chatSession == null ||
+        conversationId.isEmpty ||
+        isDraftConversationId(conversationId)) {
+      return;
+    }
+    await _joinConversationRoom(chatSession, conversationId);
+  }
+
   Future<void> markSeen(String messageId) async {
     final client = _client;
     final auth = _sessionAuth;
     final conversationId = state.selectedConversationId;
+    final inbox = _session?.inbox;
     if (client == null ||
         auth == null ||
         conversationId == null ||
-        isDraftConversationId(conversationId)) {
+        isDraftConversationId(conversationId) ||
+        inbox == null ||
+        !inbox.threadVisible) {
       return;
     }
 
@@ -1122,6 +1436,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       composerReplyDraft: draft,
       clearComposerReplyDraft: draft == null,
     );
+    _notifyShellContentChanged();
   }
 
   void setMediaUploading(bool value) {
@@ -1129,16 +1444,17 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   }
 
   void upsertMediaMessage(String conversationId, ChatMessage message) {
-    _upsertMessage(conversationId, message);
+    _upsertMessage(conversationId, _normalizeOutgoingMessage(message));
     _session?.inbox.bumpConversation(conversationId);
   }
 
   bool canDeleteMessage(MessengerChatMessage message) {
-    return message.senderId == state.currentUser?.id && !message.isDeleted;
+    return _mappers.isMessageFromCurrentUser(senderId: message.senderId) &&
+        !message.isDeleted;
   }
 
   bool canEditMessengerMessage(MessengerChatMessage message) {
-    return message.senderId == state.currentUser?.id &&
+    return _mappers.isMessageFromCurrentUser(senderId: message.senderId) &&
         !message.isDeleted &&
         message.type == MessengerMessageType.text;
   }
@@ -1163,8 +1479,72 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         .toList(growable: false);
   }
 
-  List<MessengerUser> get uiUsers =>
-      AssociatedUserMessengerMapper.toMessengerUsers(state.associatedUsers);
+  List<MessengerUser> get uiUsers {
+    return state.associatedUsers
+        .map(_mapAssociatedUserToMessengerUser)
+        .toList(growable: false);
+  }
+
+  MessengerUser _mapAssociatedUserToMessengerUser(AssociatedUser associated) {
+    final base = AssociatedUserMessengerMapper.toMessengerUser(associated);
+    final tenant = _tenantUserForPlatformId(associated.id);
+    final chatUserId = tenant?.id.trim() ?? '';
+    final isOnline = chatUserId.isNotEmpty
+        ? (_remotePresenceByUserId[chatUserId] ?? tenant?.isOnline ?? false)
+        : base.isOnline;
+    return MessengerUser(
+      id: base.id,
+      externalUserId: chatUserId.isEmpty ? null : chatUserId,
+      username: base.username,
+      roleLabel: base.roleLabel,
+      email: base.email,
+      isOnline: isOnline,
+      avatarUrl: base.avatarUrl,
+    );
+  }
+
+  /// Resolves a platform user id (associated-user id) to a [MessengerUser]
+  /// for programmatic opens such as care-team deep links.
+  MessengerUser messengerUserForPlatformId(String platformId) {
+    final trimmed = platformId.trim();
+    if (trimmed.isEmpty) {
+      return const MessengerUser(id: '', username: 'Contact');
+    }
+
+    final associated = _associatedUserForPlatformId(trimmed);
+    if (associated != null) {
+      final mapped = AssociatedUserMessengerMapper.toMessengerUser(associated);
+      final tenant = _tenantUserForPlatformId(trimmed);
+      final chatUserId = tenant?.id.trim() ?? '';
+      final isOnline = chatUserId.isNotEmpty
+          ? (_remotePresenceByUserId[chatUserId] ?? tenant?.isOnline ?? false)
+          : mapped.isOnline;
+      if (isOnline == mapped.isOnline) {
+        return mapped;
+      }
+      return MessengerUser(
+        id: mapped.id,
+        username: mapped.username,
+        roleLabel: mapped.roleLabel,
+        email: mapped.email,
+        isOnline: isOnline,
+        avatarUrl: mapped.avatarUrl,
+      );
+    }
+
+    for (final user in uiUsers) {
+      if (user.id.trim() == trimmed) {
+        return user;
+      }
+    }
+
+    final tenant = _tenantUserForPlatformId(trimmed);
+    if (tenant != null) {
+      return _mappers.mapTenantUser(tenant);
+    }
+
+    return MessengerUser(id: trimmed, username: 'Contact');
+  }
 
   List<MessengerChatMessage> get activeMessages {
     final conversationId = state.selectedConversationId;
@@ -1184,36 +1564,53 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     if (ids == null || ids.isEmpty) {
       return const [];
     }
+    final selfId = state.currentUser?.id ?? '';
     return ids
+        .where((id) => id.isNotEmpty && id != selfId)
         .map(
-          (id) => MessengerTypingUser(
-            userId: id,
-            displayLabel: _nameForUser(id),
-          ),
+          (id) =>
+              MessengerTypingUser(userId: id, displayLabel: _nameForUser(id)),
         )
         .toList(growable: false);
   }
 
   Future<bool> ensureSocketConnected() async {
-    final session = _session;
-    if (session == null) {
-      return false;
+    final sessionNotifier = ref.read(healthMessengerSessionProvider.notifier);
+    var sessionState = ref.read(healthMessengerSessionProvider);
+    if (sessionState.session == null) {
+      await sessionNotifier.recoverConnection(force: true);
+      if (!ref.mounted) {
+        return false;
+      }
+      sessionState = ref.read(healthMessengerSessionProvider);
+      if (sessionState.session == null) {
+        return false;
+      }
     }
-    if (state.isSocketConnected) {
-      return true;
-    }
-    try {
-      await session.reconnectSocket();
-      if (ref.mounted) {
+
+    if (sessionState.session!.isSocketConnected) {
+      if (ref.mounted && !state.isSocketConnected) {
         state = state.copyWith(isSocketConnected: true);
       }
       return true;
-    } catch (_) {
-      if (ref.mounted) {
-        state = state.copyWith(isSocketConnected: false);
-      }
-      return false;
     }
+
+    final connectionState = sessionState.connectionState;
+    final inProgress = HealthMessengerConnectionRecovery.isSocketInProgress(
+      connectionState,
+    );
+    if (!inProgress) {
+      await sessionNotifier.recoverConnection(force: true);
+      if (!ref.mounted) {
+        return false;
+      }
+    }
+
+    final connected = await sessionNotifier.waitUntilSocketConnected();
+    if (ref.mounted) {
+      state = state.copyWith(isSocketConnected: connected);
+    }
+    return connected;
   }
 
   Future<void> logoutAndClear() async {
@@ -1232,18 +1629,35 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   }
 
   Future<void> onMobileThreadClosed(String conversationId) async {
-    if (conversationId.trim().isEmpty ||
-        isDraftConversationId(conversationId)) {
+    final id = conversationId.trim();
+    if (id.isEmpty || isDraftConversationId(id)) {
       return;
     }
-    final chatSession = _session;
-    if (chatSession != null) {
-      try {
-        await chatSession.leaveConversation(conversationId);
-      } catch (_) {}
+
+    // Deselect before awaiting the socket leave. Awaiting first lets the user
+    // reopen the thread in between, and this close would then wipe that fresh
+    // selection — leaving the thread with no messages and no load in flight.
+    if ((state.selectedConversationId?.trim() ?? '') == id) {
+      _cancelSlowConversationHint();
+      _selectRequestId++;
+      state = state.copyWith(
+        clearSelectedConversationId: true,
+        clearLoadingConversationId: true,
+        slowConversationHintActive: false,
+        clearComposerReplyDraft: true,
+        clearComposerEditDraft: true,
+      );
     }
-    if (state.selectedConversationId == conversationId) {
-      await selectConversation('');
+
+    final chatSession = _session;
+    if (chatSession == null) {
+      return;
+    }
+    await _leaveConversationRoom(chatSession, id);
+
+    // A reopen that landed during the leave round-trip lost its room; rejoin.
+    if (ref.mounted && (state.selectedConversationId?.trim() ?? '') == id) {
+      await _joinConversationRoom(chatSession, id);
     }
   }
 
@@ -1348,12 +1762,15 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     switch (event.type) {
       case ChatSocketEventType.connected:
         state = state.copyWith(isSocketConnected: true);
+        unawaited(joinSelectedConversationRoom());
       case ChatSocketEventType.disconnected:
+        state = state.copyWith(isSocketConnected: false);
       case ChatSocketEventType.error:
         state = state.copyWith(isSocketConnected: false);
       case ChatSocketEventType.messageReceived:
         final message = event.message;
         if (message != null) {
+          _clearTypingForUser(message.conversationId, message.senderId);
           _upsertMessage(message.conversationId, message);
         }
       case ChatSocketEventType.messageReacted:
@@ -1397,6 +1814,10 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
       case ChatSocketEventType.conversationMessage:
         final conversationMessage = event.conversationMessage;
         if (conversationMessage != null) {
+          _clearTypingForUser(
+            conversationMessage.conversationId,
+            conversationMessage.message.senderId,
+          );
           _upsertMessage(
             conversationMessage.conversationId,
             conversationMessage.message,
@@ -1407,27 +1828,42 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
         if (typing != null &&
             typing.userId.isNotEmpty &&
             typing.conversationId.isNotEmpty) {
-          final nextTyping = Map<String, Set<String>>.from(
-            state.typingUserIdsByConversation,
-          );
-          nextTyping
-              .putIfAbsent(typing.conversationId, () => <String>{})
-              .add(typing.userId);
-          state = state.copyWith(typingUserIdsByConversation: nextTyping);
+          final selfId = state.currentUser?.id ?? '';
+          if (selfId.isEmpty || typing.userId != selfId) {
+            final nextTyping = Map<String, Set<String>>.from(
+              state.typingUserIdsByConversation,
+            );
+            nextTyping
+                .putIfAbsent(typing.conversationId, () => <String>{})
+                .add(typing.userId);
+            state = state.copyWith(typingUserIdsByConversation: nextTyping);
+            _scheduleTypingExpiry(typing.conversationId, typing.userId);
+            _notifyShellContentChanged();
+          }
         }
       case ChatSocketEventType.userStoppedTyping:
         final typing = event.typing;
         if (typing != null &&
             typing.userId.isNotEmpty &&
             typing.conversationId.isNotEmpty) {
+          _cancelTypingExpiry(typing.conversationId, typing.userId);
           final nextTyping = Map<String, Set<String>>.from(
             state.typingUserIdsByConversation,
           );
           nextTyping[typing.conversationId]?.remove(typing.userId);
           state = state.copyWith(typingUserIdsByConversation: nextTyping);
+          _notifyShellContentChanged();
         }
       case ChatSocketEventType.messageDelivered:
+        final delivered = event.delivered;
+        if (delivered != null) {
+          _handleDeliveredReceipt(delivered);
+        }
       case ChatSocketEventType.messageRead:
+        final receipt = event.receipt;
+        if (receipt != null) {
+          _handleReadReceipt(receipt);
+        }
       case ChatSocketEventType.unreadCountUpdated:
       case ChatSocketEventType.userBadgeUpdated:
       case ChatSocketEventType.userOnline:
@@ -1445,16 +1881,24 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   }
 
   void _upsertMessage(String conversationId, ChatMessage message) {
+    if (message.id.trim().isEmpty || conversationId.trim().isEmpty) {
+      return;
+    }
     final existing = state.messagesByConversation[conversationId] ?? const [];
     final next = List<ChatMessage>.from(existing);
     final index = next.indexWhere((item) => item.id == message.id);
+    late final ChatMessage upserted;
     if (index == -1) {
-      next.add(message);
+      upserted = _normalizeMessageIdentity(message);
+      next.add(upserted);
     } else {
-      next[index] = mergeMessageDeliveryReadSnapshot(
-        next[index],
-        _coalesceDeletedMessageOnUpsert(next[index], message),
+      final prior = next[index];
+      final merged = mergeMessageDeliveryReadSnapshot(
+        prior,
+        _coalesceDeletedMessageOnUpsert(prior, message),
       );
+      upserted = _preserveMessageIdentity(prior, merged);
+      next[index] = upserted;
     }
     next.sort((left, right) => left.createdAt.compareTo(right.createdAt));
 
@@ -1463,6 +1907,150 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     );
     nextMessages[conversationId] = next;
     state = state.copyWith(messagesByConversation: nextMessages);
+    _notifyShellContentChanged();
+    _flushPendingReceiptsForMessage(
+      conversationId: conversationId,
+      messageId: upserted.id,
+    );
+  }
+
+  /// Ensures own messages keep a stable sender id and at least SENT status.
+  ChatMessage _normalizeOutgoingMessage(ChatMessage message) {
+    final selfId = state.currentUser?.id.trim() ?? '';
+    final resolvedSenderId = _resolveStoredMessageSenderId(message);
+    final senderId = resolvedSenderId.isNotEmpty ? resolvedSenderId : selfId;
+    final status = message.deliveryStatus?.trim();
+    final deliveryStatus = (status == null || status.isEmpty) ? 'SENT' : status;
+    if (senderId == message.senderId &&
+        deliveryStatus == message.deliveryStatus) {
+      return message;
+    }
+    return _cloneMessage(
+      message,
+      senderId: senderId.isEmpty ? message.senderId : senderId,
+      deliveryStatus: deliveryStatus,
+    );
+  }
+
+  ChatMessage _normalizeMessageIdentity(ChatMessage message) {
+    final senderId = _resolveStoredMessageSenderId(message);
+    if (senderId.isEmpty || senderId == message.senderId) {
+      return message;
+    }
+    return _cloneMessage(message, senderId: senderId);
+  }
+
+  String _resolveStoredMessageSenderId(ChatMessage message) {
+    final direct = message.senderId.trim();
+    if (direct.isNotEmpty) {
+      return _mappers.resolveChatUserId(direct);
+    }
+    final fromSender = message.sender?.id.trim() ?? '';
+    if (fromSender.isNotEmpty) {
+      return _mappers.resolveChatUserId(fromSender);
+    }
+    return '';
+  }
+
+  MessageReaction _normalizeReaction(MessageReaction reaction) {
+    final userId = _mappers.resolveReactionUserId(reaction);
+    final reactionType = _mappers.normalizeReactionType(reaction.reactionType);
+    if (userId == reaction.userId.trim() &&
+        reactionType == reaction.reactionType.trim()) {
+      return reaction;
+    }
+    return MessageReaction(
+      id: reaction.id,
+      messageId: reaction.messageId,
+      userId: userId.isEmpty ? reaction.userId : userId,
+      reactionType: reactionType,
+      conversationId: reaction.conversationId,
+      createdAt: reaction.createdAt,
+      user: reaction.user,
+    );
+  }
+
+  bool _reactionBelongsToUser(MessageReaction reaction, String userId) {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) {
+      return false;
+    }
+    return _mappers.resolveReactionUserId(reaction) == normalizedUserId;
+  }
+
+  /// Sparse socket echoes must not wipe sender id or regress deliveryStatus.
+  ChatMessage _preserveMessageIdentity(ChatMessage prior, ChatMessage merged) {
+    final senderId = merged.senderId.trim().isNotEmpty
+        ? merged.senderId.trim()
+        : (merged.sender?.id.trim().isNotEmpty == true
+              ? merged.sender!.id.trim()
+              : prior.senderId);
+    final deliveryStatus = _preferDeliveryStatus(
+      prior.deliveryStatus,
+      merged.deliveryStatus,
+    );
+    if (senderId == merged.senderId &&
+        deliveryStatus == merged.deliveryStatus) {
+      return merged;
+    }
+    return _cloneMessage(
+      merged,
+      senderId: senderId,
+      deliveryStatus: deliveryStatus,
+    );
+  }
+
+  String? _preferDeliveryStatus(String? existing, String? incoming) {
+    int rank(String? raw) {
+      switch (raw?.trim().toUpperCase()) {
+        case 'SEEN':
+        case 'READ':
+        case 'VIEWED':
+        case 'R':
+          return 3;
+        case 'DELIVERED':
+        case 'D':
+          return 2;
+        case 'SENT':
+        case 'S':
+        case 'SENDING':
+          return 1;
+        default:
+          return 0;
+      }
+    }
+
+    return rank(existing) >= rank(incoming) ? existing : incoming;
+  }
+
+  ChatMessage _cloneMessage(
+    ChatMessage source, {
+    String? senderId,
+    String? deliveryStatus,
+  }) {
+    return ChatMessage(
+      id: source.id,
+      conversationId: source.conversationId,
+      tenantId: source.tenantId,
+      senderId: senderId ?? source.senderId,
+      type: source.type,
+      content: source.content,
+      attachments: source.attachments,
+      replyToMessageId: source.replyToMessageId,
+      replyTo: source.replyTo,
+      translatedMessage: source.translatedMessage,
+      transcribedMessage: source.transcribedMessage,
+      editedAt: source.editedAt,
+      deletedAt: source.deletedAt,
+      createdAt: source.createdAt,
+      reactions: source.reactions,
+      deliveredReceipts: source.deliveredReceipts,
+      readReceipts: source.readReceipts,
+      sender: source.sender,
+      deliveryStatus: deliveryStatus ?? source.deliveryStatus,
+      deliveredToCount: source.deliveredToCount,
+      readByCount: source.readByCount,
+    );
   }
 
   ChatMessage _coalesceDeletedMessageOnUpsert(
@@ -1485,26 +2073,368 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     );
   }
 
+  void _handleDeliveredReceipt(DeliveredReceipt receipt) {
+    final conversationId = _resolveReceiptConversationId(
+      explicitConversationId: receipt.conversationId,
+      messageId: receipt.messageId,
+    );
+    if (conversationId == null) {
+      _bufferDeliveredReceipt(receipt);
+      return;
+    }
+    final applied = _applyDeliveredReceipt(conversationId, receipt);
+    if (!applied) {
+      _bufferDeliveredReceipt(receipt);
+    }
+  }
+
+  void _handleReadReceipt(ReadReceipt receipt) {
+    final conversationId = _resolveReceiptConversationId(
+      explicitConversationId: receipt.conversationId,
+      messageId: receipt.messageId,
+    );
+    if (conversationId == null) {
+      _bufferReadReceipt(receipt);
+      return;
+    }
+    final applied = _applyReadReceipt(conversationId, receipt);
+    if (!applied) {
+      _bufferReadReceipt(receipt);
+    }
+  }
+
+  String? _resolveReceiptConversationId({
+    required String? explicitConversationId,
+    required String messageId,
+  }) {
+    final explicit = explicitConversationId?.trim() ?? '';
+    if (explicit.isNotEmpty) {
+      return explicit;
+    }
+    final mid = messageId.trim();
+    if (mid.isEmpty) {
+      return null;
+    }
+    for (final entry in state.messagesByConversation.entries) {
+      if (entry.value.any((message) => message.id == mid)) {
+        return entry.key;
+      }
+    }
+    final selected = state.selectedConversationId?.trim() ?? '';
+    return selected.isEmpty ? null : selected;
+  }
+
+  void _bufferDeliveredReceipt(DeliveredReceipt receipt) {
+    final messageId = receipt.messageId.trim();
+    if (messageId.isEmpty) {
+      return;
+    }
+    final bucket = _pendingDeliveredByMessageId.putIfAbsent(
+      messageId,
+      () => <DeliveredReceipt>[],
+    );
+    bucket.removeWhere((item) => item.userId == receipt.userId);
+    bucket.add(receipt);
+  }
+
+  void _bufferReadReceipt(ReadReceipt receipt) {
+    final messageId = receipt.messageId.trim();
+    if (messageId.isEmpty) {
+      return;
+    }
+    final bucket = _pendingReadByMessageId.putIfAbsent(
+      messageId,
+      () => <ReadReceipt>[],
+    );
+    bucket.removeWhere((item) => item.userId == receipt.userId);
+    bucket.add(receipt);
+  }
+
+  void _flushPendingReceiptsForMessage({
+    required String conversationId,
+    required String messageId,
+  }) {
+    final mid = messageId.trim();
+    if (mid.isEmpty) {
+      return;
+    }
+    final delivered = _pendingDeliveredByMessageId.remove(mid);
+    if (delivered != null) {
+      for (final receipt in delivered) {
+        _applyDeliveredReceipt(conversationId, receipt);
+      }
+    }
+    final read = _pendingReadByMessageId.remove(mid);
+    if (read != null) {
+      for (final receipt in read) {
+        _applyReadReceipt(conversationId, receipt);
+      }
+    }
+  }
+
   void _applyReaction(String conversationId, MessageReaction reaction) {
+    final normalizedId = conversationId.trim();
+    if (normalizedId.isEmpty) {
+      return;
+    }
+    final normalizedReaction = _normalizeReaction(reaction);
+
+    Map<String, List<ChatMessage>>? updatedMessages;
+    final messages = state.messagesByConversation[normalizedId];
+    if (messages != null) {
+      final index = messages.indexWhere(
+        (item) => item.id == normalizedReaction.messageId,
+      );
+      if (index != -1) {
+        final target = messages[index];
+        final nextReactions = List<MessageReaction>.from(target.reactions)
+          ..removeWhere(
+            (item) => _reactionBelongsToUser(item, normalizedReaction.userId),
+          )
+          ..add(normalizedReaction);
+        final nextMessages = List<ChatMessage>.from(messages);
+        nextMessages[index] = target.copyWith(reactions: nextReactions);
+        updatedMessages = Map<String, List<ChatMessage>>.from(
+          state.messagesByConversation,
+        );
+        updatedMessages[normalizedId] = nextMessages;
+      }
+    }
+
+    final nextConversations = state.conversations
+        .map(
+          (conversation) => _mergeConversationWithReaction(
+            conversation,
+            conversationId: normalizedId,
+            reaction: normalizedReaction,
+          ),
+        )
+        .toList(growable: false);
+
+    state = state.copyWith(
+      messagesByConversation: updatedMessages ?? state.messagesByConversation,
+      conversations: nextConversations,
+    );
+
+    _session?.inbox.bumpConversation(
+      normalizedId,
+      at: normalizedReaction.createdAt ?? DateTime.now().toUtc(),
+    );
+    _notifyShellContentChanged();
+  }
+
+  Conversation _mergeConversationWithReaction(
+    Conversation conversation, {
+    required String conversationId,
+    required MessageReaction reaction,
+  }) {
+    if (conversation.id != conversationId) {
+      return conversation;
+    }
+    final candidate = _latestReactionFromMessageReaction(reaction);
+    final previous = conversation.latestReaction;
+    if (previous != null && candidate.createdAt.isBefore(previous.createdAt)) {
+      return conversation;
+    }
+    final nextUpdatedAt = candidate.createdAt.isAfter(conversation.updatedAt)
+        ? candidate.createdAt
+        : conversation.updatedAt;
+    return Conversation(
+      id: conversation.id,
+      tenantId: conversation.tenantId,
+      type: conversation.type,
+      title: conversation.title,
+      createdBy: conversation.createdBy,
+      createdAt: conversation.createdAt,
+      updatedAt: nextUpdatedAt,
+      participants: conversation.participants,
+      unreadCount: conversation.unreadCount,
+      latestMessage: conversation.latestMessage,
+      latestMessageId: conversation.latestMessageId,
+      latestReaction: candidate,
+      messageState: conversation.messageState,
+      messageStatusByUserId: conversation.messageStatusByUserId,
+    );
+  }
+
+  LatestReaction _latestReactionFromMessageReaction(MessageReaction reaction) {
+    final normalized = _normalizeReaction(reaction);
+    return LatestReaction(
+      id: normalized.id,
+      messageId: normalized.messageId,
+      chatUserId: _mappers.resolveReactionUserId(normalized),
+      reactionType: _mappers.normalizeReactionType(normalized.reactionType),
+      userName: _reactionUserName(normalized),
+      createdAt: normalized.createdAt ?? DateTime.now().toUtc(),
+    );
+  }
+
+  String _reactionUserName(MessageReaction reaction) {
+    final fromPayload = reaction.user?.name?.trim() ?? '';
+    if (fromPayload.isNotEmpty) {
+      return fromPayload;
+    }
+    return _nameForUser(reaction.userId);
+  }
+
+  void _revertReaction({
+    required String conversationId,
+    required String messageId,
+    required String userId,
+  }) {
+    _applyReactionRemoval(
+      conversationId,
+      RemovedReactionEvent(
+        messageId: messageId,
+        conversationId: conversationId,
+        userId: userId,
+      ),
+    );
+  }
+
+  MessageReaction? _reactionForUser({
+    required String conversationId,
+    required String messageId,
+    required String userId,
+  }) {
     final messages = state.messagesByConversation[conversationId];
     if (messages == null) {
-      return;
+      return null;
     }
-    final index = messages.indexWhere((item) => item.id == reaction.messageId);
+    final index = messages.indexWhere((item) => item.id == messageId);
     if (index == -1) {
-      return;
+      return null;
     }
-    final target = messages[index];
-    final nextReactions = List<MessageReaction>.from(target.reactions)
-      ..removeWhere((item) => item.userId == reaction.userId)
-      ..add(reaction);
+    for (final reaction in messages[index].reactions) {
+      if (_reactionBelongsToUser(reaction, userId)) {
+        return reaction;
+      }
+    }
+    return null;
+  }
+
+  ChatMessage? _messageById(String conversationId, String messageId) {
+    final messages = state.messagesByConversation[conversationId];
+    if (messages == null) {
+      return null;
+    }
+    for (final message in messages) {
+      if (message.id == messageId) {
+        return message;
+      }
+    }
+    return null;
+  }
+
+  bool _applyDeliveredReceipt(String conversationId, DeliveredReceipt receipt) {
+    final messages = state.messagesByConversation[conversationId];
+    if (messages == null) {
+      return false;
+    }
+    final index = messages.indexWhere((item) => item.id == receipt.messageId);
+    if (index == -1) {
+      return false;
+    }
+    final updatedMessage = _preserveMessageIdentity(
+      messages[index],
+      _cloneMessage(
+        applyDeliveredReceiptToMessage(messages[index], receipt),
+        deliveryStatus: 'DELIVERED',
+      ),
+    );
     final nextMessages = List<ChatMessage>.from(messages);
-    nextMessages[index] = target.copyWith(reactions: nextReactions);
+    nextMessages[index] = updatedMessage;
     final updated = Map<String, List<ChatMessage>>.from(
       state.messagesByConversation,
     );
     updated[conversationId] = nextMessages;
     state = state.copyWith(messagesByConversation: updated);
+    _notifyShellContentChanged();
+    return true;
+  }
+
+  bool _applyReadReceipt(String conversationId, ReadReceipt receipt) {
+    final messages = state.messagesByConversation[conversationId];
+    if (messages == null) {
+      return false;
+    }
+    final index = messages.indexWhere((item) => item.id == receipt.messageId);
+    if (index == -1) {
+      return false;
+    }
+    final updatedMessage = _preserveMessageIdentity(
+      messages[index],
+      _cloneMessage(
+        applyReadReceiptToMessage(messages[index], receipt),
+        deliveryStatus: 'SEEN',
+      ),
+    );
+    final nextMessages = List<ChatMessage>.from(messages);
+    nextMessages[index] = updatedMessage;
+    final updated = Map<String, List<ChatMessage>>.from(
+      state.messagesByConversation,
+    );
+    updated[conversationId] = nextMessages;
+    state = state.copyWith(messagesByConversation: updated);
+    _notifyShellContentChanged();
+    return true;
+  }
+
+  void _clearTypingForUser(String conversationId, String userId) {
+    if (conversationId.isEmpty || userId.isEmpty) {
+      return;
+    }
+    final existing = state.typingUserIdsByConversation[conversationId];
+    if (existing == null || !existing.contains(userId)) {
+      return;
+    }
+    final nextTyping = Map<String, Set<String>>.from(
+      state.typingUserIdsByConversation,
+    );
+    nextTyping[conversationId] = Set<String>.from(existing)..remove(userId);
+    state = state.copyWith(typingUserIdsByConversation: nextTyping);
+    _cancelTypingExpiry(conversationId, userId);
+    _notifyShellContentChanged();
+  }
+
+  void _scheduleTypingExpiry(String conversationId, String userId) {
+    final normalizedConversationId = conversationId.trim();
+    final normalizedUserId = userId.trim();
+    if (normalizedConversationId.isEmpty || normalizedUserId.isEmpty) {
+      return;
+    }
+    _cancelTypingExpiry(normalizedConversationId, normalizedUserId);
+    final byConversation = _typingExpiryTimers.putIfAbsent(
+      normalizedConversationId,
+      () => <String, Timer>{},
+    );
+    byConversation[normalizedUserId] = Timer(const Duration(seconds: 6), () {
+      if (!ref.mounted) {
+        return;
+      }
+      _clearTypingForUser(normalizedConversationId, normalizedUserId);
+    });
+  }
+
+  void _cancelTypingExpiry(String conversationId, String userId) {
+    final normalizedConversationId = conversationId.trim();
+    final normalizedUserId = userId.trim();
+    final timer = _typingExpiryTimers[normalizedConversationId]?.remove(
+      normalizedUserId,
+    );
+    timer?.cancel();
+    if (_typingExpiryTimers[normalizedConversationId]?.isEmpty ?? true) {
+      _typingExpiryTimers.remove(normalizedConversationId);
+    }
+  }
+
+  void _cancelAllTypingExpiryTimers() {
+    for (final byConversation in _typingExpiryTimers.values) {
+      for (final timer in byConversation.values) {
+        timer.cancel();
+      }
+    }
+    _typingExpiryTimers.clear();
   }
 
   void _applyReactionRemoval(
@@ -1521,7 +2451,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     }
     final target = messages[index];
     final nextReactions = List<MessageReaction>.from(target.reactions)
-      ..removeWhere((item) => item.userId == event.userId);
+      ..removeWhere((item) => _reactionBelongsToUser(item, event.userId));
     final nextMessages = List<ChatMessage>.from(messages);
     nextMessages[index] = target.copyWith(reactions: nextReactions);
     final updated = Map<String, List<ChatMessage>>.from(
@@ -1529,6 +2459,7 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     );
     updated[conversationId] = nextMessages;
     state = state.copyWith(messagesByConversation: updated);
+    _notifyShellContentChanged();
   }
 
   void _applyDeletedMessage(DeletedMessageEvent deletedMessage) {
@@ -1552,79 +2483,108 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     );
     updated[deletedMessage.conversationId] = next;
     state = state.copyWith(messagesByConversation: updated);
+    _notifyShellContentChanged();
   }
 
   void _bindRemotePresenceListener(ChatSession activeSession) {
-    _remotePresenceByUserId =
-        Map<String, bool>.from(activeSession.remotePresence.onlineByUserId.value);
+    _remotePresenceStore = activeSession.remotePresence;
+    _remotePresenceByUserId = Map<String, bool>.from(
+      _remotePresenceStore!.onlineByUserId.value,
+    );
     _remotePresenceListener = () {
-      final store = activeSession.remotePresence;
+      final store = _remotePresenceStore;
+      if (store == null || !ref.mounted) {
+        return;
+      }
       final next = store.onlineByUserId.value;
       final prev = _remotePresenceByUserId;
 
       for (final entry in next.entries) {
-        final userId = entry.key;
+        final uid = entry.key;
         final nextOnline = entry.value;
-        if (prev[userId] == nextOnline) {
+        if (prev[uid] == nextOnline) {
           continue;
         }
-        _applyPresenceUpdate(userId, nextOnline);
+        _applyPresenceUpdate(uid, nextOnline);
       }
-
-      for (final userId in prev.keys) {
-        if (!next.containsKey(userId)) {
-          _applyPresenceUpdate(userId, false);
+      for (final uid in prev.keys) {
+        if (!next.containsKey(uid)) {
+          _applyPresenceUpdate(uid, false);
         }
       }
 
       _remotePresenceByUserId = Map<String, bool>.from(next);
     };
-    activeSession.remotePresence.onlineByUserId
-        .addListener(_remotePresenceListener!);
+    _remotePresenceStore!.onlineByUserId.addListener(_remotePresenceListener!);
+    _syncPresenceFromStore();
   }
 
-  void _syncRemotePresenceFromStore() {
-    final store = _session?.remotePresence;
+  void _unbindRemotePresenceListener() {
+    final listener = _remotePresenceListener;
+    final store = _remotePresenceStore;
+    if (listener != null && store != null) {
+      store.onlineByUserId.removeListener(listener);
+    }
+    _remotePresenceListener = null;
+    _remotePresenceStore = null;
+    _remotePresenceByUserId = const {};
+  }
+
+  void _syncPresenceFromStore() {
+    final store = _remotePresenceStore;
     if (store == null) {
       return;
     }
     for (final entry in store.onlineByUserId.value.entries) {
       _applyPresenceUpdate(entry.key, entry.value);
     }
-    _remotePresenceByUserId =
-        Map<String, bool>.from(store.onlineByUserId.value);
   }
 
-  void _applyPresenceUpdate(String userId, bool isOnline) {
+  bool _applyPresenceUpdate(String userId, bool isOnline) {
     if (!ref.mounted) {
-      return;
+      return false;
     }
 
-    final updatedUsers = state.users
-        .map(
-          (user) => user.id == userId
-              ? TenantUser(
-                  id: user.id,
-                  tenantId: user.tenantId,
-                  name: user.name,
-                  email: user.email,
-                  role: user.role,
-                  isOnline: isOnline,
-                  createdAt: user.createdAt,
-                  externalUserRole: user.externalUserRole,
-                  avatarUrl: user.avatarUrl,
-                  status: user.status,
-                  accessToken: user.accessToken,
-                  tokenType: user.tokenType,
-                  providerUserId: user.providerUserId,
-                )
-              : user,
-        )
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) {
+      return false;
+    }
+
+    var usersChanged = false;
+    final nextUsers = state.users
+        .map((user) {
+          if (user.id != normalizedUserId || user.isOnline == isOnline) {
+            return user;
+          }
+          usersChanged = true;
+          return _tenantUserWithOnline(user, isOnline);
+        })
         .toList(growable: false);
 
-    final updatedConversations = state.conversations
-        .map(
-          (conversation) => Conversation(
+    var conversationsChanged = false;
+    final nextConversations = state.conversations
+        .map((conversation) {
+          var participantsChanged = false;
+          final nextParticipants = conversation.participants
+              .map((participant) {
+                if (participant.user.id != normalizedUserId ||
+                    participant.user.isOnline == isOnline) {
+                  return participant;
+                }
+                participantsChanged = true;
+                return ConversationParticipant(
+                  id: participant.id,
+                  userId: participant.userId,
+                  conversationId: participant.conversationId,
+                  user: _participantUserWithOnline(participant.user, isOnline),
+                );
+              })
+              .toList(growable: false);
+          if (!participantsChanged) {
+            return conversation;
+          }
+          conversationsChanged = true;
+          return Conversation(
             id: conversation.id,
             tenantId: conversation.tenantId,
             type: conversation.type,
@@ -1632,51 +2592,67 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
             createdBy: conversation.createdBy,
             createdAt: conversation.createdAt,
             updatedAt: conversation.updatedAt,
-            participants: conversation.participants
-                .map(
-                  (participant) => participant.user.id == userId
-                      ? ConversationParticipant(
-                          id: participant.id,
-                          userId: participant.userId,
-                          conversationId: participant.conversationId,
-                          user: ConversationParticipantUser(
-                            id: participant.user.id,
-                            username: participant.user.username,
-                            role: participant.user.role,
-                            externalUserRole: participant.user.externalUserRole,
-                            email: participant.user.email,
-                            avatarUrl: participant.user.avatarUrl,
-                            status: participant.user.status,
-                            isOnline: isOnline,
-                          ),
-                        )
-                      : participant,
-                )
-                .toList(growable: false),
+            participants: nextParticipants,
             unreadCount: conversation.unreadCount,
             latestMessage: conversation.latestMessage,
             latestMessageId: conversation.latestMessageId,
             latestReaction: conversation.latestReaction,
             messageState: conversation.messageState,
             messageStatusByUserId: conversation.messageStatusByUserId,
-          ),
-        )
+          );
+        })
         .toList(growable: false);
 
+    if (!usersChanged && !conversationsChanged) {
+      return false;
+    }
+
     state = state.copyWith(
-      users: updatedUsers,
-      conversations: updatedConversations,
+      users: usersChanged ? nextUsers : state.users,
+      conversations: conversationsChanged
+          ? nextConversations
+          : state.conversations,
+    );
+    _notifyShellContentChanged();
+    return true;
+  }
+
+  TenantUser _tenantUserWithOnline(TenantUser user, bool isOnline) {
+    return TenantUser(
+      id: user.id,
+      tenantId: user.tenantId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isOnline: isOnline,
+      createdAt: user.createdAt,
+      externalUserRole: user.externalUserRole,
+      avatarUrl: user.avatarUrl,
+      status: user.status,
+      accessToken: user.accessToken,
+      tokenType: user.tokenType,
+      providerUserId: user.providerUserId,
     );
   }
 
-  void _unbindRemotePresenceListener() {
-    final listener = _remotePresenceListener;
-    final activeSession = _session;
-    if (listener != null && activeSession != null) {
-      activeSession.remotePresence.onlineByUserId.removeListener(listener);
-    }
-    _remotePresenceListener = null;
-    _remotePresenceByUserId = const {};
+  ConversationParticipantUser _participantUserWithOnline(
+    ConversationParticipantUser user,
+    bool isOnline,
+  ) {
+    return ConversationParticipantUser(
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      externalUserRole: user.externalUserRole,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      status: user.status,
+      isOnline: isOnline,
+    );
+  }
+
+  void _notifyShellContentChanged() {
+    _shellContentRevision.value++;
   }
 
   void _scheduleSlowConversationHint(String conversationId) {
@@ -1695,9 +2671,35 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
   }
 
   String _nameForUser(String userId) {
+    final normalized = userId.trim();
+    if (normalized.isEmpty) {
+      return userId;
+    }
     for (final user in state.users) {
-      if (user.id == userId) {
+      if (user.id == normalized) {
         return user.displayName;
+      }
+    }
+    final selectedConversationId = state.selectedConversationId?.trim() ?? '';
+    if (selectedConversationId.isNotEmpty) {
+      for (final conversation in state.conversations) {
+        if (conversation.id != selectedConversationId) {
+          continue;
+        }
+        for (final participant in conversation.participants) {
+          if (participant.user.id == normalized) {
+            final username = participant.user.username.trim();
+            if (username.isNotEmpty) {
+              return username;
+            }
+          }
+        }
+      }
+    }
+    for (final associated in state.associatedUsers) {
+      final tenant = _tenantUserForPlatformId(associated.id);
+      if (tenant?.id == normalized) {
+        return associated.displayName;
       }
     }
     return userId;
@@ -1709,11 +2711,14 @@ class HealthMessengerChatNotifier extends _$HealthMessengerChatNotifier {
     if (!kDebugMode) {
       return;
     }
-    debugPrint('[HealthMessengerChat] $message${data == null ? '' : ' :: $data'}');
+    debugPrint(
+      '[HealthMessengerChat] $message${data == null ? '' : ' :: $data'}',
+    );
   }
 
   Future<void> _dispose() async {
     _cancelSlowConversationHint();
+    _shellContentRevision.dispose();
     await detachFromSession();
   }
 }

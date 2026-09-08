@@ -8,6 +8,7 @@ class HealthMessengerSessionState {
     this.isBootstrapping = false,
     this.bootstrapError,
     this.pushIntegrationReady = false,
+    this.connectionState = ChatConnectionState.disconnected,
   });
 
   final ChatSession? session;
@@ -15,6 +16,7 @@ class HealthMessengerSessionState {
   final bool isBootstrapping;
   final Object? bootstrapError;
   final bool pushIntegrationReady;
+  final ChatConnectionState connectionState;
 
   bool get isReady => session?.sessionAuth != null;
 
@@ -27,6 +29,7 @@ class HealthMessengerSessionState {
     bool clearBootstrapConfig = false,
     bool clearBootstrapError = false,
     bool? pushIntegrationReady,
+    ChatConnectionState? connectionState,
   }) {
     return HealthMessengerSessionState(
       session: clearSession ? null : session ?? this.session,
@@ -38,6 +41,9 @@ class HealthMessengerSessionState {
           ? null
           : bootstrapError ?? this.bootstrapError,
       pushIntegrationReady: pushIntegrationReady ?? this.pushIntegrationReady,
+      connectionState: clearSession
+          ? ChatConnectionState.disconnected
+          : connectionState ?? this.connectionState,
     );
   }
 }

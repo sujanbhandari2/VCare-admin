@@ -176,7 +176,6 @@ class ClientUploadDocumentSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return SafeArea(
       top: false,
@@ -201,7 +200,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               children: [
                 _UploadOption(

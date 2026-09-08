@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
@@ -25,7 +26,6 @@ class HealthMessengerGroupInfoSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (context) => HealthMessengerGroupInfoSheet(
         conversation: conversation,
       ),
@@ -135,7 +135,7 @@ class _HealthMessengerGroupInfoSheetState
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: context.vcare.destructive,
+              backgroundColor: VCareColors.destructive,
             ),
             child: const Text('Remove'),
           ),
@@ -342,7 +342,7 @@ class _HealthMessengerGroupInfoSheetState
                                                 )
                                               : Icon(
                                                   LucideIcons.userMinus,
-                                                  color: context.vcare.destructive,
+                                                  color: VCareColors.destructive,
                                                 ),
                                         ),
                                     ],

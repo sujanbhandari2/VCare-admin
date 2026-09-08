@@ -1,56 +1,211 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
-import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
+import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_state.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
 
 /// VCare-styled conversation composer for Live Chat thread overrides.
 ///
 /// Attachment options match web Care Team chat:
 /// Take photo · Photo library · File · Audio file.
-class VcareMessengerThreadComposer extends StatelessWidget {
+class VcareMessengerThreadComposer extends StatefulWidget {
   const VcareMessengerThreadComposer({
     super.key,
     required this.data,
+    this.editDraft,
+    this.onCancelEditDraft,
   });
 
   final MessengerComposerData data;
+  final MessengerComposerEditDraft? editDraft;
+  final VoidCallback? onCancelEditDraft;
 
   /// Extra space above the nav pill so the input is not covered by the bar.
   static const double _aboveNavGap = 45;
+
+  /// Mirrors [vcare_bottom_navigation] floating pill metrics.
+  static const double _navOuterBottom = 8;
+  static const double _pillHeight = 78;
+
+  /// Matches package [MessengerComposerBar] typing throttle.
+  static const Duration _typingStartMinInterval = Duration(seconds: 2);
+  static const Duration _typingStopIdle = Duration(seconds: 2);
+
+  /// True when the IME is visible.
+  ///
+  /// Must read insets from the platform [View], not [MediaQuery.viewInsets]:
+  /// an ancestor [Scaffold] with `resizeToAvoidBottomInset` consumes viewInsets
+  /// for its body, so MediaQuery here reports 0 while the keyboard is open —
+  /// which previously kept applying nav clearance and floated the field up.
+  static bool _isKeyboardOpen(BuildContext context) {
+    return MediaQueryData.fromView(View.of(context)).viewInsets.bottom > 0;
+  }
 
   /// Clears the floating nav pill when the keyboard is closed. Uses
   /// [MediaQuery.viewPadding] because [Scaffold.extendBody] zeroes
   /// [MediaQuery.padding] bottom in the body.
   static double _composerBottomPadding(BuildContext context) {
-    if (isSoftKeyboardOpen(context)) {
+    if (_isKeyboardOpen(context)) {
       return 0;
     }
     if (VCareMobileShellScope.appliesBottomInsetOf(context)) {
       return _aboveNavGap;
     }
-    if (isMobileBottomNavVisible(context)) {
+    // Mobile tab shell still showing the floating nav (thread open; shell
+    // inset cleared by [liveChatMobileThreadVisibleProvider]).
+    if (MediaQuery.sizeOf(context).width < 768) {
       return MediaQuery.viewPaddingOf(context).bottom +
-          VCareMobileShellInsets.navOuterBottom +
-          VCareMobileShellInsets.pillHeight +
+          _navOuterBottom +
+          _pillHeight +
           _aboveNavGap;
     }
     return MediaQuery.viewPaddingOf(context).bottom + _aboveNavGap;
   }
 
   @override
+  State<VcareMessengerThreadComposer> createState() =>
+      _VcareMessengerThreadComposerState();
+}
+
+class _VcareMessengerThreadComposerState
+    extends State<VcareMessengerThreadComposer> {
+  Timer? _idleStopTimer;
+  DateTime? _lastTypingStartSent;
+  bool _hadNonEmptyForTyping = false;
+
+  MessengerComposerData get data => widget.data;
+
+  bool get _typingEnabled {
+    final conversationId = data.typingConversationId?.trim();
+    return conversationId != null &&
+        conversationId.isNotEmpty &&
+        data.onTypingStart != null &&
+        data.onTypingStop != null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    data.controller.addListener(_handleTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant VcareMessengerThreadComposer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data.controller != data.controller) {
+      oldWidget.data.controller.removeListener(_handleTextChanged);
+      data.controller.addListener(_handleTextChanged);
+    }
+    final oldId = oldWidget.data.typingConversationId?.trim();
+    final newId = data.typingConversationId?.trim();
+    if (oldId != newId) {
+      _cancelIdleTimer();
+      if (oldId != null &&
+          oldId.isNotEmpty &&
+          oldWidget.data.onTypingStop != null &&
+          _hadNonEmptyForTyping) {
+        unawaited(oldWidget.data.onTypingStop!(oldId));
+      }
+      _lastTypingStartSent = null;
+      _hadNonEmptyForTyping = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _cancelIdleTimer();
+    data.controller.removeListener(_handleTextChanged);
+    if (_hadNonEmptyForTyping && _typingEnabled) {
+      final id = data.typingConversationId!.trim();
+      unawaited(data.onTypingStop!(id));
+    }
+    super.dispose();
+  }
+
+  void _cancelIdleTimer() {
+    _idleStopTimer?.cancel();
+    _idleStopTimer = null;
+  }
+
+  Future<void> _emitStart() async {
+    if (!_typingEnabled) {
+      return;
+    }
+    final id = data.typingConversationId!.trim();
+    try {
+      await data.onTypingStart!(id);
+    } catch (_) {}
+  }
+
+  Future<void> _emitStop() async {
+    if (!_typingEnabled) {
+      return;
+    }
+    final id = data.typingConversationId!.trim();
+    try {
+      await data.onTypingStop!(id);
+    } catch (_) {}
+  }
+
+  void _scheduleIdleStop() {
+    if (!_typingEnabled) {
+      return;
+    }
+    _cancelIdleTimer();
+    _idleStopTimer = Timer(VcareMessengerThreadComposer._typingStopIdle, () {
+      if (!mounted) {
+        return;
+      }
+      _idleStopTimer = null;
+      if (data.controller.text.trim().isEmpty) {
+        return;
+      }
+      unawaited(_emitStop());
+      _lastTypingStartSent = null;
+      _hadNonEmptyForTyping = false;
+    });
+  }
+
+  void _handleTextChanged() {
+    if (!_typingEnabled) {
+      return;
+    }
+
+    final trimmed = data.controller.text.trim();
+    if (trimmed.isEmpty) {
+      _cancelIdleTimer();
+      if (_hadNonEmptyForTyping) {
+        unawaited(_emitStop());
+      }
+      _lastTypingStartSent = null;
+      _hadNonEmptyForTyping = false;
+      return;
+    }
+
+    _hadNonEmptyForTyping = true;
+    final now = DateTime.now();
+    final last = _lastTypingStartSent;
+    final min = VcareMessengerThreadComposer._typingStartMinInterval;
+    if (last == null || now.difference(last) >= min) {
+      _lastTypingStartSent = now;
+      unawaited(_emitStart());
+    }
+    _scheduleIdleStop();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    // When the shell still insets the tab (inbox list), keep 0 to avoid a
-    // double lift. When the conversation thread is open, MainWrapper clears
-    // that inset — pad only to the top of the nav pill so the composer sits
-    // snug above it (full content padding leaves a large empty band).
-    final bottom = _composerBottomPadding(context);
+    // When the shell still insets the tab (inbox list), keep modest clearance.
+    // When the conversation thread is open, MainWrapper clears that inset —
+    // pad only to the top of the nav pill so the composer sits snug above it.
+    final bottom = VcareMessengerThreadComposer._composerBottomPadding(context);
 
     return AnimatedBuilder(
       animation: data.controller,
@@ -61,7 +216,13 @@ class VcareMessengerThreadComposer extends StatelessWidget {
         final canSend = (hasText || hasQueuedAttachment) &&
             !data.isSending &&
             !data.isRecording &&
-            !overLimit;
+            !overLimit &&
+            (widget.editDraft == null || hasText);
+        final hintText = widget.editDraft != null
+            ? 'Edit message…'
+            : (hasQueuedAttachment && !hasText
+                ? 'Add a caption… (optional)'
+                : data.hintText);
 
         return Container(
           padding: EdgeInsets.fromLTRB(20, 8, 20, bottom),
@@ -71,6 +232,10 @@ class VcareMessengerThreadComposer extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (widget.editDraft != null)
+                _EditDraftBanner(
+                  onCancel: widget.onCancelEditDraft,
+                ),
               if (data.replyDraft != null) _ReplyDraftBanner(data: data),
               if (data.isRecording) _RecordingBanner(data: data),
               if (data.pendingAttachments.isNotEmpty)
@@ -86,7 +251,9 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                   children: [
                     const SizedBox(width: 4),
                     IconButton(
-                      onPressed: data.isSending || data.isRecording
+                      onPressed: data.isSending ||
+                              data.isRecording ||
+                              widget.editDraft != null
                           ? null
                           : () => _showAttachmentOptions(context, data),
                       icon: Icon(
@@ -108,9 +275,7 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                           }
                         },
                         decoration: InputDecoration(
-                          hintText: hasQueuedAttachment && !hasText
-                              ? 'Add a caption… (optional)'
-                              : data.hintText,
+                          hintText: hintText,
                           hintStyle: TextStyle(
                             fontSize: 14,
                             color: vcare.mutedForeground.withValues(alpha: 0.6),
@@ -129,7 +294,6 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                               fontSize: 14,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
-                        onChanged: (_) => _handleComposerTyping(data),
                       ),
                     ),
                     IconButton(
@@ -140,7 +304,7 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                         data.isRecording ? LucideIcons.square : LucideIcons.mic,
                         size: 18,
                         color: data.isRecording
-                            ? context.vcare.destructive
+                            ? VCareColors.destructive
                             : vcare.mutedForeground,
                       ),
                       visualDensity: VisualDensity.compact,
@@ -148,8 +312,8 @@ class VcareMessengerThreadComposer extends StatelessWidget {
                     const SizedBox(width: 4),
                     Material(
                       color: canSend
-                          ? context.vcare.primary
-                          : context.vcare.primary.withValues(alpha: 0.35),
+                          ? VCareColors.primary
+                          : VCareColors.primary.withValues(alpha: 0.35),
                       shape: const CircleBorder(),
                       child: InkWell(
                         onTap: canSend ? data.onSend : null,
@@ -191,30 +355,11 @@ class VcareMessengerThreadComposer extends StatelessWidget {
     }
   }
 
-  Future<void> _handleComposerTyping(MessengerComposerData data) async {
-    final conversationId = data.typingConversationId?.trim();
-    if (conversationId == null || conversationId.isEmpty) {
-      return;
-    }
-    final text = data.controller.text.trim();
-    if (text.isNotEmpty) {
-      await data.onTypingStart?.call(conversationId);
-    } else {
-      await data.onTypingStop?.call(conversationId);
-    }
-  }
-
   Future<void> _showAttachmentOptions(
     BuildContext context,
     MessengerComposerData data,
   ) async {
     await context.showBottomSheet<void>(
-      margin: EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        MediaQuery.paddingOf(context).bottom + 16,
-      ),
       topRadius: 18,
       builder: (sheetContext) {
         final vcare = context.vcare;
@@ -330,12 +475,12 @@ class _RecordingBanner extends StatelessWidget {
               icon: Icon(
                 LucideIcons.trash2,
                 size: 18,
-                color: context.vcare.destructive,
+                color: VCareColors.destructive,
               ),
               tooltip: 'Discard recording',
               visualDensity: VisualDensity.compact,
             ),
-            Icon(LucideIcons.mic, size: 16, color: context.vcare.primary),
+            Icon(LucideIcons.mic, size: 16, color: VCareColors.primary),
             const SizedBox(width: 6),
             const Expanded(
               child: Text(
@@ -355,6 +500,39 @@ class _RecordingBanner extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EditDraftBanner extends StatelessWidget {
+  const _EditDraftBanner({this.onCancel});
+
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(LucideIcons.pencil, size: 14, color: VCareColors.primary),
+          const SizedBox(width: 6),
+          const Expanded(
+            child: Text(
+              'Editing message',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: onCancel,
+            child: Icon(LucideIcons.x, size: 14, color: vcare.mutedForeground),
+          ),
+        ],
       ),
     );
   }
@@ -434,7 +612,7 @@ class _PendingAttachmentsRow extends StatelessWidget {
                 'Attachments exceed the size limit. Remove some to send.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: context.vcare.destructive,
+                  color: VCareColors.destructive,
                   fontWeight: FontWeight.w600,
                 ),
               ),

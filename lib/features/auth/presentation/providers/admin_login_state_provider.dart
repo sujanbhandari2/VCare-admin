@@ -61,6 +61,110 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
     );
   }
 
+  Future<void> verifyTwoFactor({
+    required String otp,
+    bool rememberMe = false,
+    CancelToken? cancelToken,
+    void Function(AdminAuthSession session)? onAuthenticated,
+    void Function(String? error)? onError,
+  }) async {
+    final challengeToken = state.challengeToken?.trim();
+    if (challengeToken == null || challengeToken.isEmpty) {
+      onError?.call('Missing verification challenge. Please sign in again.');
+      return;
+    }
+
+    if (_requestCompleter != null && !_requestCompleter!.isCompleted) {
+      return;
+    }
+
+    _requestCompleter = Completer<void>();
+
+    if (ref.mounted) {
+      state = state.copyWith(isSubmitting: true, clearError: true);
+    }
+
+    final response = await ref.read(authRepositoryProvider).adminVerify2fa(
+          challengeToken: challengeToken,
+          otp: otp.trim(),
+          rememberMe: rememberMe,
+          cancelToken: cancelToken,
+        );
+
+    await response.when<Future<void>>(
+      failure: (error) async {
+        if (ref.mounted) {
+          state = state.copyWith(
+            isSubmitting: false,
+            errorMessage: error.userMessage,
+          );
+        }
+        onError?.call(error.userMessage);
+      },
+      success: (session) async {
+        await ref.read(adminAuthSessionProvider.notifier).setSession(session);
+        ref.invalidate(userLoggedInStateProvider);
+        // Keep isSubmitting true until navigation finishes so the UI does not
+        // flash back to the credentials form between verify and home.
+        onAuthenticated?.call(session);
+        if (ref.mounted) {
+          state = const AdminLoginState();
+        }
+      },
+    );
+
+    _requestCompleter?.complete();
+  }
+
+  Future<void> sendTwoFactorCode({
+    CancelToken? cancelToken,
+    void Function()? onSuccess,
+    void Function(String? error)? onError,
+  }) async {
+    final challengeToken = state.challengeToken?.trim();
+    if (challengeToken == null || challengeToken.isEmpty) {
+      final message = 'Missing verification challenge. Please sign in again.';
+      onError?.call(message);
+      throw StateError(message);
+    }
+
+    if (state.isResending || state.isSubmitting) {
+      return;
+    }
+
+    if (ref.mounted) {
+      state = state.copyWith(isResending: true, clearError: true);
+    }
+
+    final response = await ref.read(authRepositoryProvider).adminSend2fa(
+          challengeToken: challengeToken,
+          cancelToken: cancelToken,
+        );
+
+    await response.when<Future<void>>(
+      failure: (error) async {
+        if (ref.mounted) {
+          state = state.copyWith(
+            isResending: false,
+            errorMessage: error.userMessage,
+          );
+        }
+        onError?.call(error.userMessage);
+        throw StateError(error.userMessage);
+      },
+      success: (expiresIn) async {
+        if (ref.mounted) {
+          state = state.copyWith(
+            isResending: false,
+            expiresIn: expiresIn,
+            clearError: true,
+          );
+        }
+        onSuccess?.call();
+      },
+    );
+  }
+
   void backToCredentials() {
     if (!ref.mounted) {
       return;
@@ -70,6 +174,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
       phase: AdminLoginPhase.credentials,
       tenantOptions: const [],
       clearError: true,
+      clearChallenge: true,
     );
   }
 
@@ -106,11 +211,11 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
     }
 
     final response = await ref.read(authRepositoryProvider).adminLogin(
-      email: email,
-      password: password,
-      tenantSlug: tenantSlug,
-      cancelToken: cancelToken,
-    );
+          email: email,
+          password: password,
+          tenantSlug: tenantSlug,
+          cancelToken: cancelToken,
+        );
 
     await response.when<Future<void>>(
       failure: (error) async {
@@ -131,6 +236,20 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
                 phase: AdminLoginPhase.tenantSelection,
                 tenantOptions: tenants,
                 clearError: true,
+                clearChallenge: true,
+              );
+            }
+          case AdminLoginTwoFactorRequired(
+              :final challengeToken,
+              :final expiresIn,
+            ):
+            if (ref.mounted) {
+              state = state.copyWith(
+                isSubmitting: false,
+                phase: AdminLoginPhase.twoFactor,
+                challengeToken: challengeToken,
+                expiresIn: expiresIn,
+                clearError: true,
               );
             }
           case AdminLoginAuthenticated(:final session):
@@ -138,11 +257,12 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
                 .read(adminAuthSessionProvider.notifier)
                 .setSession(session);
             ref.invalidate(userLoggedInStateProvider);
-
+            // Keep isSubmitting true until navigation finishes so the UI does
+            // not flash back to the credentials form between auth and home.
+            onAuthenticated?.call(session);
             if (ref.mounted) {
               state = const AdminLoginState();
             }
-            onAuthenticated?.call(session);
         }
       },
     );

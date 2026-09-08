@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
@@ -23,7 +24,6 @@ class MessagesNewGroupSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (context) => MessagesNewGroupSheet(onCreated: onCreated),
     );
   }
@@ -110,7 +110,7 @@ class _MessagesNewGroupSheetState extends ConsumerState<MessagesNewGroupSheet> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: Row(
             children: [
-              Icon(LucideIcons.users, color: context.vcare.primary),
+              Icon(LucideIcons.users, color: VCareColors.primary),
               const SizedBox(width: 8),
               const Text(
                 'New group',
@@ -209,7 +209,7 @@ class _MessagesNewGroupSheetState extends ConsumerState<MessagesNewGroupSheet> {
                             ? LucideIcons.checkCircle
                             : LucideIcons.circle,
                         color: checked
-                            ? context.vcare.primary
+                            ? VCareColors.primary
                             : vcare.mutedForeground,
                       ),
                     );

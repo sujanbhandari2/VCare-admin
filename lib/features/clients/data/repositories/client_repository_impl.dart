@@ -73,13 +73,11 @@ class ClientRepositoryImpl implements ClientRepository {
     CancelToken? cancelToken,
     bool forceRefresh = false,
   }) {
+    // Groups and individuals share GET /clients/:id (web admin parity).
+    // [clientType] is retained for callers; the response's clientType drives UI.
     return safeNetworkCall(() async {
-      final path = clientType == ClientListType.group
-          ? ApiEndpoints.clientGroupById(clientId)
-          : ApiEndpoints.clientById(clientId);
-
       final response = await apiClient.get(
-        path,
+        ApiEndpoints.clientById(clientId),
         isAuthenticated: true,
         cancelToken: cancelToken,
         forceRefresh: forceRefresh,
@@ -342,41 +340,6 @@ class ClientRepositoryImpl implements ClientRepository {
         items: items,
         pagination: parsed.pagination,
       );
-    });
-  }
-
-  @override
-  Future<EitherResponseOrException<ClientCase>> createClientCase({
-    required String clientId,
-    required String title,
-    required String description,
-    CancelToken? cancelToken,
-  }) {
-    return safeNetworkCall(() async {
-      final response = await apiClient.post(
-        ApiEndpoints.referralCases,
-        JsonRequestBody({
-          'clientId': clientId,
-          'status': 'REQUESTED',
-          'type': title,
-          if (description.trim().isNotEmpty)
-            'notes': [
-              {'note': description.trim()},
-            ],
-        }),
-        isAuthenticated: true,
-        cancelToken: cancelToken,
-      );
-
-      final model = ResponseValidator.parse(
-        response,
-        (data) => ClientCaseModel.fromJson(
-          Map<String, dynamic>.from(data as Map),
-        ),
-        dataValidator: (data) => data is Map && data['id'] != null,
-      );
-
-      return model.toEntity();
     });
   }
 

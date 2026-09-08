@@ -225,6 +225,7 @@ class ClientFile implements LoadableListItem {
     required this.uploadedAt,
     required this.url,
     required this.mime,
+    this.previewLink,
   });
 
   final String id;
@@ -233,6 +234,29 @@ class ClientFile implements LoadableListItem {
   final String uploadedAt;
   final String url;
   final String mime;
+
+  /// Presigned viewing URL from the API. [url] only holds the storage key for
+  /// files that were uploaded to storage, so it cannot be rendered directly.
+  final String? previewLink;
+
+  /// URL to render or open the file with, preferring the presigned link.
+  String get viewUrl {
+    final preview = previewLink?.trim();
+    if (preview != null && preview.isNotEmpty) return preview;
+    return url;
+  }
+
+  ClientFile copyWith({String? name}) {
+    return ClientFile(
+      id: id,
+      name: name ?? this.name,
+      size: size,
+      uploadedAt: uploadedAt,
+      url: url,
+      mime: mime,
+      previewLink: previewLink,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>

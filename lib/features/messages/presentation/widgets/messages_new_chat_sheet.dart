@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/care_team/presentation/widgets/care_avatar.dart';
@@ -18,7 +19,6 @@ class MessagesNewChatSheet extends ConsumerStatefulWidget {
   static Future<void> show(BuildContext context) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (context) => const MessagesNewChatSheet(),
     );
   }
@@ -70,7 +70,7 @@ class _MessagesNewChatSheetState extends ConsumerState<MessagesNewChatSheet> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: Row(
             children: [
-              Icon(LucideIcons.userPlus, color: context.vcare.primary),
+              Icon(LucideIcons.userPlus, color: VCareColors.primary),
               const SizedBox(width: 8),
               const Text(
                 'New chat',
@@ -206,7 +206,7 @@ class _ChatPickRow extends StatelessWidget {
                           height: 12,
                           decoration: BoxDecoration(
                             color: online
-                                ? vcare.success
+                                ? const Color(0xFF22C55E)
                                 : vcare.mutedForeground.withValues(alpha: 0.5),
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -252,7 +252,7 @@ class _ChatPickRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: context.vcare.primary,
+                    color: VCareColors.primary,
                   ),
                 ),
               ],

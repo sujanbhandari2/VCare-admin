@@ -66,5 +66,34 @@ void main() {
       expect(find.text('Choose your organization'), findsOneWidget);
       expect(find.text('Acme Corp'), findsOneWidget);
     });
+
+    testWidgets('shows two-factor form with remember-me when challenge required',
+        (tester) async {
+      repository.adminLoginResult = const Success(
+        AdminLoginTwoFactorRequired(
+          challengeToken: 'challenge-token',
+          expiresIn: 600,
+        ),
+      );
+
+      await tester.pumpWidget(buildSubject());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'admin@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(1), 'Password1!');
+      await tester.tap(find.text('Sign in'));
+      // Avoid pumpAndSettle — OTP caret animation + resend timer never settle.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Verify your identity'), findsOneWidget);
+      expect(find.text('Remember me for 7 days'), findsOneWidget);
+      expect(find.text('Verify and sign in'), findsOneWidget);
+      expect(find.textContaining('admin@example.com'), findsOneWidget);
+      expect(find.byType(Checkbox), findsOneWidget);
+    });
   });
 }

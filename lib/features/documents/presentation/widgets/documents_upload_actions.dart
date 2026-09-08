@@ -159,12 +159,6 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
     }
 
     final action = await context.showBottomSheet<_UploadAction>(
-      margin: EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        MediaQuery.paddingOf(context).bottom + 16,
-      ),
       builder: (sheetContext) => _DocumentsSourceSheet(
         onSelected: (value) => Navigator.of(sheetContext).pop(value),
       ),
@@ -234,7 +228,12 @@ class _DocumentsSourceSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        8,
+        16,
+        MediaQuery.paddingOf(context).bottom + 16,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

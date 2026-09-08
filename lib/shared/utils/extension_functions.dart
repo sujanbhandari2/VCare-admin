@@ -79,7 +79,6 @@ extension BuildContextExt on BuildContext {
     required Widget Function(BuildContext context) builder,
     Color? barrierColor,
     double maxHeightFactor = 0.9,
-    EdgeInsetsGeometry margin = EdgeInsets.zero,
     double topRadius = 24,
     bool isScrollControlled = true,
     bool useRootNavigator = true,
@@ -104,22 +103,17 @@ extension BuildContextExt on BuildContext {
       enableDrag: enableDrag,
       useSafeArea: useSafeArea,
       builder: (sheetContext) {
-        final mediaQuery = MediaQuery.of(sheetContext);
-        return SizedBox(
-          width: mediaQuery.size.width,
-          height: mediaQuery.size.height,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: VcareFloatingBottomSheetCard(
-                maxHeightFactor: maxHeightFactor,
-                margin: margin,
-                topRadius: topRadius,
-                showDragHandle: effectiveShowDragHandle,
-                child: builder(sheetContext),
-              ),
-            ),
+        // The host hugs the card so drag-to-dismiss distance and barrier taps
+        // are measured against the sheet itself, not the whole screen.
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: VcareFloatingBottomSheetCard(
+            maxHeightFactor: maxHeightFactor,
+            topRadius: topRadius,
+            showDragHandle: effectiveShowDragHandle,
+            child: builder(sheetContext),
           ),
         );
       },

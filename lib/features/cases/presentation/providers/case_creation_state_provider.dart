@@ -30,18 +30,37 @@ class CaseCreationStateNotifier extends _$CaseCreationStateNotifier {
     state = const CaseCreationState();
   }
 
+  /// Starts the wizard with a fixed client (skips the client selection step).
+  void startForClient(CaseCreationClient client) {
+    if (!ref.mounted) return;
+    state = CaseCreationState(
+      draft: CaseCreationDraft(
+        selectedClient: client,
+        clientLocked: true,
+        currentStep: 1,
+      ),
+    );
+    // Prefetch assignees so the note step shows results without focusing search.
+    searchAssignees('');
+  }
+
   void selectClient(CaseCreationClient client) {
     if (!ref.mounted) return;
+    final advancingFromClientStep = state.draft.currentStep == 0;
     state = state.withDraft(
       state.draft.copyWith(
         selectedClient: client,
-        currentStep: state.draft.currentStep == 0 ? 1 : state.draft.currentStep,
+        currentStep: advancingFromClientStep ? 1 : state.draft.currentStep,
       ),
     );
+    if (advancingFromClientStep) {
+      searchAssignees('');
+    }
   }
 
   void clearClient() {
     if (!ref.mounted) return;
+    if (state.draft.clientLocked) return;
     state = state.withDraft(
       state.draft.copyWith(
         clearClient: true,
@@ -110,6 +129,9 @@ class CaseCreationStateNotifier extends _$CaseCreationStateNotifier {
     }
 
     state = state.withDraft(draft.copyWith(currentStep: step + 1));
+    if (step == 0) {
+      searchAssignees('');
+    }
   }
 
   void previousStep() {
@@ -120,9 +142,13 @@ class CaseCreationStateNotifier extends _$CaseCreationStateNotifier {
       return;
     }
     if (draft.currentStep <= 0) return;
+    final nextStep = draft.currentStep - 1;
     state = state.withDraft(
-      draft.copyWith(currentStep: draft.currentStep - 1),
+      draft.copyWith(currentStep: nextStep),
     );
+    if (nextStep == 1) {
+      searchAssignees('');
+    }
   }
 
   void showSummary() {

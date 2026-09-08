@@ -67,7 +67,7 @@ class PendingMembershipSummaryCard extends StatelessWidget {
                     ),
                     value: formatMembershipMoney(offering.fee),
                     suffix: registrationFee > 0
-                        ? '· +${formatMembershipMoney(registrationFee)} reg.'
+                        ? '+${formatMembershipMoney(registrationFee)} reg.'
                         : null,
                     caption: formatMembershipFeeCadenceLabel(offering),
                   ),

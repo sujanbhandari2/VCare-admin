@@ -8,11 +8,9 @@ import 'package:vcare_admin/features/pending_memberships/domain/entities/pending
 import 'package:vcare_admin/features/pending_memberships/presentation/widgets/pending_membership_chips.dart';
 import 'package:vcare_admin/features/pending_memberships/utils/pending_membership_button_styles.dart';
 import 'package:vcare_admin/features/pending_memberships/utils/pending_membership_formatters.dart';
-import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 
-/// Pending membership card — the mobile form of the web memberships row: client
-/// identity with status on top, then the membership with its fee and the inline
-/// Approve action.
+/// Pending membership card — client identity on top, then the membership
+/// with its fee, benefit date, and the inline Approve action.
 class PendingMembershipRow extends StatelessWidget {
   const PendingMembershipRow({
     super.key,
@@ -56,15 +54,6 @@ class PendingMembershipRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    ProfileAvatar(
-                      name: client.displayName,
-                      photoUrl: client.avatarUrl,
-                      size: 34,
-                      circular: true,
-                      initialsFontSize: 12,
-                      initialsFontWeight: FontWeight.w500,
-                    ),
-                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,11 +81,6 @@ class PendingMembershipRow extends StatelessWidget {
                             ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    PendingMembershipStatusBadge(
-                      status: membership.status,
-                      maxWidth: 96,
                     ),
                   ],
                 ),
@@ -126,12 +110,10 @@ class PendingMembershipRow extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Benefit date '
-                            '${formatMembershipDate(membership.benefitStartDate)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            '${formatMembershipFeeCadenceLabel(offering)} '
+                            '${formatMembershipMoney(offering.fee)}',
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 11,
                               height: 1.3,
                               color: vcare.mutedForeground,
                               fontFeatures: const [
@@ -139,6 +121,19 @@ class PendingMembershipRow extends StatelessWidget {
                               ],
                             ),
                           ),
+                          if (registrationFee > 0)
+                            Text(
+                              'Reg fee '
+                              '${formatMembershipMoney(registrationFee)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.3,
+                                color: vcare.mutedForeground,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -149,39 +144,26 @@ class PendingMembershipRow extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            formatMembershipMoney(offering.fee),
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            formatMembershipFeeCadenceLabel(offering),
+                            'Benefit date',
                             textAlign: TextAlign.right,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.5,
                               height: 1.3,
                               color: vcare.mutedForeground,
                             ),
                           ),
-                          if (registrationFee > 0)
-                            Text(
-                              'Reg fee '
-                              '${formatMembershipMoney(registrationFee)}',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontSize: 11,
-                                height: 1.3,
-                                color: vcare.mutedForeground,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                              ),
+                          Text(
+                            formatMembershipDate(membership.benefitStartDate),
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              height: 1.3,
+                              color: vcare.mutedForeground,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
+                          ),
                           if (canApprove) ...[
                             const SizedBox(height: 8),
                             SizedBox(

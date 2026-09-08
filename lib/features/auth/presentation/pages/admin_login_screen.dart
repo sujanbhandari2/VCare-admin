@@ -1,15 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/app/router/app_router_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_login_state_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/state/admin_login_state.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_auth_brand_panel.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_login_form.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_tenant_picker.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/admin_two_factor_form.dart';
 import 'package:vcare_admin/features/home/data/vcare_assets.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
@@ -32,31 +34,38 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final session = ref.read(adminAuthSessionProvider);
       if (session.isAuthenticated && mounted) {
-        context.goNamed(AppRouter.home.toPathName);
+        startAuthenticatedRouterSession(ref);
       }
     });
   }
 
-  Future<void> _handleAuthenticated() async {
+  /// Completes sign-in without awaiting network side effects first.
+  ///
+  /// Awaiting auth/me or branding here used to leave the login screen mounted
+  /// (and briefly reset to credentials) before home appeared. Match the agent
+  /// flow: fire side effects, then swap the router so home is the first frame.
+  void _handleAuthenticated() {
     ref.read(networkFetchSessionProvider.notifier).resetSession();
     final session = ref.read(adminAuthSessionProvider);
     final tenantSlug = session.user?.currentTenant.slug;
-    await Future.wait([
-      ref.read(authMeStateProvider.notifier).fetchMe(),
+
+    unawaited(ref.read(authMeStateProvider.notifier).fetchMe());
+    unawaited(
       ref.read(tenantBrandingStateProvider.notifier).refreshFromApi(
             tenantSlug: tenantSlug,
           ),
-    ]);
+    );
 
-    if (!mounted) {
-      return;
+    if (mounted) {
+      context.showVcareToast(
+        title: 'Signed in successfully',
+        variant: VcareToastVariant.success,
+      );
     }
 
-    context.showVcareToast(
-      title: 'Signed in successfully',
-      variant: VcareToastVariant.success,
-    );
-    context.goNamed(AppRouter.home.toPathName);
+    // Must be last: this disposes the router that owns this screen and starts
+    // a fresh session already at home — no login flash, no shell GlobalKey clash.
+    startAuthenticatedRouterSession(ref);
   }
 
   void _showLoginError(String message) {
@@ -132,9 +141,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 const SizedBox(height: 32),
               ],
               Text(
-                loginState.phase == AdminLoginPhase.credentials
-                    ? 'Welcome back'
-                    : 'Select organization',
+                _phaseTitleFor(loginState.phase),
                 style: context.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -149,37 +156,88 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              if (loginState.phase == AdminLoginPhase.credentials)
-                AdminLoginForm(
-                  isSubmitting: loginState.isSubmitting,
-                  onSubmit: (email, password) {
-                    ref.read(adminLoginStateProvider.notifier).submitCredentials(
-                      email: email,
-                      password: password,
-                      onAuthenticated: (_) => _handleAuthenticated(),
-                      onError: (_) {},
-                    );
-                  },
-                )
-              else
-                AdminTenantPicker(
-                  tenants: loginState.tenantOptions,
-                  isSubmitting: loginState.isSubmitting,
-                  onBack: () {
-                    ref.read(adminLoginStateProvider.notifier).backToCredentials();
-                  },
-                  onContinue: (tenantSlug) {
-                    ref.read(adminLoginStateProvider.notifier).submitTenant(
-                      tenantSlug: tenantSlug,
-                      onAuthenticated: (_) => _handleAuthenticated(),
-                      onError: (_) {},
-                    );
-                  },
-                ),
+              switch (loginState.phase) {
+                AdminLoginPhase.credentials => AdminLoginForm(
+                    isSubmitting: loginState.isSubmitting,
+                    onSubmit: (email, password) {
+                      ref
+                          .read(adminLoginStateProvider.notifier)
+                          .submitCredentials(
+                            email: email,
+                            password: password,
+                            onAuthenticated: (_) => _handleAuthenticated(),
+                            onError: (_) {},
+                          );
+                    },
+                  ),
+                AdminLoginPhase.tenantSelection => AdminTenantPicker(
+                    tenants: loginState.tenantOptions,
+                    isSubmitting: loginState.isSubmitting,
+                    onBack: () {
+                      ref
+                          .read(adminLoginStateProvider.notifier)
+                          .backToCredentials();
+                    },
+                    onContinue: (tenantSlug) {
+                      ref.read(adminLoginStateProvider.notifier).submitTenant(
+                            tenantSlug: tenantSlug,
+                            onAuthenticated: (_) => _handleAuthenticated(),
+                            onError: (_) {},
+                          );
+                    },
+                  ),
+                AdminLoginPhase.twoFactor => AdminTwoFactorForm(
+                    key: ValueKey(loginState.challengeToken),
+                    email: loginState.storedEmail,
+                    expiresIn: loginState.expiresIn,
+                    isVerifying: loginState.isSubmitting,
+                    isResending: loginState.isResending,
+                    onBack: () {
+                      ref
+                          .read(adminLoginStateProvider.notifier)
+                          .backToCredentials();
+                    },
+                    onResend: () async {
+                      await ref
+                          .read(adminLoginStateProvider.notifier)
+                          .sendTwoFactorCode(
+                            onSuccess: () {
+                              if (!mounted) {
+                                return;
+                              }
+                              context.showVcareToast(
+                                title: 'Code sent',
+                                description:
+                                    'A new verification code has been sent.',
+                                variant: VcareToastVariant.success,
+                              );
+                            },
+                          );
+                    },
+                    onVerify: ({required otp, required rememberMe}) {
+                      ref
+                          .read(adminLoginStateProvider.notifier)
+                          .verifyTwoFactor(
+                            otp: otp,
+                            rememberMe: rememberMe,
+                            onAuthenticated: (_) => _handleAuthenticated(),
+                            onError: (_) {},
+                          );
+                    },
+                  ),
+              },
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _phaseTitleFor(AdminLoginPhase phase) {
+    return switch (phase) {
+      AdminLoginPhase.credentials => 'Welcome back',
+      AdminLoginPhase.tenantSelection => 'Select organization',
+      AdminLoginPhase.twoFactor => 'Verify your identity',
+    };
   }
 }

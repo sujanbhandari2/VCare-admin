@@ -61,13 +61,14 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Approve'), findsOneWidget);
-    expect(find.text('Benefit date 08/13/2026'), findsOneWidget);
+    expect(find.text('Benefit date'), findsOneWidget);
+    expect(find.text('08/13/2026'), findsOneWidget);
   });
 
   testWidgets('row fits without overflow on a large phone', (tester) async {
     await _pumpRow(tester, 430);
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Submitted'), findsOneWidget);
+    expect(find.text('Flynn Mccray'), findsOneWidget);
   });
 }

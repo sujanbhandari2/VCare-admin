@@ -16,6 +16,7 @@ import 'package:vcare_admin/features/cases/presentation/widgets/case_detail_head
 import 'package:vcare_admin/features/cases/presentation/widgets/case_detail_tab_bar.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_files_tab.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_info_sheet.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/case_notes_live_sync.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_notes_tab.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_tasks_tab.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
@@ -138,6 +139,10 @@ class _CaseDetailScreenState extends ConsumerState<CaseDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    return CaseNotesLiveSync(caseId: widget.caseId, child: _buildPage(context));
+  }
+
+  Widget _buildPage(BuildContext context) {
     final caseId = widget.caseId;
     final detailState = ref.watch(caseDetailStateProvider(caseId));
     final notesState = ref.watch(caseNotesStateProvider(caseId));

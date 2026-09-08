@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
@@ -23,7 +24,6 @@ class HealthMessengerAddGroupMembersSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (context) => HealthMessengerAddGroupMembersSheet(
         conversation: conversation,
       ),
@@ -260,7 +260,7 @@ class _HealthMessengerAddGroupMembersSheetState
                                               ? LucideIcons.checkCircle
                                               : LucideIcons.circle,
                                           color: isSelected
-                                              ? context.vcare.primary
+                                              ? VCareColors.primary
                                               : vcare.mutedForeground,
                                         ),
                                       ],

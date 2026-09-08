@@ -37,6 +37,7 @@ import 'package:vcare_admin/features/clients/presentation/providers/clients_list
 import 'package:vcare_admin/features/commission/presentation/providers/commission_history_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_sales_history_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_summary_state_provider.dart';
+import 'package:vcare_admin/features/feature_access/presentation/providers/feature_access_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_category_search_state_provider.dart';
@@ -144,6 +145,7 @@ void invalidateUserScopedProviders({
     }
   }
 
+  invalidate(featureAccessStateProvider);
   invalidate(authMeStateProvider);
   invalidate(localProfileStateProvider);
   invalidate(userProfileStateProvider);

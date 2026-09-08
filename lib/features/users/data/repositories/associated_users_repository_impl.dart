@@ -17,7 +17,7 @@ class AssociatedUsersRepositoryImpl implements AssociatedUsersRepository {
   @override
   Future<EitherResponseOrException<AssociatedUsersPage>> fetchAssociatedUsers({
     int page = 1,
-    int limit = 100,
+    int limit = 30,
     String sortBy = 'createdAt',
     String sortOrder = 'desc',
     bool forceRefresh = true,
@@ -39,9 +39,8 @@ class AssociatedUsersRepositoryImpl implements AssociatedUsersRepository {
 
       final pageModel = ResponseValidator.parse(
         response,
-        (data) => AssociatedUsersPageModel.fromJson(
-          data as Map<String, dynamic>,
-        ),
+        (data) =>
+            AssociatedUsersPageModel.fromJson(data as Map<String, dynamic>),
         dataValidator: AssociatedUsersPageModel.isValidApiData,
       );
       return pageModel.toEntity();

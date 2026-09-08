@@ -4,6 +4,7 @@ import 'package:vcare_admin/features/cases/domain/entities/case_assignee.dart';
 class CaseCreationDraft {
   const CaseCreationDraft({
     this.selectedClient,
+    this.clientLocked = false,
     this.initialNote = '',
     this.noteConfirmed = false,
     this.selectedAssignee,
@@ -13,6 +14,7 @@ class CaseCreationDraft {
   });
 
   final CaseCreationClient? selectedClient;
+  final bool clientLocked;
   final String initialNote;
   final bool noteConfirmed;
   final CaseAssignee? selectedAssignee;
@@ -30,6 +32,7 @@ class CaseCreationDraft {
   CaseCreationDraft copyWith({
     CaseCreationClient? selectedClient,
     bool clearClient = false,
+    bool? clientLocked,
     String? initialNote,
     bool? noteConfirmed,
     CaseAssignee? selectedAssignee,
@@ -43,6 +46,7 @@ class CaseCreationDraft {
       selectedClient: clearClient
           ? null
           : (selectedClient ?? this.selectedClient),
+      clientLocked: clientLocked ?? this.clientLocked,
       initialNote: initialNote ?? this.initialNote,
       noteConfirmed: noteConfirmed ?? this.noteConfirmed,
       selectedAssignee: clearAssignee

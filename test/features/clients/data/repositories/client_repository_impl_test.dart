@@ -247,9 +247,9 @@ void main() {
       );
     });
 
-    test('fetchClientDetail uses clients/groups/:id for groups', () async {
+    test('fetchClientDetail uses clients/:id for groups', () async {
       apiClient.getResponse = _ok(
-        path: ApiEndpoints.clientGroupById('group-1'),
+        path: ApiEndpoints.clientById('group-1'),
         data: {
           'id': 'group-1',
           'clientType': 'GROUP',
@@ -263,7 +263,7 @@ void main() {
         clientType: ClientListType.group,
       );
 
-      expect(apiClient.lastGetPath, ApiEndpoints.clientGroupById('group-1'));
+      expect(apiClient.lastGetPath, ApiEndpoints.clientById('group-1'));
       response.when(
         failure: (_) => fail('expected success'),
         success: (detail) {
