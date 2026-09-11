@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/enums/login_request_type.dart';
@@ -199,11 +200,9 @@ class LoginRequestStateNotifier extends _$LoginRequestStateNotifier {
     final storageService = ref.read(storageServiceProvider);
 
     if (response.access != null) {
-      await storageService.set(StorageKeys.loggedInUserToken, response.access);
-
-      await storageService.set(
-        StorageKeys.loggedInUserRefreshToken,
-        response.refresh,
+      await AuthSecureTokenStore(storage: storageService).save(
+        accessToken: response.access!,
+        refreshToken: response.refresh ?? '',
       );
 
       await storageService.set(StorageKeys.loggedInUserId, response.userId);

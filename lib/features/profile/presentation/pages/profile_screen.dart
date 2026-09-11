@@ -10,10 +10,16 @@ import 'package:vcare_admin/features/account/data/mappers/account_mapper.dart';
 import 'package:vcare_admin/features/account/presentation/widgets/account_actions_card.dart';
 import 'package:vcare_admin/features/account/presentation/widgets/account_details_section.dart';
 import 'package:vcare_admin/features/account/presentation/widgets/account_header_card.dart';
+import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/widgets/profile_sign_out_footer.dart';
+import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_login_status.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/providers/biometric_login_state_provider.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/widgets/biometric_login_prompt_sheet.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/widgets/biometric_login_status_tile.dart';
 import 'package:vcare_admin/shared/session/user_session_cleanup.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
@@ -33,6 +39,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final accountId = ref.read(adminAuthSessionProvider).user?.id;
+      ref
+          .read(biometricLoginStateProvider.notifier)
+          .refreshStatus(accountId: accountId);
       _onRefresh();
     });
   }
@@ -56,15 +66,104 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
     await ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true);
+    final accountId = ref.read(adminAuthSessionProvider).user?.id;
+    await ref
+        .read(biometricLoginStateProvider.notifier)
+        .refreshStatus(accountId: accountId);
   }
 
   Future<void> _signOut() async {
     await clearUserSession(ref, navigateToLogin: true);
   }
 
+  Future<void> _toggleBiometric() async {
+    final biometricState = ref.read(biometricLoginStateProvider);
+    final session = ref.read(adminAuthSessionProvider);
+    final accountId = session.user?.id.trim() ?? '';
+    final status = biometricState.status ?? BiometricLoginStatus.disabled;
+    final biometricLabel = status.displayType;
+
+    if (status.isEnrolled) {
+      final revoke = await showBiometricPromptSheet(
+        context,
+        title: biometricLabel == 'Face ID'
+            ? 'Revoke Face ID?'
+            : 'Revoke fingerprint?',
+        description:
+            'This removes $biometricLabel sign-in from this device for now. You can enable it again later.',
+        primaryLabel: 'Revoke $biometricLabel',
+        secondaryLabel: 'Keep it',
+        biometricLabel: biometricLabel,
+        onPrimaryPressed: () async {
+          await ref.read(biometricLoginStateProvider.notifier).revoke(
+                accessToken: session.accessToken ?? '',
+                onError: (message) {
+                  if (message == null || !mounted) {
+                    return;
+                  }
+                  context.showVcareToast(
+                    title: 'Could not revoke biometric',
+                    description: message,
+                    variant: VcareToastVariant.destructive,
+                  );
+                },
+                onCompleted: () {
+                  if (!mounted) {
+                    return;
+                  }
+                  context.showVcareToast(
+                    title: 'Biometric disabled',
+                    variant: VcareToastVariant.success,
+                  );
+                },
+              );
+        },
+      );
+
+      if (revoke != true) {
+        return;
+      }
+      return;
+    }
+
+    final shouldEnable = await showBiometricPromptSheet(
+      context,
+      title: biometricLabel == 'Face ID'
+          ? 'Enable Face ID?'
+          : 'Enable fingerprint?',
+      description:
+          'Use $biometricLabel to log in faster from this device.',
+      primaryLabel: 'Enable $biometricLabel',
+      secondaryLabel: 'Maybe later',
+      biometricLabel: biometricLabel,
+      onPrimaryPressed: () async {
+        await ref.read(biometricLoginStateProvider.notifier).enroll(
+              accessToken: session.accessToken ?? '',
+              accountId: accountId,
+              accountEmail: session.user?.email,
+              onError: (message) {
+                if (message == null || !mounted) {
+                  return;
+                }
+                context.showVcareToast(
+                  title: 'Biometric enrollment failed',
+                  description: message,
+                  variant: VcareToastVariant.destructive,
+                );
+              },
+            );
+      },
+    );
+
+    if (shouldEnable != true) {
+      return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authMeState = ref.watch(authMeStateProvider);
+    final biometricState = ref.watch(biometricLoginStateProvider);
     final user = authMeState.user;
     final fetching = authMeState.fetching && user == null;
     final error = authMeState.error;
@@ -110,6 +209,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         context.pushNamed(AppRouter.profileEditName),
                     onChangePassword: () =>
                         context.pushNamed(AppRouter.profilePasswordName),
+                  ),
+                  const SizedBox(height: 16),
+                  BiometricLoginStatusTile(
+                    status: biometricState.status ?? BiometricLoginStatus.disabled,
+                    loading: biometricState.loading,
+                    onTap: _toggleBiometric,
                   ),
                   if (isSsoAccount(user)) ...[
                     const SizedBox(height: 12),

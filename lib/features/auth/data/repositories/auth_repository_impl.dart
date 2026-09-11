@@ -303,12 +303,13 @@ class AuthRepositoryImpl extends AuthRepository {
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
+      final headers = await AuthApiHeaders.adminWithDeviceId(storage);
       final response = await apiClient.post(
         ApiEndpoints.authRefresh,
         JsonRequestBody({'refreshToken': refreshToken}),
         cancelToken: cancelToken,
         isAuthenticated: false,
-        additionalHeaders: AuthApiHeaders.admin,
+        additionalHeaders: headers,
       );
 
       final model = ResponseValidator.parse(

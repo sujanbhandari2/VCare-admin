@@ -5,6 +5,8 @@ import 'package:vcare_admin/core/config/flavor/configuration.dart';
 import 'package:vcare_admin/core/services/network/session_expiry_handler.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
+import 'package:vcare_admin/features/auth/data/auth_device_id.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 
 /// Interceptor that handles 401 Unauthorized errors by attempting to refresh the JWT token.
 /// Also auto-refreshes the token if the last refresh was more than or equal to 2 hours ago.
@@ -18,12 +20,15 @@ class RefreshTokenInterceptor extends Interceptor {
     required this.storageService,
     required this.dio,
     required this.sessionExpiryHandler,
-  });
+    AuthSecureTokenStore? tokenStore,
+  }) : _tokenStore =
+            tokenStore ?? AuthSecureTokenStore(storage: storageService);
 
   final Configuration config;
   final StorageService storageService;
   final Dio dio;
   final SessionExpiryHandler sessionExpiryHandler;
+  final AuthSecureTokenStore _tokenStore;
 
   @override
   void onRequest(
@@ -105,9 +110,16 @@ class RefreshTokenInterceptor extends Interceptor {
         ),
       );
 
+      final deviceId = await getOrCreateDeviceId(storageService);
       final response = await refreshDio.post(
         ApiEndpoints.authRefresh,
         data: {'refreshToken': refreshToken},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Device-Id': deviceId,
+          },
+        ),
       );
 
       if ([200, 201].contains(response.statusCode)) {
@@ -124,17 +136,16 @@ class RefreshTokenInterceptor extends Interceptor {
           return null;
         }
 
-        await storageService.set(StorageKeys.loggedInUserToken, newAccessToken);
-        await storageService.set(
-          StorageKeys.loggedInUserRefreshToken,
-          newRefreshToken,
+        await _tokenStore.save(
+          accessToken: newAccessToken.toString(),
+          refreshToken: newRefreshToken.toString(),
         );
         await storageService.set(
           StorageKeys.tokenRefreshedDate,
           DateTime.now().toIso8601String(),
         );
 
-        return newAccessToken;
+        return newAccessToken.toString();
       }
 
       // If refresh fails (e.g., invalid refresh token), clear session

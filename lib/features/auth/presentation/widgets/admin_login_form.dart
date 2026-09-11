@@ -11,11 +11,17 @@ class AdminLoginForm extends StatefulWidget {
     super.key,
     required this.onSubmit,
     required this.isSubmitting,
+    this.biometricAvailable = false,
+    this.biometricLoading = false,
+    this.onBiometricPressed,
     this.disabled = false,
   });
 
   final void Function(String email, String password) onSubmit;
   final bool isSubmitting;
+  final bool biometricAvailable;
+  final bool biometricLoading;
+  final VoidCallback? onBiometricPressed;
   final bool disabled;
 
   @override
@@ -112,12 +118,72 @@ class _AdminLoginFormState extends State<AdminLoginForm> {
             ),
           ),
           const SizedBox(height: 8),
-          AppButton.elevated(
-            text: widget.isSubmitting ? 'Signing in…' : 'Sign in',
-            loading: widget.isSubmitting,
-            onPressed: enabled ? _handleSubmit : null,
+          Row(
+            children: [
+              Expanded(
+                child: AppButton.elevated(
+                  text: widget.isSubmitting ? 'Signing in…' : 'Sign in',
+                  loading: widget.isSubmitting,
+                  onPressed: enabled ? _handleSubmit : null,
+                ),
+              ),
+              if (widget.biometricAvailable && widget.onBiometricPressed != null)
+                ...[
+                  const SizedBox(width: 12),
+                  _BiometricIconButton(
+                    enabled: enabled && !widget.biometricLoading,
+                    loading: widget.biometricLoading,
+                    onPressed: widget.onBiometricPressed!,
+                  ),
+                ],
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BiometricIconButton extends StatelessWidget {
+  const _BiometricIconButton({
+    required this.enabled,
+    required this.loading,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: InkWell(
+        onTap: enabled ? onPressed : null,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: Center(
+            child: loading
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
+                    ),
+                  )
+                : const Icon(LucideIcons.fingerprint, size: 18),
+          ),
+        ),
       ),
     );
   }

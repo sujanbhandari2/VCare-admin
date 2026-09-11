@@ -172,8 +172,10 @@ class AdminLoginResultModel {
   final int? expiresIn;
 
   factory AdminLoginResultModel.fromJson(Map<String, dynamic> json) {
-    if (json['requiresTenantSelection'] == true) {
-      final tenantsRaw = json['tenants'];
+    final payload = _unwrapPayload(json);
+
+    if (payload['requiresTenantSelection'] == true) {
+      final tenantsRaw = payload['tenants'];
       return AdminLoginResultModel._(
         requiresTenantSelection: true,
         tenants: tenantsRaw is List
@@ -185,12 +187,13 @@ class AdminLoginResultModel {
       );
     }
 
-    final requiresTwoFactor = json['requiresTwoFactor'] == true;
-    final challengeToken = (json['challengeToken'] as String?)?.trim();
+    final requiresTwoFactor = payload['requiresTwoFactor'] == true;
+    final challengeToken =
+        _readString(payload, const ['challengeToken', 'challenge_token']);
     if (requiresTwoFactor &&
         challengeToken != null &&
         challengeToken.isNotEmpty) {
-      final expiresRaw = json['expiresIn'];
+      final expiresRaw = payload['expiresIn'];
       final expiresIn = expiresRaw is int
           ? expiresRaw
           : int.tryParse(expiresRaw?.toString() ?? '') ?? 0;
@@ -201,14 +204,22 @@ class AdminLoginResultModel {
       );
     }
 
-    final user = json['user'] as Map<String, dynamic>? ?? {};
-    final tokens = json['tokens'] as Map<String, dynamic>? ?? {};
-    final menuRaw = json['menu'];
-    final urlsRaw = json['urls'];
+    final user = _readMap(payload, const ['user', 'account', 'profile']);
+    final tokens = _readMap(payload, const ['tokens', 'session', 'auth']);
+    final menuRaw = payload['menu'];
+    final urlsRaw = payload['urls'];
 
     final userModel = AdminAuthUserModel.fromJson(user);
-    final accessToken = tokens['accessToken'] as String? ?? '';
-    final refreshToken = tokens['refreshToken'] as String? ?? '';
+    final accessToken = _readString(
+      tokens,
+      const ['accessToken', 'access', 'access_token'],
+    ) ??
+        '';
+    final refreshToken = _readString(
+      tokens,
+      const ['refreshToken', 'refresh', 'refresh_token'],
+    ) ??
+        '';
 
     return AdminLoginResultModel._(
       session: AdminAuthSession(
@@ -223,6 +234,55 @@ class AdminLoginResultModel {
             : null,
       ),
     );
+  }
+
+  static Map<String, dynamic> _unwrapPayload(Map<String, dynamic> json) {
+    final nestedData = json['data'];
+    if (nestedData is Map<String, dynamic>) {
+      return _unwrapPayload(nestedData);
+    }
+
+    final nestedResult = json['result'];
+    if (nestedResult is Map<String, dynamic>) {
+      return _unwrapPayload(nestedResult);
+    }
+
+    final nestedPayload = json['payload'];
+    if (nestedPayload is Map<String, dynamic>) {
+      return _unwrapPayload(nestedPayload);
+    }
+
+    return json;
+  }
+
+  static Map<String, dynamic> _readMap(
+    Map<String, dynamic> json,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is Map<String, dynamic>) {
+        return value;
+      }
+    }
+    return const {};
+  }
+
+  static String? _readString(
+    Map<String, dynamic> json,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value == null) {
+        continue;
+      }
+      final resolved = value is String ? value.trim() : value.toString().trim();
+      if (resolved.isNotEmpty) {
+        return resolved;
+      }
+    }
+    return null;
   }
 
   AdminLoginOutcome toOutcome() {

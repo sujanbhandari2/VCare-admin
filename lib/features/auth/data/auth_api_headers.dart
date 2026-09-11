@@ -19,6 +19,18 @@ class AuthApiHeaders {
     };
   }
 
+  static Future<Map<String, String>> biometric({
+    required StorageService storage,
+    String? userType,
+  }) async {
+    final deviceId = await getOrCreateDeviceId(storage);
+    return {
+      if (userType != null && userType.trim().isNotEmpty)
+        'X-User-Type': userType.trim().toUpperCase(),
+      'X-Device-Id': deviceId,
+    };
+  }
+
   /// Agent headers, optionally including a durable `x-device-id` for 2FA trust.
   static Future<Map<String, String>> agentWith({
     StorageService? storage,

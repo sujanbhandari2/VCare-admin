@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/features/auth/data/repositories/admin_auth_session_store.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 
 import '../../../../fixtures/repository_fixtures.dart';
 import '../../../../helpers/in_memory_storage_service.dart';
@@ -13,7 +14,13 @@ void main() {
 
     setUp(() {
       storage = InMemoryStorageService();
-      store = AdminAuthSessionStore(storage);
+      store = AdminAuthSessionStore(
+        storage,
+        tokenStore: AuthSecureTokenStore(
+          storage: storage,
+          secureStore: InMemorySecureKvStore(),
+        ),
+      );
     });
 
     test('saveSession persists tokens, user, menu, and urls', () async {

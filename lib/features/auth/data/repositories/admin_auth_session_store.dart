@@ -3,20 +3,26 @@ import 'dart:convert';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/features/auth/data/models/admin_login_result_model.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/admin_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/app_urls.dart';
 
 class AdminAuthSessionStore {
-  const AdminAuthSessionStore(this._storage);
+  AdminAuthSessionStore(
+    this._storage, {
+    AuthSecureTokenStore? tokenStore,
+  }) : _tokenStore = tokenStore ?? AuthSecureTokenStore(storage: _storage);
 
   final StorageService _storage;
+  final AuthSecureTokenStore _tokenStore;
+
+  AuthSecureTokenStore get tokenStore => _tokenStore;
 
   Future<void> saveSession(AdminAuthSession session) async {
-    await _storage.set(StorageKeys.loggedInUserToken, session.accessToken);
-    await _storage.set(
-      StorageKeys.loggedInUserRefreshToken,
-      session.refreshToken,
+    await _tokenStore.save(
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
     );
     await _storage.set(
       StorageKeys.loggedInUserProfileId,
@@ -89,8 +95,10 @@ class AdminAuthSessionStore {
     required String accessToken,
     required String refreshToken,
   }) async {
-    await _storage.set(StorageKeys.loggedInUserToken, accessToken);
-    await _storage.set(StorageKeys.loggedInUserRefreshToken, refreshToken);
+    await _tokenStore.save(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
     await _storage.set(
       StorageKeys.tokenRefreshedDate,
       DateTime.now().toIso8601String(),
@@ -109,7 +117,12 @@ class AdminAuthSessionStore {
   }
 
   Future<void> clearSession() async {
+    await _tokenStore.clear();
     for (final key in adminSessionStorageKeys) {
+      if (key == StorageKeys.loggedInUserToken ||
+          key == StorageKeys.loggedInUserRefreshToken) {
+        continue;
+      }
       await _storage.remove(key);
     }
   }

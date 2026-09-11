@@ -24,7 +24,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
     required String email,
     required String password,
     CancelToken? cancelToken,
-    void Function(AdminAuthSession session)? onAuthenticated,
+    Future<void> Function(AdminAuthSession session)? onAuthenticated,
     void Function(String? error)? onError,
   }) async {
     await _login(
@@ -40,7 +40,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
   Future<void> submitTenant({
     required String tenantSlug,
     CancelToken? cancelToken,
-    void Function(AdminAuthSession session)? onAuthenticated,
+    Future<void> Function(AdminAuthSession session)? onAuthenticated,
     void Function(String? error)? onError,
   }) async {
     final email = state.storedEmail;
@@ -65,7 +65,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
     required String otp,
     bool rememberMe = false,
     CancelToken? cancelToken,
-    void Function(AdminAuthSession session)? onAuthenticated,
+    Future<void> Function(AdminAuthSession session)? onAuthenticated,
     void Function(String? error)? onError,
   }) async {
     final challengeToken = state.challengeToken?.trim();
@@ -106,7 +106,9 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
         ref.invalidate(userLoggedInStateProvider);
         // Keep isSubmitting true until navigation finishes so the UI does not
         // flash back to the credentials form between verify and home.
-        onAuthenticated?.call(session);
+        if (onAuthenticated != null) {
+          await onAuthenticated(session);
+        }
         if (ref.mounted) {
           state = const AdminLoginState();
         }
@@ -192,7 +194,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
     String? tenantSlug,
     CancelToken? cancelToken,
     required bool storeCredentials,
-    void Function(AdminAuthSession session)? onAuthenticated,
+    Future<void> Function(AdminAuthSession session)? onAuthenticated,
     void Function(String? error)? onError,
   }) async {
     if (_requestCompleter != null && !_requestCompleter!.isCompleted) {
@@ -259,7 +261,9 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
             ref.invalidate(userLoggedInStateProvider);
             // Keep isSubmitting true until navigation finishes so the UI does
             // not flash back to the credentials form between auth and home.
-            onAuthenticated?.call(session);
+            if (onAuthenticated != null) {
+              await onAuthenticated(session);
+            }
             if (ref.mounted) {
               state = const AdminLoginState();
             }

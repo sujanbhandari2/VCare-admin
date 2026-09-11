@@ -12,6 +12,8 @@ import 'package:vcare_admin/features/auth/presentation/widgets/admin_auth_brand_
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_login_form.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_tenant_picker.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_two_factor_form.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/providers/biometric_login_state_provider.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/widgets/biometric_login_prompt_sheet.dart';
 import 'package:vcare_admin/features/home/data/vcare_assets.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/tenant_branding/presentation/providers/tenant_branding_state_provider.dart';
@@ -35,7 +37,10 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       final session = ref.read(adminAuthSessionProvider);
       if (session.isAuthenticated && mounted) {
         startAuthenticatedRouterSession(ref);
+        return;
       }
+
+      ref.read(biometricLoginStateProvider.notifier).refreshStatus();
     });
   }
 
@@ -72,6 +77,79 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     context.showVcareToast(
       title: message,
       variant: VcareToastVariant.destructive,
+    );
+  }
+
+  Future<void> _handleBiometricEnrollmentPrompt() async {
+    final session = ref.read(adminAuthSessionProvider);
+    final accountId = session.user?.id.trim() ?? '';
+    final biometricLabel =
+        ref.read(biometricLoginStateProvider).status?.displayType ??
+        'Biometric';
+    final shouldEnroll = await showBiometricPromptSheet(
+      context,
+      title: biometricLabel == 'Face ID'
+          ? 'Enable Face ID?'
+          : 'Enable fingerprint?',
+      description:
+          'Use $biometricLabel to sign in faster next time. You can still keep using your password.',
+      primaryLabel: 'Enable $biometricLabel',
+      secondaryLabel: 'Skip',
+      biometricLabel: biometricLabel,
+      onPrimaryPressed: () async {
+        await ref.read(biometricLoginStateProvider.notifier).enroll(
+              accessToken: session.accessToken ?? '',
+              accountId: accountId,
+              accountEmail: session.user?.email,
+              onError: (message) {
+                if (message == null || !mounted) {
+                  return;
+                }
+                context.showVcareToast(
+                  title: 'Biometric enrollment failed',
+                  description: message,
+                  variant: VcareToastVariant.destructive,
+                );
+              },
+            );
+      },
+    );
+
+    if (shouldEnroll != true) {
+      return;
+    }
+  }
+
+  Future<void> _loginWithBiometric() async {
+    await ref.read(biometricLoginStateProvider.notifier).login(
+          onAuthenticated: (_) async {
+            _handleAuthenticated();
+          },
+          onError: (message) {
+            if (message == null || !mounted) {
+              return;
+            }
+            _showLoginError(message);
+          },
+        );
+  }
+
+  Future<void> _promptBiometricLogin() async {
+    final biometricLabel =
+        ref.read(biometricLoginStateProvider).status?.displayType ??
+        'Biometric';
+
+    await showBiometricPromptSheet(
+      context,
+      title: biometricLabel == 'Face ID'
+          ? 'Align your face to sign in'
+          : 'Use fingerprint to sign in',
+      description:
+          'Confirm with $biometricLabel to continue. We’ll handle the rest for you.',
+      primaryLabel: 'Continue',
+      secondaryLabel: 'Cancel',
+      biometricLabel: biometricLabel,
+      onPrimaryPressed: _loginWithBiometric,
     );
   }
 
@@ -121,6 +199,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     AdminLoginState loginState,
     String? logoUrl,
   ) {
+    final biometricState = ref.watch(biometricLoginStateProvider);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
@@ -159,13 +238,20 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
               switch (loginState.phase) {
                 AdminLoginPhase.credentials => AdminLoginForm(
                     isSubmitting: loginState.isSubmitting,
+                    biometricAvailable: biometricState.isActive,
+                    biometricLoading: biometricState.loading,
+                    onBiometricPressed: biometricState.isActive
+                        ? _promptBiometricLogin
+                        : null,
                     onSubmit: (email, password) {
                       ref
                           .read(adminLoginStateProvider.notifier)
                           .submitCredentials(
                             email: email,
                             password: password,
-                            onAuthenticated: (_) => _handleAuthenticated(),
+                            onAuthenticated: (_) async {
+                              _handleAuthenticated();
+                            },
                             onError: (_) {},
                           );
                     },
@@ -181,7 +267,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     onContinue: (tenantSlug) {
                       ref.read(adminLoginStateProvider.notifier).submitTenant(
                             tenantSlug: tenantSlug,
-                            onAuthenticated: (_) => _handleAuthenticated(),
+                            onAuthenticated: (_) async {
+                              _handleAuthenticated();
+                            },
                             onError: (_) {},
                           );
                     },
@@ -220,7 +308,10 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           .verifyTwoFactor(
                             otp: otp,
                             rememberMe: rememberMe,
-                            onAuthenticated: (_) => _handleAuthenticated(),
+                            onAuthenticated: (_) async {
+                              await _handleBiometricEnrollmentPrompt();
+                              _handleAuthenticated();
+                            },
                             onError: (_) {},
                           );
                     },
