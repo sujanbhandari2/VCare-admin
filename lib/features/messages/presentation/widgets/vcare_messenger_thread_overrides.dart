@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
+import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_state.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_thread_composer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 
@@ -15,7 +17,11 @@ enum _ThreadOverflowAction {
 }
 
 /// Builds [MessengerThreadViewOverrides] for VCare Live Chat conversation UI.
-MessengerThreadViewOverrides vcareMessengerThreadOverrides(BuildContext context) {
+MessengerThreadViewOverrides vcareMessengerThreadOverrides(
+  BuildContext context, {
+  MessengerComposerEditDraft? composerEditDraft,
+  VoidCallback? onCancelComposerEdit,
+}) {
   return MessengerThreadViewOverrides(
     headerBuilder: _buildHeader,
     messageContentBuilders: MessengerMessageContentBuilders(
@@ -28,7 +34,11 @@ MessengerThreadViewOverrides vcareMessengerThreadOverrides(BuildContext context)
       deletedBuilder: _buildDeletedContent,
       uploadingBuilder: _buildUploadingContent,
     ),
-    composerBuilder: (context, data) => VcareMessengerThreadComposer(data: data),
+    composerBuilder: (context, data) => VcareMessengerThreadComposer(
+      data: data,
+      editDraft: composerEditDraft,
+      onCancelEditDraft: onCancelComposerEdit,
+    ),
   );
 }
 
@@ -39,40 +49,76 @@ Widget _buildHeader(BuildContext context, MessengerThreadHeaderData data) {
   }
 
   final overflow = _buildOverflowAction(context, data, conversation);
-  final avatarUrl = conversation.avatarUrl?.trim();
-  final showOnlinePresence =
-      !conversation.isGroup && conversation.isOnline != null;
-  final showAvatar = !conversation.isGroup;
+  final roleLabel = _directConversationRoleLabel(conversation);
+  final headerAvatarUrl = _conversationHeaderAvatarUrl(conversation);
 
-  return VcareStickyPageHeader(
-    title: conversation.title,
-    subtitle: conversation.isGroup
-        ? 'Shared care-team conversation'
-        : showOnlinePresence
-            ? (conversation.isOnline! ? 'Online' : 'Offline')
-            : null,
-    leading: showAvatar
-        ? VcareMessengerAvatar(
-            displayTitle: conversation.title,
-            imageUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : null,
-            size: 40,
-            borderRadius: 12,
-            showOnlineIndicator: showOnlinePresence,
-            isOnline: conversation.isOnline ?? false,
-          )
-        : null,
-    showBack: data.isMobile,
-    onBack: data.onBack,
-    showBell: conversation.isGroup && data.onEditGroupConversation != null,
-    onBellTap: conversation.isGroup && data.onEditGroupConversation != null
-        ? () => unawaited(
-              Future<void>.sync(
-                () => data.onEditGroupConversation!(conversation),
-              ),
-            )
-        : null,
-    action: overflow,
+  return VcarePinnedHeaderChrome(
+    child: VcarePageHeader(
+      title: conversation.title,
+      titleMaxLines: 2,
+      titleStyle: VcarePageHeaderLayout.titleTextStyle(context).copyWith(
+        fontSize: 16,
+        height: 1.2,
+        letterSpacing: -0.1,
+      ),
+      titleLeading: VcareMessengerPresenceAvatar(
+        displayTitle: conversation.title,
+        imageUrl: headerAvatarUrl,
+        isGroup: conversation.isGroup,
+        isOnline: conversation.isOnline ?? false,
+        showOnlinePresence: !conversation.isGroup,
+        size: 40,
+        borderRadius: 14,
+      ),
+      subtitle: conversation.isGroup ? 'Shared care-team conversation' : null,
+      subtitleWidget: roleLabel.isEmpty
+          ? null
+          : VcareMessengerRoleBadge(roleLabel: roleLabel, compact: true),
+      showBack: data.isMobile,
+      onBack: data.onBack,
+      showBell: conversation.isGroup && data.onEditGroupConversation != null,
+      onBellTap: conversation.isGroup && data.onEditGroupConversation != null
+          ? () => unawaited(
+                Future<void>.sync(
+                  () => data.onEditGroupConversation!(conversation),
+                ),
+              )
+          : null,
+      action: overflow,
+    ),
   );
+}
+
+/// Direct chats only show a photo when [MessengerConversation.avatarUrl] (or a
+/// peer avatar) is present; groups keep the shared Users icon.
+String? _conversationHeaderAvatarUrl(MessengerConversation conversation) {
+  if (conversation.isGroup) {
+    return null;
+  }
+  final direct = conversation.avatarUrl?.trim();
+  if (direct != null && direct.isNotEmpty) {
+    return direct;
+  }
+  for (final peer in conversation.peerUsers) {
+    final peerAvatar = peer.avatarUrl?.trim();
+    if (peerAvatar != null && peerAvatar.isNotEmpty) {
+      return peerAvatar;
+    }
+  }
+  return null;
+}
+
+String _directConversationRoleLabel(MessengerConversation conversation) {
+  if (conversation.isGroup) {
+    return '';
+  }
+  for (final user in conversation.peerUsers) {
+    final role = user.roleLabel.trim();
+    if (role.isNotEmpty) {
+      return role;
+    }
+  }
+  return '';
 }
 
 Widget? _buildOverflowAction(
@@ -116,7 +162,7 @@ Widget? _buildOverflowAction(
   }
 
   return PopupMenuButton<_ThreadOverflowAction>(
-    icon: const Icon(LucideIcons.moreVertical, size: 22),
+    icon: Icon(LucideIcons.moreVertical, size: 22, color: VCareColors.foreground),
     itemBuilder: (_) => items,
     onSelected: (action) {
       unawaited(_onOverflowSelected(context, data, conversation, action));
@@ -221,7 +267,7 @@ class _VcareDeleteChatDialogState extends State<_VcareDeleteChatDialog> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: context.vcare.destructive,
+              backgroundColor: VCareColors.destructive,
             ),
             onPressed: _deleting ? null : () => unawaited(_onDeletePressed()),
             child: _deleting

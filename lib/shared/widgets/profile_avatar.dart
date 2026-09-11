@@ -25,6 +25,7 @@ class ProfileAvatar extends StatelessWidget {
     this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
+    this.backgroundColor,
     this.onPhotoError,
   });
 
@@ -38,6 +39,7 @@ class ProfileAvatar extends StatelessWidget {
   final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
+  final Color? backgroundColor;
   final VoidCallback? onPhotoError;
 
   @override
@@ -62,6 +64,7 @@ class ProfileAvatar extends StatelessWidget {
                 initialsFontWeight: initialsFontWeight,
                 emptyIconSize: emptyIconSize,
                 initialsColor: initialsColor,
+                backgroundColor: backgroundColor,
                 onPhotoError: onPhotoError,
               )
             : _InitialsAvatar(
@@ -71,6 +74,7 @@ class ProfileAvatar extends StatelessWidget {
                 initialsFontWeight: initialsFontWeight,
                 emptyIconSize: emptyIconSize,
                 initialsColor: initialsColor,
+                backgroundColor: backgroundColor,
               ),
       ),
     );
@@ -88,6 +92,7 @@ class _ProfilePhoto extends StatefulWidget {
     this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
+    this.backgroundColor,
     this.onPhotoError,
   });
 
@@ -100,6 +105,7 @@ class _ProfilePhoto extends StatefulWidget {
   final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
+  final Color? backgroundColor;
   final VoidCallback? onPhotoError;
 
   @override
@@ -134,6 +140,7 @@ class _ProfilePhotoState extends State<_ProfilePhoto> {
       initialsFontWeight: widget.initialsFontWeight,
       emptyIconSize: widget.emptyIconSize,
       initialsColor: widget.initialsColor,
+      backgroundColor: widget.backgroundColor,
     );
     final loadingPlaceholder = _AvatarShimmerPlaceholder(
       size: widget.size,
@@ -245,6 +252,7 @@ class _InitialsAvatar extends StatelessWidget {
     this.initialsFontWeight,
     this.emptyIconSize,
     this.initialsColor,
+    this.backgroundColor,
   });
 
   final String name;
@@ -253,6 +261,7 @@ class _InitialsAvatar extends StatelessWidget {
   final FontWeight? initialsFontWeight;
   final double? emptyIconSize;
   final Color? initialsColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +269,7 @@ class _InitialsAvatar extends StatelessWidget {
     final initials = profileInitials(name);
 
     return ColoredBox(
-      color: vcare.muted,
+      color: backgroundColor ?? vcare.muted,
       child: Center(
         child: initials.isEmpty
             ? Icon(

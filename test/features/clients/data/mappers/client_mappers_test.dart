@@ -313,8 +313,27 @@ void main() {
         'https://dev-api-v4.vitafyhealth.com/api/test/pexels-gamze-altinsoy-157458220-11123835.jpg',
       );
       expect(entity.mime, 'image/jpeg');
-      expect(entity.size, '—');
+      expect(entity.size, '');
       expect(entity.uploadedAt, '2026-06-25T06:15:24.432Z');
+      expect(entity.previewLink, isNull);
+      expect(entity.viewUrl, entity.url);
+    });
+
+    test('ClientDocumentModel prefers presigned previewLink for viewing', () {
+      final entity = ClientDocumentModel.fromJson({
+        'id': 'fbe1696e-2f2b-45af-9467-d31026a69dba',
+        'name': 'insurance-card.jpg',
+        'url': 'test/insurance-card.jpg',
+        'previewLink':
+            'https://vitafy-files.s3.amazonaws.com/test/insurance-card.jpg?X-Amz-Signature=abc',
+        'createdAt': '2026-06-25T06:15:24.432Z',
+      }).toEntity(hostBaseUrl: 'https://dev-api-v4.vitafyhealth.com/');
+
+      expect(
+        entity.previewLink,
+        'https://vitafy-files.s3.amazonaws.com/test/insurance-card.jpg?X-Amz-Signature=abc',
+      );
+      expect(entity.viewUrl, entity.previewLink);
     });
   });
 }

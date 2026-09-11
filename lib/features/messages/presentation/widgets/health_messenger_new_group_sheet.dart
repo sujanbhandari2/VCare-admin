@@ -3,19 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
-import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
 
 class HealthMessengerNewGroupSheet extends ConsumerStatefulWidget {
-  const HealthMessengerNewGroupSheet({super.key});
+  const HealthMessengerNewGroupSheet({
+    super.key,
+    this.onCreateGroupRequested,
+  });
 
-  static Future<void> show(BuildContext context) {
+  /// Shell-provided create handler (creates group + pushes mobile thread).
+  final Future<void> Function(MessengerGroupCreateRequest request)?
+      onCreateGroupRequested;
+
+  static Future<void> show(
+    BuildContext context, {
+    Future<void> Function(MessengerGroupCreateRequest request)?
+        onCreateGroupRequested,
+  }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => const HealthMessengerNewGroupSheet(),
+      builder: (context) => HealthMessengerNewGroupSheet(
+        onCreateGroupRequested: onCreateGroupRequested,
+      ),
     );
   }
 
@@ -92,13 +106,20 @@ class _HealthMessengerNewGroupSheetState
         ? _defaultGroupName(selected)
         : _nameController.text.trim();
 
+    final request = MessengerGroupCreateRequest(
+      selectedUsers: selected,
+      groupName: name,
+    );
+    final createGroup = widget.onCreateGroupRequested;
     Navigator.of(context).pop();
-    await ref.read(healthMessengerChatProvider.notifier).createGroupChatFromRequest(
-          MessengerGroupCreateRequest(
-            selectedUsers: selected,
-            groupName: name,
-          ),
-        );
+    if (createGroup != null) {
+      // Use the shell callback so mobile also pushes the conversation route.
+      await createGroup(request);
+      return;
+    }
+    await ref
+        .read(healthMessengerChatProvider.notifier)
+        .createGroupChatFromRequest(request);
   }
 
   @override
@@ -112,82 +133,83 @@ class _HealthMessengerNewGroupSheetState
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'New group',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'New group',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: Icon(LucideIcons.x, color: vcare.mutedForeground),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(LucideIcons.x, color: vcare.mutedForeground),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              hintText: 'Group name (optional)',
-              filled: true,
-              fillColor: vcare.muted.withValues(alpha: 0.4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: vcare.border),
-              ),
-            ),
-          ),
-        ),
-        if (selected.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-            child: SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: selected.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final user = selected[index];
-                  return _SelectedChip(
-                    user: user,
-                    onRemove: () => _toggle(user.id),
-                  );
-                },
-              ),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-          child: TextField(
-            controller: _queryController,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              hintText: 'Search people',
-              prefixIcon: Icon(
-                LucideIcons.search,
-                color: vcare.mutedForeground,
-              ),
-              filled: true,
-              fillColor: vcare.muted.withValues(alpha: 0.4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: vcare.border),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      hintText: 'Group name (optional)',
+                      filled: true,
+                      fillColor: vcare.muted.withValues(alpha: 0.4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: vcare.border),
+                      ),
+                    ),
+                  ),
+                ),
+                if (selected.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+                    child: SizedBox(
+                      height: 40,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: selected.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final user = selected[index];
+                          return _SelectedChip(
+                            user: user,
+                            onRemove: () => _toggle(user.id),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                  child: TextField(
+                    controller: _queryController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: 'Search people',
+                      prefixIcon: Icon(
+                        LucideIcons.search,
+                        color: vcare.mutedForeground,
+                      ),
+                      filled: true,
+                      fillColor: vcare.muted.withValues(alpha: 0.4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: vcare.border),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
                   child: isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : filtered.isEmpty
@@ -233,26 +255,44 @@ class _HealthMessengerNewGroupSheetState
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                displayName,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
+                                              Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      displayName,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  if (user.roleLabel
+                                                      .trim()
+                                                      .isNotEmpty) ...[
+                                                    const SizedBox(width: 6),
+                                                    VcareMessengerRoleBadge(
+                                                      roleLabel:
+                                                          user.roleLabel,
+                                                      compact: true,
+                                                    ),
+                                                  ],
+                                                ],
                                               ),
-                                              if (user.roleLabel
-                                                  .trim()
-                                                  .isNotEmpty)
+                                              if (user.email.trim().isNotEmpty)
                                                 Text(
-                                                  user.roleLabel.trim(),
+                                                  user.email.trim(),
                                                   style: TextStyle(
                                                     fontSize: 12,
-                                                    color: vcare.mutedForeground,
+                                                    color:
+                                                        vcare.mutedForeground,
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                             ],
                                           ),
@@ -264,11 +304,11 @@ class _HealthMessengerNewGroupSheetState
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: isSelected
-                                                ? context.vcare.primary
+                                                ? VCareColors.primary
                                                 : Colors.transparent,
                                             border: Border.all(
                                               color: isSelected
-                                                  ? context.vcare.primary
+                                                  ? VCareColors.primary
                                                   : vcare.border,
                                               width: 1.5,
                                             ),
@@ -289,35 +329,35 @@ class _HealthMessengerNewGroupSheetState
                             );
                           },
                         ),
-        ),
-        Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: vcare.border)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${selected.length} selected',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: vcare.mutedForeground,
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: vcare.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${selected.length} selected',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: vcare.mutedForeground,
+                          ),
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: canCreate ? _create : null,
+                        child: const Text('Create group'),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: canCreate ? _create : null,
-                child: const Text('Create group'),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

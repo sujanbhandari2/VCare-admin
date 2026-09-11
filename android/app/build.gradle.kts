@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.vcare.admin"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     flavorDimensions += "flavor"
@@ -18,25 +18,25 @@ android {
     productFlavors {
         create("dev") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare Admin - Dev")
+            resValue("string", "app_name", "Vitafy Admin - Dev")
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
         }
         create("qa") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare Admin - QA")
+            resValue("string", "app_name", "Vitafy Admin - QA")
             applicationIdSuffix = ".qa"
             versionNameSuffix = "-qa"
         }
         create("uat") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare Admin - UAT")
+            resValue("string", "app_name", "Vitafy Admin - UAT")
             applicationIdSuffix = ".uat"
             versionNameSuffix = "-uat"
         }
         create("prod") {
             dimension = "flavor"
-            resValue("string", "app_name", "VCare Admin")
+            resValue("string", "app_name", "Vitafy Admin")
         }
     }
 
@@ -58,7 +58,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 37
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
@@ -75,6 +75,7 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("androidx.biometric:biometric:1.1.0")
 }
 
 flutter {

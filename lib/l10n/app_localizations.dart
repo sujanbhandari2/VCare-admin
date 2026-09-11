@@ -103,25 +103,25 @@ abstract class AppLocalizations {
   /// No description provided for @app_name.
   ///
   /// In en, this message translates to:
-  /// **'VCare client'**
+  /// **'Vitafy Admin'**
   String get app_name;
 
   /// No description provided for @app_name_dev.
   ///
   /// In en, this message translates to:
-  /// **'VCare client - Dev'**
+  /// **'Vitafy Admin - Dev'**
   String get app_name_dev;
 
   /// No description provided for @app_name_qa.
   ///
   /// In en, this message translates to:
-  /// **'VCare client - QA'**
+  /// **'Vitafy Admin - QA'**
   String get app_name_qa;
 
   /// No description provided for @app_name_uat.
   ///
   /// In en, this message translates to:
-  /// **'VCare client - UAT'**
+  /// **'Vitafy Admin - UAT'**
   String get app_name_uat;
 
   /// No description provided for @tab_home.

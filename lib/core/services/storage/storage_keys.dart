@@ -21,6 +21,7 @@ class StorageKeys {
 
   /// Stable install device id for 2FA remember-device (survives logout).
   static const String deviceId = 'vcare.device-id';
+  static const String biometricCredential = 'vcare.biometric.credential.v1';
   static const String locale = 'language_locale';
   static const String themeSeedColor = 'theme_seed_color';
   static const String themeMode = 'theme_mode';

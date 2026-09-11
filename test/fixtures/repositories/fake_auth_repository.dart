@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_login_outcome.dart';
@@ -18,6 +19,10 @@ import '../repository_fixtures.dart';
 class FakeAuthRepository implements AuthRepository {
   EitherResponseOrException<AdminLoginOutcome> adminLoginResult = Success(
     AdminLoginAuthenticated(RepositoryFixtures.adminAuthSession()),
+  );
+  EitherResponseOrException<int> adminSend2faResult = const Success(600);
+  EitherResponseOrException<AdminAuthSession> adminVerify2faResult = Success(
+    RepositoryFixtures.adminAuthSession(),
   );
   EitherResponseOrException<AuthRefreshTokens> refreshAuthTokensResult =
       Success(
@@ -74,6 +79,10 @@ class FakeAuthRepository implements AuthRepository {
   String? lastAdminLoginEmail;
   String? lastAdminLoginPassword;
   String? lastAdminLoginTenantSlug;
+  String? lastAdminSend2faChallengeToken;
+  String? lastAdminVerify2faChallengeToken;
+  String? lastAdminVerify2faOtp;
+  bool? lastAdminVerify2faRememberMe;
   String? lastLogoutRefreshToken;
 
   Map<String, dynamic>? lastLoginPayloads;
@@ -118,6 +127,28 @@ class FakeAuthRepository implements AuthRepository {
     lastAdminLoginPassword = password;
     lastAdminLoginTenantSlug = tenantSlug;
     return adminLoginResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<int>> adminSend2fa({
+    required String challengeToken,
+    CancelToken? cancelToken,
+  }) async {
+    lastAdminSend2faChallengeToken = challengeToken;
+    return adminSend2faResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<AdminAuthSession>> adminVerify2fa({
+    required String challengeToken,
+    required String otp,
+    bool rememberMe = false,
+    CancelToken? cancelToken,
+  }) async {
+    lastAdminVerify2faChallengeToken = challengeToken;
+    lastAdminVerify2faOtp = otp;
+    lastAdminVerify2faRememberMe = rememberMe;
+    return adminVerify2faResult;
   }
 
   @override

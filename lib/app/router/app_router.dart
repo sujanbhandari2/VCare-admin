@@ -12,8 +12,10 @@ import 'package:vcare_admin/features/cases/presentation/pages/case_create_screen
 import 'package:vcare_admin/features/cases/presentation/pages/case_detail_screen.dart';
 import 'package:vcare_admin/features/cases/presentation/pages/cases_screen.dart';
 import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
+import 'package:vcare_admin/features/clients/presentation/pages/client_case_create_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/client_detail_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/pages/clients_screen.dart';
+import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
 import 'package:vcare_admin/features/find_care/domain/entities/medicare_provider_lookup_row.dart';
 import 'package:vcare_admin/features/find_care/presentation/pages/find_care_category_screen.dart';
 import 'package:vcare_admin/features/find_care/presentation/pages/find_care_screen.dart';
@@ -62,6 +64,7 @@ class AppRouter {
   static const home = "/home";
   static const clients = "/clients";
   static const clientDetail = "/clients/:id";
+  static const clientCaseCreate = "/clients/:id/cases/create";
   // Mock advocate requests replaced by Cases tab — constants kept commented
   // for reference if deep-links need restoration.
   // static const requests = "/requests";
@@ -124,6 +127,7 @@ class AppRouter {
   static const savedProvidersName = "saved-providers";
   static const clientsName = "clients";
   static const clientDetailName = "client-detail";
+  static const clientCaseCreateName = "client-case-create";
   // static const requestNewName = "request-new";
   // static const requestDetailName = "request-detail";
   static const caseCreateName = "case-create";
@@ -294,6 +298,22 @@ class AppRouter {
                             : ClientListType.individual,
                       ),
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'cases/create',
+                        name: clientCaseCreateName,
+                        pageBuilder: (_, state) => _pageBuilder(
+                          state: state,
+                          transitionType: TransitionType.slide,
+                          child: ClientCaseCreateScreen(
+                            clientId: state.pathParameters['id'] ?? '',
+                            prefillClient: state.extra is CaseCreationClient
+                                ? state.extra as CaseCreationClient
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

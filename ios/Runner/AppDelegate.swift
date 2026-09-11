@@ -18,6 +18,9 @@ import flutter_local_notifications
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    BiometricCryptoChannel.register(
+      messenger: engineBridge.applicationRegistrar.messenger()
+    )
 
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate

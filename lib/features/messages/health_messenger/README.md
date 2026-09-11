@@ -2,17 +2,17 @@
 
 This folder hosts the **Messages** tab integration with the local `health_messenger_ui` package (`chat_app_package`). Production UX is **Live Chat** (`LiveChatScreen`); the older mock `MessagesScreen` remains in-tree but is no longer routed from the bottom nav.
 
-Bootstrap role defaults to **`AGENT`** when no admin role is available (client app uses `CLIENT`).
+Bootstrap role defaults to **`AGENT`** (client app uses `CLIENT`).
 
-Identity for chat bootstrap (aligned with admin web identify):
+Identity for chat bootstrap:
 
 | Field | Source |
 |-------|--------|
 | API / socket / key | `.env` via `HealthMessengerEnv` |
-| `externalTenantId` | Prefer `adminAuthSessionProvider.user.currentTenant.id`, then `auth/me` tenant, then `StorageKeys.loggedInUserTenantId` (+ flavor prefix) |
-| `externalUserId` | Prefer `StorageKeys.loggedInUserUuid` (set on admin login + `auth/me`), then admin session `user.id`, then `loggedInUserProfileId`, then legacy int id |
-| `email` / display name | Auth storage, then admin session, then optional `UserProfile` |
-| `externalUserRole` | Prefer `adminAuthSessionProvider.user.currentRoles[0]`, else default `AGENT` |
+| `externalTenantId` | `user.currentTenant.id` from login / `auth/me` (+ flavor prefix) |
+| `externalUserId` | `StorageKeys.loggedInUserUuid` (from `auth/me` / login) |
+| `email` / display name | Auth storage + optional `UserProfile` |
+| `externalUserRole` | Default `AGENT` |
 
 Session lifecycle:
 

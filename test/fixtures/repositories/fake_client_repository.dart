@@ -121,17 +121,6 @@ class FakeClientRepository implements ClientRepository {
     null,
   );
 
-  EitherResponseOrException<ClientCase> createClientCaseResult = Success(
-    const ClientCase(
-      id: 'case-new',
-      caseId: 'CASENEW',
-      title: 'New case',
-      status: ClientCaseStatus.requested,
-      createdAt: '2026-06-25T11:29:06.803Z',
-      updatedAt: '2026-06-25T11:29:06.803Z',
-    ),
-  );
-
   String? lastUploadClientId;
   String? lastUploadFileName;
   List<int>? lastUploadBytes;
@@ -142,10 +131,6 @@ class FakeClientRepository implements ClientRepository {
   String? lastRenameDocumentId;
   String? lastRenameName;
   String? lastDeleteDocumentId;
-
-  String? lastCreateCaseClientId;
-  String? lastCreateCaseTitle;
-  String? lastCreateCaseDescription;
 
   ClientsListRequest? lastClientsRequest;
   bool? lastClientsForceRefresh;
@@ -329,19 +314,6 @@ class FakeClientRepository implements ClientRepository {
     lastCasesRequest = request;
     lastCasesForceRefresh = forceRefresh;
     return fetchCasesResult;
-  }
-
-  @override
-  Future<EitherResponseOrException<ClientCase>> createClientCase({
-    required String clientId,
-    required String title,
-    required String description,
-    CancelToken? cancelToken,
-  }) async {
-    lastCreateCaseClientId = clientId;
-    lastCreateCaseTitle = title;
-    lastCreateCaseDescription = description;
-    return createClientCaseResult;
   }
 
   @override

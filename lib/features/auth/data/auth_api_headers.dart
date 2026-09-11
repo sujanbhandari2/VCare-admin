@@ -9,6 +9,28 @@ class AuthApiHeaders {
 
   static const agent = {'x-user-type': 'AGENT'};
 
+  /// Admin headers with a durable device id for 2FA remember-device (web parity).
+  static Future<Map<String, String>> adminWithDeviceId(
+    StorageService storage,
+  ) async {
+    final deviceId = await getOrCreateDeviceId(storage);
+    return {
+      'X-Device-Id': deviceId,
+    };
+  }
+
+  static Future<Map<String, String>> biometric({
+    required StorageService storage,
+    String? userType,
+  }) async {
+    final deviceId = await getOrCreateDeviceId(storage);
+    return {
+      if (userType != null && userType.trim().isNotEmpty)
+        'X-User-Type': userType.trim().toUpperCase(),
+      'X-Device-Id': deviceId,
+    };
+  }
+
   /// Agent headers, optionally including a durable `x-device-id` for 2FA trust.
   static Future<Map<String, String>> agentWith({
     StorageService? storage,

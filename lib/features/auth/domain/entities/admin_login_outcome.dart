@@ -17,6 +17,16 @@ class AdminLoginTenantSelectionRequired extends AdminLoginOutcome {
   final List<TenantOption> tenants;
 }
 
+class AdminLoginTwoFactorRequired extends AdminLoginOutcome {
+  const AdminLoginTwoFactorRequired({
+    required this.challengeToken,
+    required this.expiresIn,
+  });
+
+  final String challengeToken;
+  final int expiresIn;
+}
+
 class AuthRefreshTokens {
   const AuthRefreshTokens({
     required this.accessToken,

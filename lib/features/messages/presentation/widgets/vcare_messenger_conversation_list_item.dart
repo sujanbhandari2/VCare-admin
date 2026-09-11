@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_role_badge.dart';
+
+/// Maps an available-person row to the shared list card payload.
+MessengerUserListItemData vcareMessengerListItemDataFromAvailablePerson(
+  MessengerAvailablePersonData data,
+) {
+  final user = data.user;
+  return MessengerUserListItemData(
+    user: user,
+    isSelected: false,
+    hasUnread: false,
+    isOpening: data.isOpening,
+    messagePreview: null,
+    onTap: data.onTap,
+    showOnlinePresence: false,
+    displayTitle: conversationListItemDisplayName(user.username),
+    subtitle: '',
+    roleLabel: user.roleLabel.trim(),
+  );
+}
 
 /// VCare-styled conversation list row for [MessengerChatShell.userListItemBuilder].
 class VcareMessengerConversationListItem extends StatelessWidget {
@@ -12,6 +32,7 @@ class VcareMessengerConversationListItem extends StatelessWidget {
     required this.data,
     required this.vcare,
     this.lastActivityAt,
+    this.unreadCount = 0,
   });
 
   final MessengerUserListItemData data;
@@ -19,6 +40,9 @@ class VcareMessengerConversationListItem extends StatelessWidget {
 
   /// Last activity time for conversation rows; drives the relative timestamp.
   final DateTime? lastActivityAt;
+
+  /// Unread message count for conversation rows (0 hides the badge).
+  final int unreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +53,11 @@ class VcareMessengerConversationListItem extends StatelessWidget {
         (data.isConversationRow && data.groupAvatarUsers.length > 1);
     // peerUsers excludes the current user; include self for total member count.
     final groupMemberCount = data.groupAvatarUsers.length + 1;
-    final roleLabel = data.roleLabel.trim().isNotEmpty
-        ? data.roleLabel.trim()
-        : data.user.roleLabel.trim();
+    final roleLabel = isGroupRow
+        ? ''
+        : (data.roleLabel.trim().isNotEmpty
+            ? data.roleLabel.trim()
+            : data.user.roleLabel.trim());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -55,13 +81,22 @@ class VcareMessengerConversationListItem extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              VcareMessengerAvatar(
-                displayTitle: data.displayTitle,
-                imageUrl: isGroupRow ? null : data.user.avatarUrl,
-                isGroup: isGroupRow,
-                showOnlineIndicator: data.showOnlinePresence && !isGroupRow,
-                isOnline: data.user.isOnline,
-              ),
+              if (data.showOnlinePresence && !isGroupRow)
+                VcareMessengerPresenceAvatar(
+                  displayTitle: data.displayTitle,
+                  // Active conversation rows: photo only when a URL is available.
+                  imageUrl: _nonEmptyAvatarUrl(data.user.avatarUrl),
+                  isGroup: false,
+                  isOnline: data.user.isOnline,
+                )
+              else
+                VcareMessengerAvatar(
+                  displayTitle: data.displayTitle,
+                  imageUrl: isGroupRow
+                      ? null
+                      : _nonEmptyAvatarUrl(data.user.avatarUrl),
+                  isGroup: isGroupRow,
+                ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -83,12 +118,12 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (!isGroupRow &&
-                                  VcareMessengerRoleBadge.shouldShow(
-                                    roleLabel,
-                                  )) ...[
+                              if (roleLabel.isNotEmpty) ...[
                                 const SizedBox(width: 6),
-                                VcareMessengerRoleBadge(roleLabel: roleLabel),
+                                VcareMessengerRoleBadge(
+                                  roleLabel: roleLabel,
+                                  compact: true,
+                                ),
                               ],
                             ],
                           ),
@@ -100,7 +135,7 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: context.vcare.primary.withValues(alpha: 0.8),
+                              color: VCareColors.primary.withValues(alpha: 0.8),
                             ),
                           ),
                         ],
@@ -128,9 +163,14 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                                 : preview,
                             style: TextStyle(
                               fontSize: 13,
-                              color: vcare.mutedForeground.withValues(
-                                alpha: 0.8,
-                              ),
+                              fontWeight: data.hasUnread
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                              color: data.hasUnread
+                                  ? VCareColors.foreground
+                                  : vcare.mutedForeground.withValues(
+                                      alpha: 0.8,
+                                    ),
                               height: 1.2,
                             ),
                             maxLines: 1,
@@ -146,25 +186,8 @@ class VcareMessengerConversationListItem extends StatelessWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           )
-                        else if (data.hasUnread)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: context.vcare.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              '1',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                        else if (data.hasUnread && unreadCount > 0)
+                          _UnreadCountBadge(count: unreadCount),
                       ],
                     ),
                   ],
@@ -176,6 +199,45 @@ class VcareMessengerConversationListItem extends StatelessWidget {
       ),
     );
   }
+}
+
+class _UnreadCountBadge extends StatelessWidget {
+  const _UnreadCountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = count > 99 ? '99+' : '$count';
+    final minWidth = count > 9 ? 28.0 : 24.0;
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      constraints: BoxConstraints(minWidth: minWidth, minHeight: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: VCareColors.primary,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+String? _nonEmptyAvatarUrl(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return null;
+  }
+  return trimmed;
 }
 
 /// Relative timestamp for the conversation list:

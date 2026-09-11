@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client.dart';
 import 'package:vcare_admin/features/clients/domain/entities/client_detail.dart';
 import 'package:vcare_admin/features/clients/domain/entities/clients_list_request.dart';
+import 'package:vcare_admin/features/clients/presentation/pages/client_case_create_screen.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_cases_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_dependents_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/client_detail_state_provider.dart';
@@ -231,6 +233,13 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
                 onLoadMore: () => ref
                     .read(clientCasesStateProvider(clientId).notifier)
                     .loadMore(),
+                onCreateCase: () {
+                  context.pushNamed(
+                    AppRouter.clientCaseCreateName,
+                    pathParameters: {'id': clientId},
+                    extra: caseCreationClientFromDetail(detail),
+                  );
+                },
               ),
               ClientDocumentsTab(
                 clientId: clientId,
@@ -298,7 +307,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
   }
 
   Future<void> _downloadDocument(BuildContext context, ClientFile file) async {
-    if (file.url.startsWith('data:')) {
+    final url = file.viewUrl;
+
+    if (url.startsWith('data:')) {
       if (!context.mounted) return;
       context.showVcareToast(
         title: 'File saved locally on this device.',
@@ -307,10 +318,9 @@ class _ClientDetailScreenState extends ConsumerState<ClientDetailScreen>
       return;
     }
 
-    final launched = await launchUrlString(
-      file.url,
-      mode: LaunchMode.externalApplication,
-    );
+    final launched = url.isUrl
+        ? await launchUrlString(url, mode: LaunchMode.externalApplication)
+        : false;
     if (!context.mounted) return;
     if (!launched) {
       context.showVcareToast(

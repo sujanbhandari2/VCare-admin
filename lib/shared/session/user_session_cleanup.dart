@@ -12,12 +12,14 @@ import 'package:vcare_admin/core/services/network/http_cache_utils.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 import 'package:vcare_admin/features/auth/domain/repositories/auth_repository.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/logged_in_user_id_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/logged_in_user_profile_id_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/providers/biometric_login_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_assignees_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_creation_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_detail_state_provider.dart';
@@ -37,6 +39,7 @@ import 'package:vcare_admin/features/clients/presentation/providers/clients_list
 import 'package:vcare_admin/features/commission/presentation/providers/commission_history_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_sales_history_state_provider.dart';
 import 'package:vcare_admin/features/commission/presentation/providers/commission_summary_state_provider.dart';
+import 'package:vcare_admin/features/feature_access/presentation/providers/feature_access_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/document_types_state_provider.dart';
 import 'package:vcare_admin/features/documents/presentation/providers/documents_list_state_provider.dart';
 import 'package:vcare_admin/features/find_care/presentation/providers/find_care_category_search_state_provider.dart';
@@ -120,7 +123,13 @@ Future<void> clearUserSessionStorage({
   // TODO: Re-enable when FCM device API is available.
   // await deregisterFcmDeviceBestEffort(storage: storage, apiBaseUrl: apiBaseUrl);
 
+  await AuthSecureTokenStore(storage: storage).clear();
+
   for (final key in _sessionStorageKeys) {
+    if (key == StorageKeys.loggedInUserToken ||
+        key == StorageKeys.loggedInUserRefreshToken) {
+      continue;
+    }
     await storage.remove(key);
   }
 
@@ -144,6 +153,7 @@ void invalidateUserScopedProviders({
     }
   }
 
+  invalidate(featureAccessStateProvider);
   invalidate(authMeStateProvider);
   invalidate(localProfileStateProvider);
   invalidate(userProfileStateProvider);
@@ -181,6 +191,7 @@ void invalidateUserScopedProviders({
   invalidate(providerFavoritesProvider);
   invalidate(networkFetchSessionProvider);
   invalidate(adminAuthSessionProvider);
+  invalidate(biometricLoginStateProvider);
 }
 
 /// Clears all user session data, caches, and in-memory provider state.

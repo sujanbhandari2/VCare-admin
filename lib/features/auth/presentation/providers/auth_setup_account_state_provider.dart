@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_setup_account_result.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
@@ -95,10 +96,9 @@ class AuthSetupAccountStateNotifier extends _$AuthSetupAccountStateNotifier {
     final storageService = ref.read(storageServiceProvider);
 
     if (session.access != null) {
-      await storageService.set(StorageKeys.loggedInUserToken, session.access);
-      await storageService.set(
-        StorageKeys.loggedInUserRefreshToken,
-        session.refresh,
+      await AuthSecureTokenStore(storage: storageService).save(
+        accessToken: session.access!,
+        refreshToken: session.refresh ?? '',
       );
       await storageService.set(StorageKeys.loggedInUserEmail, session.email);
       await storageService.set(

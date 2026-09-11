@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
@@ -56,11 +57,26 @@ abstract class AuthRepository {
     CancelToken? cancelToken,
   });
 
-  /// Admin console login — returns a session or tenant selection.
+  /// Admin console login — returns a session, tenant selection, or 2FA challenge.
   Future<EitherResponseOrException<AdminLoginOutcome>> adminLogin({
     required String email,
     required String password,
     String? tenantSlug,
+    CancelToken? cancelToken,
+  });
+
+  /// Resends the admin 2FA OTP for an active challenge.
+  /// Returns the updated code expiry in seconds.
+  Future<EitherResponseOrException<int>> adminSend2fa({
+    required String challengeToken,
+    CancelToken? cancelToken,
+  });
+
+  /// Completes admin login after 2FA OTP verification.
+  Future<EitherResponseOrException<AdminAuthSession>> adminVerify2fa({
+    required String challengeToken,
+    required String otp,
+    bool rememberMe = false,
     CancelToken? cancelToken,
   });
 

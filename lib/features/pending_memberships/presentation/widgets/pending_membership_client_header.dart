@@ -7,7 +7,7 @@ import 'package:vcare_admin/features/pending_memberships/utils/pending_membershi
 import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 
 /// Client banner at the top of the review sheet — parity with web
-/// `ApprovalClientProfileHeader` (primary band, overlapping avatar, meta chips).
+/// `ApprovalClientProfileHeader` (avatar, identity, meta chips).
 class PendingMembershipClientHeader extends StatelessWidget {
   const PendingMembershipClientHeader({
     super.key,
@@ -18,61 +18,94 @@ class PendingMembershipClientHeader extends StatelessWidget {
   final MembershipClient client;
   final Widget? trailing;
 
+  static const double _avatarSize = 72;
+  static const double _avatarRing = 3;
+
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     final address = client.formattedAddress;
     final identityNote = client.ssnLast4?.trim();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              ProfileAvatar(
-                name: client.displayName,
-                photoUrl: client.avatarUrl,
-                size: 56,
-                circular: true,
-                initialsFontSize: 18,
-                initialsFontWeight: FontWeight.w500,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: vcare.card,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(_avatarRing),
+                  child: ProfileAvatar(
+                    name: client.displayName,
+                    photoUrl: client.avatarUrl,
+                    size: _avatarSize,
+                    circular: true,
+                    initialsFontSize: 24,
+                    initialsFontWeight: FontWeight.w600,
+                    initialsColor: vcare.primary,
+                    backgroundColor: vcare.primaryScale.s100,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      client.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (client.email?.trim().isNotEmpty == true) ...[
-                      const SizedBox(height: 2),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        client.email!.trim(),
+                        client.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: vcare.mutedForeground,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (client.email?.trim().isNotEmpty == true) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          client.email!.trim(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: vcare.mutedForeground,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+              if (trailing != null) ...[
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: trailing!,
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Wrap(
             spacing: 12,
             runSpacing: 8,
             children: [
@@ -93,8 +126,8 @@ class PendingMembershipClientHeader extends StatelessWidget {
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

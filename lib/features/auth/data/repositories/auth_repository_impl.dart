@@ -17,6 +17,7 @@ import 'package:vcare_admin/core/services/storage/storage_service.dart';
 import 'package:vcare_admin/features/auth/data/auth_api_headers.dart';
 import 'package:vcare_admin/features/auth/data/mappers/auth_mappers.dart';
 import 'package:vcare_admin/features/auth/domain/admin_login_payload_builder.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_pre_auth_user.dart';
 import 'package:vcare_admin/features/auth/domain/entities/auth_identify_result.dart';
@@ -215,12 +216,13 @@ class AuthRepositoryImpl extends AuthRepository {
         tenantSlug: tenantSlug,
       );
 
+      final headers = await AuthApiHeaders.adminWithDeviceId(storage);
       final response = await apiClient.post(
         ApiEndpoints.login,
         JsonRequestBody(payload),
         cancelToken: cancelToken,
         isAuthenticated: false,
-        additionalHeaders: AuthApiHeaders.admin,
+        additionalHeaders: headers,
       );
 
       final model = ResponseValidator.parse(
@@ -234,17 +236,80 @@ class AuthRepositoryImpl extends AuthRepository {
   }
 
   @override
+  Future<EitherResponseOrException<int>> adminSend2fa({
+    required String challengeToken,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authSend2fa,
+        JsonRequestBody({'challengeToken': challengeToken}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.admin,
+      );
+
+      final expiresIn = ResponseValidator.parse(
+        response,
+        (data) {
+          final map = data as Map;
+          final expiresRaw = map['expiresIn'];
+          if (expiresRaw is int) {
+            return expiresRaw;
+          }
+          return int.tryParse(expiresRaw?.toString() ?? '') ?? 0;
+        },
+        dataValidator: (data) => data is Map,
+      );
+
+      return expiresIn;
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<AdminAuthSession>> adminVerify2fa({
+    required String challengeToken,
+    required String otp,
+    bool rememberMe = false,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final headers = await AuthApiHeaders.adminWithDeviceId(storage);
+      final response = await apiClient.post(
+        ApiEndpoints.authVerify2fa,
+        JsonRequestBody({
+          'challengeToken': challengeToken,
+          'otp': otp,
+          'rememberMe': rememberMe,
+        }),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: headers,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AdminLoginResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+
+      return model.toSession();
+    });
+  }
+
+  @override
   Future<EitherResponseOrException<AuthRefreshTokens>> refreshAuthTokens({
     required String refreshToken,
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
+      final headers = await AuthApiHeaders.adminWithDeviceId(storage);
       final response = await apiClient.post(
         ApiEndpoints.authRefresh,
         JsonRequestBody({'refreshToken': refreshToken}),
         cancelToken: cancelToken,
         isAuthenticated: false,
-        additionalHeaders: AuthApiHeaders.admin,
+        additionalHeaders: headers,
       );
 
       final model = ResponseValidator.parse(

@@ -5,7 +5,6 @@ import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
-import 'package:vcare_admin/shared/widgets/vcare_floating_bottom_sheet.dart';
 
 class LocationPermissionRequestBottomSheet extends StatefulWidget {
   final VoidCallback? onAllowClick;
@@ -33,12 +32,6 @@ class LocationPermissionRequestBottomSheet extends StatefulWidget {
       },
       enableDrag: false,
       isDismissible: dismissible,
-      margin: EdgeInsets.fromLTRB(
-        24,
-        0,
-        24,
-        MediaQuery.paddingOf(context).bottom + 16,
-      ),
       topRadius: 24,
     );
   }
@@ -55,70 +48,55 @@ class _LocationPermissionRequestBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        context.appLocalization.location_service_dialog_title,
-                        style: context.textTheme.semibold16?.copyWith(
-                          fontWeight: FontWeight.bold,
+    return SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          context.appLocalization.location_service_dialog_title,
+                          style: context.textTheme.semibold16?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            context.appLocalization.location_service_dialog_body,
-            style: context.textTheme.regular14?.copyWith(height: 1.75),
-            textScaler: const TextScaler.linear(0.95),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            top: 16.0,
-            bottom: Platform.isIOS ? 24.0 : 8.0,
-          ),
-          child: AppButton.elevated(
-            text: Platform.isIOS
-                ? context.appLocalization.continue_
-                : context.appLocalization.allow,
-            padding: EdgeInsets.zero,
-            height: 46.0,
-            onPressed: () {
-              _isAlreadyDismissed = true;
-
-              context.pop();
-              Future.delayed(const Duration(milliseconds: 375), () {
-                widget.onAllowClick?.call();
-              });
-            },
-          ),
-        ),
-        if (!Platform.isIOS)
           Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-            child: AppButton.text(
-              text: context.appLocalization.cancel,
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              context.appLocalization.location_service_dialog_body,
+              style: context.textTheme.regular14?.copyWith(height: 1.75),
+              textScaler: const TextScaler.linear(0.95),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              top: 16.0,
+              bottom: Platform.isIOS ? 24.0 : 8.0,
+            ),
+            child: AppButton.elevated(
+              text: Platform.isIOS
+                  ? context.appLocalization.continue_
+                  : context.appLocalization.allow,
               padding: EdgeInsets.zero,
               height: 46.0,
               onPressed: () {
@@ -126,12 +104,34 @@ class _LocationPermissionRequestBottomSheetState
 
                 context.pop();
                 Future.delayed(const Duration(milliseconds: 375), () {
-                  widget.onCancelClick?.call();
+                  widget.onAllowClick?.call();
                 });
               },
             ),
           ),
-      ],
+          if (!Platform.isIOS)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                bottom: 16.0,
+              ),
+              child: AppButton.text(
+                text: context.appLocalization.cancel,
+                padding: EdgeInsets.zero,
+                height: 46.0,
+                onPressed: () {
+                  _isAlreadyDismissed = true;
+
+                  context.pop();
+                  Future.delayed(const Duration(milliseconds: 375), () {
+                    widget.onCancelClick?.call();
+                  });
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 

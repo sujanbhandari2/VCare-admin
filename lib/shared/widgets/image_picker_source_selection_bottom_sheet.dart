@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/vcare_floating_bottom_sheet.dart';
 
 class ImagePickerSourceSelectionBottomSheet extends StatefulWidget {
   final VoidCallback? onGalleryPick;
   final VoidCallback? onCameraPick;
   final bool showDragLine;
 
+  /// Keeps the options clear of the system gesture area when the sheet is
+  /// flush with the screen bottom.
+  final double? bottomSafeInset;
+
   const ImagePickerSourceSelectionBottomSheet({
     super.key,
     this.onGalleryPick,
     this.onCameraPick,
     this.showDragLine = false,
+    this.bottomSafeInset,
   });
 
   /// Method to show bottom sheet
@@ -20,19 +24,20 @@ class ImagePickerSourceSelectionBottomSheet extends StatefulWidget {
     BuildContext context, {
     VoidCallback? onGalleryPick,
     VoidCallback? onCameraPick,
-    EdgeInsetsGeometry? margin,
-    bool showDragLine = false,
+    bool showDragLine = true,
   }) {
+    final bottomSafeInset = MediaQuery.paddingOf(context).bottom;
+
     return context.showBottomSheet<T>(
       builder: (BuildContext context) {
         return ImagePickerSourceSelectionBottomSheet(
           onCameraPick: onCameraPick,
           onGalleryPick: onGalleryPick,
           showDragLine: showDragLine,
+          bottomSafeInset: bottomSafeInset,
         );
       },
-      enableDrag: false,
-      margin: margin ?? vcareCompactBottomSheetMargin(context),
+      enableDrag: true,
       topRadius: 12,
       showDragHandle: showDragLine,
     );
@@ -52,7 +57,9 @@ class _ImagePickerSourceSelectionBottomSheetState
         left: 8,
         right: 8,
         top: widget.showDragLine ? 0 : 8,
-        bottom: 8,
+        bottom:
+            (widget.bottomSafeInset ?? MediaQuery.paddingOf(context).bottom) +
+            8,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

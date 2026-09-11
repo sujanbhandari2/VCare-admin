@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -107,6 +108,11 @@ void _showLocationResultToast(
           reason == CurrentLocationFailureReason.permissionDenied) {
         return;
       }
+      if (reason == CurrentLocationFailureReason.serviceDisabled ||
+          reason == CurrentLocationFailureReason.permissionDeniedForever) {
+        unawaited(_showLocationSettingsDialog(context, reason));
+        return;
+      }
       context.showVcareToast(
         title: 'Location unavailable',
         description: userMessage,
@@ -117,4 +123,50 @@ void _showLocationResultToast(
             : VcareToastVariant.destructive,
       );
   }
+}
+
+Future<void> _showLocationSettingsDialog(
+  BuildContext context,
+  CurrentLocationFailureReason reason,
+) async {
+  final isServiceDisabled =
+      reason == CurrentLocationFailureReason.serviceDisabled;
+  final openSettings = await showDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(
+          isServiceDisabled
+              ? 'Turn on location services'
+              : 'Allow location access',
+        ),
+        content: Text(
+          isServiceDisabled
+              ? 'Location services are turned off. Turn them on in Settings '
+                    'to find providers near you.'
+              : 'Location access is blocked for this app. Enable it in '
+                    'Settings to find providers near you.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (openSettings != true || !context.mounted) return;
+
+  await AppSettings.openAppSettings(
+    type: isServiceDisabled
+        ? AppSettingsType.location
+        : AppSettingsType.settings,
+  );
 }

@@ -40,13 +40,13 @@ class VcareMessengerAvatar extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: vcare.accent.withValues(alpha: 0.1),
+          color: vcare.primary.withValues(alpha: 0.12),
           borderRadius: radius,
         ),
         alignment: Alignment.center,
         child: Icon(
           LucideIcons.users,
-          color: vcare.accent,
+          color: vcare.primary,
           size: size * 0.5,
         ),
       );
@@ -95,7 +95,7 @@ class VcareMessengerAvatar extends StatelessWidget {
     final vcare = context.vcare;
     final dotSize = size * 0.29;
     final dotColor = isOnline
-        ? vcare.success
+        ? const Color(0xFF10B981)
         : vcare.mutedForeground.withValues(alpha: 0.6);
 
     return Stack(
@@ -120,6 +120,61 @@ class VcareMessengerAvatar extends StatelessWidget {
   }
 }
 
+class VcareMessengerPresenceAvatar extends StatelessWidget {
+  const VcareMessengerPresenceAvatar({
+    super.key,
+    required this.displayTitle,
+    this.imageUrl,
+    this.isGroup = false,
+    this.isOnline = false,
+    this.showOnlinePresence = true,
+    this.size = 48,
+    this.borderRadius = 16,
+  });
+
+  final String displayTitle;
+  final String? imageUrl;
+  final bool isGroup;
+  final bool isOnline;
+  final bool showOnlinePresence;
+  final double size;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        VcareMessengerAvatar(
+          displayTitle: displayTitle,
+          imageUrl: imageUrl,
+          isGroup: isGroup,
+          size: size,
+          borderRadius: borderRadius,
+        ),
+        if (showOnlinePresence && !isGroup)
+          Positioned(
+            bottom: -2,
+            right: -2,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: isOnline
+                    ? const Color(0xFF22C55E)
+                    : vcare.mutedForeground.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+                border: Border.all(color: vcare.card, width: 2.5),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _InitialsFallback extends StatelessWidget {
   const _InitialsFallback({
     required this.displayTitle,
@@ -139,7 +194,9 @@ class _InitialsFallback extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: vcare.accent.withValues(alpha: 0.1),
+        // Primary tint keeps initials readable on admin themes where accent is
+        // very light (ProfileAvatar uses muted; messenger matches list badges).
+        color: vcare.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       alignment: Alignment.center,
@@ -148,7 +205,7 @@ class _InitialsFallback extends StatelessWidget {
         style: TextStyle(
           fontSize: size * 0.32,
           fontWeight: FontWeight.w700,
-          color: vcare.accent,
+          color: vcare.primary,
         ),
       ),
     );

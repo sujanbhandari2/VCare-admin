@@ -39,6 +39,7 @@ class VcareBottomNavigation extends StatelessWidget {
     required this.currentItem,
     required this.onSelect,
     this.collapsed = false,
+    this.showMessagesUnreadDot = false,
   });
 
   final NavItem currentItem;
@@ -47,6 +48,9 @@ class VcareBottomNavigation extends StatelessWidget {
   /// When true, occupies no layout height so the IME can sit flush under content.
   /// The widget stays mounted so the shell does not lose the bar after dismiss.
   final bool collapsed;
+
+  /// Red unread indicator on the Messages tab.
+  final bool showMessagesUnreadDot;
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +143,8 @@ class VcareBottomNavigation extends StatelessWidget {
                             item: item,
                             isActive: isActive,
                             vcare: vcare,
+                            showUnreadDot: item == NavItem.messages &&
+                                showMessagesUnreadDot,
                             onTap: () => onSelect(item),
                           ),
                         );
@@ -161,12 +167,14 @@ class _NavTab extends StatelessWidget {
     required this.isActive,
     required this.vcare,
     required this.onTap,
+    this.showUnreadDot = false,
   });
 
   final NavItem item;
   final bool isActive;
   final VCareThemeExtension vcare;
   final VoidCallback onTap;
+  final bool showUnreadDot;
 
   static LinearGradient _homeGradient(Color primary) => LinearGradient(
     begin: Alignment.topLeft,
@@ -282,10 +290,33 @@ class _NavTab extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: VCareRadius.lgAll,
               ),
-              child: AnimatedScale(
-                scale: isActive ? 1.1 : 1,
-                duration: const Duration(milliseconds: 200),
-                child: Icon(item.icon, size: 18, color: color),
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedScale(
+                    scale: isActive ? 1.1 : 1,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(item.icon, size: 18, color: color),
+                  ),
+                  if (showUnreadDot)
+                    Positioned(
+                      top: 4,
+                      right: 8,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: vcare.destructive,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: vcare.background,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: VCareMobileShellInsets.tabIconLabelGap),

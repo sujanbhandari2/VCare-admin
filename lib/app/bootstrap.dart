@@ -12,6 +12,7 @@ import '../core/config/flavor/configuration_provider.dart';
 import '../core/config/flavor/flavor.dart';
 import '../core/services/storage/hive_storage_service.dart';
 import '../core/services/storage/storage_service_provider.dart';
+import '../features/auth/data/repositories/auth_secure_token_store.dart';
 import 'app.dart';
 
 Future<void> bootstrap() async {
@@ -30,6 +31,9 @@ Future<void> bootstrap() async {
   // Hive-specific initialization
   final storageService = HiveStorageService.instance;
   await storageService.init(configuration.hiveBoxName);
+
+  // Prefer encrypted secure storage for access/refresh tokens; mirror into Hive.
+  await AuthSecureTokenStore(storage: storageService).hydrate();
 
   if (!kIsWeb) {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);

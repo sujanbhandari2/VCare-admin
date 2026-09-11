@@ -9,16 +9,16 @@ class AppLocalizationsBn extends AppLocalizations {
   AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
-  String get app_name => 'VCare client';
+  String get app_name => 'Vitafy Admin';
 
   @override
-  String get app_name_dev => 'VCare client - Dev';
+  String get app_name_dev => 'Vitafy Admin - Dev';
 
   @override
-  String get app_name_qa => 'VCare client - QA';
+  String get app_name_qa => 'Vitafy Admin - QA';
 
   @override
-  String get app_name_uat => 'VCare client - UAT';
+  String get app_name_uat => 'Vitafy Admin - UAT';
 
   @override
   String get tab_home => 'বাড়ি';

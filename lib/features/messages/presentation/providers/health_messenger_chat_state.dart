@@ -1,6 +1,13 @@
 import 'package:health_messenger_ui/lib/health_messenger_ui.dart';
 import 'package:vcare_admin/features/users/domain/entities/associated_user.dart';
 
+/// Tracks a message being edited in the thread composer.
+class MessengerComposerEditDraft {
+  const MessengerComposerEditDraft({required this.messageId});
+
+  final String messageId;
+}
+
 class HealthMessengerChatState {
   const HealthMessengerChatState({
     this.bootstrapError,
@@ -26,6 +33,7 @@ class HealthMessengerChatState {
     this.messagesByConversation = const {},
     this.typingUserIdsByConversation = const {},
     this.composerReplyDraft,
+    this.composerEditDraft,
   });
 
   final Object? bootstrapError;
@@ -51,6 +59,19 @@ class HealthMessengerChatState {
   final Map<String, List<ChatMessage>> messagesByConversation;
   final Map<String, Set<String>> typingUserIdsByConversation;
   final MessengerComposerReplyDraft? composerReplyDraft;
+  final MessengerComposerEditDraft? composerEditDraft;
+
+  /// True only while the conversation that is currently open fetches messages.
+  ///
+  /// Both ids must be present and equal. Comparing the raw fields would report
+  /// `null == null` as "loading", which leaves a reopened thread on the
+  /// package loading placeholder (empty messages + loading) with nothing left
+  /// to clear it.
+  bool get isSelectedConversationLoading {
+    final loadingId = loadingConversationId?.trim() ?? '';
+    final selectedId = selectedConversationId?.trim() ?? '';
+    return loadingId.isNotEmpty && loadingId == selectedId;
+  }
 
   /// True only before a session user exists — host full-screen spinner.
   bool get showPreSessionConnectingShimmer =>
@@ -96,6 +117,8 @@ class HealthMessengerChatState {
     Map<String, Set<String>>? typingUserIdsByConversation,
     MessengerComposerReplyDraft? composerReplyDraft,
     bool clearComposerReplyDraft = false,
+    MessengerComposerEditDraft? composerEditDraft,
+    bool clearComposerEditDraft = false,
   }) {
     return HealthMessengerChatState(
       bootstrapError: clearBootstrapError
@@ -136,6 +159,9 @@ class HealthMessengerChatState {
       composerReplyDraft: clearComposerReplyDraft
           ? null
           : composerReplyDraft ?? this.composerReplyDraft,
+      composerEditDraft: clearComposerEditDraft
+          ? null
+          : composerEditDraft ?? this.composerEditDraft,
     );
   }
 }

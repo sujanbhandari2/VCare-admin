@@ -12,6 +12,12 @@ class ApiEndpoints {
   static const String login = "auth/login/";
   static const String authSend2fa = "auth/send-2fa/";
   static const String authVerify2fa = "auth/verify-2fa/";
+  static const String authBiometricEnroll = "auth/biometric/enroll";
+  static const String authBiometricChallenge = "auth/biometric/challenge";
+  static const String authBiometricLogin = "auth/biometric/login";
+  static const String authBiometricCurrent = "auth/biometric/current";
+  static String authBiometricDevice(String enrollmentId) =>
+      "auth/biometric/devices/$enrollmentId";
   static const String googleLogin = "google-login/";
   static const String appleLogin = "apple-login/";
   static const String register = "register/";
@@ -44,7 +50,6 @@ class ApiEndpoints {
   static const String agentClients = "agents/clients";
   static String agentClient(String id) => "agents/clients/$id";
   static String clientById(String id) => "clients/$id";
-  static String clientGroupById(String id) => "clients/groups/$id";
   static String clientRelationships(String id) => "clients/$id/relationships";
   static String clientFiles(String id) => "clients/$id/files";
 
@@ -142,4 +147,3 @@ class ApiEndpoints {
   static const String settingsBranding = "settings/branding";
   static const String settingsTheme = "settings/theme";
 }
-

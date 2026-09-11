@@ -34,7 +34,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -89,7 +89,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -135,7 +135,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -177,7 +177,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -224,7 +224,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -258,7 +258,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -293,7 +293,7 @@ void main() {
             ClientFile(
               id: 'doc-1',
               name: 'insurance-card.jpg',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/insurance-card.jpg',
               mime: 'image/jpeg',
@@ -321,7 +321,7 @@ void main() {
             ClientFile(
               id: 'doc-2',
               name: 'agreement.pdf',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-24T06:15:24.432Z',
               url: 'https://example.com/api/test/agreement.pdf',
               mime: 'application/pdf',
@@ -383,7 +383,7 @@ void main() {
               ClientFile(
                 id: 'doc-1',
                 name: 'insurance-card.jpg',
-                size: '—',
+                size: '',
                 uploadedAt: '2026-06-25T06:15:24.432Z',
                 url: 'https://example.com/api/test/insurance-card.jpg',
                 mime: 'image/jpeg',
@@ -434,7 +434,7 @@ void main() {
             ClientFile(
               id: 'doc-new',
               name: 'new-doc.pdf',
-              size: '—',
+              size: '',
               uploadedAt: '2026-06-25T06:15:24.432Z',
               url: 'https://example.com/api/test/new-doc.pdf',
               mime: 'application/pdf',

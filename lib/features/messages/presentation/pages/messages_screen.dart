@@ -5,14 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
+import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/care_team/presentation/widgets/care_avatar.dart';
 import 'package:vcare_admin/features/care_team/presentation/providers/care_team_state_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/message_groups_provider.dart';
-// TODO: Re-enable when new chat / new group creation is ready.
-// import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_chat_sheet.dart';
-// import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_group_sheet.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_chat_sheet.dart';
+import 'package:vcare_admin/features/messages/presentation/widgets/messages_new_group_sheet.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/messages_empty_state.dart';
 import 'package:vcare_admin/features/shell/data/shell_mock_data.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
@@ -108,18 +108,17 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               title: vcareTabPageTitle(
                 title: 'Messages',
                 subtitle: 'Chat with your care team',
-                // TODO: Re-enable when new chat / new group creation is ready.
-                // action: _HeaderNewMenu(
-                //   vcare: vcare,
-                //   onNewChat: () => MessagesNewChatSheet.show(context),
-                //   onNewGroup: () => MessagesNewGroupSheet.show(
-                //     context,
-                //     onCreated: (group) => context.pushNamed(
-                //       AppRouter.groupChatName,
-                //       pathParameters: {'id': group.id},
-                //     ),
-                //   ),
-                // ),
+                action: _HeaderNewMenu(
+                  vcare: vcare,
+                  onNewChat: () => MessagesNewChatSheet.show(context),
+                  onNewGroup: () => MessagesNewGroupSheet.show(
+                    context,
+                    onCreated: (group) => context.pushNamed(
+                      AppRouter.groupChatName,
+                      pathParameters: {'id': group.id},
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -216,117 +215,116 @@ class _MessagesSearchEmptyState extends StatelessWidget {
   }
 }
 
-// TODO: Re-enable when new chat / new group creation is ready.
-// class _HeaderNewMenu extends StatelessWidget {
-//   const _HeaderNewMenu({
-//     required this.vcare,
-//     required this.onNewChat,
-//     required this.onNewGroup,
-//   });
-//
-//   final VCareThemeExtension vcare;
-//   final VoidCallback onNewChat;
-//   final VoidCallback onNewGroup;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return PopupMenuButton<void>(
-//       offset: const Offset(0, 40),
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-//       itemBuilder: (context) => [
-//         PopupMenuItem<void>(
-//           onTap: onNewChat,
-//           child: _NewMenuOption(
-//             icon: LucideIcons.userPlus,
-//             iconBackground: VCareColors.primary.withValues(alpha: 0.12),
-//             iconColor: VCareColors.primary,
-//             title: 'New chat',
-//             subtitle: 'Start a 1:1 conversation',
-//           ),
-//         ),
-//         PopupMenuItem<void>(
-//           onTap: onNewGroup,
-//           child: _NewMenuOption(
-//             icon: LucideIcons.users,
-//             iconBackground: vcare.accent.withValues(alpha: 0.12),
-//             iconColor: vcare.accent,
-//             title: 'New group',
-//             subtitle: 'Chat with multiple people',
-//           ),
-//         ),
-//       ],
-//       child: Row(
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           Icon(LucideIcons.plus, size: 16, color: VCareColors.primary),
-//           const SizedBox(width: 4),
-//           Text(
-//             'New',
-//             style: TextStyle(
-//               fontSize: 15,
-//               fontWeight: FontWeight.w600,
-//               color: VCareColors.primary,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-//
-// class _NewMenuOption extends StatelessWidget {
-//   const _NewMenuOption({
-//     required this.icon,
-//     required this.iconBackground,
-//     required this.iconColor,
-//     required this.title,
-//     required this.subtitle,
-//   });
-//
-//   final IconData icon;
-//   final Color iconBackground;
-//   final Color iconColor;
-//   final String title;
-//   final String subtitle;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final vcare = context.vcare;
-//     return Row(
-//       children: [
-//         Container(
-//           width: 44,
-//           height: 44,
-//           decoration: BoxDecoration(
-//             color: iconBackground,
-//             borderRadius: BorderRadius.circular(16),
-//           ),
-//           child: Icon(icon, color: iconColor, size: 22),
-//         ),
-//         const SizedBox(width: 12),
-//         Expanded(
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               Text(
-//                 title,
-//                 style: const TextStyle(
-//                   fontSize: 16,
-//                   fontWeight: FontWeight.w600,
-//                 ),
-//               ),
-//               const SizedBox(height: 4),
-//               Text(
-//                 subtitle,
-//                 style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+class _HeaderNewMenu extends StatelessWidget {
+  const _HeaderNewMenu({
+    required this.vcare,
+    required this.onNewChat,
+    required this.onNewGroup,
+  });
+
+  final VCareThemeExtension vcare;
+  final VoidCallback onNewChat;
+  final VoidCallback onNewGroup;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<void>(
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      itemBuilder: (context) => [
+        PopupMenuItem<void>(
+          onTap: onNewChat,
+          child: _NewMenuOption(
+            icon: LucideIcons.userPlus,
+            iconBackground: VCareColors.primary.withValues(alpha: 0.12),
+            iconColor: VCareColors.primary,
+            title: 'New chat',
+            subtitle: 'Start a 1:1 conversation',
+          ),
+        ),
+        PopupMenuItem<void>(
+          onTap: onNewGroup,
+          child: _NewMenuOption(
+            icon: LucideIcons.users,
+            iconBackground: vcare.accent.withValues(alpha: 0.12),
+            iconColor: vcare.accent,
+            title: 'New group',
+            subtitle: 'Chat with multiple people',
+          ),
+        ),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.plus, size: 16, color: VCareColors.primary),
+          const SizedBox(width: 4),
+          Text(
+            'New',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: VCareColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewMenuOption extends StatelessWidget {
+  const _NewMenuOption({
+    required this.icon,
+    required this.iconBackground,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final Color iconBackground;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final vcare = context.vcare;
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: iconBackground,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(icon, color: iconColor, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _MessagesThreadRow extends StatelessWidget {
   const _MessagesThreadRow({required this.thread, required this.vcare});
@@ -374,8 +372,8 @@ class _MessagesThreadRow extends StatelessWidget {
                       height: 14,
                       decoration: BoxDecoration(
                         color: thread.isOnline
-                            ? vcare.success
-                            : vcare.destructive,
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFFEF4444),
                         shape: BoxShape.circle,
                         border: Border.all(color: vcare.card, width: 2.5),
                       ),
@@ -408,7 +406,7 @@ class _MessagesThreadRow extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: context.vcare.primary.withValues(alpha: 0.8),
+                              color: VCareColors.primary.withValues(alpha: 0.8),
                             ),
                           ),
                       ],
@@ -436,7 +434,7 @@ class _MessagesThreadRow extends StatelessWidget {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: context.vcare.primary,
+                              color: VCareColors.primary,
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
@@ -479,7 +477,7 @@ class _MessagesGroupRow extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isFresh
-            ? context.vcare.primary.withValues(alpha: 0.05)
+            ? VCareColors.primary.withValues(alpha: 0.05)
             : vcare.card,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: vcare.border),
@@ -511,7 +509,7 @@ class _MessagesGroupRow extends StatelessWidget {
                       color: vcare.accent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: isFresh
-                          ? Border.all(color: context.vcare.primary, width: 2)
+                          ? Border.all(color: VCareColors.primary, width: 2)
                           : null,
                     ),
                     child: Icon(
@@ -528,7 +526,7 @@ class _MessagesGroupRow extends StatelessWidget {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: context.vcare.primary,
+                          color: VCareColors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: vcare.card, width: 2),
                         ),
@@ -566,7 +564,7 @@ class _MessagesGroupRow extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: context.vcare.primary,
+                                    color: VCareColors.primary,
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: const Text(

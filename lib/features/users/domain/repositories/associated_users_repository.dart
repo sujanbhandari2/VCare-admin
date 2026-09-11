@@ -6,7 +6,7 @@ import 'package:vcare_admin/features/users/domain/entities/associated_users_page
 abstract class AssociatedUsersRepository {
   Future<EitherResponseOrException<AssociatedUsersPage>> fetchAssociatedUsers({
     int page = 1,
-    int limit = 100,
+    int limit = 30,
     String sortBy = 'createdAt',
     String sortOrder = 'desc',
     bool forceRefresh = true,

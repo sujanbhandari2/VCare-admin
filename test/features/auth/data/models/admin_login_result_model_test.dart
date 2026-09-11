@@ -59,5 +59,34 @@ void main() {
       expect(tenants.first.slug, 'acme');
       expect(tenants.last.name, 'Beta Org');
     });
+
+    test('fromJson maps two-factor challenge response', () {
+      final model = AdminLoginResultModel.fromJson({
+        'requiresTwoFactor': true,
+        'challengeToken':
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.challenge',
+        'expiresIn': 600,
+      });
+
+      final outcome = model.toOutcome();
+      expect(outcome, isA<AdminLoginTwoFactorRequired>());
+
+      final challenge = outcome as AdminLoginTwoFactorRequired;
+      expect(
+        challenge.challengeToken,
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.challenge',
+      );
+      expect(challenge.expiresIn, 600);
+    });
+
+    test('toSession throws for two-factor challenge', () {
+      final model = AdminLoginResultModel.fromJson({
+        'requiresTwoFactor': true,
+        'challengeToken': 'token',
+        'expiresIn': 600,
+      });
+
+      expect(model.toSession, throwsStateError);
+    });
   });
 }

@@ -11,9 +11,12 @@ extension ClientDocumentModelMapper on ClientDocumentModel {
     return ClientFile(
       id: id,
       name: name?.trim().isNotEmpty == true ? name!.trim() : 'Untitled',
-      size: '—',
+      size: '',
       uploadedAt: uploadedAt,
       url: resolveClientDocumentUrl(url ?? '', hostBaseUrl),
+      previewLink: previewLink?.trim().isNotEmpty == true
+          ? resolveClientDocumentUrl(previewLink!, hostBaseUrl)
+          : null,
       mime: mimeTypeFromFileName(name),
     );
   }

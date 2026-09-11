@@ -25,17 +25,21 @@ class ConnectivityService {
     return _instance!;
   }
 
+  /// Whether [results] include a transport that can reach the internet.
+  static bool hasUsableNetwork(Iterable<ConnectivityResult> results) {
+    return results.toSet().intersection({
+      ConnectivityResult.wifi,
+      ConnectivityResult.mobile,
+      ConnectivityResult.ethernet,
+      ConnectivityResult.bluetooth,
+    }).isNotEmpty;
+  }
+
   /// Checking Internet Connectivity
   ///
   Future<bool> hasActiveConnection() async {
     try {
-      final results = await _connectivity.checkConnectivity();
-      return results.toSet().intersection({
-        ConnectivityResult.wifi,
-        ConnectivityResult.mobile,
-        ConnectivityResult.ethernet,
-        ConnectivityResult.bluetooth,
-      }).isNotEmpty;
+      return hasUsableNetwork(await _connectivity.checkConnectivity());
     } catch (e) {
       Logger.logError(e.toString());
       return false;

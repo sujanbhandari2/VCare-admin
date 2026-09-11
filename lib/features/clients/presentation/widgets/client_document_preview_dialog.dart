@@ -33,7 +33,7 @@ class ClientDocumentPreviewDialog extends StatelessWidget {
       file.mime == 'application/pdf' ||
       file.name.toLowerCase().endsWith('.pdf');
 
-  bool get _isDataUrl => file.url.startsWith('data:');
+  bool get _isDataUrl => file.viewUrl.startsWith('data:');
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +105,13 @@ class _ImagePreview extends StatelessWidget {
       child: InteractiveViewer(
         child: isDataUrl
             ? Image.memory(
-                base64Decode(file.url.split(',').last),
+                base64Decode(file.viewUrl.split(',').last),
                 fit: BoxFit.contain,
+                errorBuilder: (_, _, _) =>
+                    const Icon(LucideIcons.imageOff, size: 32),
               )
             : VCareCachedImage(
-                imageUrl: file.url,
+                imageUrl: file.viewUrl,
                 cacheKey: 'client-file:${file.id}',
                 fit: BoxFit.contain,
                 showLoadingIndicator: true,

@@ -117,6 +117,29 @@ class VcareHeaderActionButton extends StatelessWidget {
   }
 }
 
+/// Pinned SafeArea + frosted strip used by sticky tab/page scaffolds.
+class VcarePinnedHeaderChrome extends StatelessWidget {
+  const VcarePinnedHeaderChrome({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = Theme.of(context).scaffoldBackgroundColor;
+
+    return SafeArea(
+      bottom: false,
+      child: Material(
+        color: background.withValues(alpha: 0.95),
+        child: child,
+      ),
+    );
+  }
+}
+
 /// Sticky frosted page header — parity with web [PageHeader] `safe-top sticky`.
 class VcareStickyPageHeader extends StatelessWidget {
   const VcareStickyPageHeader({
@@ -229,7 +252,12 @@ class VcarePageHeader extends StatelessWidget {
   const VcarePageHeader({
     super.key,
     required this.title,
+    this.titleMaxLines,
+    this.titleStyle,
+    this.titleLeading,
+    this.titleTrailing,
     this.subtitle,
+    this.subtitleWidget,
     this.leading,
     this.showBack = false,
     this.onBack,
@@ -240,7 +268,14 @@ class VcarePageHeader extends StatelessWidget {
   });
 
   final String title;
+  final int? titleMaxLines;
+  /// Overrides the default 24px header title style.
+  final TextStyle? titleStyle;
+  final Widget? titleLeading;
+  final Widget? titleTrailing;
   final String? subtitle;
+  /// Optional widget shown under the title (e.g. a role badge).
+  final Widget? subtitleWidget;
   /// Optional widget shown before the title (e.g. conversation avatar).
   final Widget? leading;
   final bool showBack;
@@ -253,11 +288,13 @@ class VcarePageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final titleStyle = VcarePageHeaderLayout.titleTextStyle(context);
+    final resolvedTitleStyle =
+        titleStyle ?? VcarePageHeaderLayout.titleTextStyle(context);
     final subtitleStyle = VcarePageHeaderLayout.subtitleTextStyle(
       context,
       vcare.mutedForeground,
     );
+    final hasSubtitleRow = subtitle != null || subtitleWidget != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -279,34 +316,50 @@ class VcarePageHeader extends StatelessWidget {
             leading!,
             const SizedBox(width: VcarePageHeaderLayout.itemGap),
           ],
+          if (titleLeading != null) ...[
+            titleLeading!,
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: titleStyle,
-                  strutStyle: StrutStyle.fromTextStyle(
-                    titleStyle,
-                    forceStrutHeight: true,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: VcarePageHeaderLayout.subtitleGap),
-                  Text(
-                    subtitle!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: subtitleStyle,
-                    strutStyle: StrutStyle.fromTextStyle(
-                      subtitleStyle,
-                      forceStrutHeight: true,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: titleMaxLines ?? 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: resolvedTitleStyle,
+                        strutStyle: StrutStyle.fromTextStyle(
+                          resolvedTitleStyle,
+                          forceStrutHeight: true,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (titleTrailing != null) ...[
+                      const SizedBox(width: 6),
+                      titleTrailing!,
+                    ],
+                  ],
+                ),
+                if (hasSubtitleRow) ...[
+                  const SizedBox(height: VcarePageHeaderLayout.subtitleGap),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: subtitleStyle,
+                      strutStyle: StrutStyle.fromTextStyle(
+                        subtitleStyle,
+                        forceStrutHeight: true,
+                      ),
+                    ),
+                  if (subtitleWidget != null) subtitleWidget!,
                 ],
               ],
             ),

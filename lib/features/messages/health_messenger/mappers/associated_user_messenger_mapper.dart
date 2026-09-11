@@ -19,11 +19,20 @@ class AssociatedUserMessengerMapper {
     return MessengerUser(
       id: user.id,
       username: user.displayName,
-      roleLabel: humanizeRole(user.role),
+      roleLabel: displayRoleFor(user),
       email: user.email,
       isOnline: false,
       avatarUrl: loadablePhoto,
     );
+  }
+
+  /// Prefer [AssociatedUser.role] when present; otherwise [AssociatedUser.userType].
+  static String displayRoleFor(AssociatedUser user) {
+    final role = user.role.trim();
+    if (role.isNotEmpty) {
+      return humanizeRole(role);
+    }
+    return humanizeRole(user.userType);
   }
 
   static ChatUserRegistrationBody toRegistrationBody(

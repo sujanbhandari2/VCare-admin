@@ -85,13 +85,6 @@ abstract class ClientRepository {
     bool forceRefresh = false,
   });
 
-  Future<EitherResponseOrException<ClientCase>> createClientCase({
-    required String clientId,
-    required String title,
-    required String description,
-    CancelToken? cancelToken,
-  });
-
   Future<EitherResponseOrException<PaginatedResult<ClientFile>>> fetchDocuments(
     String clientId,
     PaginatedListRequest request, {

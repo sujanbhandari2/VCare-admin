@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/shared/widgets/shimmer.dart';
 
 enum AdminDashboardStatCardTone { primary, secondary, success, warning, danger }
 
@@ -20,6 +21,7 @@ class AdminDashboardStatCard extends StatelessWidget {
     this.iconTone = AdminDashboardStatCardTone.primary,
     this.empty = false,
     this.emptyCaption,
+    this.loading = false,
     this.onTap,
   });
 
@@ -33,6 +35,7 @@ class AdminDashboardStatCard extends StatelessWidget {
   final AdminDashboardStatCardTone iconTone;
   final bool empty;
   final String? emptyCaption;
+  final bool loading;
   final VoidCallback? onTap;
 
   @override
@@ -83,44 +86,46 @@ class AdminDashboardStatCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                value,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.1,
-                                  letterSpacing: -0.3,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                  color: empty
-                                      ? vcare.mutedForeground
-                                      : vcare.foreground,
-                                ),
+                        child: loading
+                            ? const _StatCardValueSkeleton()
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      value,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.1,
+                                        letterSpacing: -0.3,
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                        color: empty
+                                            ? vcare.mutedForeground
+                                            : vcare.foreground,
+                                      ),
+                                    ),
+                                  ),
+                                  if (displayCaption case final caption?)
+                                    Text(
+                                      caption,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.2,
+                                        color: _captionColor(vcare, empty),
+                                      ),
+                                    ),
+                                ],
                               ),
-                            ),
-                            if (displayCaption case final caption?)
-                              Text(
-                                caption,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.2,
-                                  color: _captionColor(vcare, empty),
-                                ),
-                              ),
-                          ],
-                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -233,5 +238,39 @@ class AdminDashboardStatCard extends StatelessWidget {
       case AdminDashboardStatCardTone.danger:
         return vcare.dangerScale.s500;
     }
+  }
+}
+
+/// Bars sized to the value/caption text they stand in for, so the card does not
+/// shift once the counts arrive.
+class _StatCardValueSkeleton extends StatelessWidget {
+  const _StatCardValueSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Shimmer.loadingContainer(
+            context,
+            width: 52,
+            height: 18,
+            radius: 6,
+            opacity: 0.35,
+          ),
+          const SizedBox(height: 6),
+          Shimmer.loadingContainer(
+            context,
+            width: 72,
+            height: 9,
+            radius: 4.5,
+            opacity: 0.25,
+          ),
+        ],
+      ),
+    );
   }
 }
