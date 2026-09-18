@@ -4,6 +4,7 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -19,14 +20,24 @@ import java.security.interfaces.ECPublicKey
 import java.security.spec.ECGenParameterSpec
 
 /**
- * MethodChannel bridge for non-exportable EC P-256 keys in Android Keystore,
- * with biometric-gated ECDSA SHA-256 signing (IEEE P1363 / raw r||s).
+ * MethodChannel bridge for non-exportable EC P-256 keys in Android Keystore.
+ *
+ * Signing always goes through [BiometricPrompt.CryptoObject]. A plain biometric
+ * prompt does not unlock Keystore keys that require user authentication, which
+ * is why silent [Signature.sign] after `authenticate()` fails with
+ * KEY_USER_NOT_AUTHENTICATED (-26).
+ *
+ * Flow:
+ * 1. authenticateForSigning — BiometricPrompt + CryptoObject(Signature)
+ * 2. completeSign — update/sign on the *same* authenticated Signature
  */
 class BiometricCryptoChannel(
     private val activity: FragmentActivity,
 ) : MethodChannel.MethodCallHandler {
     companion object {
         const val CHANNEL = "com.vcare.admin/biometric_crypto"
+        const val REENROLLMENT_REQUIRED = "reenrollment_required"
+        private const val TAG = "BiometricCrypto"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val SIGNATURE_ALGORITHM = "SHA256withECDSA"
 
@@ -36,6 +47,13 @@ class BiometricCryptoChannel(
             )
         }
     }
+
+    @Volatile
+    private var pendingKeyAlias: String? = null
+
+    /** Authenticated Signature from CryptoObject; must be used for completeSign. */
+    @Volatile
+    private var pendingSignature: Signature? = null
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -52,16 +70,64 @@ class BiometricCryptoChannel(
                 }
             }
 
+            "authenticateForSigning" -> {
+                val keyAlias = call.argument<String>("keyAlias")
+                val reason = call.argument<String>("reason")
+                    ?: "Authenticate to sign in"
+                val preferredBiometric = call.argument<String>("preferredBiometric")
+                if (keyAlias.isNullOrBlank()) {
+                    result.error("invalid_args", "keyAlias is required", null)
+                    return
+                }
+                authenticateForSigning(keyAlias, reason, preferredBiometric, result)
+            }
+
+            "completeSign" -> {
+                val nonce = call.argument<String>("nonce")
+                if (nonce.isNullOrBlank()) {
+                    result.error("invalid_args", "nonce is required", null)
+                    return
+                }
+                completeSign(nonce, result)
+            }
+
+            "cancelSigning" -> {
+                clearPending()
+                result.success(null)
+            }
+
             "sign" -> {
                 val keyAlias = call.argument<String>("keyAlias")
                 val nonce = call.argument<String>("nonce")
                 val reason = call.argument<String>("reason")
                     ?: "Authenticate to sign in"
+                val preferredBiometric = call.argument<String>("preferredBiometric")
                 if (keyAlias.isNullOrBlank() || nonce.isNullOrBlank()) {
                     result.error("invalid_args", "keyAlias and nonce are required", null)
                     return
                 }
-                signWithBiometric(keyAlias, nonce, reason, result)
+                authenticateForSigning(
+                    keyAlias,
+                    reason,
+                    preferredBiometric,
+                    object : MethodChannel.Result {
+                        override fun success(resultData: Any?) {
+                            completeSign(nonce, result)
+                        }
+
+                        override fun error(
+                            errorCode: String,
+                            errorMessage: String?,
+                            errorDetails: Any?,
+                        ) {
+                            result.error(errorCode, errorMessage, errorDetails)
+                        }
+
+                        override fun notImplemented() {
+                            result.notImplemented()
+                        }
+                    },
+                )
             }
 
             "deleteKey" -> {
@@ -90,6 +156,8 @@ class BiometricCryptoChannel(
             ANDROID_KEYSTORE,
         )
 
+        // Bind signing to biometric auth so CryptoObject can unlock the key.
+        // BIOMETRIC_STRONG is required for CryptoObject on modern Android.
         val builder = KeyGenParameterSpec.Builder(
             keyAlias,
             KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY,
@@ -97,7 +165,6 @@ class BiometricCryptoChannel(
             .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
             .setDigests(KeyProperties.DIGEST_SHA256)
             .setUserAuthenticationRequired(true)
-            .setInvalidatedByBiometricEnrollment(true)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             builder.setUserAuthenticationParameters(
@@ -120,19 +187,13 @@ class BiometricCryptoChannel(
         )
     }
 
-    private fun signWithBiometric(
+    private fun authenticateForSigning(
         keyAlias: String,
-        nonce: String,
         reason: String,
+        preferredBiometric: String?,
         result: MethodChannel.Result,
     ) {
-        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
-        val biometricManager = BiometricManager.from(activity)
-        val canAuthenticate = biometricManager.canAuthenticate(authenticators)
-        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
-            result.error("biometric_unavailable", "Biometric authentication is unavailable", null)
-            return
-        }
+        clearPending()
 
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         val entry = keyStore.getEntry(keyAlias, null) as? KeyStore.PrivateKeyEntry
@@ -141,12 +202,37 @@ class BiometricCryptoChannel(
             return
         }
 
-        val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
-        try {
-            signature.initSign(entry.privateKey)
-        } catch (error: Exception) {
-            result.error("sign_init_failed", error.message, null)
+        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
+        val biometricManager = BiometricManager.from(activity)
+        if (biometricManager.canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
+            result.error(
+                "biometric_unavailable",
+                "Strong biometric authentication is unavailable",
+                null,
+            )
             return
+        }
+
+        val signature = try {
+            Signature.getInstance(SIGNATURE_ALGORITHM).apply {
+                initSign(entry.privateKey)
+            }
+        } catch (error: Exception) {
+            Log.e(TAG, "initSign failed for $keyAlias", error)
+            // Legacy / broken key — force a clean re-enroll.
+            deleteKey(keyAlias)
+            result.error(
+                REENROLLMENT_REQUIRED,
+                "Biometric login needs to be set up again on this device.",
+                null,
+            )
+            return
+        }
+
+        val subtitle = when (preferredBiometric?.lowercase()) {
+            "face" -> "Use Face unlock"
+            "fingerprint" -> "Use fingerprint"
+            else -> "Confirm with biometrics"
         }
 
         val executor = ContextCompat.getMainExecutor(activity)
@@ -157,32 +243,35 @@ class BiometricCryptoChannel(
                 override fun onAuthenticationSucceeded(
                     authResult: BiometricPrompt.AuthenticationResult,
                 ) {
-                    try {
-                        val cryptoSignature = authResult.cryptoObject?.signature
-                            ?: signature
-                        cryptoSignature.update(nonce.toByteArray(Charsets.UTF_8))
-                        val der = cryptoSignature.sign()
-                        val raw = derToP1363(der)
-                        val encoded = Base64.encodeToString(raw, Base64.NO_WRAP)
-                        result.success(mapOf("signatureBase64" to encoded))
-                    } catch (error: Exception) {
-                        result.error("sign_failed", error.message, null)
+                    val cryptoSignature = authResult.cryptoObject?.signature
+                    if (cryptoSignature == null) {
+                        clearPending()
+                        result.error(
+                            "auth_failed",
+                            "Biometric crypto session was not established",
+                            null,
+                        )
+                        return
                     }
+                    pendingKeyAlias = keyAlias
+                    pendingSignature = cryptoSignature
+                    result.success(null)
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    clearPending()
                     result.error("auth_failed", errString.toString(), errorCode)
                 }
 
                 override fun onAuthenticationFailed() {
-                    // Keep the prompt open; terminal failures go through onAuthenticationError.
+                    // Keep the prompt open for another attempt.
                 }
             },
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(reason)
-            .setSubtitle("Confirm with biometrics")
+            .setSubtitle(subtitle)
             .setNegativeButtonText("Cancel")
             .setAllowedAuthenticators(authenticators)
             .build()
@@ -192,6 +281,53 @@ class BiometricCryptoChannel(
         }
     }
 
+    private fun completeSign(nonce: String, result: MethodChannel.Result) {
+        val signature = pendingSignature
+        val keyAlias = pendingKeyAlias
+        if (signature == null || keyAlias.isNullOrBlank()) {
+            clearPending()
+            result.error(
+                "auth_required",
+                "Biometric authentication is required before signing",
+                null,
+            )
+            return
+        }
+
+        try {
+            signature.update(nonce.toByteArray(Charsets.UTF_8))
+            val der = signature.sign()
+            clearPending()
+            result.success(
+                mapOf(
+                    "signatureBase64" to Base64.encodeToString(derToP1363(der), Base64.NO_WRAP),
+                ),
+            )
+        } catch (error: Exception) {
+            Log.e(TAG, "completeSign failed for $keyAlias", error)
+            clearPending()
+            val message = error.message.orEmpty()
+            if (message.contains("Key user not authenticated", ignoreCase = true) ||
+                message.contains("KEY_USER_NOT_AUTHENTICATED", ignoreCase = true) ||
+                message.contains("-26")
+            ) {
+                deleteKey(keyAlias)
+                result.error(
+                    REENROLLMENT_REQUIRED,
+                    "Biometric login needs to be set up again on this device.",
+                    null,
+                )
+                return
+            }
+            result.error("sign_failed", error.message, null)
+        }
+    }
+
+    private fun clearPending() {
+        pendingKeyAlias = null
+        pendingSignature = null
+    }
+
     private fun deleteKey(keyAlias: String) {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         if (keyStore.containsAlias(keyAlias)) {
@@ -199,7 +335,6 @@ class BiometricCryptoChannel(
         }
     }
 
-    /** Converts ASN.1 DER ECDSA signature to IEEE P1363 (r||s, 64 bytes). */
     private fun derToP1363(der: ByteArray): ByteArray {
         var offset = 0
         if (der[offset++] != 0x30.toByte()) {

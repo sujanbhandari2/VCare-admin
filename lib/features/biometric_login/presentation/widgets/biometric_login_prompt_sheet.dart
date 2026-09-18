@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 
@@ -9,15 +10,12 @@ Future<bool?> showBiometricPromptSheet(
   required String title,
   required String description,
   required String primaryLabel,
-  String secondaryLabel = 'Skip for now',
+  String secondaryLabel = 'Maybe later',
   String biometricLabel = 'Biometric',
   Future<void> Function()? onPrimaryPressed,
 }) {
-  return showModalBottomSheet<bool>(
-    context: context,
+  return context.showBottomSheet<bool>(
     isScrollControlled: true,
-    showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (sheetContext) {
       return _BiometricPromptSheetBody(
         title: title,
@@ -105,12 +103,13 @@ class _BiometricPromptSheetBodyState extends State<_BiometricPromptSheetBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final vcare = context.vcare;
+    final textTheme = context.textTheme;
 
     return SafeArea(
+      top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,13 +119,13 @@ class _BiometricPromptSheetBodyState extends State<_BiometricPromptSheetBody> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  color: vcare.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   _icon,
                   size: 34,
-                  color: colorScheme.primary,
+                  color: vcare.primary,
                 ),
               ),
             ),
@@ -134,7 +133,8 @@ class _BiometricPromptSheetBodyState extends State<_BiometricPromptSheetBody> {
             Text(
               widget.title,
               textAlign: TextAlign.center,
-              style: context.textTheme.titleLarge?.copyWith(
+              style: textTheme.titleLarge?.copyWith(
+                color: vcare.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -142,23 +142,25 @@ class _BiometricPromptSheetBodyState extends State<_BiometricPromptSheetBody> {
             Text(
               widget.description,
               textAlign: TextAlign.center,
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: theme.hintColor,
+              style: textTheme.bodyMedium?.copyWith(
+                color: vcare.mutedForeground,
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             if (_processing) ...[
               LinearProgressIndicator(
                 minHeight: 4,
                 borderRadius: BorderRadius.circular(999),
+                color: vcare.primary,
+                backgroundColor: vcare.primary.withValues(alpha: 0.12),
               ),
               const SizedBox(height: 12),
               Text(
                 _processingLabel,
                 textAlign: TextAlign.center,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: theme.hintColor,
+                style: textTheme.bodySmall?.copyWith(
+                  color: vcare.mutedForeground,
                 ),
               ),
               const SizedBox(height: 20),
@@ -167,11 +169,13 @@ class _BiometricPromptSheetBodyState extends State<_BiometricPromptSheetBody> {
               text: widget.primaryLabel,
               icon: _icon,
               loading: _processing,
+              height: 48,
               onPressed: _handlePrimaryPressed,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             AppButton.text(
               text: widget.secondaryLabel,
+              height: 44,
               onPressed: _processing ? null : () => Navigator.of(context).pop(false),
             ),
           ],

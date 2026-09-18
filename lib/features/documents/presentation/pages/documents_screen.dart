@@ -18,7 +18,6 @@ import 'package:vcare_admin/features/documents/presentation/widgets/documents_pr
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_upload_actions.dart';
 import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/utils/network_error_message.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
@@ -357,106 +356,113 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: _horizontalPadding),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          hintText: 'Search documents…',
-                          prefixIcon: Icon(
-                            LucideIcons.search,
-                            size: 16,
-                            color: vcare.mutedForeground,
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            hintText: 'Search documents…',
+                            prefixIcon: Icon(
+                              LucideIcons.search,
+                              size: 16,
+                              color: vcare.mutedForeground,
+                            ),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: VCareRadius.lgAll,
+                              borderSide: BorderSide(color: vcare.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: VCareRadius.lgAll,
+                              borderSide: BorderSide(color: vcare.border),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: VCareRadius.lgAll,
+                              borderSide: BorderSide(color: vcare.border),
+                            ),
+                            filled: true,
+                            fillColor: vcare.card,
                           ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: VCareRadius.lgAll,
-                            borderSide: BorderSide(color: vcare.border),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: VCareRadius.lgAll,
-                            borderSide: BorderSide(color: vcare.border),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: VCareRadius.lgAll,
-                            borderSide: BorderSide(color: vcare.border),
-                          ),
-                          filled: true,
-                          fillColor: vcare.card,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const DocumentsUploadActions(),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (listState.isInitialLoading && items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (listState.isInitialError && items.isEmpty)
-                  VcareErrorStatePanel(
-                    title: 'Unable to load documents',
-                    message: listState.operation.errorMessage,
-                    padding: const EdgeInsets.all(24),
-                    actionLabel: context.appLocalization.retry,
-                    onAction: () => ref
-                        .read(documentsListStateProvider.notifier)
-                        .loadInitial(),
-                  )
-                else if (filtered.isEmpty)
-                  const DocumentsEmptyState()
-                else
-                  for (var i = 0; i < filtered.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 8),
-                    DocumentsDocRow(
-                      item: filtered[i],
-                      isBusy: _busyDocumentId == filtered[i].id,
-                      canManage: _canManage(filtered[i]),
-                      onOpen: filtered[i].canOpen
-                          ? () => _openDocument(filtered[i])
-                          : null,
-                      onDownload: () => _downloadDocument(filtered[i]),
-                      onRename: () => _renameDocument(filtered[i]),
-                      onDelete: () => _deleteDocument(filtered[i]),
-                    ),
-                  ],
-                if (listState.isLoadingMore)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(child: CircularProgressIndicator()),
+                      const SizedBox(width: 8),
+                      const DocumentsUploadActions(),
+                    ],
                   ),
-                if (listState.loadMoreErrorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Center(
-                      child: TextButton(
-                        onPressed: () => ref
-                            .read(documentsListStateProvider.notifier)
-                            .loadMore(),
-                        child: Text(
-                          NetworkErrorMessage.displayMessage(
-                            context,
-                            message: listState.loadMoreErrorMessage,
-                          ),
-                          style: TextStyle(color: context.vcare.primary),
-                        ),
-                      ),
-                    ),
-                  ),
-              ]),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
+          if (listState.isInitialLoading && items.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (listState.isInitialError && items.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: VcareErrorStatePanel(
+                title: 'Unable to load documents',
+                message: listState.operation.errorMessage,
+                padding: const EdgeInsets.all(24),
+                actionLabel: context.appLocalization.retry,
+                onAction: () =>
+                    ref.read(documentsListStateProvider.notifier).loadInitial(),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: _horizontalPadding,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (filtered.isEmpty)
+                    const DocumentsEmptyState()
+                  else
+                    for (var i = 0; i < filtered.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      DocumentsDocRow(
+                        item: filtered[i],
+                        isBusy: _busyDocumentId == filtered[i].id,
+                        canManage: _canManage(filtered[i]),
+                        onOpen: filtered[i].canOpen
+                            ? () => _openDocument(filtered[i])
+                            : null,
+                        onDownload: () => _downloadDocument(filtered[i]),
+                        onRename: () => _renameDocument(filtered[i]),
+                        onDelete: () => _deleteDocument(filtered[i]),
+                      ),
+                    ],
+                  if (listState.isLoadingMore)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  if (listState.loadMoreErrorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: VcareInlineErrorCard(
+                        message: listState.loadMoreErrorMessage,
+                        compact: true,
+                        onRetry: () => ref
+                            .read(documentsListStateProvider.notifier)
+                            .loadMore(),
+                      ),
+                    ),
+                ]),
+              ),
+            ),
         ],
       ),
     );
@@ -531,9 +537,7 @@ class _RenameDocumentDialogState extends State<_RenameDocumentDialog> {
         controller: _controller,
         autofocus: true,
         // Prevent typing a new extension into the name field.
-        inputFormatters: [
-          FilteringTextInputFormatter.deny(RegExp(r'[\\/]')),
-        ],
+        inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\\/]'))],
         decoration: InputDecoration(
           hintText: 'Document name',
           suffixText: _extension.isNotEmpty ? _extension : null,
@@ -553,10 +557,7 @@ class _RenameDocumentDialogState extends State<_RenameDocumentDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Save'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Save')),
       ],
     );
   }

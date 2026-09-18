@@ -1,4 +1,5 @@
 import 'package:vcare_admin/features/find_care/domain/entities/search_location.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 enum CurrentLocationFailureReason {
   permissionDenied,
@@ -42,7 +43,7 @@ class CurrentLocationFailure extends CurrentLocationResult {
 
   String get userMessage {
     if (message != null && message!.trim().isNotEmpty) {
-      return message!.trim();
+      return NetworkErrorMessage.sanitize(message: message);
     }
     return switch (reason) {
       CurrentLocationFailureReason.permissionDenied =>

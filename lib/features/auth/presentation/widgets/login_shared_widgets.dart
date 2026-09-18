@@ -1,7 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:vcare_admin/core/styles/app_theme.dart';
 import 'package:vcare_admin/core/styles/vcare_button_styles.dart';
@@ -13,7 +15,7 @@ import 'package:vcare_admin/features/tenant_branding/presentation/widgets/tenant
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
-/// Full wordmark above login card — parity: LoginShell.tsx `h-12 w-auto`.
+/// Full wordmark inside the login card — parity: LoginShell.tsx `h-12 w-auto`.
 class LoginWordmark extends ConsumerWidget {
   const LoginWordmark({super.key});
 
@@ -28,7 +30,7 @@ class LoginWordmark extends ConsumerWidget {
   }
 }
 
-/// Card shell — parity: vcare-agent-app-2.0/src/features/auth/components/LoginShell.tsx
+/// Card shell — logo sits inside the card above the step body.
 class LoginShell extends StatelessWidget {
   const LoginShell({super.key, required this.body, this.onBack});
 
@@ -51,28 +53,16 @@ class LoginShell extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // parity: LoginShell.tsx `w-full relative flex items-center justify-center min-h-[56px]`
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        if (onBack != null)
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: _LoginHeaderBackButton(
-                              onTap: onBack!,
-                              backgroundColor: vcare.muted,
-                            ),
-                          ),
-                        const Center(child: LoginWordmark()),
-                      ],
+                  if (onBack != null) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _LoginHeaderBackButton(
+                        onTap: onBack!,
+                        backgroundColor: vcare.muted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                  ],
                   Material(
                     color: VCareColors.loginCardSurface,
                     shape: RoundedRectangleBorder(
@@ -90,7 +80,14 @@ class LoginShell extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
-                          child: body,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Center(child: LoginWordmark()),
+                              const SizedBox(height: 24),
+                              body,
+                            ],
+                          ),
                         ),
                         const LoginFooter(),
                       ],
@@ -106,12 +103,50 @@ class LoginShell extends StatelessWidget {
   }
 }
 
-class LoginFooter extends StatelessWidget {
+class LoginFooter extends StatefulWidget {
   const LoginFooter({super.key});
+
+  static const termsOfServiceUrl =
+      'https://vcareadvocacy.com/terms-of-service';
+  static const privacyPolicyUrl = 'https://vcareadvocacy.com/privacy-policy';
+
+  @override
+  State<LoginFooter> createState() => _LoginFooterState();
+}
+
+class _LoginFooterState extends State<LoginFooter> {
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () => _openUrl(LoginFooter.termsOfServiceUrl);
+    _privacyRecognizer = TapGestureRecognizer()
+      ..onTap = () => _openUrl(LoginFooter.privacyPolicyUrl);
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openUrl(String url) async {
+    await launchUrlString(url, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    final linkStyle = TextStyle(
+      color: context.vcare.foreground,
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+      decorationColor: context.vcare.foreground.withValues(alpha: 0.4),
+    );
 
     return Container(
       width: double.infinity,
@@ -134,18 +169,14 @@ class LoginFooter extends StatelessWidget {
                 const TextSpan(text: "By continuing you agree to VCare's "),
                 TextSpan(
                   text: 'Terms of Service',
-                  style: TextStyle(
-                    color: context.vcare.foreground,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: linkStyle,
+                  recognizer: _termsRecognizer,
                 ),
                 const TextSpan(text: ' and '),
                 TextSpan(
                   text: 'Privacy Policy',
-                  style: TextStyle(
-                    color: context.vcare.foreground,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: linkStyle,
+                  recognizer: _privacyRecognizer,
                 ),
                 const TextSpan(text: '.'),
               ],
@@ -167,7 +198,6 @@ class LoginFooter extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-
                   color: vcare.mutedForeground,
                 ),
               ),

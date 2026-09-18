@@ -6,6 +6,7 @@ import 'package:vcare_admin/features/find_care/domain/entities/search_location.d
 import 'package:vcare_admin/features/find_care/domain/repositories/find_care_location_repository.dart';
 import 'package:vcare_admin/features/find_care/utils/find_care_utils.dart';
 import 'package:vcare_admin/shared/utils/logger.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
 
 typedef ReverseGeocodeFn =
     Future<SearchLocation?> Function(double latitude, double longitude);
@@ -75,7 +76,7 @@ class FindCareLocationRepositoryImpl implements FindCareLocationRepository {
       );
       return CurrentLocationFailure(
         reason: CurrentLocationFailureReason.error,
-        message: error.toString(),
+        message: NetworkErrorMessage.sanitize(message: error.toString()),
       );
     }
   }
@@ -98,7 +99,9 @@ class FindCareLocationRepositoryImpl implements FindCareLocationRepository {
         ),
       LocationPermissionRequestStatus.error => CurrentLocationFailure(
         reason: CurrentLocationFailureReason.error,
-        message: result.error?.toString(),
+        message: NetworkErrorMessage.sanitize(
+          message: result.error?.toString(),
+        ),
       ),
       LocationPermissionRequestStatus.granted => const CurrentLocationFailure(
         reason: CurrentLocationFailureReason.error,

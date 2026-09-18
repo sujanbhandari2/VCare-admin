@@ -157,7 +157,10 @@ class _MedicareProviderLookupScreenState
                 ),
                 if (lookupState.error != null) ...[
                   const SizedBox(height: 12),
-                  VcareInlineErrorCard(message: lookupState.error),
+                  VcareInlineErrorCard(
+                    message: lookupState.error,
+                    onRetry: notifier.submitSearch,
+                  ),
                 ],
                 if (lookupState.enabled) ...[
                   const SizedBox(height: 20),

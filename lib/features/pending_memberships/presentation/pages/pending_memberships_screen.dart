@@ -150,35 +150,34 @@ class _PendingMembershipsScreenState
             ),
           ),
           if (listState.isInitialLoading && items.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
             )
           else if (listState.isInitialError && items.isEmpty)
-            SliverPadding(
-              padding: context.mobileShellScrollPadding,
-              sliver: SliverToBoxAdapter(
-                child: VcareErrorStatePanel(
-                  title: 'Unable to load pending memberships',
-                  message: listState.operation.errorMessage,
-                  actionLabel: 'Try again',
-                  onAction: () => ref
-                      .read(pendingMembershipsListStateProvider.notifier)
-                      .loadInitial(),
-                ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: VcareErrorStatePanel(
+                title: 'Unable to load pending memberships',
+                message: listState.operation.errorMessage,
+                actionLabel: 'Try again',
+                onAction: () => ref
+                    .read(pendingMembershipsListStateProvider.notifier)
+                    .loadInitial(),
               ),
             )
           else if (items.isEmpty)
             SliverPadding(
               padding: context.mobileShellScrollPadding,
-              sliver: const SliverToBoxAdapter(
-                child: VcareEmptyStateCard(
-                  icon: LucideIcons.badgeCheck,
-                  title: 'No pending memberships',
-                  description:
-                      'Submitted memberships will show up here for review.',
+              sliver: const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: VcareEmptyStateCard(
+                    icon: LucideIcons.badgeCheck,
+                    title: 'No pending memberships',
+                    description:
+                        'Submitted memberships will show up here for review.',
+                  ),
                 ),
               ),
             )

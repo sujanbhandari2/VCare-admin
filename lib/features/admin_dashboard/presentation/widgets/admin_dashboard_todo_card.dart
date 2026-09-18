@@ -15,10 +15,7 @@ import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 class AdminDashboardTodoCard extends ConsumerStatefulWidget {
-  const AdminDashboardTodoCard({
-    super.key,
-    required this.state,
-  });
+  const AdminDashboardTodoCard({super.key, required this.state});
 
   final AdminDashboardState state;
 
@@ -81,11 +78,10 @@ class _AdminDashboardTodoCardState
 
     Widget body;
     if (operation.isLoading && rows.isEmpty) {
-      body = const AdminDashboardSectionMessage(
-        message: 'Loading todos…',
-      );
+      body = const AdminDashboardSectionMessage(message: 'Loading todos…');
     } else if (operation.hasError && rows.isEmpty) {
       body = VcareInlineErrorCard(
+        title: 'Unable to load todos',
         message: operation.errorMessage,
         onRetry: () =>
             ref.read(adminDashboardStateProvider.notifier).refreshTodoTasks(),

@@ -5,8 +5,16 @@ import Flutter
 
 /// MethodChannel bridge for non-exportable EC P-256 keys in the Secure Enclave,
 /// with biometric-gated ECDSA SHA-256 signing (IEEE P1363 / raw r||s).
+///
+/// Login uses a two-phase flow so Face ID / Touch ID can appear before the
+/// challenge API returns:
+/// 1. authenticateForSigning — LAContext.evaluatePolicy
+/// 2. completeSign — SecKeyCreateSignature using the authenticated context
 enum BiometricCryptoChannel {
   static let name = "com.vcare.admin/biometric_crypto"
+
+  private static var pendingContext: LAContext?
+  private static var pendingKeyAlias: String?
 
   static func register(messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(name: name, binaryMessenger: messenger)
@@ -39,6 +47,71 @@ enum BiometricCryptoChannel {
           )
         }
 
+      case "authenticateForSigning":
+        guard
+          let args = call.arguments as? [String: Any],
+          let keyAlias = args["keyAlias"] as? String,
+          !keyAlias.isEmpty
+        else {
+          result(
+            FlutterError(
+              code: "invalid_args",
+              message: "keyAlias is required",
+              details: nil
+            )
+          )
+          return
+        }
+        let reason = (args["reason"] as? String)?
+          .trimmingCharacters(in: .whitespacesAndNewlines)
+        let preferred = (args["preferredBiometric"] as? String)?
+          .trimmingCharacters(in: .whitespacesAndNewlines)
+          .lowercased()
+        let prompt: String
+        if let reason, !reason.isEmpty {
+          prompt = reason
+        } else if preferred == "face" {
+          prompt = "Confirm with Face ID to sign in."
+        } else if preferred == "fingerprint" {
+          prompt = "Confirm with Touch ID to sign in."
+        } else {
+          prompt = "Authenticate to sign in"
+        }
+        authenticateForSigning(keyAlias: keyAlias, reason: prompt, result: result)
+
+      case "completeSign":
+        guard
+          let args = call.arguments as? [String: Any],
+          let nonce = args["nonce"] as? String,
+          !nonce.isEmpty
+        else {
+          result(
+            FlutterError(
+              code: "invalid_args",
+              message: "nonce is required",
+              details: nil
+            )
+          )
+          return
+        }
+        do {
+          let signature = try completeSign(nonce: nonce)
+          result(["signatureBase64": signature])
+        } catch {
+          clearPendingSession()
+          result(
+            FlutterError(
+              code: "sign_failed",
+              message: error.localizedDescription,
+              details: nil
+            )
+          )
+        }
+
+      case "cancelSigning":
+        clearPendingSession()
+        result(nil)
+
       case "sign":
         guard
           let args = call.arguments as? [String: Any],
@@ -61,21 +134,24 @@ enum BiometricCryptoChannel {
         let prompt = (reason?.isEmpty == false)
           ? reason!
           : "Authenticate to sign in"
-        do {
-          let signature = try sign(
-            keyAlias: keyAlias,
-            nonce: nonce,
-            reason: prompt
-          )
-          result(["signatureBase64": signature])
-        } catch {
-          result(
-            FlutterError(
-              code: "sign_failed",
-              message: error.localizedDescription,
-              details: nil
+        authenticateForSigning(keyAlias: keyAlias, reason: prompt) { authResult in
+          if let error = authResult as? FlutterError {
+            result(error)
+            return
+          }
+          do {
+            let signature = try completeSign(nonce: nonce)
+            result(["signatureBase64": signature])
+          } catch {
+            clearPendingSession()
+            result(
+              FlutterError(
+                code: "sign_failed",
+                message: error.localizedDescription,
+                details: nil
+              )
             )
-          )
+          }
         }
 
       case "deleteKey":
@@ -100,6 +176,11 @@ enum BiometricCryptoChannel {
         result(FlutterMethodNotImplemented)
       }
     }
+  }
+
+  private static func clearPendingSession() {
+    pendingContext = nil
+    pendingKeyAlias = nil
   }
 
   private static func tagData(for keyAlias: String) -> Data {
@@ -154,8 +235,84 @@ enum BiometricCryptoChannel {
     ]
   }
 
-  private static func sign(keyAlias: String, nonce: String, reason: String) throws -> String {
-    guard let privateKey = loadPrivateKey(keyAlias: keyAlias) else {
+  private static func authenticateForSigning(
+    keyAlias: String,
+    reason: String,
+    result: @escaping FlutterResult
+  ) {
+    clearPendingSession()
+
+    guard loadPrivateKey(keyAlias: keyAlias, context: nil) != nil else {
+      result(
+        FlutterError(
+          code: "key_missing",
+          message: "Biometric key was not found",
+          details: nil
+        )
+      )
+      return
+    }
+
+    let context = LAContext()
+    context.localizedReason = reason
+    context.touchIDAuthenticationAllowableReuseDuration =
+      LATouchIDAuthenticationMaximumAllowableReuseDuration
+
+    var authError: NSError?
+    guard context.canEvaluatePolicy(
+      .deviceOwnerAuthenticationWithBiometrics,
+      error: &authError
+    ) else {
+      result(
+        FlutterError(
+          code: "biometric_unavailable",
+          message: authError?.localizedDescription
+            ?? "Biometric authentication is unavailable",
+          details: nil
+        )
+      )
+      return
+    }
+
+    context.evaluatePolicy(
+      .deviceOwnerAuthenticationWithBiometrics,
+      localizedReason: reason
+    ) { success, error in
+      DispatchQueue.main.async {
+        if success {
+          pendingContext = context
+          pendingKeyAlias = keyAlias
+          result(nil)
+        } else {
+          clearPendingSession()
+          result(
+            FlutterError(
+              code: "auth_failed",
+              message: error?.localizedDescription ?? "Biometric authentication failed",
+              details: nil
+            )
+          )
+        }
+      }
+    }
+  }
+
+  private static func completeSign(nonce: String) throws -> String {
+    guard
+      let keyAlias = pendingKeyAlias,
+      let context = pendingContext
+    else {
+      throw NSError(
+        domain: "BiometricCrypto",
+        code: 6,
+        userInfo: [
+          NSLocalizedDescriptionKey: "Biometric authentication is required before signing",
+        ]
+      )
+    }
+
+    guard let privateKey = loadPrivateKey(keyAlias: keyAlias, context: context) else {
+      clearPendingSession()
       throw NSError(
         domain: "BiometricCrypto",
         code: 2,
@@ -163,24 +320,9 @@ enum BiometricCryptoChannel {
       )
     }
 
-    let context = LAContext()
-    context.localizedReason = reason
-
-    var authError: NSError?
-    guard context.canEvaluatePolicy(
-      .deviceOwnerAuthenticationWithBiometrics,
-      error: &authError
-    ) else {
-      throw authError
-        ?? NSError(
-          domain: "BiometricCrypto",
-          code: 3,
-          userInfo: [NSLocalizedDescriptionKey: "Biometric authentication is unavailable"]
-        )
-    }
-
     let algorithm = SecKeyAlgorithm.ecdsaSignatureMessageX962SHA256
     guard SecKeyIsAlgorithmSupported(privateKey, .sign, algorithm) else {
+      clearPendingSession()
       throw NSError(
         domain: "BiometricCrypto",
         code: 4,
@@ -196,20 +338,30 @@ enum BiometricCryptoChannel {
       nonceData as CFData,
       &signError
     ) as Data? else {
+      clearPendingSession()
       throw signError!.takeRetainedValue() as Error
     }
 
+    clearPendingSession()
     let raw = try derToP1363(derSignature)
     return raw.base64EncodedString()
   }
 
-  private static func loadPrivateKey(keyAlias: String) -> SecKey? {
-    let query: [String: Any] = [
+  private static func loadPrivateKey(
+    keyAlias: String,
+    context: LAContext?
+  ) -> SecKey? {
+    var query: [String: Any] = [
       kSecClass as String: kSecClassKey,
       kSecAttrApplicationTag as String: tagData(for: keyAlias),
       kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
       kSecReturnRef as String: true,
     ]
+
+    if let context {
+      query[kSecUseAuthenticationContext as String] = context
+      query[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUISkip
+    }
 
     var item: CFTypeRef?
     let status = SecItemCopyMatching(query as CFDictionary, &item)

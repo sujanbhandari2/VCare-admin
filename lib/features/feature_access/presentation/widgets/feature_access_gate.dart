@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
@@ -33,27 +32,30 @@ class FeatureAccessGate extends ConsumerWidget {
     final accessState = ref.watch(featureAccessStateProvider);
 
     if (accessState.fetching) {
-      return loadingChild ??
-          const Center(child: CircularProgressIndicator());
+      return loadingChild ?? const Center(child: CircularProgressIndicator());
     }
 
     if (accessState.hasError) {
-      return VcareErrorStatePanel(
-        title: 'Unable to load settings',
-        message: accessState.error,
-        actionLabel: context.appLocalization.retry,
-        onAction: () => ref
-            .read(featureAccessStateProvider.notifier)
-            .refreshFromApi(forceRefresh: true),
+      return Center(
+        child: VcareErrorStatePanel(
+          title: 'Unable to load settings',
+          message: accessState.error,
+          actionLabel: context.appLocalization.retry,
+          onAction: () => ref
+              .read(featureAccessStateProvider.notifier)
+              .refreshFromApi(forceRefresh: true),
+        ),
       );
     }
 
     final access = accessState.data ?? FeatureAccess.disabled;
     if (!isEnabled(access)) {
-      return FeatureAccessDeniedPanel(
-        title: deniedTitle,
-        message: deniedMessage,
-        icon: deniedIcon,
+      return Center(
+        child: FeatureAccessDeniedPanel(
+          title: deniedTitle,
+          message: deniedMessage,
+          icon: deniedIcon,
+        ),
       );
     }
 

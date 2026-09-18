@@ -129,6 +129,12 @@ abstract class AuthRepository {
     CancelToken? cancelToken,
   });
 
+  /// Admin console forgot password — sends `{ email }` (web parity).
+  Future<EitherResponseOrException<ForgotPasswordResult>> adminForgotPassword({
+    required String email,
+    CancelToken? cancelToken,
+  });
+
   /// Completes password reset using a token from the reset link.
   Future<EitherResponseOrException<ResetPasswordResult>> resetPassword({
     required String token,

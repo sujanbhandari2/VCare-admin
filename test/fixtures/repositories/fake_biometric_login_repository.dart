@@ -1,19 +1,22 @@
 import 'package:dio/dio.dart';
-import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
-import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_challenge.dart';
-import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
-import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_login_status.dart';
 
-abstract class BiometricLoginRepository {
-  /// Reads the single local biometric credential.
-  ///
-  /// When [accountId] is provided (settings), enrollment is reported only if
-  /// the stored credential belongs to that account. When omitted (sign-in),
-  /// any valid local credential is treated as available for biometric login.
+import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
+import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_challenge.dart';
+import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_login_status.dart';
+import 'package:vcare_admin/features/biometric_login/domain/repositories/biometric_login_repository.dart';
+
+class FakeBiometricLoginRepository implements BiometricLoginRepository {
+  BiometricLoginStatus status = BiometricLoginStatus.disabled;
+
+  @override
   Future<EitherResponseOrException<BiometricLoginStatus>> fetchStatus({
     String? accountId,
-  });
+  }) async {
+    return Success(status);
+  }
 
+  @override
   Future<EitherResponseOrException<BiometricLoginStatus>> enroll({
     required String accessToken,
     required String accountId,
@@ -21,37 +24,61 @@ abstract class BiometricLoginRepository {
     String? userType,
     String? deviceName,
     CancelToken? cancelToken,
-  });
+  }) async {
+    status = BiometricLoginStatus(
+      isEnrolled: true,
+      accountId: accountId,
+      accountEmail: accountEmail,
+    );
+    return Success(status);
+  }
 
+  @override
   Future<EitherResponseOrException<BiometricChallenge>> challenge({
     String? userType,
     CancelToken? cancelToken,
-  });
+  }) async {
+    return const Success(
+      BiometricChallenge(
+        challengeToken: 'challenge',
+        nonce: 'nonce',
+      ),
+    );
+  }
 
-  /// Shows the OS biometric prompt immediately and prepares a signing session.
+  @override
   Future<EitherResponseOrException<void>> authenticateForLogin({
     String? userType,
     String? preferredBiometric,
     String? reason,
-  });
+  }) async {
+    return const Success(null);
+  }
 
-  /// Clears any pending native signing session (e.g. after a cancelled login).
-  Future<void> cancelLoginAuthentication();
+  @override
+  Future<void> cancelLoginAuthentication() async {}
 
-  /// Clears the local biometric credential (and best-effort native key).
-  Future<void> clearLocalCredential();
+  @override
+  Future<void> clearLocalCredential() async {
+    status = BiometricLoginStatus.disabled;
+  }
 
+  @override
   Future<EitherResponseOrException<AdminAuthSession>> loginWithChallenge({
     required BiometricChallenge challenge,
     String? userType,
     CancelToken? cancelToken,
-  });
+  }) async {
+    throw UnimplementedError();
+  }
 
-  /// Calls `DELETE /auth/biometric/current`, then clears the native key and
-  /// local credential. On API failure the local credential is retained.
+  @override
   Future<EitherResponseOrException<void>> revoke({
     required String accessToken,
     String? userType,
     CancelToken? cancelToken,
-  });
+  }) async {
+    status = BiometricLoginStatus.disabled;
+    return const Success(null);
+  }
 }

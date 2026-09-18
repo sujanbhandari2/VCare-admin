@@ -35,9 +35,7 @@ class _AdminFailedPaymentsScreenState
       final state = ref.read(adminFailedPaymentsListStateProvider);
       if (state.isInitialLoading || state.isRefreshing) return;
 
-      final notifier = ref.read(
-        adminFailedPaymentsListStateProvider.notifier,
-      );
+      final notifier = ref.read(adminFailedPaymentsListStateProvider.notifier);
       if (state.items.isEmpty) {
         if (!state.isInitialError) notifier.loadInitial();
         return;
@@ -57,7 +55,8 @@ class _AdminFailedPaymentsScreenState
 
   void _onScroll() {
     final listState = ref.read(adminFailedPaymentsListStateProvider);
-    final shouldLoadMore = listState.hasMore &&
+    final shouldLoadMore =
+        listState.hasMore &&
         listState.items.isNotEmpty &&
         !listState.isLoadingMore &&
         listState.loadMoreErrorMessage == null &&
@@ -73,10 +72,10 @@ class _AdminFailedPaymentsScreenState
           .read(adminFailedPaymentsListStateProvider.notifier)
           .loadMore()
           .whenComplete(() {
-        if (mounted) {
-          _isLoadMoreRequested = false;
-        }
-      });
+            if (mounted) {
+              _isLoadMoreRequested = false;
+            }
+          });
     }
   }
 
@@ -84,9 +83,7 @@ class _AdminFailedPaymentsScreenState
     await ref.read(adminFailedPaymentsListStateProvider.notifier).sync();
   }
 
-  Future<void> _openRecovery(
-    AdminDashboardFailedPaymentTodoItem item,
-  ) async {
+  Future<void> _openRecovery(AdminDashboardFailedPaymentTodoItem item) async {
     final payerId = item.details.relatedId?.trim() ?? '';
     final transactionId = item.resource.id.trim();
     if (payerId.isEmpty || transactionId.isEmpty) return;
@@ -109,53 +106,55 @@ class _AdminFailedPaymentsScreenState
         onRefresh: _onRefresh,
         controller: _scrollController,
         slivers: [
-          const SliverVcarePageHeader(
-            title: 'Failed Payments',
-            showBack: true,
-          ),
+          const SliverVcarePageHeader(title: 'Failed Payments', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (listState.isInitialLoading && items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
+            sliver: listState.isInitialLoading && items.isEmpty
+                ? const SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (listState.isInitialError && items.isEmpty)
-                  VcareErrorStatePanel(
-                    title: 'Unable to load failed payments',
-                    message: listState.operation.errorMessage,
-                    actionLabel: 'Try again',
-                    onAction: () => ref
-                        .read(adminFailedPaymentsListStateProvider.notifier)
-                        .loadInitial(),
+                : listState.isInitialError && items.isEmpty
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: VcareErrorStatePanel(
+                      title: 'Unable to load failed payments',
+                      message: listState.operation.errorMessage,
+                      actionLabel: 'Try again',
+                      onAction: () => ref
+                          .read(adminFailedPaymentsListStateProvider.notifier)
+                          .loadInitial(),
+                    ),
                   )
-                else if (items.isEmpty)
-                  const AdminDashboardFailedPaymentsEmptyState()
-                else ...[
-                  for (var i = 0; i < items.length; i++) ...[
-                    AdminDashboardFailedPaymentRow(
-                      item: items[i],
-                      onTap: () => _openRecovery(items[i]),
-                    ),
-                    if (i < items.length - 1) const SizedBox(height: 8),
-                  ],
-                  if (listState.isLoadingMore)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    ),
-                ],
-                const SizedBox(height: 16),
-              ]),
-            ),
+                : SliverList(
+                    delegate: SliverChildListDelegate([
+                      if (items.isEmpty)
+                        const AdminDashboardFailedPaymentsEmptyState()
+                      else ...[
+                        for (var i = 0; i < items.length; i++) ...[
+                          AdminDashboardFailedPaymentRow(
+                            item: items[i],
+                            onTap: () => _openRecovery(items[i]),
+                          ),
+                          if (i < items.length - 1) const SizedBox(height: 8),
+                        ],
+                        if (listState.isLoadingMore)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                      const SizedBox(height: 16),
+                    ]),
+                  ),
           ),
         ],
       ),

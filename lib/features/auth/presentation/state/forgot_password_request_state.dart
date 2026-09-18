@@ -9,6 +9,7 @@ class ForgotPasswordRequestState {
   final OperationState<ForgotPasswordResult> operation;
 
   bool get requesting => operation.isLoading;
+  String? get error => operation.errorMessage;
   ForgotPasswordResult? get result => operation.data;
 
   ForgotPasswordRequestState loading() => ForgotPasswordRequestState(

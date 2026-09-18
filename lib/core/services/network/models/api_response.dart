@@ -39,7 +39,8 @@ class ApiResponse<T> {
           return nested;
         }
       }
-      return map.toString();
+      // Avoid dumping raw map contents into UI-facing error copy.
+      return '';
     }
     return raw.toString();
   }

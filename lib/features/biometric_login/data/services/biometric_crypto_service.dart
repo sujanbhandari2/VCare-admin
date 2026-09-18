@@ -17,6 +17,14 @@ class BiometricKeyPairData {
 ///
 /// Private keys never leave the secure hardware; only the public SPKI and a
 /// local key alias are returned to Dart.
+///
+/// Login signing is two-phase so the OS biometric UI unlocks a Keystore
+/// CryptoObject session before the challenge nonce is signed:
+/// 1. [authenticateForSigning] — BiometricPrompt + CryptoObject
+/// 2. [completeSign] — signs with the authenticated Signature instance
+///
+/// On Android, never sign with a fresh Signature after a plain biometric
+/// prompt — that causes KEY_USER_NOT_AUTHENTICATED (-26).
 class BiometricCryptoService {
   const BiometricCryptoService({
     MethodChannel? channel,
@@ -54,22 +62,35 @@ class BiometricCryptoService {
     );
   }
 
-  Future<String> signNonce({
+  /// Shows the OS biometric prompt and keeps a short-lived signing session.
+  Future<void> authenticateForSigning({
     required String keyAlias,
-    required String nonce,
     String reason = 'Use biometrics to sign in.',
+    String? preferredBiometric,
   }) async {
     if (kIsWeb) {
       throw UnsupportedError('Biometric login is not supported on web.');
     }
 
-    final response = await _channel.invokeMapMethod<String, dynamic>(
-      'sign',
+    await _channel.invokeMethod<void>(
+      'authenticateForSigning',
       {
         'keyAlias': keyAlias,
-        'nonce': nonce,
         'reason': reason,
+        'preferredBiometric': ?preferredBiometric,
       },
+    );
+  }
+
+  /// Completes a signature for [nonce] after [authenticateForSigning].
+  Future<String> completeSign({required String nonce}) async {
+    if (kIsWeb) {
+      throw UnsupportedError('Biometric login is not supported on web.');
+    }
+
+    final response = await _channel.invokeMapMethod<String, dynamic>(
+      'completeSign',
+      {'nonce': nonce},
     );
 
     final signature = (response?['signatureBase64'] as String?)?.trim() ?? '';
@@ -77,6 +98,33 @@ class BiometricCryptoService {
       throw StateError('Native biometric signing returned an empty signature.');
     }
     return signature;
+  }
+
+  Future<void> cancelSigning() async {
+    if (kIsWeb) {
+      return;
+    }
+
+    try {
+      await _channel.invokeMethod<void>('cancelSigning');
+    } catch (_) {
+      // Best-effort cleanup of any pending native signing session.
+    }
+  }
+
+  /// One-shot authenticate + sign (used when a two-phase flow is unnecessary).
+  Future<String> signNonce({
+    required String keyAlias,
+    required String nonce,
+    String reason = 'Use biometrics to sign in.',
+  }) async {
+    await authenticateForSigning(keyAlias: keyAlias, reason: reason);
+    try {
+      return await completeSign(nonce: nonce);
+    } catch (error) {
+      await cancelSigning();
+      rethrow;
+    }
   }
 
   Future<void> deleteKey(String keyAlias) async {

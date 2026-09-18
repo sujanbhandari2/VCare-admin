@@ -91,6 +91,7 @@ class FakeAuthRepository implements AuthRepository {
   String? lastForgotPasswordAccountId;
   String? lastForgotPasswordDob;
   String? lastForgotPasswordZipCode;
+  String? lastAdminForgotPasswordEmail;
   String? lastResetPasswordToken;
   String? lastResetPasswordPassword;
   String? lastIdentifyIdentifier;
@@ -248,6 +249,15 @@ class FakeAuthRepository implements AuthRepository {
     lastForgotPasswordAccountId = accountId;
     lastForgotPasswordDob = dob;
     lastForgotPasswordZipCode = zipCode;
+    return forgotPasswordResult;
+  }
+
+  @override
+  Future<EitherResponseOrException<ForgotPasswordResult>> adminForgotPassword({
+    required String email,
+    CancelToken? cancelToken,
+  }) async {
+    lastAdminForgotPasswordEmail = email;
     return forgotPasswordResult;
   }
 

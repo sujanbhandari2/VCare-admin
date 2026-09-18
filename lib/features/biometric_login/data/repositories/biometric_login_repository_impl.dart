@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
 import 'package:vcare_admin/core/config/api_endpoints.dart';
@@ -230,6 +231,62 @@ class BiometricLoginRepositoryImpl implements BiometricLoginRepository {
   }
 
   @override
+  Future<EitherResponseOrException<void>> authenticateForLogin({
+    String? userType,
+    String? preferredBiometric,
+    String? reason,
+  }) {
+    return safeNetworkCall(() async {
+      if (kIsWeb) {
+        throw UnsupportedError('Biometric login is not supported on web.');
+      }
+
+      final credential = await _readCredential();
+      if (credential == null) {
+        throw HttpException(
+          title: 'Biometric unavailable',
+          message: 'No biometric enrollment exists on this device.',
+        );
+      }
+
+      try {
+        await _cryptoService.authenticateForSigning(
+          keyAlias: credential.keyAlias,
+          reason: reason?.trim().isNotEmpty == true
+              ? reason!.trim()
+              : 'Use biometrics to sign in.',
+          preferredBiometric: preferredBiometric,
+        );
+      } on PlatformException catch (error) {
+        if (error.code == 'reenrollment_required') {
+          await _credentialStore.delete();
+          throw HttpException(
+            title: 'Biometric reenrollment required',
+            message:
+                'Biometric login needs to be set up again. Enable it from Profile.',
+            responseData: error.code,
+          );
+        }
+        rethrow;
+      }
+    });
+  }
+
+  @override
+  Future<void> cancelLoginAuthentication() {
+    return _cryptoService.cancelSigning();
+  }
+
+  @override
+  Future<void> clearLocalCredential() async {
+    final credential = await _readCredential();
+    if (credential != null && credential.keyAlias.trim().isNotEmpty) {
+      await _cryptoService.deleteKey(credential.keyAlias);
+    }
+    await _credentialStore.delete();
+  }
+
+  @override
   Future<EitherResponseOrException<AdminAuthSession>> loginWithChallenge({
     required BiometricChallenge challenge,
     String? userType,
@@ -263,13 +320,34 @@ class BiometricLoginRepositoryImpl implements BiometricLoginRepository {
       Logger.logMessage('Biometric headers prepared for $resolvedUserType.');
       late final String signature;
       try {
-        signature = await _cryptoService.signNonce(
-          keyAlias: credential.keyAlias,
+        signature = await _cryptoService.completeSign(
           nonce: challenge.nonce,
-          reason: 'Use biometrics to sign in.',
+        );
+      } on PlatformException catch (error) {
+        Logger.logError('Biometric signature creation failed: $error');
+        await _cryptoService.cancelSigning();
+        if (error.code == 'reenrollment_required' ||
+            _isKeyUserNotAuthenticated(error)) {
+          await _credentialStore.delete();
+          throw HttpException(
+            title: 'Biometric reenrollment required',
+            message:
+                'Biometric login needs to be set up again. Enable it from Profile.',
+            responseData: 'reenrollment_required',
+          );
+        }
+        throw HttpException(
+          title: 'Biometric login failed',
+          message: 'Unable to sign the biometric challenge.',
+          requestMethod: 'POST',
+          requestUri: Uri.parse(
+            '${apiClient.baseUrl}${ApiEndpoints.authBiometricLogin}',
+          ),
+          responseData: error.toString(),
         );
       } catch (error) {
         Logger.logError('Biometric signature creation failed: $error');
+        await _cryptoService.cancelSigning();
         throw HttpException(
           title: 'Biometric login failed',
           message: 'Unable to sign the biometric challenge.',
@@ -583,5 +661,12 @@ class BiometricLoginRepositoryImpl implements BiometricLoginRepository {
       ),
       currentRoles: currentRoles,
     );
+  }
+
+  bool _isKeyUserNotAuthenticated(PlatformException error) {
+    final raw = '${error.code} ${error.message}'.toLowerCase();
+    return raw.contains('key user not authenticated') ||
+        raw.contains('key_user_not_authenticated') ||
+        raw.contains('keystore code: -26');
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 
+import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
@@ -118,9 +119,12 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
 
   Future<void> login({
     String? userType,
+    String? preferredBiometric,
+    String? biometricReason,
     Future<void> Function(AdminAuthSession session)? onAuthenticated,
     void Function(String? error)? onError,
   }) async {
+    final repository = ref.read(biometricLoginRepositoryProvider);
     try {
       final availability = await _biometricAvailabilityMessage();
       if (availability != null) {
@@ -132,13 +136,10 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
         state = state.actionLoading();
       }
 
+      // Challenge first so CryptoObject signing can finish immediately after
+      // biometric success (Android Keystore requires the authenticated Signature).
       Logger.logMessage('Requesting biometric challenge.');
-
-      final challengeResponse =
-          await ref.read(biometricLoginRepositoryProvider).challenge(
-                userType: userType,
-              );
-
+      final challengeResponse = await repository.challenge(userType: userType);
       final challenge = _resolveChallenge(challengeResponse);
       if (challenge == null) {
         Logger.logWarning(
@@ -154,23 +155,74 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
         return;
       }
 
+      Logger.logMessage('Prompting OS biometric authentication.');
+      final authResponse = await repository.authenticateForLogin(
+        userType: userType,
+        preferredBiometric: preferredBiometric,
+        reason: biometricReason,
+      );
+      if (authResponse.isFailure) {
+        await repository.cancelLoginAuthentication();
+        final error = authResponse.failureOrNull;
+        final code = error?.responseData?.toString() ?? '';
+        final message = error?.userMessage ??
+            'Biometric authentication was cancelled.';
+
+        if (_isReenrollmentRequired(error)) {
+          await repository.clearLocalCredential();
+          if (ref.mounted) {
+            state = state
+                .statusSuccess(BiometricLoginStatus.disabled)
+                .actionFailure(
+                  'Biometric login needs to be set up again. Enable it from Profile.',
+                );
+          }
+          onError?.call(
+            'Biometric login needs to be set up again. Enable it from Profile.',
+          );
+          return;
+        }
+
+        if (ref.mounted) {
+          state = state.actionFailure(message);
+        }
+        onError?.call(message);
+        Logger.logWarning('Biometric auth failed: $code $message');
+        return;
+      }
+
       Logger.logMessage(
-        'Biometric challenge received; prompting native biometric sign.',
+        'Biometric confirmed; completing signed login.',
       );
 
-      final loginResponse = await ref
-          .read(biometricLoginRepositoryProvider)
-          .loginWithChallenge(
-            challenge: challenge,
-            userType: userType,
-          );
+      final loginResponse = await repository.loginWithChallenge(
+        challenge: challenge,
+        userType: userType,
+      );
 
       final session = _resolveSession(loginResponse);
       if (session == null) {
         Logger.logWarning(
           'Biometric login response did not resolve into a session.',
         );
+        await repository.cancelLoginAuthentication();
         final error = loginResponse.failureOrNull;
+
+        if (_isReenrollmentRequired(error)) {
+          await repository.clearLocalCredential();
+          if (ref.mounted) {
+            state = state
+                .statusSuccess(BiometricLoginStatus.disabled)
+                .actionFailure(
+                  'Biometric login needs to be set up again. Enable it from Profile.',
+                );
+          }
+          onError?.call(
+            'Biometric login needs to be set up again. Enable it from Profile.',
+          );
+          return;
+        }
+
         final message =
             error?.userMessage ?? 'Unable to complete biometric login.';
         if (ref.mounted) {
@@ -191,6 +243,7 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
     } catch (error, stackTrace) {
       Logger.logError('Biometric login threw: $error');
       Logger.logRaw(stackTrace);
+      await repository.cancelLoginAuthentication();
       final message = 'Unable to complete biometric login.';
       if (ref.mounted) {
         state = state.actionFailure(message);
@@ -201,6 +254,21 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
         state = state.clearAction();
       }
     }
+  }
+
+  bool _isReenrollmentRequired(Object? error) {
+    if (error == null) {
+      return false;
+    }
+    final raw = [
+      error.toString(),
+      if (error is HttpException) error.message,
+      if (error is HttpException) error.responseData?.toString(),
+    ].whereType<String>().join(' ').toLowerCase();
+    return raw.contains('reenrollment_required') ||
+        raw.contains('needs to be set up again') ||
+        raw.contains('key user not authenticated') ||
+        raw.contains('key_user_not_authenticated');
   }
 
   Future<void> revoke({

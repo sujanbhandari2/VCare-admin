@@ -41,15 +41,14 @@ class AdminDashboardStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
+    // Empty only swaps the caption copy — keep brand tones/icons intact.
     final displayCaption = empty ? (emptyCaption ?? caption) : caption;
 
     return SizedBox(
       height: cardHeight,
       width: double.infinity,
       child: Material(
-        color: empty
-            ? vcare.muted.withValues(alpha: 0.22)
-            : _surfaceColor(vcare, iconTone),
+        color: _surfaceColor(vcare, iconTone),
         borderRadius: VCareRadius.lgAll,
         child: InkWell(
           onTap: onTap,
@@ -57,9 +56,7 @@ class AdminDashboardStatCard extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: VCareRadius.lgAll,
-              border: Border.all(
-                color: empty ? vcare.border : _borderColor(vcare, iconTone),
-              ),
+              border: Border.all(color: _borderColor(vcare, iconTone)),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -76,9 +73,7 @@ class AdminDashboardStatCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       height: 1.2,
                       letterSpacing: -0.1,
-                      color: empty
-                          ? vcare.mutedForeground.withValues(alpha: 0.85)
-                          : vcare.foreground,
+                      color: vcare.foreground,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -106,9 +101,7 @@ class AdminDashboardStatCard extends StatelessWidget {
                                         fontFeatures: const [
                                           FontFeature.tabularFigures(),
                                         ],
-                                        color: empty
-                                            ? vcare.mutedForeground
-                                            : vcare.foreground,
+                                        color: vcare.foreground,
                                       ),
                                     ),
                                   ),
@@ -121,7 +114,7 @@ class AdminDashboardStatCard extends StatelessWidget {
                                         fontSize: 10,
                                         fontWeight: FontWeight.w500,
                                         height: 1.2,
-                                        color: _captionColor(vcare, empty),
+                                        color: _captionColor(vcare),
                                       ),
                                     ),
                                 ],
@@ -132,17 +125,13 @@ class AdminDashboardStatCard extends StatelessWidget {
                         width: 30,
                         height: 30,
                         decoration: BoxDecoration(
-                          color: empty
-                              ? vcare.muted
-                              : _iconBackground(vcare, iconTone),
+                          color: _iconBackground(vcare, iconTone),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
                           icon,
                           size: 14,
-                          color: empty
-                              ? vcare.mutedForeground
-                              : _iconForeground(vcare, iconTone),
+                          color: _iconForeground(vcare, iconTone),
                         ),
                       ),
                     ],
@@ -192,8 +181,7 @@ class AdminDashboardStatCard extends StatelessWidget {
     }
   }
 
-  Color _captionColor(VCareThemeExtension vcare, bool isEmpty) {
-    if (isEmpty) return vcare.mutedForeground;
+  Color _captionColor(VCareThemeExtension vcare) {
     switch (captionTone) {
       case AdminDashboardStatCaptionTone.positive:
         return vcare.successScale.s600;

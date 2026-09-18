@@ -10,13 +10,12 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_notifier.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_avatar.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/network_error_message.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
 /// Group info: rename, member list, and remove members.
 class HealthMessengerGroupInfoSheet extends ConsumerStatefulWidget {
-  const HealthMessengerGroupInfoSheet({
-    super.key,
-    required this.conversation,
-  });
+  const HealthMessengerGroupInfoSheet({super.key, required this.conversation});
 
   final MessengerConversation conversation;
 
@@ -26,9 +25,8 @@ class HealthMessengerGroupInfoSheet extends ConsumerStatefulWidget {
   }) {
     return context.showBottomSheet<void>(
       isScrollControlled: true,
-      builder: (context) => HealthMessengerGroupInfoSheet(
-        conversation: conversation,
-      ),
+      builder: (context) =>
+          HealthMessengerGroupInfoSheet(conversation: conversation),
     );
   }
 
@@ -41,7 +39,7 @@ class _HealthMessengerGroupInfoSheetState
     extends ConsumerState<HealthMessengerGroupInfoSheet> {
   late final TextEditingController _nameController;
   List<ConversationParticipant>? _members;
-  Object? _loadError;
+  String? _loadError;
   bool _isLoading = true;
   bool _isRenaming = false;
   String? _removingUserId;
@@ -84,7 +82,7 @@ class _HealthMessengerGroupInfoSheetState
         return;
       }
       setState(() {
-        _loadError = error;
+        _loadError = NetworkErrorMessage.sanitize(message: error.toString());
         _isLoading = false;
       });
     }
@@ -98,10 +96,9 @@ class _HealthMessengerGroupInfoSheetState
     }
     setState(() => _isRenaming = true);
     try {
-      await ref.read(healthMessengerChatProvider.notifier).renameGroupConversation(
-            widget.conversation,
-            next,
-          );
+      await ref
+          .read(healthMessengerChatProvider.notifier)
+          .renameGroupConversation(widget.conversation, next);
     } catch (_) {
       // Notifier toast.
     } finally {
@@ -148,7 +145,9 @@ class _HealthMessengerGroupInfoSheetState
 
     setState(() => _removingUserId = userId);
     try {
-      await ref.read(healthMessengerChatProvider.notifier).removeGroupMember(
+      await ref
+          .read(healthMessengerChatProvider.notifier)
+          .removeGroupMember(
             conversationId: widget.conversation.id,
             userId: userId,
           );
@@ -178,10 +177,7 @@ class _HealthMessengerGroupInfoSheetState
               const Expanded(
                 child: Text(
                   'Group info',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
               ),
               IconButton(
@@ -240,118 +236,107 @@ class _HealthMessengerGroupInfoSheetState
           ),
         ),
         Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _loadError != null
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Could not load members',
-                                style: TextStyle(color: vcare.mutedForeground),
-                              ),
-                              TextButton(
-                                onPressed: () => unawaited(_loadMembers()),
-                                child: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : members.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No members found',
-                            style: TextStyle(color: vcare.mutedForeground),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                          itemCount: members.length,
-                          itemBuilder: (context, index) {
-                            final participant = members[index];
-                            final userId = participant.user.id.trim().isNotEmpty
-                                ? participant.user.id.trim()
-                                : participant.userId.trim();
-                            final isSelf = userId == currentUserId;
-                            final displayName =
-                                participant.user.username.trim().isEmpty
-                                ? userId
-                                : participant.user.username.trim();
-                            final roleLabel = participant.user.role.label;
-                            final isRemoving = _removingUserId == userId;
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _loadError != null
+              ? VcareErrorStatePanel(
+                  title: 'Could not load members',
+                  message: _loadError,
+                  actionLabel: context.appLocalization.retry,
+                  onAction: () => unawaited(_loadMembers()),
+                  padding: const EdgeInsets.all(24),
+                )
+              : members.isEmpty
+              ? Center(
+                  child: Text(
+                    'No members found',
+                    style: TextStyle(color: vcare.mutedForeground),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  itemCount: members.length,
+                  itemBuilder: (context, index) {
+                    final participant = members[index];
+                    final userId = participant.user.id.trim().isNotEmpty
+                        ? participant.user.id.trim()
+                        : participant.userId.trim();
+                    final isSelf = userId == currentUserId;
+                    final displayName = participant.user.username.trim().isEmpty
+                        ? userId
+                        : participant.user.username.trim();
+                    final roleLabel = participant.user.role.label;
+                    final isRemoving = _removingUserId == userId;
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Material(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(16),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Row(
-                                    children: [
-                                      VcareMessengerAvatar(
-                                        displayTitle: displayName,
-                                        imageUrl: participant.user.avatarUrl,
-                                        size: 44,
-                                        borderRadius: 16,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              VcareMessengerAvatar(
+                                displayTitle: displayName,
+                                imageUrl: participant.user.avatarUrl,
+                                size: 44,
+                                borderRadius: 16,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isSelf
+                                          ? '$displayName (you)'
+                                          : displayName,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              isSelf
-                                                  ? '$displayName (you)'
-                                                  : displayName,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            if (roleLabel.trim().isNotEmpty)
-                                              Text(
-                                                roleLabel,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: vcare.mutedForeground,
-                                                ),
-                                              ),
-                                          ],
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (roleLabel.trim().isNotEmpty)
+                                      Text(
+                                        roleLabel,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: vcare.mutedForeground,
                                         ),
                                       ),
-                                      if (!isSelf)
-                                        IconButton(
-                                          onPressed: isRemoving
-                                              ? null
-                                              : () => unawaited(
-                                                    _removeMember(participant),
-                                                  ),
-                                          icon: isRemoving
-                                              ? const SizedBox(
-                                                  width: 18,
-                                                  height: 18,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : Icon(
-                                                  LucideIcons.userMinus,
-                                                  color: VCareColors.destructive,
-                                                ),
-                                        ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
+                              if (!isSelf)
+                                IconButton(
+                                  onPressed: isRemoving
+                                      ? null
+                                      : () => unawaited(
+                                          _removeMember(participant),
+                                        ),
+                                  icon: isRemoving
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Icon(
+                                          LucideIcons.userMinus,
+                                          color: VCareColors.destructive,
+                                        ),
+                                ),
+                            ],
+                          ),
                         ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );

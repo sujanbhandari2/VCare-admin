@@ -9,17 +9,22 @@ import 'package:vcare_admin/features/auth/domain/entities/admin_auth_tenant.dart
 import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
 import 'package:vcare_admin/features/auth/presentation/pages/admin_login_screen.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
+import 'package:vcare_admin/features/biometric_login/presentation/providers/biometric_login_repository_provider.dart';
 
 import '../../../../fixtures/repositories/fake_auth_repository.dart';
+import '../../../../fixtures/repositories/fake_biometric_login_repository.dart';
 import '../../../../helpers/in_memory_storage_service.dart';
 
 void main() {
   group('AdminLoginScreen', () {
     late FakeAuthRepository repository;
+    late FakeBiometricLoginRepository biometricRepository;
     late InMemoryStorageService storageService;
 
     setUp(() {
       repository = FakeAuthRepository();
+      biometricRepository = FakeBiometricLoginRepository();
       storageService = InMemoryStorageService();
     });
 
@@ -27,6 +32,9 @@ void main() {
       return ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWith((ref) => repository),
+          biometricLoginRepositoryProvider.overrideWithValue(
+            biometricRepository,
+          ),
           storageServiceProvider.overrideWithValue(storageService),
         ],
         child: MaterialApp(
@@ -35,6 +43,17 @@ void main() {
         ),
       );
     }
+
+    testWidgets('shows LoginFooter terms copy on credentials step',
+        (tester) async {
+      await tester.pumpWidget(buildSubject());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginFooter), findsOneWidget);
+      expect(find.textContaining('Terms of Service'), findsOneWidget);
+      expect(find.textContaining('Privacy Policy'), findsOneWidget);
+      expect(find.textContaining('HIPAA Compliant'), findsOneWidget);
+    });
 
     testWidgets('shows validation errors for empty credentials', (tester) async {
       await tester.pumpWidget(buildSubject());
@@ -58,13 +77,14 @@ void main() {
       await tester.pumpWidget(buildSubject());
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'admin@example.com');
-      await tester.enterText(find.byType(TextFormField).at(1), 'Password1!');
+      await tester.enterText(find.byType(TextField).at(0), 'admin@example.com');
+      await tester.enterText(find.byType(TextField).at(1), 'Password1!');
       await tester.tap(find.text('Sign in'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Choose your organization'), findsOneWidget);
+      expect(find.text('Select organization'), findsOneWidget);
       expect(find.text('Acme Corp'), findsOneWidget);
+      expect(find.byType(LoginFooter), findsOneWidget);
     });
 
     testWidgets('shows two-factor form with remember-me when challenge required',
@@ -80,20 +100,21 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(
-        find.byType(TextFormField).at(0),
+        find.byType(TextField).at(0),
         'admin@example.com',
       );
-      await tester.enterText(find.byType(TextFormField).at(1), 'Password1!');
+      await tester.enterText(find.byType(TextField).at(1), 'Password1!');
       await tester.tap(find.text('Sign in'));
       // Avoid pumpAndSettle — OTP caret animation + resend timer never settle.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('Verify your identity'), findsOneWidget);
-      expect(find.text('Remember me for 7 days'), findsOneWidget);
-      expect(find.text('Verify and sign in'), findsOneWidget);
+      expect(find.text('Enter verification code'), findsOneWidget);
+      expect(find.text('Remember this code for 7 days'), findsOneWidget);
+      expect(find.text('Verify'), findsOneWidget);
       expect(find.textContaining('admin@example.com'), findsOneWidget);
       expect(find.byType(Checkbox), findsOneWidget);
+      expect(find.byType(LoginFooter), findsOneWidget);
     });
   });
 }

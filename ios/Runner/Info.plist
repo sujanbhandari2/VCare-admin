@@ -32,6 +32,8 @@
 	<string>Need camera access to take photos for chat attachments and app preferences.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID or Touch ID to sign in with biometric authentication.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>VCare uses your location to find nearby healthcare providers when you search in Find Care.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>VCare uses your location to find nearby healthcare providers when you search in Find Care.</string>
 	<key>NSMicrophoneUsageDescription</key>

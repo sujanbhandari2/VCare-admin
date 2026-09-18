@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:vcare_admin/features/auth/domain/entities/admin_auth_tenant.dart';
-import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/app_button.dart';
+
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_tenant.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 
 class AdminTenantPicker extends StatefulWidget {
   const AdminTenantPicker({
     super.key,
     required this.tenants,
     required this.onContinue,
-    required this.onBack,
     required this.isSubmitting,
   });
 
   final List<TenantOption> tenants;
   final void Function(String tenantSlug) onContinue;
-  final VoidCallback onBack;
   final bool isSubmitting;
 
   @override
@@ -36,39 +35,30 @@ class _AdminTenantPickerState extends State<AdminTenantPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final vcare = context.vcare;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Choose your organization',
-          textAlign: TextAlign.center,
-          style: context.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+        const LoginStepHeader(
+          icon: LucideIcons.building2,
+          title: 'Select organization',
+          subtitle: Text(
+            'Your account is linked to multiple organizations. Select one to continue.',
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Your account is linked to multiple organizations. Select one to continue.',
-          textAlign: TextAlign.center,
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.theme.hintColor,
-          ),
-        ),
-        const SizedBox(height: 20),
         ...widget.tenants.map((tenant) {
           final isSelected = _selectedSlug == tenant.slug;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Material(
               color: isSelected
-                  ? context.theme.colorScheme.primary.withValues(alpha: 0.08)
-                  : context.theme.colorScheme.surface,
+                  ? vcare.primary.withValues(alpha: 0.08)
+                  : vcare.card,
               shape: RoundedRectangleBorder(
                 borderRadius: VCareRadius.lgAll,
                 side: BorderSide(
-                  color: isSelected
-                      ? context.theme.colorScheme.primary
-                      : context.theme.dividerColor,
+                  color: isSelected ? vcare.primary : vcare.border,
                 ),
               ),
               child: InkWell(
@@ -84,10 +74,14 @@ class _AdminTenantPickerState extends State<AdminTenantPicker> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: context.theme.colorScheme.surfaceContainerHighest,
+                          color: vcare.muted,
                           borderRadius: VCareRadius.mdAll,
                         ),
-                        child: const Icon(LucideIcons.building2, size: 18),
+                        child: Icon(
+                          LucideIcons.building2,
+                          size: 18,
+                          color: vcare.mutedForeground,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -96,14 +90,14 @@ class _AdminTenantPickerState extends State<AdminTenantPicker> {
                           children: [
                             Text(
                               tenant.name,
-                              style: context.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             Text(
                               tenant.slug,
-                              style: context.textTheme.bodySmall?.copyWith(
-                                color: context.theme.hintColor,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: vcare.mutedForeground,
                               ),
                             ),
                           ],
@@ -116,26 +110,13 @@ class _AdminTenantPickerState extends State<AdminTenantPicker> {
             ),
           );
         }),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton.outlined(
-                text: 'Back',
-                onPressed: widget.isSubmitting ? null : widget.onBack,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppButton.elevated(
-                text: widget.isSubmitting ? 'Signing in…' : 'Continue',
-                loading: widget.isSubmitting,
-                onPressed: _selectedSlug == null || widget.isSubmitting
-                    ? null
-                    : () => widget.onContinue(_selectedSlug!),
-              ),
-            ),
-          ],
+        const SizedBox(height: 16),
+        LoginPrimaryButton(
+          label: 'Continue',
+          loading: widget.isSubmitting,
+          onPressed: _selectedSlug == null || widget.isSubmitting
+              ? null
+              : () => widget.onContinue(_selectedSlug!),
         ),
       ],
     );
