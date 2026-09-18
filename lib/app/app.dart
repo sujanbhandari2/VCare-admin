@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/app/router/app_router_provider.dart';
+import 'package:vcare_admin/core/config/flavor/flavor.dart';
 import 'package:vcare_admin/core/styles/app_theme.dart';
 import 'package:vcare_admin/core/styles/vcare_scroll_behavior.dart';
 import 'package:vcare_admin/core/styles/text_scale_provider.dart';
@@ -77,7 +78,7 @@ class _MyAppState extends ConsumerState<MyApp> {
       // Rebuild the whole tree when the session router is swapped so no element
       // is carried over from the previous session.
       key: ValueKey(router),
-      title: 'VCare Admin',
+      title: Flavor.fromEnvironment.localizedAppName(context),
       scrollBehavior: VcareScrollBehavior(),
       debugShowCheckedModeBanner: false,
       // Light-only — matches web console (dark mode not wired).

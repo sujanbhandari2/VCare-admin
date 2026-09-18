@@ -36,8 +36,8 @@ class NotificationServiceConfig {
   static const NotificationServiceConfig defaultConfig =
       NotificationServiceConfig(
         channelId: 'vcare_admin_default',
-        channelName: 'VCare Notifications',
-        channelDescription: 'Notifications for VCare Admin app',
+        channelName: 'Vitafy Notifications',
+        channelDescription: 'Notifications for Vitafy Admin app',
         androidSmallIcon: '@mipmap/ic_launcher',
         maxRetriesForApnsToken: 5,
         retryDelayForApnsToken: Duration(seconds: 2),
