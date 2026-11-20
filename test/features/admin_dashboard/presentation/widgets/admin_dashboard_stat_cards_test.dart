@@ -24,6 +24,7 @@ Widget _wrap(
     caseManagement: true,
     healthChat: true,
     membership: true,
+    taskManagement: true,
   ),
 }) {
   return ProviderScope(
@@ -44,9 +45,7 @@ Widget _wrap(
 Future<void> _loadFeatureAccess(WidgetTester tester) async {
   final element = tester.element(find.byType(AdminDashboardStatCards));
   final container = ProviderScope.containerOf(element);
-  await container
-      .read(featureAccessStateProvider.notifier)
-      .refreshFromApi();
+  await container.read(featureAccessStateProvider.notifier).refreshFromApi();
 }
 
 void main() {
@@ -101,6 +100,7 @@ void main() {
             caseManagement: true,
             healthChat: true,
             membership: false,
+            taskManagement: true,
           ),
         ),
       );
@@ -122,11 +122,8 @@ void main() {
         pendingDocumentsOperation: OperationState.success(0),
       );
 
-      final repository = FakeFeatureAccessRepository(
-        FeatureAccess.disabled,
-      )..nextResult = Failure(
-          HttpException(message: 'Settings unavailable'),
-        );
+      final repository = FakeFeatureAccessRepository(FeatureAccess.disabled)
+        ..nextResult = Failure(HttpException(message: 'Settings unavailable'));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -150,6 +147,35 @@ void main() {
 
       expect(find.byType(VcareInlineErrorCard), findsOneWidget);
       expect(find.text('Pending memberships'), findsNothing);
+    });
+
+    testWidgets('shows edge cards when dashboard count fetches fail', (
+      tester,
+    ) async {
+      const state = AdminDashboardState(
+        failedPaymentsOperation: OperationState.failure(
+          'Unable to connect to server. Check your internet connection.',
+        ),
+        openTasksOperation: OperationState.failure(
+          'Unable to connect to server. Check your internet connection.',
+        ),
+        openCasesOperation: OperationState.failure(
+          'Unable to connect to server. Check your internet connection.',
+        ),
+        pendingDocumentsOperation: OperationState.failure(
+          'Unable to connect to server. Check your internet connection.',
+        ),
+      );
+
+      await tester.pumpWidget(_wrap(state));
+      await _loadFeatureAccess(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(VcareInlineErrorCard), findsAtLeastNWidgets(3));
+      expect(find.text("You're all caught up"), findsNothing);
+      expect(find.text('Unable to load tasks'), findsOneWidget);
+      expect(find.text('Unable to load cases'), findsOneWidget);
+      expect(find.text('Unable to load documents'), findsOneWidget);
     });
   });
 }

@@ -499,4 +499,361 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sign_out => 'Sign Out';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get my_tasks_title => 'My Tasks';
+
+  @override
+  String get my_tasks_new_task => 'New Task';
+
+  @override
+  String get my_tasks_edit_task => 'Edit Task';
+
+  @override
+  String get my_tasks_view_task => 'View Task';
+
+  @override
+  String get my_tasks_search_hint => 'Search by name';
+
+  @override
+  String get my_tasks_overdue => 'Overdue';
+
+  @override
+  String get my_tasks_snoozed => 'Snoozed';
+
+  @override
+  String get my_tasks_assigned_to_me => 'Assigned to me';
+
+  @override
+  String get my_tasks_all_owners => 'All owners';
+
+  @override
+  String get my_tasks_unassigned => 'Unassigned';
+
+  @override
+  String get my_tasks_team_member => 'Team member';
+
+  @override
+  String get my_tasks_owner => 'Owner';
+
+  @override
+  String get my_tasks_unavailable_title => 'Tasks unavailable';
+
+  @override
+  String get my_tasks_unavailable_message =>
+      'Task management is not enabled for your organization, or you do not have access.';
+
+  @override
+  String get my_tasks_unable_to_load => 'Unable to load tasks';
+
+  @override
+  String get my_tasks_unable_to_load_task => 'Unable to load task';
+
+  @override
+  String get my_tasks_loading => 'Loading tasks…';
+
+  @override
+  String my_tasks_showing_count(int count, int total) {
+    return 'Showing $count of $total';
+  }
+
+  @override
+  String my_tasks_overdue_count(int count) {
+    return '$count overdue';
+  }
+
+  @override
+  String get my_tasks_failed_complete => 'Failed to complete task';
+
+  @override
+  String get my_tasks_completed => 'Task completed';
+
+  @override
+  String get my_tasks_completed_desc => 'The task was marked as complete.';
+
+  @override
+  String get my_tasks_filters => 'Filters';
+
+  @override
+  String get my_tasks_category => 'Category';
+
+  @override
+  String get my_tasks_status => 'Status';
+
+  @override
+  String get my_tasks_origin => 'Origin';
+
+  @override
+  String get my_tasks_priority => 'Priority';
+
+  @override
+  String get my_tasks_all => 'All';
+
+  @override
+  String get my_tasks_origin_custom => 'Custom';
+
+  @override
+  String get my_tasks_origin_system => 'System';
+
+  @override
+  String get my_tasks_priority_high => 'High Priority';
+
+  @override
+  String get my_tasks_priority_medium => 'Medium';
+
+  @override
+  String get my_tasks_priority_low => 'Low';
+
+  @override
+  String get my_tasks_high => 'High';
+
+  @override
+  String get my_tasks_urgent => 'Urgent';
+
+  @override
+  String get my_tasks_clear => 'Clear';
+
+  @override
+  String get my_tasks_apply => 'Apply';
+
+  @override
+  String get my_tasks_status_default_hint =>
+      'Status defaults to Open to match the web queue.';
+
+  @override
+  String get my_tasks_empty_clear => 'You\'re clear';
+
+  @override
+  String get my_tasks_empty_clear_desc => 'Nothing in this queue right now.';
+
+  @override
+  String get my_tasks_empty_no_matches => 'No matches';
+
+  @override
+  String get my_tasks_empty_no_matches_desc =>
+      'Try a different name or clear your filters.';
+
+  @override
+  String get my_tasks_snooze_title => 'Snooze task';
+
+  @override
+  String get my_tasks_snooze_subtitle =>
+      'Choose when this task should resurface.';
+
+  @override
+  String get my_tasks_snooze => 'Snooze';
+
+  @override
+  String get my_tasks_snooze_tomorrow => 'Tomorrow';
+
+  @override
+  String get my_tasks_snooze_three_days => 'In 3 days';
+
+  @override
+  String get my_tasks_snooze_five_days => 'In 5 days';
+
+  @override
+  String get my_tasks_snooze_next_week => 'Next week';
+
+  @override
+  String get my_tasks_snooze_custom => 'Custom date';
+
+  @override
+  String get my_tasks_notes => 'Notes';
+
+  @override
+  String get my_tasks_no_notes => 'No notes yet.';
+
+  @override
+  String get my_tasks_add_note_hint => 'Add a note…';
+
+  @override
+  String get my_tasks_edit_note_hint => 'Edit note…';
+
+  @override
+  String get my_tasks_cancel_edit => 'Cancel edit';
+
+  @override
+  String get my_tasks_failed_save_note => 'Failed to save note';
+
+  @override
+  String get my_tasks_failed_delete_note => 'Failed to delete note';
+
+  @override
+  String get my_tasks_note_edited => '(edited)';
+
+  @override
+  String get my_tasks_review_subtitle => 'Review task details and progress.';
+
+  @override
+  String get my_tasks_description => 'Description';
+
+  @override
+  String get my_tasks_no_description => 'No description';
+
+  @override
+  String get my_tasks_assignee => 'Assignee';
+
+  @override
+  String get my_tasks_due => 'Due';
+
+  @override
+  String get my_tasks_due_date => 'Due date';
+
+  @override
+  String get my_tasks_snoozed_until => 'Snoozed until';
+
+  @override
+  String get my_tasks_client => 'Client';
+
+  @override
+  String get my_tasks_edit => 'Edit';
+
+  @override
+  String get my_tasks_close => 'Close';
+
+  @override
+  String get my_tasks_resume => 'Resume';
+
+  @override
+  String get my_tasks_complete => 'Complete';
+
+  @override
+  String get my_tasks_task_status => 'Task status';
+
+  @override
+  String get my_tasks_task_priority => 'Task priority';
+
+  @override
+  String get my_tasks_failed_update_status => 'Failed to update status';
+
+  @override
+  String get my_tasks_status_updated => 'Status updated';
+
+  @override
+  String get my_tasks_failed_snooze => 'Failed to snooze task';
+
+  @override
+  String get my_tasks_task_snoozed => 'Task snoozed';
+
+  @override
+  String get my_tasks_failed_resume => 'Failed to resume task';
+
+  @override
+  String get my_tasks_task_resumed => 'Task resumed';
+
+  @override
+  String get my_tasks_delete_confirm_title => 'Delete task?';
+
+  @override
+  String get my_tasks_delete_confirm_body => 'This cannot be undone.';
+
+  @override
+  String get my_tasks_failed_delete => 'Failed to delete task';
+
+  @override
+  String get my_tasks_task_deleted => 'Task deleted';
+
+  @override
+  String get my_tasks_select_team_member => 'Select team member';
+
+  @override
+  String get my_tasks_title_required => 'Title is required';
+
+  @override
+  String get my_tasks_due_date_future => 'Due date must be in the future';
+
+  @override
+  String get my_tasks_failed_update => 'Failed to update task';
+
+  @override
+  String get my_tasks_task_updated => 'Task updated';
+
+  @override
+  String get my_tasks_failed_create => 'Failed to create task';
+
+  @override
+  String get my_tasks_task_created => 'Task created';
+
+  @override
+  String get my_tasks_field_title => 'Title';
+
+  @override
+  String get my_tasks_none => 'None';
+
+  @override
+  String get my_tasks_add_note_optional => 'Add note (optional)';
+
+  @override
+  String get my_tasks_initial_note_optional => 'Initial note (optional)';
+
+  @override
+  String get my_tasks_save_changes => 'Save changes';
+
+  @override
+  String get my_tasks_create_task => 'Create task';
+
+  @override
+  String my_tasks_due_overdue(int days) {
+    return '${days}d overdue';
+  }
+
+  @override
+  String get my_tasks_due_today => 'today';
+
+  @override
+  String get my_tasks_due_tomorrow => 'tomorrow';
+
+  @override
+  String my_tasks_due_in_days(int days) {
+    return 'in ${days}d';
+  }
+
+  @override
+  String get my_tasks_assigned_to => 'Assigned to';
+
+  @override
+  String get my_tasks_no_client => 'No client';
+
+  @override
+  String my_tasks_badge_overdue_days(int days) {
+    return 'Overdue $days days';
+  }
+
+  @override
+  String get my_tasks_badge_overdue_one_day => 'Overdue 1 day';
+
+  @override
+  String get my_tasks_badge_high_priority => 'High priority';
+
+  @override
+  String get my_tasks_badge_due_today => 'Due today';
+
+  @override
+  String get my_tasks_filter_by_assignee => 'Filter by assignee';
+
+  @override
+  String get my_tasks_all_members => 'All Members';
+
+  @override
+  String my_tasks_assigned_to_name(String name) {
+    return 'Assigned to $name';
+  }
+
+  @override
+  String my_tasks_you_label(String name) {
+    return '$name (You)';
+  }
+
+  @override
+  String get my_tasks_search_team_members => 'Search team members…';
+
+  @override
+  String get my_tasks_no_team_members => 'No team members found.';
+
+  @override
+  String get my_tasks_clear_assignee_filter => 'Clear assignee filter';
 }

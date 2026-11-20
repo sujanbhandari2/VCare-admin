@@ -133,8 +133,10 @@ class _FakeCryptoService extends BiometricCryptoService {
 
   final deletedAliases = <String>[];
   var keyCounter = 0;
+  var authenticated = false;
   String? lastSignedAlias;
   String? lastNonce;
+  String? pendingAlias;
 
   @override
   Future<BiometricKeyPairData> generateKeyPair({String? keyAlias}) async {
@@ -149,14 +151,41 @@ class _FakeCryptoService extends BiometricCryptoService {
   }
 
   @override
+  Future<void> authenticateForSigning({
+    required String keyAlias,
+    String reason = 'Use biometrics to sign in.',
+    String? preferredBiometric,
+  }) async {
+    pendingAlias = keyAlias;
+    authenticated = true;
+  }
+
+  @override
+  Future<String> completeSign({required String nonce}) async {
+    if (!authenticated || pendingAlias == null) {
+      throw StateError('Biometric authentication is required before signing');
+    }
+    lastSignedAlias = pendingAlias;
+    lastNonce = nonce;
+    authenticated = false;
+    pendingAlias = null;
+    return base64Encode(List<int>.filled(64, 7));
+  }
+
+  @override
+  Future<void> cancelSigning() async {
+    authenticated = false;
+    pendingAlias = null;
+  }
+
+  @override
   Future<String> signNonce({
     required String keyAlias,
     required String nonce,
     String reason = 'Use biometrics to sign in.',
   }) async {
-    lastSignedAlias = keyAlias;
-    lastNonce = nonce;
-    return base64Encode(List<int>.filled(64, 7));
+    await authenticateForSigning(keyAlias: keyAlias, reason: reason);
+    return completeSign(nonce: nonce);
   }
 
   @override
@@ -361,6 +390,9 @@ void main() {
           'menu': ['dashboard'],
         },
       );
+
+      final auth = await repository.authenticateForLogin();
+      expect(auth.isSuccess, isTrue);
 
       final result = await repository.loginWithChallenge(
         challenge: const BiometricChallenge(

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_assignee.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
+import 'package:vcare_admin/features/cases/domain/entities/case_note_summarize.dart';
 import 'package:vcare_admin/features/cases/domain/entities/cases_list_request.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/shared/pagination/paginated_result.dart';
@@ -55,5 +56,12 @@ abstract class CaseRepository {
     String? search,
     CancelToken? cancelToken,
     bool forceRefresh = false,
+  });
+
+  /// AI summary of case notes. Returns the summary text.
+  Future<EitherResponseOrException<String>> summarizeCaseNotes(
+    String caseId,
+    CaseNoteSummarizeRequest request, {
+    CancelToken? cancelToken,
   });
 }

@@ -5,6 +5,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/pending_memberships/domain/entities/pending_membership.dart';
 import 'package:vcare_admin/features/pending_memberships/presentation/widgets/pending_membership_chips.dart';
 import 'package:vcare_admin/features/pending_memberships/utils/pending_membership_formatters.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
 /// Associated / relevant membership list inside the review sheet — parity with
 /// web `DrawerMembershipSectionTable`, rendered as stacked rows for mobile.
@@ -69,29 +70,10 @@ class PendingMembershipSection extends StatelessWidget {
             ),
           )
         else if (hasError)
-          _SectionShell(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Could not load memberships.',
-                  style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
-                ),
-                if (onRetry != null)
-                  TextButton(
-                    onPressed: onRetry,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text(
-                      'Try again',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-              ],
-            ),
+          VcareInlineErrorCard(
+            title: 'Could not load memberships',
+            onRetry: onRetry,
+            compact: true,
           )
         else if (memberships.isEmpty)
           _SectionEmpty(icon: emptyIcon, message: emptyMessage)

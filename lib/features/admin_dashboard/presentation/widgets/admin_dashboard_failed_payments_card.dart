@@ -17,10 +17,7 @@ import 'package:vcare_admin/features/todo/presentation/widgets/todo_transaction_
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 
 class AdminDashboardFailedPaymentsCard extends ConsumerWidget {
-  const AdminDashboardFailedPaymentsCard({
-    super.key,
-    required this.state,
-  });
+  const AdminDashboardFailedPaymentsCard({super.key, required this.state});
 
   final AdminDashboardState state;
 
@@ -59,6 +56,7 @@ class AdminDashboardFailedPaymentsCard extends ConsumerWidget {
       );
     } else if (operation.hasError && rows.isEmpty) {
       body = VcareInlineErrorCard(
+        title: 'Unable to load failed payments',
         message: operation.errorMessage,
         onRetry: () => ref
             .read(adminDashboardStateProvider.notifier)
@@ -85,8 +83,7 @@ class AdminDashboardFailedPaymentsCard extends ConsumerWidget {
       badgeLabel: failedCount > 0 ? failedCount.toString() : null,
       badgeColor: vcare.destructive,
       showViewAll: rows.isNotEmpty,
-      onViewAll: () =>
-          context.pushNamed(AppRouter.adminFailedPaymentsName),
+      onViewAll: () => context.pushNamed(AppRouter.adminFailedPaymentsName),
       child: body,
     );
   }

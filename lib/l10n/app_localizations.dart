@@ -1047,6 +1047,684 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign Out'**
   String get sign_out;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @my_tasks_title.
+  ///
+  /// In en, this message translates to:
+  /// **'My Tasks'**
+  String get my_tasks_title;
+
+  /// No description provided for @my_tasks_new_task.
+  ///
+  /// In en, this message translates to:
+  /// **'New Task'**
+  String get my_tasks_new_task;
+
+  /// No description provided for @my_tasks_edit_task.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get my_tasks_edit_task;
+
+  /// No description provided for @my_tasks_view_task.
+  ///
+  /// In en, this message translates to:
+  /// **'View Task'**
+  String get my_tasks_view_task;
+
+  /// No description provided for @my_tasks_search_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name'**
+  String get my_tasks_search_hint;
+
+  /// No description provided for @my_tasks_overdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get my_tasks_overdue;
+
+  /// No description provided for @my_tasks_snoozed.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed'**
+  String get my_tasks_snoozed;
+
+  /// No description provided for @my_tasks_assigned_to_me.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to me'**
+  String get my_tasks_assigned_to_me;
+
+  /// No description provided for @my_tasks_all_owners.
+  ///
+  /// In en, this message translates to:
+  /// **'All owners'**
+  String get my_tasks_all_owners;
+
+  /// No description provided for @my_tasks_unassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get my_tasks_unassigned;
+
+  /// No description provided for @my_tasks_team_member.
+  ///
+  /// In en, this message translates to:
+  /// **'Team member'**
+  String get my_tasks_team_member;
+
+  /// No description provided for @my_tasks_owner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get my_tasks_owner;
+
+  /// No description provided for @my_tasks_unavailable_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks unavailable'**
+  String get my_tasks_unavailable_title;
+
+  /// No description provided for @my_tasks_unavailable_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Task management is not enabled for your organization, or you do not have access.'**
+  String get my_tasks_unavailable_message;
+
+  /// No description provided for @my_tasks_unable_to_load.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load tasks'**
+  String get my_tasks_unable_to_load;
+
+  /// No description provided for @my_tasks_unable_to_load_task.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load task'**
+  String get my_tasks_unable_to_load_task;
+
+  /// No description provided for @my_tasks_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading tasks…'**
+  String get my_tasks_loading;
+
+  /// No description provided for @my_tasks_showing_count.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {count} of {total}'**
+  String my_tasks_showing_count(int count, int total);
+
+  /// No description provided for @my_tasks_overdue_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} overdue'**
+  String my_tasks_overdue_count(int count);
+
+  /// No description provided for @my_tasks_failed_complete.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to complete task'**
+  String get my_tasks_failed_complete;
+
+  /// No description provided for @my_tasks_completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Task completed'**
+  String get my_tasks_completed;
+
+  /// No description provided for @my_tasks_completed_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'The task was marked as complete.'**
+  String get my_tasks_completed_desc;
+
+  /// No description provided for @my_tasks_filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get my_tasks_filters;
+
+  /// No description provided for @my_tasks_category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get my_tasks_category;
+
+  /// No description provided for @my_tasks_status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get my_tasks_status;
+
+  /// No description provided for @my_tasks_origin.
+  ///
+  /// In en, this message translates to:
+  /// **'Origin'**
+  String get my_tasks_origin;
+
+  /// No description provided for @my_tasks_priority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get my_tasks_priority;
+
+  /// No description provided for @my_tasks_all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get my_tasks_all;
+
+  /// No description provided for @my_tasks_origin_custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get my_tasks_origin_custom;
+
+  /// No description provided for @my_tasks_origin_system.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get my_tasks_origin_system;
+
+  /// No description provided for @my_tasks_priority_high.
+  ///
+  /// In en, this message translates to:
+  /// **'High Priority'**
+  String get my_tasks_priority_high;
+
+  /// No description provided for @my_tasks_priority_medium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get my_tasks_priority_medium;
+
+  /// No description provided for @my_tasks_priority_low.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get my_tasks_priority_low;
+
+  /// No description provided for @my_tasks_high.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get my_tasks_high;
+
+  /// No description provided for @my_tasks_urgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get my_tasks_urgent;
+
+  /// No description provided for @my_tasks_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get my_tasks_clear;
+
+  /// No description provided for @my_tasks_apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get my_tasks_apply;
+
+  /// No description provided for @my_tasks_status_default_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Status defaults to Open to match the web queue.'**
+  String get my_tasks_status_default_hint;
+
+  /// No description provided for @my_tasks_empty_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re clear'**
+  String get my_tasks_empty_clear;
+
+  /// No description provided for @my_tasks_empty_clear_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in this queue right now.'**
+  String get my_tasks_empty_clear_desc;
+
+  /// No description provided for @my_tasks_empty_no_matches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches'**
+  String get my_tasks_empty_no_matches;
+
+  /// No description provided for @my_tasks_empty_no_matches_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different name or clear your filters.'**
+  String get my_tasks_empty_no_matches_desc;
+
+  /// No description provided for @my_tasks_snooze_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze task'**
+  String get my_tasks_snooze_title;
+
+  /// No description provided for @my_tasks_snooze_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose when this task should resurface.'**
+  String get my_tasks_snooze_subtitle;
+
+  /// No description provided for @my_tasks_snooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze'**
+  String get my_tasks_snooze;
+
+  /// No description provided for @my_tasks_snooze_tomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get my_tasks_snooze_tomorrow;
+
+  /// No description provided for @my_tasks_snooze_three_days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 3 days'**
+  String get my_tasks_snooze_three_days;
+
+  /// No description provided for @my_tasks_snooze_five_days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 5 days'**
+  String get my_tasks_snooze_five_days;
+
+  /// No description provided for @my_tasks_snooze_next_week.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get my_tasks_snooze_next_week;
+
+  /// No description provided for @my_tasks_snooze_custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom date'**
+  String get my_tasks_snooze_custom;
+
+  /// No description provided for @my_tasks_notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get my_tasks_notes;
+
+  /// No description provided for @my_tasks_no_notes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes yet.'**
+  String get my_tasks_no_notes;
+
+  /// No description provided for @my_tasks_add_note_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note…'**
+  String get my_tasks_add_note_hint;
+
+  /// No description provided for @my_tasks_edit_note_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note…'**
+  String get my_tasks_edit_note_hint;
+
+  /// No description provided for @my_tasks_cancel_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel edit'**
+  String get my_tasks_cancel_edit;
+
+  /// No description provided for @my_tasks_failed_save_note.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save note'**
+  String get my_tasks_failed_save_note;
+
+  /// No description provided for @my_tasks_failed_delete_note.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete note'**
+  String get my_tasks_failed_delete_note;
+
+  /// No description provided for @my_tasks_note_edited.
+  ///
+  /// In en, this message translates to:
+  /// **'(edited)'**
+  String get my_tasks_note_edited;
+
+  /// No description provided for @my_tasks_review_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review task details and progress.'**
+  String get my_tasks_review_subtitle;
+
+  /// No description provided for @my_tasks_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get my_tasks_description;
+
+  /// No description provided for @my_tasks_no_description.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get my_tasks_no_description;
+
+  /// No description provided for @my_tasks_assignee.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignee'**
+  String get my_tasks_assignee;
+
+  /// No description provided for @my_tasks_due.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get my_tasks_due;
+
+  /// No description provided for @my_tasks_due_date.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get my_tasks_due_date;
+
+  /// No description provided for @my_tasks_snoozed_until.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed until'**
+  String get my_tasks_snoozed_until;
+
+  /// No description provided for @my_tasks_client.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get my_tasks_client;
+
+  /// No description provided for @my_tasks_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get my_tasks_edit;
+
+  /// No description provided for @my_tasks_close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get my_tasks_close;
+
+  /// No description provided for @my_tasks_resume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get my_tasks_resume;
+
+  /// No description provided for @my_tasks_complete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get my_tasks_complete;
+
+  /// No description provided for @my_tasks_task_status.
+  ///
+  /// In en, this message translates to:
+  /// **'Task status'**
+  String get my_tasks_task_status;
+
+  /// No description provided for @my_tasks_task_priority.
+  ///
+  /// In en, this message translates to:
+  /// **'Task priority'**
+  String get my_tasks_task_priority;
+
+  /// No description provided for @my_tasks_failed_update_status.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update status'**
+  String get my_tasks_failed_update_status;
+
+  /// No description provided for @my_tasks_status_updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Status updated'**
+  String get my_tasks_status_updated;
+
+  /// No description provided for @my_tasks_failed_snooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to snooze task'**
+  String get my_tasks_failed_snooze;
+
+  /// No description provided for @my_tasks_task_snoozed.
+  ///
+  /// In en, this message translates to:
+  /// **'Task snoozed'**
+  String get my_tasks_task_snoozed;
+
+  /// No description provided for @my_tasks_failed_resume.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to resume task'**
+  String get my_tasks_failed_resume;
+
+  /// No description provided for @my_tasks_task_resumed.
+  ///
+  /// In en, this message translates to:
+  /// **'Task resumed'**
+  String get my_tasks_task_resumed;
+
+  /// No description provided for @my_tasks_delete_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete task?'**
+  String get my_tasks_delete_confirm_title;
+
+  /// No description provided for @my_tasks_delete_confirm_body.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get my_tasks_delete_confirm_body;
+
+  /// No description provided for @my_tasks_failed_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete task'**
+  String get my_tasks_failed_delete;
+
+  /// No description provided for @my_tasks_task_deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deleted'**
+  String get my_tasks_task_deleted;
+
+  /// No description provided for @my_tasks_select_team_member.
+  ///
+  /// In en, this message translates to:
+  /// **'Select team member'**
+  String get my_tasks_select_team_member;
+
+  /// No description provided for @my_tasks_title_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get my_tasks_title_required;
+
+  /// No description provided for @my_tasks_due_date_future.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date must be in the future'**
+  String get my_tasks_due_date_future;
+
+  /// No description provided for @my_tasks_failed_update.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update task'**
+  String get my_tasks_failed_update;
+
+  /// No description provided for @my_tasks_task_updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task updated'**
+  String get my_tasks_task_updated;
+
+  /// No description provided for @my_tasks_failed_create.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create task'**
+  String get my_tasks_failed_create;
+
+  /// No description provided for @my_tasks_task_created.
+  ///
+  /// In en, this message translates to:
+  /// **'Task created'**
+  String get my_tasks_task_created;
+
+  /// No description provided for @my_tasks_field_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get my_tasks_field_title;
+
+  /// No description provided for @my_tasks_none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get my_tasks_none;
+
+  /// No description provided for @my_tasks_add_note_optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note (optional)'**
+  String get my_tasks_add_note_optional;
+
+  /// No description provided for @my_tasks_initial_note_optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial note (optional)'**
+  String get my_tasks_initial_note_optional;
+
+  /// No description provided for @my_tasks_save_changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get my_tasks_save_changes;
+
+  /// No description provided for @my_tasks_create_task.
+  ///
+  /// In en, this message translates to:
+  /// **'Create task'**
+  String get my_tasks_create_task;
+
+  /// No description provided for @my_tasks_due_overdue.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d overdue'**
+  String my_tasks_due_overdue(int days);
+
+  /// No description provided for @my_tasks_due_today.
+  ///
+  /// In en, this message translates to:
+  /// **'today'**
+  String get my_tasks_due_today;
+
+  /// No description provided for @my_tasks_due_tomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'tomorrow'**
+  String get my_tasks_due_tomorrow;
+
+  /// No description provided for @my_tasks_due_in_days.
+  ///
+  /// In en, this message translates to:
+  /// **'in {days}d'**
+  String my_tasks_due_in_days(int days);
+
+  /// No description provided for @my_tasks_assigned_to.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to'**
+  String get my_tasks_assigned_to;
+
+  /// No description provided for @my_tasks_no_client.
+  ///
+  /// In en, this message translates to:
+  /// **'No client'**
+  String get my_tasks_no_client;
+
+  /// No description provided for @my_tasks_badge_overdue_days.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue {days} days'**
+  String my_tasks_badge_overdue_days(int days);
+
+  /// No description provided for @my_tasks_badge_overdue_one_day.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue 1 day'**
+  String get my_tasks_badge_overdue_one_day;
+
+  /// No description provided for @my_tasks_badge_high_priority.
+  ///
+  /// In en, this message translates to:
+  /// **'High priority'**
+  String get my_tasks_badge_high_priority;
+
+  /// No description provided for @my_tasks_badge_due_today.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get my_tasks_badge_due_today;
+
+  /// No description provided for @my_tasks_filter_by_assignee.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by assignee'**
+  String get my_tasks_filter_by_assignee;
+
+  /// No description provided for @my_tasks_all_members.
+  ///
+  /// In en, this message translates to:
+  /// **'All Members'**
+  String get my_tasks_all_members;
+
+  /// No description provided for @my_tasks_assigned_to_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to {name}'**
+  String my_tasks_assigned_to_name(String name);
+
+  /// No description provided for @my_tasks_you_label.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (You)'**
+  String my_tasks_you_label(String name);
+
+  /// No description provided for @my_tasks_search_team_members.
+  ///
+  /// In en, this message translates to:
+  /// **'Search team members…'**
+  String get my_tasks_search_team_members;
+
+  /// No description provided for @my_tasks_no_team_members.
+  ///
+  /// In en, this message translates to:
+  /// **'No team members found.'**
+  String get my_tasks_no_team_members;
+
+  /// No description provided for @my_tasks_clear_assignee_filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear assignee filter'**
+  String get my_tasks_clear_assignee_filter;
 }
 
 class _AppLocalizationsDelegate

@@ -192,29 +192,6 @@ String capitalizeWords(String value) {
   return buffer.toString();
 }
 
-/// Minimum note count before a summary can be generated.
-const int caseNoteSummaryMinimumCount = 3;
-
-/// Placeholder digest of the first few notes, mirroring the web summary text.
-String buildCaseNoteSummary(List<CaseNote> notes) {
-  if (notes.length < caseNoteSummaryMinimumCount) return '';
-
-  final leading = notes
-      .take(3)
-      .map(
-        (note) => note.content.length > 80
-            ? note.content.substring(0, 80)
-            : note.content,
-      )
-      .join('\n• ');
-  final remaining = notes.length - 3;
-
-  return 'Based on ${notes.length} notes:\n\n'
-      '• $leading\n\n'
-      '…and $remaining more note(s). Key themes include care coordination, '
-      'follow-ups, and client communication.';
-}
-
 /// Toggle note access between INTERNAL and EXTERNAL.
 String toggleNoteAccessType(String? accessType) {
   final value = accessType?.trim().toUpperCase();

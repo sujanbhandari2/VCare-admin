@@ -16,7 +16,8 @@
         tools:replace="android:maxSdkVersion" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+        android:maxSdkVersion="32"
+        tools:replace="android:maxSdkVersion" />
 
     <application
         android:label="@string/app_name"

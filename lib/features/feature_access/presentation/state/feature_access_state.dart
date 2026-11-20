@@ -25,6 +25,8 @@ class FeatureAccessState {
 
   bool get membershipEnabled => data?.membership ?? false;
 
+  bool get taskManagementEnabled => data?.taskManagement ?? false;
+
   FeatureAccessState loading() =>
       FeatureAccessState(operation: OperationState.loading(data: data));
 
@@ -32,8 +34,8 @@ class FeatureAccessState {
       FeatureAccessState(operation: OperationState.success(value));
 
   FeatureAccessState failure(String? message) => FeatureAccessState(
-        operation: OperationState.failure(message, data: data),
-      );
+    operation: OperationState.failure(message, data: data),
+  );
 
   FeatureAccessState reset() => const FeatureAccessState();
 }

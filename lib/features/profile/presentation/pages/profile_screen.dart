@@ -5,7 +5,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_status_colors.dart';
-import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/account/data/mappers/account_mapper.dart';
 import 'package:vcare_admin/features/account/presentation/widgets/account_actions_card.dart';
 import 'package:vcare_admin/features/account/presentation/widgets/account_details_section.dart';
@@ -20,6 +19,7 @@ import 'package:vcare_admin/features/biometric_login/presentation/widgets/biomet
 import 'package:vcare_admin/shared/session/user_session_cleanup.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_sticky_tab_header.dart';
 
@@ -90,12 +90,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ? 'Revoke Face ID?'
             : 'Revoke fingerprint?',
         description:
-            'This removes $biometricLabel sign-in from this device for now. You can enable it again later.',
-        primaryLabel: 'Revoke $biometricLabel',
+            'This removes Biometric sign-in from this device for now. You can enable it again later.',
+        primaryLabel: 'Revoke Biometric',
         secondaryLabel: 'Keep it',
         biometricLabel: biometricLabel,
         onPrimaryPressed: () async {
-          await ref.read(biometricLoginStateProvider.notifier).revoke(
+          await ref
+              .read(biometricLoginStateProvider.notifier)
+              .revoke(
                 accessToken: session.accessToken ?? '',
                 onError: (message) {
                   if (message == null || !mounted) {
@@ -131,13 +133,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       title: biometricLabel == 'Face ID'
           ? 'Enable Face ID?'
           : 'Enable fingerprint?',
-      description:
-          'Use $biometricLabel to log in faster from this device.',
-      primaryLabel: 'Enable $biometricLabel',
+      description: 'Use Biometric to log in faster from this device.',
+      primaryLabel: 'Enable Biometric',
       secondaryLabel: 'Maybe later',
       biometricLabel: biometricLabel,
       onPrimaryPressed: () async {
-        await ref.read(biometricLoginStateProvider.notifier).enroll(
+        await ref
+            .read(biometricLoginStateProvider.notifier)
+            .enroll(
               accessToken: session.accessToken ?? '',
               accountId: accountId,
               accountEmail: session.user?.email,
@@ -187,83 +190,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (fetching)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
+            sliver: fetching
+                ? const SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (user == null)
-                  _AccountLoadError(
-                    message: error ?? 'Could not load your account.',
-                    onRetry: _onRefresh,
+                : user == null
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: VcareErrorStatePanel(
+                      title: 'Unable to load account',
+                      message: error ?? 'Could not load your account.',
+                      actionLabel: context.appLocalization.retry,
+                      onAction: _onRefresh,
+                    ),
                   )
-                else ...[
-                  AccountHeaderCard(user: user),
-                  const SizedBox(height: 16),
-                  AccountDetailsSection(user: user),
-                  const SizedBox(height: 16),
-                  AccountActionsCard(
-                    onEditProfile: () =>
-                        context.pushNamed(AppRouter.profileEditName),
-                    onChangePassword: () =>
-                        context.pushNamed(AppRouter.profilePasswordName),
+                : SliverList(
+                    delegate: SliverChildListDelegate([
+                      AccountHeaderCard(user: user),
+                      const SizedBox(height: 16),
+                      AccountDetailsSection(user: user),
+                      const SizedBox(height: 16),
+                      AccountActionsCard(
+                        onEditProfile: () =>
+                            context.pushNamed(AppRouter.profileEditName),
+                        onChangePassword: () =>
+                            context.pushNamed(AppRouter.profilePasswordName),
+                      ),
+                      const SizedBox(height: 16),
+                      BiometricLoginStatusTile(
+                        status:
+                            biometricState.status ??
+                            BiometricLoginStatus.disabled,
+                        loading: biometricState.loading,
+                        onTap: _toggleBiometric,
+                      ),
+                      if (isSsoAccount(user)) ...[
+                        const SizedBox(height: 12),
+                        const _SsoPasswordHint(),
+                      ],
+                      const SizedBox(height: 24),
+                      ProfileSignOutFooter(onSignOut: _signOut),
+                    ]),
                   ),
-                  const SizedBox(height: 16),
-                  BiometricLoginStatusTile(
-                    status: biometricState.status ?? BiometricLoginStatus.disabled,
-                    loading: biometricState.loading,
-                    onTap: _toggleBiometric,
-                  ),
-                  if (isSsoAccount(user)) ...[
-                    const SizedBox(height: 12),
-                    const _SsoPasswordHint(),
-                  ],
-                  const SizedBox(height: 24),
-                  ProfileSignOutFooter(onSignOut: _signOut),
-                ],
-              ]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountLoadError extends StatelessWidget {
-  const _AccountLoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-    final danger = VCareStatusColors.of(context, VCareStatusTone.danger);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: danger.background,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: danger.border),
-      ),
-      child: Column(
-        children: [
-          Icon(LucideIcons.alertCircle, color: danger.foreground),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: danger.foreground),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Try again', style: TextStyle(color: vcare.primary)),
           ),
         ],
       ),

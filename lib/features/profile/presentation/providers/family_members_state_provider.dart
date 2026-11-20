@@ -97,9 +97,11 @@ class FamilyMembersStateNotifier extends _$FamilyMembersStateNotifier {
       );
     } on FileSystemException catch (error) {
       onFailure(
-        error.message.isNotEmpty
-            ? error.message
-            : 'Could not read the selected photo.',
+        NetworkErrorMessage.sanitize(
+          message: error.message.isNotEmpty
+              ? error.message
+              : 'Could not read the selected photo.',
+        ),
       );
       return null;
     }
@@ -151,10 +153,7 @@ class FamilyMembersStateNotifier extends _$FamilyMembersStateNotifier {
         return false;
       },
       success: (_) async {
-        await fetchFamilyMembers(
-          forceRefresh: true,
-          cancelToken: cancelToken,
-        );
+        await fetchFamilyMembers(forceRefresh: true, cancelToken: cancelToken);
         if (ref.mounted) {
           state = state.withCreating(false);
         }
@@ -211,10 +210,7 @@ class FamilyMembersStateNotifier extends _$FamilyMembersStateNotifier {
         return false;
       },
       success: (_) async {
-        await fetchFamilyMembers(
-          forceRefresh: true,
-          cancelToken: cancelToken,
-        );
+        await fetchFamilyMembers(forceRefresh: true, cancelToken: cancelToken);
         if (ref.mounted) {
           state = state.withCreating(false);
         }
@@ -229,10 +225,7 @@ class FamilyMembersStateNotifier extends _$FamilyMembersStateNotifier {
   }) async {
     final response = await ref
         .read(familyMemberRepositoryProvider)
-        .deleteFamilyMember(
-          id: id,
-          cancelToken: cancelToken,
-        );
+        .deleteFamilyMember(id: id, cancelToken: cancelToken);
 
     return response.when(
       failure: (error) {
@@ -242,10 +235,7 @@ class FamilyMembersStateNotifier extends _$FamilyMembersStateNotifier {
         return false;
       },
       success: (_) async {
-        await fetchFamilyMembers(
-          forceRefresh: true,
-          cancelToken: cancelToken,
-        );
+        await fetchFamilyMembers(forceRefresh: true, cancelToken: cancelToken);
         return true;
       },
     );

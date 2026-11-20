@@ -594,6 +594,30 @@ class AuthRepositoryImpl extends AuthRepository {
   }
 
   @override
+  Future<EitherResponseOrException<ForgotPasswordResult>> adminForgotPassword({
+    required String email,
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.authForgotPassword,
+        JsonRequestBody({'email': email.trim().toLowerCase()}),
+        cancelToken: cancelToken,
+        isAuthenticated: false,
+        additionalHeaders: AuthApiHeaders.admin,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => ForgotPasswordResultModel.fromJson(data),
+        dataValidator: (data) => data is Map,
+      );
+
+      return model.toEntity();
+    });
+  }
+
+  @override
   Future<EitherResponseOrException<ResetPasswordResult>> resetPassword({
     required String token,
     required String password,
@@ -605,7 +629,7 @@ class AuthRepositoryImpl extends AuthRepository {
         JsonRequestBody({'token': token, 'password': password}),
         cancelToken: cancelToken,
         isAuthenticated: false,
-        additionalHeaders: AuthApiHeaders.agent,
+        additionalHeaders: AuthApiHeaders.admin,
       );
 
       final model = ResponseValidator.parse(

@@ -11,6 +11,7 @@ class AdminLoginState {
     this.challengeToken,
     this.expiresIn,
     this.errorMessage,
+    this.accountLockedSupportEmail,
     this.isSubmitting = false,
     this.isResending = false,
   });
@@ -22,8 +23,11 @@ class AdminLoginState {
   final String? challengeToken;
   final int? expiresIn;
   final String? errorMessage;
+  final String? accountLockedSupportEmail;
   final bool isSubmitting;
   final bool isResending;
+
+  bool get isAccountPasswordLocked => accountLockedSupportEmail != null;
 
   AdminLoginState copyWith({
     AdminLoginPhase? phase,
@@ -33,9 +37,11 @@ class AdminLoginState {
     String? challengeToken,
     int? expiresIn,
     String? errorMessage,
+    String? accountLockedSupportEmail,
     bool? isSubmitting,
     bool? isResending,
     bool clearError = false,
+    bool clearAccountLock = false,
     bool clearCredentials = false,
     bool clearChallenge = false,
   }) {
@@ -49,6 +55,9 @@ class AdminLoginState {
           clearChallenge ? null : challengeToken ?? this.challengeToken,
       expiresIn: clearChallenge ? null : expiresIn ?? this.expiresIn,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      accountLockedSupportEmail: clearAccountLock
+          ? null
+          : accountLockedSupportEmail ?? this.accountLockedSupportEmail,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isResending: isResending ?? this.isResending,
     );

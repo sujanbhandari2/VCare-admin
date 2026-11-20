@@ -28,6 +28,19 @@ abstract class BiometricLoginRepository {
     CancelToken? cancelToken,
   });
 
+  /// Shows the OS biometric prompt immediately and prepares a signing session.
+  Future<EitherResponseOrException<void>> authenticateForLogin({
+    String? userType,
+    String? preferredBiometric,
+    String? reason,
+  });
+
+  /// Clears any pending native signing session (e.g. after a cancelled login).
+  Future<void> cancelLoginAuthentication();
+
+  /// Clears the local biometric credential (and best-effort native key).
+  Future<void> clearLocalCredential();
+
   Future<EitherResponseOrException<AdminAuthSession>> loginWithChallenge({
     required BiometricChallenge challenge,
     String? userType,

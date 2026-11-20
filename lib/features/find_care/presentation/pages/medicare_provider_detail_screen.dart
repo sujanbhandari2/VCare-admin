@@ -151,6 +151,11 @@ class _MedicareProviderDetailScreenState
                         medicareProviderDetailStateProvider(digits).notifier,
                       )
                       .loadMoreServices(),
+                  onRetry: () => ref
+                      .read(
+                        medicareProviderDetailStateProvider(digits).notifier,
+                      )
+                      .load(),
                 ),
                 if (detailState.raw.isNotEmpty &&
                     detailState.fieldOrder.isNotEmpty) ...[

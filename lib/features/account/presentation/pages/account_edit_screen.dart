@@ -12,6 +12,7 @@ import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.d
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
@@ -82,8 +83,7 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
     setState(() => _hydrated = true);
   }
 
-  bool get _photoChanged =>
-      isLocalAccountPhotoPath(_photoUrl) || _photoRemoved;
+  bool get _photoChanged => isLocalAccountPhotoPath(_photoUrl) || _photoRemoved;
 
   bool get _isDirty {
     return _firstNameController.text.trim() != _initialFirstName ||
@@ -105,15 +105,16 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
       return;
     }
 
-    final updated =
-        await ref.read(accountEditStateProvider.notifier).saveProfile(
-              firstName: _firstNameController.text,
-              lastName: _lastNameController.text,
-              email: _emailController.text,
-              photoUrl: _photoUrl,
-              photoChanged: isLocalAccountPhotoPath(_photoUrl),
-              photoRemoved: _photoRemoved,
-            );
+    final updated = await ref
+        .read(accountEditStateProvider.notifier)
+        .saveProfile(
+          firstName: _firstNameController.text,
+          lastName: _lastNameController.text,
+          email: _emailController.text,
+          photoUrl: _photoUrl,
+          photoChanged: isLocalAccountPhotoPath(_photoUrl),
+          photoRemoved: _photoRemoved,
+        );
 
     if (!mounted) {
       return;
@@ -175,135 +176,137 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
           const SliverVcarePageHeader(title: 'Edit profile', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding.copyWith(top: 8),
-            sliver: SliverToBoxAdapter(
-              child: user == null && authMeState.fetching
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 48),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : user == null
-                      ? Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 32),
-                          child: Text(
-                            authMeState.error ?? 'Could not load profile.',
-                            textAlign: TextAlign.center,
+            sliver: user == null && authMeState.fetching
+                ? const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : user == null
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: VcareErrorStatePanel(
+                      title: 'Unable to load profile',
+                      message: authMeState.error ?? 'Could not load profile.',
+                      actionLabel: context.appLocalization.retry,
+                      onAction: () => ref
+                          .read(authMeStateProvider.notifier)
+                          .fetchMe(forceRefresh: true),
+                    ),
+                  )
+                : SliverToBoxAdapter(
+                    child: Form(
+                      key: _formKey,
+                      onChanged: () => setState(() {}),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Update your photo, name, and email shown across your workspace.',
                             style: TextStyle(
+                              fontSize: 13,
                               color: context.vcare.mutedForeground,
                             ),
                           ),
-                        )
-                      : Form(
-                          key: _formKey,
-                          onChanged: () => setState(() {}),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                          const SizedBox(height: 20),
+                          Center(
+                            child: AccountPhotoEditor(
+                              name: displayName,
+                              photoUrl: _photoRemoved ? null : _photoUrl,
+                              photoCacheKey: _photoRemoved
+                                  ? null
+                                  : _photoCacheKey,
+                              enabled: !saving,
+                              canRemove: _canRemovePhoto,
+                              onPhotoChanged: (path) {
+                                setState(() {
+                                  _photoUrl = path;
+                                  _photoCacheKey = null;
+                                  _photoRemoved = false;
+                                });
+                              },
+                              onPhotoRemoved: () {
+                                setState(() {
+                                  _photoUrl = null;
+                                  _photoCacheKey = null;
+                                  _photoRemoved = true;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          AuthTextField(
+                            controller: _firstNameController,
+                            label: 'First name',
+                            hint: 'First name',
+                            required: true,
+                            enabled: !saving,
+                            textInputAction: TextInputAction.next,
+                            maxLength: 50,
+                            validator: AccountValidators.validateFirstName,
+                          ),
+                          const SizedBox(height: 16),
+                          AuthTextField(
+                            controller: _lastNameController,
+                            label: 'Last name',
+                            hint: 'Last name',
+                            required: true,
+                            enabled: !saving,
+                            textInputAction: TextInputAction.next,
+                            maxLength: 50,
+                            validator: AccountValidators.validateLastName,
+                          ),
+                          const SizedBox(height: 16),
+                          AuthTextField(
+                            controller: _emailController,
+                            label: 'Email address',
+                            hint: 'you@company.com',
+                            required: true,
+                            enabled: !saving,
+                            inputType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.done,
+                            validator: AccountValidators.validateEmail,
+                            onSubmitted: (_) {
+                              if (_isDirty && !saving) {
+                                _save();
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Used for sign-in and account notifications.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.vcare.mutedForeground,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Row(
                             children: [
-                              Text(
-                                'Update your photo, name, and email shown across your workspace.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: context.vcare.mutedForeground,
+                              Expanded(
+                                child: AppButton.outlined(
+                                  text: 'Discard',
+                                  onPressed: (!_isDirty || saving)
+                                      ? null
+                                      : _discard,
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              Center(
-                                child: AccountPhotoEditor(
-                                  name: displayName,
-                                  photoUrl: _photoRemoved ? null : _photoUrl,
-                                  photoCacheKey:
-                                      _photoRemoved ? null : _photoCacheKey,
-                                  enabled: !saving,
-                                  canRemove: _canRemovePhoto,
-                                  onPhotoChanged: (path) {
-                                    setState(() {
-                                      _photoUrl = path;
-                                      _photoCacheKey = null;
-                                      _photoRemoved = false;
-                                    });
-                                  },
-                                  onPhotoRemoved: () {
-                                    setState(() {
-                                      _photoUrl = null;
-                                      _photoCacheKey = null;
-                                      _photoRemoved = true;
-                                    });
-                                  },
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: AppButton.elevated(
+                                  text: 'Save changes',
+                                  icon: LucideIcons.save,
+                                  loading: saving,
+                                  onPressed: (!_isDirty || saving)
+                                      ? null
+                                      : _save,
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-                              AuthTextField(
-                                controller: _firstNameController,
-                                label: 'First name',
-                                hint: 'First name',
-                                required: true,
-                                enabled: !saving,
-                                textInputAction: TextInputAction.next,
-                                maxLength: 50,
-                                validator: AccountValidators.validateFirstName,
-                              ),
-                              const SizedBox(height: 16),
-                              AuthTextField(
-                                controller: _lastNameController,
-                                label: 'Last name',
-                                hint: 'Last name',
-                                required: true,
-                                enabled: !saving,
-                                textInputAction: TextInputAction.next,
-                                maxLength: 50,
-                                validator: AccountValidators.validateLastName,
-                              ),
-                              const SizedBox(height: 16),
-                              AuthTextField(
-                                controller: _emailController,
-                                label: 'Email address',
-                                hint: 'you@company.com',
-                                required: true,
-                                enabled: !saving,
-                                inputType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.done,
-                                validator: AccountValidators.validateEmail,
-                                onSubmitted: (_) {
-                                  if (_isDirty && !saving) {
-                                    _save();
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Used for sign-in and account notifications.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.vcare.mutedForeground,
-                                ),
-                              ),
-                              const SizedBox(height: 28),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: AppButton.outlined(
-                                      text: 'Discard',
-                                      onPressed: (!_isDirty || saving)
-                                          ? null
-                                          : _discard,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: AppButton.elevated(
-                                      text: 'Save changes',
-                                      icon: LucideIcons.save,
-                                      loading: saving,
-                                      onPressed: (!_isDirty || saving)
-                                          ? null
-                                          : _save,
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
-                        ),
-            ),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),

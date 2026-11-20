@@ -7,6 +7,7 @@ extension FeatureAccessModelMapper on FeatureAccessModel {
       caseManagement: caseManagement,
       healthChat: healthChat,
       membership: membership,
+      taskManagement: taskManagement,
     );
   }
 }
@@ -17,6 +18,7 @@ extension FeatureAccessEntityMapper on FeatureAccess {
       caseManagement: caseManagement,
       healthChat: healthChat,
       membership: membership,
+      taskManagement: taskManagement,
     );
   }
 }

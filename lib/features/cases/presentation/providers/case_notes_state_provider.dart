@@ -9,6 +9,8 @@ import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_repository_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/state/case_notes_state.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
+import 'package:vcare_admin/features/cases/utils/case_note_timeline.dart';
+import 'package:vcare_admin/features/cases/utils/map_notes_for_summarize.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/shared/state/operation_state.dart';
 import 'package:vcare_admin/shared/utils/network_error_message.dart';
@@ -115,7 +117,11 @@ class CaseNotesState extends _$CaseNotesState {
     required bool forceRefresh,
     CancelToken? cancelToken,
   }) async {
-    if (!_streaming || _streamInFlight || state.fetching || state.mutating) {
+    if (!_streaming ||
+        _streamInFlight ||
+        state.fetching ||
+        state.mutating ||
+        state.summarizing) {
       return;
     }
 
@@ -344,6 +350,47 @@ class CaseNotesState extends _$CaseNotesState {
           state = state.mutationIdle();
         }
         onCompleted?.call(true, null);
+      },
+    );
+  }
+
+  Future<void> summarizeNotes({
+    void Function(String? summary, String? error)? onCompleted,
+  }) async {
+    if (state.summarizing) return;
+
+    final body = mapNotesForSummarize(filterCaseNotesForTimeline(state.notes));
+    if (!hasEnoughCaseNotesForSummarize(body.notes.length)) {
+      onCompleted?.call(
+        null,
+        summarizeNotesButtonTooltip(body.notes.length) ??
+            'Min $minCaseNotesForSummarize notes required for summary',
+      );
+      return;
+    }
+
+    if (ref.mounted) {
+      state = state.summarizeLoading();
+    }
+
+    final response = await ref
+        .read(caseRepositoryProvider)
+        .summarizeCaseNotes(caseId, body);
+
+    if (!ref.mounted) return;
+
+    response.when(
+      failure: (error) {
+        if (ref.mounted) {
+          state = state.summarizeFailure(error.userMessage);
+        }
+        onCompleted?.call(null, error.userMessage);
+      },
+      success: (summary) {
+        if (ref.mounted) {
+          state = state.summarizeSuccess(summary);
+        }
+        onCompleted?.call(summary, null);
       },
     );
   }

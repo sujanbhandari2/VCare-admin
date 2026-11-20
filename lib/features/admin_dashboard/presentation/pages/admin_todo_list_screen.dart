@@ -54,7 +54,8 @@ class _AdminTodoListScreenState extends ConsumerState<AdminTodoListScreen> {
 
   void _onScroll() {
     final listState = ref.read(adminTodoListStateProvider);
-    final shouldLoadMore = listState.hasMore &&
+    final shouldLoadMore =
+        listState.hasMore &&
         listState.items.isNotEmpty &&
         !listState.isLoadingMore &&
         listState.loadMoreErrorMessage == null &&
@@ -91,7 +92,9 @@ class _AdminTodoListScreenState extends ConsumerState<AdminTodoListScreen> {
     if (_completingTaskId != null) return;
     setState(() => _completingTaskId = taskId);
 
-    final ok = await ref.read(adminTodoListStateProvider.notifier).completeTask(
+    final ok = await ref
+        .read(adminTodoListStateProvider.notifier)
+        .completeTask(
           taskId: taskId,
           onError: (message) {
             if (!mounted) return;
@@ -124,57 +127,60 @@ class _AdminTodoListScreenState extends ConsumerState<AdminTodoListScreen> {
         onRefresh: _onRefresh,
         controller: _scrollController,
         slivers: [
-          const SliverVcarePageHeader(
-            title: 'My Todo List',
-            showBack: true,
-          ),
+          const SliverVcarePageHeader(title: 'My Todo List', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (listState.isInitialLoading && items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
+            sliver: listState.isInitialLoading && items.isEmpty
+                ? const SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (listState.isInitialError && items.isEmpty)
-                  VcareErrorStatePanel(
-                    title: 'Unable to load todos',
-                    message: listState.operation.errorMessage,
-                    actionLabel: 'Try again',
-                    onAction: () => ref
-                        .read(adminTodoListStateProvider.notifier)
-                        .loadInitial(),
+                : listState.isInitialError && items.isEmpty
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: VcareErrorStatePanel(
+                      title: 'Unable to load todos',
+                      message: listState.operation.errorMessage,
+                      actionLabel: 'Try again',
+                      onAction: () => ref
+                          .read(adminTodoListStateProvider.notifier)
+                          .loadInitial(),
+                    ),
                   )
-                else if (items.isEmpty)
-                  const AdminDashboardTodoEmptyState()
-                else ...[
-                  for (var i = 0; i < items.length; i++) ...[
-                    AdminDashboardTodoRow(
-                      item: items[i],
-                      isCompleting: _completingTaskId == items[i].resource.id,
-                      onComplete: _completeTask,
-                      onTap: () => _openTask(items[i].resource.id),
-                      onEdit: () =>
-                          _openTask(items[i].resource.id, editing: true),
-                    ),
-                    if (i < items.length - 1) const SizedBox(height: 8),
-                  ],
-                  if (listState.isLoadingMore)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    ),
-                ],
-                const SizedBox(height: 16),
-              ]),
-            ),
+                : SliverList(
+                    delegate: SliverChildListDelegate([
+                      if (items.isEmpty)
+                        const AdminDashboardTodoEmptyState()
+                      else ...[
+                        for (var i = 0; i < items.length; i++) ...[
+                          AdminDashboardTodoRow(
+                            item: items[i],
+                            isCompleting:
+                                _completingTaskId == items[i].resource.id,
+                            onComplete: _completeTask,
+                            onTap: () => _openTask(items[i].resource.id),
+                            onEdit: () =>
+                                _openTask(items[i].resource.id, editing: true),
+                          ),
+                          if (i < items.length - 1) const SizedBox(height: 8),
+                        ],
+                        if (listState.isLoadingMore)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                      const SizedBox(height: 16),
+                    ]),
+                  ),
           ),
         ],
       ),

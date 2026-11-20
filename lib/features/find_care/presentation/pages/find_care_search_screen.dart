@@ -163,7 +163,10 @@ class _FindCareSearchScreenState extends ConsumerState<FindCareSearchScreen> {
                 ),
                 if (searchState.error != null && !searchState.loading) ...[
                   const SizedBox(height: 12),
-                  VcareInlineErrorCard(message: searchState.error),
+                  VcareInlineErrorCard(
+                    message: searchState.error,
+                    onRetry: () => _runSearch(),
+                  ),
                 ],
                 if (searchState.loading &&
                     searchState.items.isEmpty &&

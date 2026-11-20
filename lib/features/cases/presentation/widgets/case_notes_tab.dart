@@ -12,7 +12,10 @@ import 'package:vcare_admin/features/cases/presentation/state/case_notes_state.d
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_card.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_composer.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_edit_form.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/case_notes_summary_dialog.dart';
+import 'package:vcare_admin/features/cases/utils/case_note_timeline.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
+import 'package:vcare_admin/features/cases/utils/map_notes_for_summarize.dart';
 import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
@@ -202,30 +205,19 @@ class _CaseNotesTabState extends ConsumerState<CaseNotesTab> {
         );
   }
 
-  void _showSummary(List<CaseNote> notes) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(LucideIcons.sparkles, size: 16, color: context.vcare.primary),
-            const SizedBox(width: 8),
-            const Text('AI Notes Summary'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Text(
-            buildCaseNoteSummary(notes),
-            style: const TextStyle(fontSize: 13, height: 1.6),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => dialogContext.pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+  Future<void> _summarizeNotes() async {
+    await ref.read(caseNotesStateProvider(widget.caseId).notifier).summarizeNotes(
+      onCompleted: (summary, error) {
+        if (!mounted) return;
+        if (error != null || summary == null || summary.trim().isEmpty) {
+          context.showVcareToast(
+            title: error ?? 'Failed to generate case summary',
+            variant: VcareToastVariant.destructive,
+          );
+          return;
+        }
+        CaseNotesSummaryDialog.show(context, summaryText: summary);
+      },
     );
   }
 
@@ -236,6 +228,12 @@ class _CaseNotesTabState extends ConsumerState<CaseNotesTab> {
     final sourceState = sourceId == null
         ? null
         : ref.watch(caseNotesStateProvider(sourceId));
+    final timelineNotes = filterCaseNotesForTimeline(state.notes);
+    final eligibleSummarizeCount = countNotesEligibleForSummarize(timelineNotes);
+    final canSummarize = !_showSourceNotes &&
+        hasEnoughCaseNotesForSummarize(eligibleSummarizeCount) &&
+        !state.summarizing;
+    final summarizeTooltip = summarizeNotesButtonTooltip(eligibleSummarizeCount);
 
     ref.listen(
       caseNotesStateProvider(widget.caseId).select((s) => s.notes.length),
@@ -262,8 +260,10 @@ class _CaseNotesTabState extends ConsumerState<CaseNotesTab> {
           isSourceLoading: sourceState?.isInitialLoading ?? false,
           isShowingSourceNotes: _showSourceNotes,
           onToggleSourceNotes: _toggleSourceNotes,
-          canSummarize: state.notes.length >= caseNoteSummaryMinimumCount,
-          onSummarize: () => _showSummary(state.notes),
+          canSummarize: canSummarize,
+          isSummarizing: state.summarizing,
+          summarizeTooltip: summarizeTooltip,
+          onSummarize: _summarizeNotes,
         ),
         Expanded(
           child: ListView(
@@ -363,6 +363,8 @@ class _CaseNotesHeaderActions extends StatelessWidget {
     required this.isShowingSourceNotes,
     required this.onToggleSourceNotes,
     required this.canSummarize,
+    required this.isSummarizing,
+    required this.summarizeTooltip,
     required this.onSummarize,
   });
 
@@ -371,6 +373,8 @@ class _CaseNotesHeaderActions extends StatelessWidget {
   final bool isShowingSourceNotes;
   final VoidCallback onToggleSourceNotes;
   final bool canSummarize;
+  final bool isSummarizing;
+  final String? summarizeTooltip;
   final VoidCallback onSummarize;
 
   @override
@@ -385,6 +389,19 @@ class _CaseNotesHeaderActions extends StatelessWidget {
       side: BorderSide(color: vcare.border),
       shape: RoundedRectangleBorder(borderRadius: VCareRadius.mdAll),
       textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    );
+
+    final summarizeButton = OutlinedButton.icon(
+      onPressed: canSummarize ? onSummarize : null,
+      icon: isSummarizing
+          ? const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(LucideIcons.sparkles, size: 12),
+      label: const Text('Summarize Notes'),
+      style: buttonStyle,
     );
 
     return Padding(
@@ -409,12 +426,14 @@ class _CaseNotesHeaderActions extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
-          OutlinedButton.icon(
-            onPressed: canSummarize ? onSummarize : null,
-            icon: const Icon(LucideIcons.sparkles, size: 12),
-            label: const Text('Summarize Notes'),
-            style: buttonStyle,
-          ),
+          if (!isShowingSourceNotes)
+            if (summarizeTooltip != null)
+              Tooltip(
+                message: summarizeTooltip!,
+                child: summarizeButton,
+              )
+            else
+              summarizeButton,
         ],
       ),
     );

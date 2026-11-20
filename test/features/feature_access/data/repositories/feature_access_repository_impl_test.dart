@@ -130,6 +130,7 @@ void main() {
       expect(access.caseManagement, isTrue);
       expect(access.healthChat, isFalse);
       expect(access.membership, isTrue);
+      expect(access.taskManagement, isFalse);
     });
   });
 }

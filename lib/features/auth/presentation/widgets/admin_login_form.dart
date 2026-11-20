@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import 'package:vcare_admin/app/router/app_router.dart';
-import 'package:vcare_admin/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
-import 'package:vcare_admin/shared/widgets/app_button.dart';
 
 class AdminLoginForm extends StatefulWidget {
   const AdminLoginForm({
@@ -29,9 +30,10 @@ class AdminLoginForm extends StatefulWidget {
 }
 
 class _AdminLoginFormState extends State<AdminLoginForm> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -40,8 +42,8 @@ class _AdminLoginFormState extends State<AdminLoginForm> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
-    final trimmed = value?.trim() ?? '';
+  String? _validateEmail(String value) {
+    final trimmed = value.trim();
     if (trimmed.isEmpty) {
       return 'Email is required';
     }
@@ -52,15 +54,21 @@ class _AdminLoginFormState extends State<AdminLoginForm> {
     return null;
   }
 
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
       return 'Password is required';
     }
     return null;
   }
 
   void _handleSubmit() {
-    if (!( _formKey.currentState?.validate() ?? false)) {
+    final emailError = _validateEmail(_emailController.text);
+    final passwordError = _validatePassword(_passwordController.text);
+    setState(() {
+      _emailError = emailError;
+      _passwordError = passwordError;
+    });
+    if (emailError != null || passwordError != null) {
       return;
     }
 
@@ -73,118 +81,142 @@ class _AdminLoginFormState extends State<AdminLoginForm> {
   @override
   Widget build(BuildContext context) {
     final enabled = !widget.disabled && !widget.isSubmitting;
+    final vcare = context.vcare;
 
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AuthTextField(
-            controller: _emailController,
-            label: 'Email',
-            hint: 'you@company.com',
-            inputType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            enabled: enabled,
-            validator: _validateEmail,
-            prefix: const Padding(
-              padding: EdgeInsets.only(left: 12, right: 8),
-              child: Icon(LucideIcons.mail, size: 18),
-            ),
-          ),
-          const SizedBox(height: 16),
-          AuthTextField(
-            controller: _passwordController,
-            label: 'Password',
-            hint: 'Enter your password',
-            obscureText: true,
-            textInputAction: TextInputAction.done,
-            enabled: enabled,
-            validator: _validatePassword,
-            onSubmitted: (_) => _handleSubmit(),
-            prefix: const Padding(
-              padding: EdgeInsets.only(left: 12, right: 8),
-              child: Icon(LucideIcons.lock, size: 18),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: enabled
-                  ? () => context.pushNamed(AppRouter.forgotPassword.toPathName)
-                  : null,
-              child: const Text('Forgot password?'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Title only — LoginWordmark is rendered inside LoginShell above this body.
+        Padding(
+          padding: const EdgeInsets.only(bottom: 28),
+          child: Column(
             children: [
-              Expanded(
-                child: AppButton.elevated(
-                  text: widget.isSubmitting ? 'Signing in…' : 'Sign in',
-                  loading: widget.isSubmitting,
-                  onPressed: enabled ? _handleSubmit : null,
+              Text(
+                'Welcome back',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              if (widget.biometricAvailable && widget.onBiometricPressed != null)
-                ...[
-                  const SizedBox(width: 12),
-                  _BiometricIconButton(
-                    enabled: enabled && !widget.biometricLoading,
-                    loading: widget.biometricLoading,
-                    onPressed: widget.onBiometricPressed!,
-                  ),
-                ],
+              const SizedBox(height: 6),
+              Text(
+                'Enter your email and password to access the admin console.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: vcare.mutedForeground,
+                  height: 1.35,
+                ),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BiometricIconButton extends StatelessWidget {
-  const _BiometricIconButton({
-    required this.enabled,
-    required this.loading,
-    required this.onPressed,
-  });
-
-  final bool enabled;
-  final bool loading;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Material(
-      color: colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: enabled ? onPressed : null,
-        borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: Center(
-            child: loading
-                ? SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.primary,
-                    ),
-                  )
-                : const Icon(LucideIcons.fingerprint, size: 18),
+        ),
+        LoginFieldGroup(
+          errorText: _emailError,
+          field: LoginTextField(
+            controller: _emailController,
+            hint: 'you@company.com',
+            keyboardType: TextInputType.emailAddress,
+            textCapitalization: TextCapitalization.none,
+            autocorrect: false,
+            enabled: enabled,
+            hasError: _emailError != null,
+            prefix: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 8),
+              child: Icon(
+                LucideIcons.mail,
+                size: 18,
+                color: vcare.mutedForeground,
+              ),
+            ),
+            onChanged: (_) {
+              if (_emailError != null) {
+                setState(() => _emailError = null);
+              }
+            },
           ),
         ),
-      ),
+        const SizedBox(height: 12),
+        LoginFieldGroup(
+          errorText: _passwordError,
+          field: LoginTextField(
+            controller: _passwordController,
+            hint: 'Password',
+            obscureText: true,
+            textCapitalization: TextCapitalization.none,
+            autocorrect: false,
+            enabled: enabled,
+            hasError: _passwordError != null,
+            prefix: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 8),
+              child: Icon(
+                LucideIcons.lock,
+                size: 18,
+                color: vcare.mutedForeground,
+              ),
+            ),
+            onChanged: (_) {
+              if (_passwordError != null) {
+                setState(() => _passwordError = null);
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: enabled
+                ? () => context.pushNamed(AppRouter.forgotPassword.toPathName)
+                : null,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              'Forgot password?',
+              style: TextStyle(
+                fontSize: 12,
+                color: vcare.mutedForeground,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        LoginPrimaryButton(
+          label: 'Sign in',
+          loading: widget.isSubmitting,
+          onPressed: enabled ? _handleSubmit : null,
+        ),
+        if (widget.biometricAvailable && widget.onBiometricPressed != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: enabled && !widget.biometricLoading
+                ? widget.onBiometricPressed
+                : null,
+            icon: widget.biometricLoading
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.theme.colorScheme.primary,
+                    ),
+                  )
+                : const Icon(LucideIcons.fingerprint, size: 16),
+            label: const Text('Use biometric instead'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

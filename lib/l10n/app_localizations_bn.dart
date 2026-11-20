@@ -491,4 +491,363 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get sign_out => 'Sign Out';
+
+  @override
+  String get delete => 'মুছুন';
+
+  @override
+  String get my_tasks_title => 'আমার কাজ';
+
+  @override
+  String get my_tasks_new_task => 'নতুন কাজ';
+
+  @override
+  String get my_tasks_edit_task => 'কাজ সম্পাদনা';
+
+  @override
+  String get my_tasks_view_task => 'কাজ দেখুন';
+
+  @override
+  String get my_tasks_search_hint => 'নাম দিয়ে খুঁজুন';
+
+  @override
+  String get my_tasks_overdue => 'মেয়াদোত্তীর্ণ';
+
+  @override
+  String get my_tasks_snoozed => 'স্থগিত';
+
+  @override
+  String get my_tasks_assigned_to_me => 'আমাকে অর্পিত';
+
+  @override
+  String get my_tasks_all_owners => 'সব মালিক';
+
+  @override
+  String get my_tasks_unassigned => 'অনির্ধারিত';
+
+  @override
+  String get my_tasks_team_member => 'দলের সদস্য';
+
+  @override
+  String get my_tasks_owner => 'মালিক';
+
+  @override
+  String get my_tasks_unavailable_title => 'কাজ উপলব্ধ নয়';
+
+  @override
+  String get my_tasks_unavailable_message =>
+      'আপনার প্রতিষ্ঠানের জন্য টাস্ক ম্যানেজমেন্ট চালু নেই, অথবা আপনার অ্যাক্সেস নেই।';
+
+  @override
+  String get my_tasks_unable_to_load => 'কাজ লোড করা যায়নি';
+
+  @override
+  String get my_tasks_unable_to_load_task => 'কাজ লোড করা যায়নি';
+
+  @override
+  String get my_tasks_loading => 'কাজ লোড হচ্ছে…';
+
+  @override
+  String my_tasks_showing_count(int count, int total) {
+    return '$total এর মধ্যে $countটি দেখানো হচ্ছে';
+  }
+
+  @override
+  String my_tasks_overdue_count(int count) {
+    return '$countটি মেয়াদোত্তীর্ণ';
+  }
+
+  @override
+  String get my_tasks_failed_complete => 'কাজ সম্পূর্ণ করা যায়নি';
+
+  @override
+  String get my_tasks_completed => 'কাজ সম্পন্ন';
+
+  @override
+  String get my_tasks_completed_desc => 'কাজটি সম্পূর্ণ হিসেবে চিহ্নিত হয়েছে।';
+
+  @override
+  String get my_tasks_filters => 'ফিল্টার';
+
+  @override
+  String get my_tasks_category => 'বিভাগ';
+
+  @override
+  String get my_tasks_status => 'অবস্থা';
+
+  @override
+  String get my_tasks_origin => 'উৎস';
+
+  @override
+  String get my_tasks_priority => 'অগ্রাধিকার';
+
+  @override
+  String get my_tasks_all => 'সব';
+
+  @override
+  String get my_tasks_origin_custom => 'কাস্টম';
+
+  @override
+  String get my_tasks_origin_system => 'সিস্টেম';
+
+  @override
+  String get my_tasks_priority_high => 'উচ্চ অগ্রাধিকার';
+
+  @override
+  String get my_tasks_priority_medium => 'মাঝারি';
+
+  @override
+  String get my_tasks_priority_low => 'নিম্ন';
+
+  @override
+  String get my_tasks_high => 'উচ্চ';
+
+  @override
+  String get my_tasks_urgent => 'জরুরি';
+
+  @override
+  String get my_tasks_clear => 'মুছুন';
+
+  @override
+  String get my_tasks_apply => 'প্রয়োগ';
+
+  @override
+  String get my_tasks_status_default_hint =>
+      'ওয়েব কিউয়ের সাথে মিল রাখতে অবস্থা ডিফল্টভাবে খোলা থাকে।';
+
+  @override
+  String get my_tasks_empty_clear => 'আপনি খালি';
+
+  @override
+  String get my_tasks_empty_clear_desc => 'এই কিউয়ে এখন কিছু নেই।';
+
+  @override
+  String get my_tasks_empty_no_matches => 'কোনো মিল নেই';
+
+  @override
+  String get my_tasks_empty_no_matches_desc =>
+      'অন্য নাম চেষ্টা করুন বা ফিল্টার মুছুন।';
+
+  @override
+  String get my_tasks_snooze_title => 'কাজ স্থগিত করুন';
+
+  @override
+  String get my_tasks_snooze_subtitle =>
+      'এই কাজটি কখন আবার দেখাবে তা বেছে নিন।';
+
+  @override
+  String get my_tasks_snooze => 'স্থগিত';
+
+  @override
+  String get my_tasks_snooze_tomorrow => 'আগামীকাল';
+
+  @override
+  String get my_tasks_snooze_three_days => '৩ দিনে';
+
+  @override
+  String get my_tasks_snooze_five_days => '৫ দিনে';
+
+  @override
+  String get my_tasks_snooze_next_week => 'পরের সপ্তাহে';
+
+  @override
+  String get my_tasks_snooze_custom => 'কাস্টম তারিখ';
+
+  @override
+  String get my_tasks_notes => 'নোট';
+
+  @override
+  String get my_tasks_no_notes => 'এখনো কোনো নোট নেই।';
+
+  @override
+  String get my_tasks_add_note_hint => 'একটি নোট যোগ করুন…';
+
+  @override
+  String get my_tasks_edit_note_hint => 'নোট সম্পাদনা…';
+
+  @override
+  String get my_tasks_cancel_edit => 'সম্পাদনা বাতিল';
+
+  @override
+  String get my_tasks_failed_save_note => 'নোট সংরক্ষণ করা যায়নি';
+
+  @override
+  String get my_tasks_failed_delete_note => 'নোট মুছে ফেলা যায়নি';
+
+  @override
+  String get my_tasks_note_edited => '(সম্পাদিত)';
+
+  @override
+  String get my_tasks_review_subtitle =>
+      'কাজের বিবরণ ও অগ্রগতি পর্যালোচনা করুন।';
+
+  @override
+  String get my_tasks_description => 'বিবরণ';
+
+  @override
+  String get my_tasks_no_description => 'কোনো বিবরণ নেই';
+
+  @override
+  String get my_tasks_assignee => 'অর্পিত ব্যক্তি';
+
+  @override
+  String get my_tasks_due => 'নির্ধারিত';
+
+  @override
+  String get my_tasks_due_date => 'নির্ধারিত তারিখ';
+
+  @override
+  String get my_tasks_snoozed_until => 'স্থগিত থাকবে';
+
+  @override
+  String get my_tasks_client => 'ক্লায়েন্ট';
+
+  @override
+  String get my_tasks_edit => 'সম্পাদনা';
+
+  @override
+  String get my_tasks_close => 'বন্ধ';
+
+  @override
+  String get my_tasks_resume => 'পুনরায় শুরু';
+
+  @override
+  String get my_tasks_complete => 'সম্পূর্ণ';
+
+  @override
+  String get my_tasks_task_status => 'কাজের অবস্থা';
+
+  @override
+  String get my_tasks_task_priority => 'কাজের অগ্রাধিকার';
+
+  @override
+  String get my_tasks_failed_update_status => 'অবস্থা আপডেট করা যায়নি';
+
+  @override
+  String get my_tasks_status_updated => 'অবস্থা আপডেট হয়েছে';
+
+  @override
+  String get my_tasks_failed_snooze => 'কাজ স্থগিত করা যায়নি';
+
+  @override
+  String get my_tasks_task_snoozed => 'কাজ স্থগিত হয়েছে';
+
+  @override
+  String get my_tasks_failed_resume => 'কাজ পুনরায় শুরু করা যায়নি';
+
+  @override
+  String get my_tasks_task_resumed => 'কাজ পুনরায় শুরু হয়েছে';
+
+  @override
+  String get my_tasks_delete_confirm_title => 'কাজ মুছবেন?';
+
+  @override
+  String get my_tasks_delete_confirm_body =>
+      'এটি পূর্বাবস্থায় ফেরানো যাবে না।';
+
+  @override
+  String get my_tasks_failed_delete => 'কাজ মুছে ফেলা যায়নি';
+
+  @override
+  String get my_tasks_task_deleted => 'কাজ মুছে ফেলা হয়েছে';
+
+  @override
+  String get my_tasks_select_team_member => 'দলের সদস্য নির্বাচন করুন';
+
+  @override
+  String get my_tasks_title_required => 'শিরোনাম প্রয়োজন';
+
+  @override
+  String get my_tasks_due_date_future => 'নির্ধারিত তারিখ ভবিষ্যতে হতে হবে';
+
+  @override
+  String get my_tasks_failed_update => 'কাজ আপডেট করা যায়নি';
+
+  @override
+  String get my_tasks_task_updated => 'কাজ আপডেট হয়েছে';
+
+  @override
+  String get my_tasks_failed_create => 'কাজ তৈরি করা যায়নি';
+
+  @override
+  String get my_tasks_task_created => 'কাজ তৈরি হয়েছে';
+
+  @override
+  String get my_tasks_field_title => 'শিরোনাম';
+
+  @override
+  String get my_tasks_none => 'কোনোটি নয়';
+
+  @override
+  String get my_tasks_add_note_optional => 'নোট যোগ করুন (ঐচ্ছিক)';
+
+  @override
+  String get my_tasks_initial_note_optional => 'প্রাথমিক নোট (ঐচ্ছিক)';
+
+  @override
+  String get my_tasks_save_changes => 'পরিবর্তন সংরক্ষণ';
+
+  @override
+  String get my_tasks_create_task => 'কাজ তৈরি করুন';
+
+  @override
+  String my_tasks_due_overdue(int days) {
+    return '$daysদিন অতিক্রান্ত';
+  }
+
+  @override
+  String get my_tasks_due_today => 'আজ';
+
+  @override
+  String get my_tasks_due_tomorrow => 'আগামীকাল';
+
+  @override
+  String my_tasks_due_in_days(int days) {
+    return '$daysদিনে';
+  }
+
+  @override
+  String get my_tasks_assigned_to => 'অ্যাসাইন করা';
+
+  @override
+  String get my_tasks_no_client => 'কোনো ক্লায়েন্ট নেই';
+
+  @override
+  String my_tasks_badge_overdue_days(int days) {
+    return '$days দিন ওভারডিউ';
+  }
+
+  @override
+  String get my_tasks_badge_overdue_one_day => '১ দিন ওভারডিউ';
+
+  @override
+  String get my_tasks_badge_high_priority => 'উচ্চ অগ্রাধিকার';
+
+  @override
+  String get my_tasks_badge_due_today => 'আজ বাকি';
+
+  @override
+  String get my_tasks_filter_by_assignee => 'অ্যাসাইনি দিয়ে ফিল্টার';
+
+  @override
+  String get my_tasks_all_members => 'সব সদস্য';
+
+  @override
+  String my_tasks_assigned_to_name(String name) {
+    return '$name-কে অ্যাসাইন';
+  }
+
+  @override
+  String my_tasks_you_label(String name) {
+    return '$name (আপনি)';
+  }
+
+  @override
+  String get my_tasks_search_team_members => 'টিম সদস্য খুঁজুন…';
+
+  @override
+  String get my_tasks_no_team_members => 'কোনো টিম সদস্য পাওয়া যায়নি।';
+
+  @override
+  String get my_tasks_clear_assignee_filter => 'অ্যাসাইনি ফিল্টার মুছুন';
 }

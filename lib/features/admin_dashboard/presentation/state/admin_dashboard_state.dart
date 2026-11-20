@@ -32,12 +32,38 @@ class AdminDashboardState {
       pendingMembershipsOperation.isLoading ||
       pendingDocumentsOperation.isLoading;
 
+  /// True when every dashboard fetch failed and there is nothing useful to show.
+  bool get isInitialLoadFailure {
+    if (isAnyLoading) return false;
+
+    final paymentsFailed =
+        failedPaymentsOperation.hasError && failedPaymentRows.isEmpty;
+    final todosFailed = todoTasksOperation.hasError && todoRows.isEmpty;
+    final openTasksFailed = openTasksOperation.hasError;
+    final openCasesFailed = openCasesOperation.hasError;
+    final documentsFailed = pendingDocumentsOperation.hasError;
+
+    return paymentsFailed &&
+        todosFailed &&
+        openTasksFailed &&
+        openCasesFailed &&
+        documentsFailed;
+  }
+
+  String? get initialLoadErrorMessage =>
+      failedPaymentsOperation.errorMessage ??
+      todoTasksOperation.errorMessage ??
+      openTasksOperation.errorMessage ??
+      openCasesOperation.errorMessage ??
+      pendingDocumentsOperation.errorMessage ??
+      pendingMembershipsOperation.errorMessage;
+
   List<AdminDashboardFailedPaymentTodoItem> get failedPaymentRows {
     final page = failedPaymentsOperation.data;
     if (page == null) return const [];
-    return page.items
-        .whereType<AdminDashboardFailedPaymentTodoItem>()
-        .toList(growable: false);
+    return page.items.whereType<AdminDashboardFailedPaymentTodoItem>().toList(
+      growable: false,
+    );
   }
 
   List<AdminDashboardTaskTodoItem> get todoRows {

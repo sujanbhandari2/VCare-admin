@@ -26,6 +26,7 @@ import 'package:vcare_admin/features/find_care/presentation/pages/provider_detai
 import 'package:vcare_admin/features/find_care/presentation/pages/saved_providers_screen.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/pages/admin_failed_payments_screen.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/pages/admin_todo_list_screen.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/pages/my_tasks_screen.dart';
 import 'package:vcare_admin/features/pending_memberships/presentation/pages/pending_memberships_screen.dart';
 import 'package:vcare_admin/features/home/presentation/pages/card_edit_screen.dart';
 import 'package:vcare_admin/features/care_team/presentation/pages/care_team_detail_screen.dart';
@@ -121,6 +122,7 @@ class AppRouter {
   static const activityName = "activity";
   static const adminFailedPaymentsName = "admin-failed-payments";
   static const adminTodoListName = "admin-todo-list";
+  static const myTasksName = "my-tasks";
   static const pendingMembershipsName = "pending-memberships";
   static const salesName = "sales";
   static const homeSalesName = "home-sales";
@@ -265,9 +267,7 @@ class AppRouter {
         name: toName(resetPassword),
         pageBuilder: (_, state) => _pageBuilder(
           state: state,
-          child: ResetPasswordScreen(
-            token: state.uri.queryParameters['token'],
-          ),
+          child: ResetPasswordScreen(token: state.uri.queryParameters['token']),
         ),
       ),
       StatefulShellRoute.indexedStack(
@@ -465,6 +465,15 @@ class AppRouter {
                     ),
                   ),
                   GoRoute(
+                    path: 'my-tasks',
+                    name: myTasksName,
+                    pageBuilder: (_, state) => _pageBuilder(
+                      state: state,
+                      transitionType: TransitionType.slide,
+                      child: const MyTasksScreen(),
+                    ),
+                  ),
+                  GoRoute(
                     path: 'pending-memberships',
                     name: pendingMembershipsName,
                     pageBuilder: (_, state) => _pageBuilder(
@@ -642,7 +651,8 @@ class AppRouter {
                             state.uri.queryParameters['documentSource'] ??
                             state.uri.queryParameters['source'],
                         openDocumentOnLoad:
-                            state.uri.queryParameters['openDocument'] == 'true' ||
+                            state.uri.queryParameters['openDocument'] ==
+                                'true' ||
                             state.uri.queryParameters['open'] == 'true',
                         initialFileName: state.uri.queryParameters['fileName'],
                       ),
@@ -751,10 +761,7 @@ class AppRouter {
                 }
                 if (raw is Map) {
                   passedRaw = raw.map(
-                    (key, value) => MapEntry(
-                      key.toString(),
-                      value.toString(),
-                    ),
+                    (key, value) => MapEntry(key.toString(), value.toString()),
                   );
                 }
               }

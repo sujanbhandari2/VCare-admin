@@ -151,7 +151,10 @@ class HttpException implements Exception {
 
     if (data is String) {
       final message = data.trim();
-      return message.isEmpty ? null : message;
+      if (message.isEmpty) return null;
+      // Reject HTML/proxy pages so they never become the primary exception message.
+      if (_looksLikeNonUserMessage(message)) return null;
+      return message;
     }
 
     if (data is Map<String, dynamic>) {
@@ -199,6 +202,19 @@ class HttpException implements Exception {
     }
 
     return null;
+  }
+
+  static final RegExp _nonUserMessagePattern = RegExp(
+    r'<!doctype\s+html\b|<html\b|<head\b|<body\b|<title\b|</\s*html\s*>|'
+    r'<\?xml\b|\bnginx\b|\bcloudflare\b',
+    caseSensitive: false,
+  );
+
+  static bool _looksLikeNonUserMessage(String message) {
+    final trimmed = message.trim();
+    if (_nonUserMessagePattern.hasMatch(trimmed)) return true;
+    if (trimmed.contains('\n') && trimmed.length > 120) return true;
+    return false;
   }
 
   @override

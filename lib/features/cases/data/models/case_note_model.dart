@@ -82,22 +82,26 @@ class CaseNoteModel {
     required this.note,
     this.status,
     this.accessType,
+    this.source,
     this.tags = const [],
     this.files = const [],
     this.externalInviteId,
     this.createdBy,
     this.createdAt,
+    this.isDeleted = false,
   });
 
   final String id;
   final String note;
   final String? status;
   final String? accessType;
+  final String? source;
   final List<CaseNoteTagModel> tags;
   final List<CaseNoteFileModel> files;
   final String? externalInviteId;
   final CaseNoteAuthorModel? createdBy;
   final String? createdAt;
+  final bool isDeleted;
 
   factory CaseNoteModel.fromJson(Map<String, dynamic> json) {
     final tagsRaw = json['tags'];
@@ -108,6 +112,7 @@ class CaseNoteModel {
       note: json['note']?.toString() ?? '',
       status: _optionalString(json['status']),
       accessType: _optionalString(json['accessType']),
+      source: _optionalString(json['source']),
       tags: tagsRaw is List
           ? tagsRaw
                 .whereType<Map>()
@@ -131,6 +136,7 @@ class CaseNoteModel {
       externalInviteId: _optionalString(json['externalInviteId']),
       createdBy: CaseNoteAuthorModel.parse(json['createdBy']),
       createdAt: _optionalString(json['createdAt']),
+      isDeleted: json['isDeleted'] == true,
     );
   }
 

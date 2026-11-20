@@ -11,13 +11,21 @@ import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_
 import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_dashboard_stat_cards.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_dashboard_todo_card.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
+import 'package:vcare_admin/features/feature_access/presentation/providers/feature_access_state_provider.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/data/home_profile_mapper.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/providers/my_tasks_preview_state_provider.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/widgets/my_tasks_preview_card.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
+import 'package:vcare_admin/shared/network/connectivity_status_provider.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
+import 'package:vcare_admin/shared/state/operation_state.dart';
+import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/widgets/vcare_error_state_panel.dart';
+import 'package:vcare_admin/shared/widgets/vcare_network_edge_widgets.dart';
 import 'package:vcare_admin/shared/widgets/vcare_refresh_scroll_view.dart';
 
 /// Section spacing from admin web `Dashboard.tsx` (`space-y-6`).
@@ -38,12 +46,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
-      final isAuthenticated =
-          ref.read(adminAuthSessionProvider).isAuthenticated;
+      final isAuthenticated = ref
+          .read(adminAuthSessionProvider)
+          .isAuthenticated;
       if (isAuthenticated) {
         await Future.wait([
           ref.read(authMeStateProvider.notifier).fetchMe(),
           ref.read(adminDashboardStateProvider.notifier).load(),
+          if (ref.read(featureAccessStateProvider).taskManagementEnabled ||
+              ref.read(featureAccessStateProvider).fetching)
+            ref.read(myTasksPreviewStateProvider.notifier).load(),
         ]);
       }
 
@@ -54,13 +66,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _onRefresh() async {
-    final isAuthenticated =
-        ref.read(adminAuthSessionProvider).isAuthenticated;
+    final isAuthenticated = ref.read(adminAuthSessionProvider).isAuthenticated;
     if (!isAuthenticated) return;
 
     await Future.wait([
       ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
       ref.read(adminDashboardStateProvider.notifier).load(forceRefresh: true),
+      if (ref.read(featureAccessStateProvider).taskManagementEnabled)
+        ref.read(myTasksPreviewStateProvider.notifier).refresh(),
     ]);
   }
 
@@ -69,6 +82,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authMeState = ref.watch(authMeStateProvider);
     final inboxState = ref.watch(notificationInboxStateProvider);
     final dashboardState = ref.watch(adminDashboardStateProvider);
+    final isOnline = ref.watch(isNetworkOnlineProvider);
+    final featureAccess = ref.watch(featureAccessStateProvider);
+    final menu = ref.watch(adminAuthSessionProvider).menu;
+    final showMyTasks =
+        featureAccess.taskManagementEnabled &&
+        (menu.isEmpty || menu.contains('tasks'));
 
     final headerProfile = homeProfileFromLocal(
       ref.watch(localProfileStateProvider),
@@ -78,6 +97,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     const greetingLabel = 'Welcome back';
 
     final safeTop = MediaQuery.paddingOf(context).top;
+    final showFullNetworkEdge =
+        dashboardState.isInitialLoadFailure ||
+        (!isOnline &&
+            !dashboardState.isAnyLoading &&
+            dashboardState.failedPaymentRows.isEmpty &&
+            dashboardState.todoRows.isEmpty &&
+            dashboardState.openTasksOperation.status !=
+                OperationStatus.success &&
+            dashboardState.openCasesOperation.status !=
+                OperationStatus.success);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -105,58 +134,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: _pageHorizontalPadding),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  Text(
-                    "Here's what's happening with your clients today.",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: context.vcare.mutedForeground,
-                    ),
-                  ),
-                  const SizedBox(height: _sectionGap),
-                  AdminDashboardStatCards(state: dashboardState),
-                  const SizedBox(height: _sectionGap),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide =
-                          constraints.maxWidth >=
-                          VCareLayout.mobileBreakpoint;
-
-                      if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: AdminDashboardFailedPaymentsCard(
-                                state: dashboardState,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: AdminDashboardTodoCard(
-                                state: dashboardState,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Column(
-                        children: [
-                          AdminDashboardFailedPaymentsCard(
-                            state: dashboardState,
-                          ),
-                          const SizedBox(height: 20),
-                          AdminDashboardTodoCard(state: dashboardState),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ]),
+              padding: const EdgeInsets.symmetric(
+                horizontal: _pageHorizontalPadding,
               ),
+              sliver: showFullNetworkEdge
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: !isOnline
+                          ? VcareOfflineErrorPanel(onRetry: _onRefresh)
+                          : VcareErrorStatePanel(
+                              title: 'Unable to load home',
+                              message: dashboardState.initialLoadErrorMessage,
+                              actionLabel: context.appLocalization.retry,
+                              onAction: _onRefresh,
+                            ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildListDelegate([
+                        Text(
+                          "Here's what's happening with your clients today.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: context.vcare.mutedForeground,
+                          ),
+                        ),
+                        const SizedBox(height: _sectionGap),
+                        AdminDashboardStatCards(state: dashboardState),
+                        const SizedBox(height: _sectionGap),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isWide =
+                                constraints.maxWidth >=
+                                VCareLayout.mobileBreakpoint;
+
+                            if (isWide) {
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: AdminDashboardFailedPaymentsCard(
+                                      state: dashboardState,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: AdminDashboardTodoCard(
+                                      state: dashboardState,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return Column(
+                              children: [
+                                AdminDashboardFailedPaymentsCard(
+                                  state: dashboardState,
+                                ),
+                                const SizedBox(height: 20),
+                                AdminDashboardTodoCard(state: dashboardState),
+                              ],
+                            );
+                          },
+                        ),
+                        if (showMyTasks) ...[
+                          const SizedBox(height: _sectionGap),
+                          const MyTasksPreviewCard(),
+                        ],
+                        const SizedBox(height: 16),
+                      ]),
+                    ),
             ),
           ],
         ),

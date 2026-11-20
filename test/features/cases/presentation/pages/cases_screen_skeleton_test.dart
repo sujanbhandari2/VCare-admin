@@ -76,10 +76,11 @@ Widget _wrap(_PendingPageCaseRepository repository) {
       caseRepositoryProvider.overrideWithValue(repository),
       fakeFeatureAccessRepositoryOverride(
         const FeatureAccess(
-          caseManagement: true,
-          healthChat: true,
-          membership: true,
-        ),
+            caseManagement: true,
+            healthChat: true,
+            membership: true,
+            taskManagement: true,
+          ),
       ),
     ],
     child: MaterialApp(

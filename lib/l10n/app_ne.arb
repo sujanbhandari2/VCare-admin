@@ -151,5 +151,154 @@
   "item1_description": "यो बोर्डिङ शीर्षक १ को विवरण हो",
   "item2_description": "यो बोर्डिङ शीर्षक २ को विवरण हो",
   "item3_description": "यो अन बोर्डिङ शीर्षक ३ को विवरण हो",
-  "item4_description": "यो अन बोर्डिङ शीर्षक ४ को विवरण हो"
+  "item4_description": "यो अन बोर्डिङ शीर्षक ४ को विवरण हो",
+  "delete": "मेटाउनुहोस्",
+  "my_tasks_title": "मेरा कार्यहरू",
+  "my_tasks_new_task": "नयाँ कार्य",
+  "my_tasks_edit_task": "कार्य सम्पादन",
+  "my_tasks_view_task": "कार्य हेर्नुहोस्",
+  "my_tasks_search_hint": "नामबाट खोज्नुहोस्",
+  "my_tasks_overdue": "म्याद नाघेको",
+  "my_tasks_snoozed": "स्थगित",
+  "my_tasks_assigned_to_me": "मलाई तोकिएको",
+  "my_tasks_all_owners": "सबै मालिक",
+  "my_tasks_unassigned": "नतोकिएको",
+  "my_tasks_team_member": "टोली सदस्य",
+  "my_tasks_owner": "मालिक",
+  "my_tasks_unavailable_title": "कार्य उपलब्ध छैन",
+  "my_tasks_unavailable_message": "तपाईंको संस्थाका लागि कार्य व्यवस्थापन सक्षम छैन, वा तपाईंसँग पहुँच छैन।",
+  "my_tasks_unable_to_load": "कार्यहरू लोड गर्न सकिएन",
+  "my_tasks_unable_to_load_task": "कार्य लोड गर्न सकिएन",
+  "my_tasks_loading": "कार्यहरू लोड हुँदैछ…",
+  "my_tasks_showing_count": "{total} मध्ये {count} देखाइँदै",
+  "@my_tasks_showing_count": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "my_tasks_overdue_count": "{count} म्याद नाघेको",
+  "@my_tasks_overdue_count": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "my_tasks_failed_complete": "कार्य पूरा गर्न सकिएन",
+  "my_tasks_completed": "कार्य पूरा भयो",
+  "my_tasks_completed_desc": "कार्य पूरा भएको चिन्ह लगाइयो।",
+  "my_tasks_filters": "फिल्टरहरू",
+  "my_tasks_category": "श्रेणी",
+  "my_tasks_status": "स्थिति",
+  "my_tasks_origin": "स्रोत",
+  "my_tasks_priority": "प्राथमिकता",
+  "my_tasks_all": "सबै",
+  "my_tasks_origin_custom": "कस्टम",
+  "my_tasks_origin_system": "प्रणाली",
+  "my_tasks_priority_high": "उच्च प्राथमिकता",
+  "my_tasks_priority_medium": "मध्यम",
+  "my_tasks_priority_low": "न्यून",
+  "my_tasks_high": "उच्च",
+  "my_tasks_urgent": "जरुरी",
+  "my_tasks_clear": "खाली गर्नुहोस्",
+  "my_tasks_apply": "लागू गर्नुहोस्",
+  "my_tasks_status_default_hint": "वेब क्यूसँग मिल्न स्थिति पूर्वनिर्धारित रूपमा खुला हुन्छ।",
+  "my_tasks_empty_clear": "तपाईं खाली हुनुहुन्छ",
+  "my_tasks_empty_clear_desc": "यो क्यूमा अहिले केही छैन।",
+  "my_tasks_empty_no_matches": "कुनै मिलान छैन",
+  "my_tasks_empty_no_matches_desc": "अर्को नाम प्रयास गर्नुहोस् वा फिल्टर खाली गर्नुहोस्।",
+  "my_tasks_snooze_title": "कार्य स्थगित गर्नुहोस्",
+  "my_tasks_snooze_subtitle": "यो कार्य कहिले फेरि देखिनुपर्छ छान्नुहोस्।",
+  "my_tasks_snooze": "स्थगित",
+  "my_tasks_snooze_tomorrow": "भोलि",
+  "my_tasks_snooze_three_days": "३ दिनमा",
+  "my_tasks_snooze_five_days": "५ दिनमा",
+  "my_tasks_snooze_next_week": "अर्को हप्ता",
+  "my_tasks_snooze_custom": "कस्टम मिति",
+  "my_tasks_notes": "नोटहरू",
+  "my_tasks_no_notes": "अहिलेसम्म कुनै नोट छैन।",
+  "my_tasks_add_note_hint": "नोट थप्नुहोस्…",
+  "my_tasks_edit_note_hint": "नोट सम्पादन…",
+  "my_tasks_cancel_edit": "सम्पादन रद्द",
+  "my_tasks_failed_save_note": "नोट बचत गर्न सकिएन",
+  "my_tasks_failed_delete_note": "नोट मेटाउन सकिएन",
+  "my_tasks_note_edited": "(सम्पादित)",
+  "my_tasks_review_subtitle": "कार्य विवरण र प्रगति समीक्षा गर्नुहोस्।",
+  "my_tasks_description": "विवरण",
+  "my_tasks_no_description": "कुनै विवरण छैन",
+  "my_tasks_assignee": "जिम्मेवार",
+  "my_tasks_due": "नियत",
+  "my_tasks_due_date": "नियत मिति",
+  "my_tasks_snoozed_until": "स्थगित रहने मिति",
+  "my_tasks_client": "ग्राहक",
+  "my_tasks_edit": "सम्पादन",
+  "my_tasks_close": "बन्द",
+  "my_tasks_resume": "पुनः सुरु",
+  "my_tasks_complete": "पूरा गर्नुहोस्",
+  "my_tasks_task_status": "कार्य स्थिति",
+  "my_tasks_task_priority": "कार्य प्राथमिकता",
+  "my_tasks_failed_update_status": "स्थिति अपडेट गर्न सकिएन",
+  "my_tasks_status_updated": "स्थिति अपडेट भयो",
+  "my_tasks_failed_snooze": "कार्य स्थगित गर्न सकिएन",
+  "my_tasks_task_snoozed": "कार्य स्थगित भयो",
+  "my_tasks_failed_resume": "कार्य पुनः सुरु गर्न सकिएन",
+  "my_tasks_task_resumed": "कार्य पुनः सुरु भयो",
+  "my_tasks_delete_confirm_title": "कार्य मेटाउने?",
+  "my_tasks_delete_confirm_body": "यो उल्ट्याउन सकिँदैन।",
+  "my_tasks_failed_delete": "कार्य मेटाउन सकिएन",
+  "my_tasks_task_deleted": "कार्य मेटाइयो",
+  "my_tasks_select_team_member": "टोली सदस्य छान्नुहोस्",
+  "my_tasks_title_required": "शीर्षक आवश्यक छ",
+  "my_tasks_due_date_future": "नियत मिति भविष्यमा हुनुपर्छ",
+  "my_tasks_failed_update": "कार्य अपडेट गर्न सकिएन",
+  "my_tasks_task_updated": "कार्य अपडेट भयो",
+  "my_tasks_failed_create": "कार्य सिर्जना गर्न सकिएन",
+  "my_tasks_task_created": "कार्य सिर्जना भयो",
+  "my_tasks_field_title": "शीर्षक",
+  "my_tasks_none": "कुनै होइन",
+  "my_tasks_add_note_optional": "नोट थप्नुहोस् (वैकल्पिक)",
+  "my_tasks_initial_note_optional": "प्रारम्भिक नोट (वैकल्पिक)",
+  "my_tasks_save_changes": "परिवर्तन बचत",
+  "my_tasks_create_task": "कार्य सिर्जना गर्नुहोस्",
+  "my_tasks_due_overdue": "{days} दिन नाघ्यो",
+  "@my_tasks_due_overdue": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "my_tasks_due_today": "आज",
+  "my_tasks_due_tomorrow": "भोलि",
+  "my_tasks_due_in_days": "{days} दिनमा",
+  "@my_tasks_due_in_days": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "my_tasks_assigned_to": "असाइन गरिएको",
+  "my_tasks_no_client": "कुनै क्लाइन्ट छैन",
+  "my_tasks_badge_overdue_days": "{days} दिन ओभरड्यू",
+  "@my_tasks_badge_overdue_days": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "my_tasks_badge_overdue_one_day": "१ दिन ओभरड्यू",
+  "my_tasks_badge_high_priority": "उच्च प्राथमिकता",
+  "my_tasks_badge_due_today": "आज बाँकी",
+  "my_tasks_filter_by_assignee": "असाइनीबाट फिल्टर",
+  "my_tasks_all_members": "सबै सदस्यहरू",
+  "my_tasks_assigned_to_name": "{name} लाई असाइन्ड",
+  "@my_tasks_assigned_to_name": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "my_tasks_you_label": "{name} (तपाईं)",
+  "@my_tasks_you_label": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "my_tasks_search_team_members": "टिम सदस्य खोज्नुहोस्…",
+  "my_tasks_no_team_members": "कुनै टिम सदस्य फेला परेन।",
+  "my_tasks_clear_assignee_filter": "असाइनी फिल्टर हटाउनुहोस्"
 }

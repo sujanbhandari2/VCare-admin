@@ -189,7 +189,10 @@ class _FindCareCategoryScreenState
                   ),
                 if (searchState.error != null) ...[
                   const SizedBox(height: 8),
-                  VcareInlineErrorCard(message: searchState.error),
+                  VcareInlineErrorCard(
+                    message: searchState.error,
+                    onRetry: _runSearch,
+                  ),
                 ],
                 if (searchState.hasSearched &&
                     !searchState.loading &&

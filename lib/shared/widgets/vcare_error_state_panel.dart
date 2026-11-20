@@ -35,10 +35,11 @@ class VcareErrorStatePanel extends StatelessWidget {
       errorType: errorType,
     );
 
-    return Padding(
+    final content = Padding(
       padding: padding,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 40, color: context.vcare.mutedForeground),
           const SizedBox(height: 12),
@@ -60,23 +61,55 @@ class VcareErrorStatePanel extends StatelessWidget {
         ],
       ),
     );
+
+    // Center within whatever space the parent provides (e.g. SliverFillRemaining,
+    // Expanded, or a full Scaffold body). Falls back to intrinsic size in lists.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasBoundedHeight =
+            constraints.hasBoundedHeight &&
+            constraints.maxHeight.isFinite &&
+            constraints.maxHeight > 0;
+
+        if (!hasBoundedHeight) {
+          return content;
+        }
+
+        return SizedBox(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          child: Center(child: SingleChildScrollView(child: content)),
+        );
+      },
+    );
   }
 }
 
 /// Inline error card for section-level failures.
+///
+/// Always sanitizes [message] through [NetworkErrorMessage] so raw HTML,
+/// proxy pages, and stack traces never appear in the UI.
 class VcareInlineErrorCard extends StatelessWidget {
   const VcareInlineErrorCard({
     super.key,
     this.message,
     this.errorType,
+    this.title,
+    this.icon = LucideIcons.wifiOff,
     this.onRetry,
     this.retryLabel,
+    this.compact = false,
   });
 
   final String? message;
   final HttpErrorType? errorType;
+  final String? title;
+  final IconData icon;
   final VoidCallback? onRetry;
   final String? retryLabel;
+
+  /// When true, omits the icon for dense list/footer placements.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -89,28 +122,43 @@ class VcareInlineErrorCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
         color: vcare.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: vcare.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          if (!compact) ...[
+            Icon(icon, size: 28, color: vcare.mutedForeground),
+            const SizedBox(height: 10),
+          ],
+          if (title != null) ...[
+            Text(
+              title!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: vcare.foreground,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
           Text(
             displayMessage,
             textAlign: TextAlign.center,
+            maxLines: compact ? 3 : 6,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
           ),
           if (onRetry != null) ...[
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.center,
-              child: TextButton(
-                onPressed: onRetry,
-                child: Text(retryLabel ?? context.appLocalization.retry),
-              ),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(retryLabel ?? context.appLocalization.retry),
             ),
           ],
         ],

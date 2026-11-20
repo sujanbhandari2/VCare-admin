@@ -71,10 +71,9 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
         state = state.loading();
       }
 
-      final response = await ref.read(userProfileRepositoryProvider).fetchMe(
-            forceRefresh: forceRefresh,
-            cancelToken: cancelToken,
-          );
+      final response = await ref
+          .read(userProfileRepositoryProvider)
+          .fetchMe(forceRefresh: forceRefresh, cancelToken: cancelToken);
 
       await response.when<Future<void>>(
         failure: (error) async {
@@ -90,24 +89,21 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
 
           final uuid = authMe.user.id?.trim();
           if (uuid != null && uuid.isNotEmpty) {
-            await ref.read(storageServiceProvider).set(
-                  StorageKeys.loggedInUserUuid,
-                  uuid,
-                );
+            await ref
+                .read(storageServiceProvider)
+                .set(StorageKeys.loggedInUserUuid, uuid);
           }
           final email = authMe.user.email?.trim();
           if (email != null && email.isNotEmpty) {
-            await ref.read(storageServiceProvider).set(
-                  StorageKeys.loggedInUserEmail,
-                  email,
-                );
+            await ref
+                .read(storageServiceProvider)
+                .set(StorageKeys.loggedInUserEmail, email);
           }
           final tenantId = authMe.user.currentTenant?.id?.trim();
           if (tenantId != null && tenantId.isNotEmpty) {
-            await ref.read(storageServiceProvider).set(
-                  StorageKeys.loggedInUserTenantId,
-                  tenantId,
-                );
+            await ref
+                .read(storageServiceProvider)
+                .set(StorageKeys.loggedInUserTenantId, tenantId);
           }
 
           final localProfile = localProfileFromAuthMe(authMe);
@@ -165,9 +161,11 @@ class AuthMeStateNotifier extends _$AuthMeStateNotifier {
       } on FileSystemException catch (error) {
         if (ref.mounted) {
           state = state.updateFailure(
-            error.message.isNotEmpty
-                ? error.message
-                : 'Could not read the selected photo.',
+            NetworkErrorMessage.sanitize(
+              message: error.message.isNotEmpty
+                  ? error.message
+                  : 'Could not read the selected photo.',
+            ),
           );
         }
         return UpdateMeOutcome.failure;

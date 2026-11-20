@@ -156,5 +156,154 @@
   "failed_to_load_more_items": "Failed to load more items",
   "retry": "Retry",
   "no_items_found": "No items found",
-  "sign_out": "Sign Out"
+  "sign_out": "Sign Out",
+  "delete": "Delete",
+  "my_tasks_title": "My Tasks",
+  "my_tasks_new_task": "New Task",
+  "my_tasks_edit_task": "Edit Task",
+  "my_tasks_view_task": "View Task",
+  "my_tasks_search_hint": "Search by name",
+  "my_tasks_overdue": "Overdue",
+  "my_tasks_snoozed": "Snoozed",
+  "my_tasks_assigned_to_me": "Assigned to me",
+  "my_tasks_all_owners": "All owners",
+  "my_tasks_unassigned": "Unassigned",
+  "my_tasks_team_member": "Team member",
+  "my_tasks_owner": "Owner",
+  "my_tasks_unavailable_title": "Tasks unavailable",
+  "my_tasks_unavailable_message": "Task management is not enabled for your organization, or you do not have access.",
+  "my_tasks_unable_to_load": "Unable to load tasks",
+  "my_tasks_unable_to_load_task": "Unable to load task",
+  "my_tasks_loading": "Loading tasks…",
+  "my_tasks_showing_count": "Showing {count} of {total}",
+  "@my_tasks_showing_count": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "my_tasks_overdue_count": "{count} overdue",
+  "@my_tasks_overdue_count": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "my_tasks_failed_complete": "Failed to complete task",
+  "my_tasks_completed": "Task completed",
+  "my_tasks_completed_desc": "The task was marked as complete.",
+  "my_tasks_filters": "Filters",
+  "my_tasks_category": "Category",
+  "my_tasks_status": "Status",
+  "my_tasks_origin": "Origin",
+  "my_tasks_priority": "Priority",
+  "my_tasks_all": "All",
+  "my_tasks_origin_custom": "Custom",
+  "my_tasks_origin_system": "System",
+  "my_tasks_priority_high": "High Priority",
+  "my_tasks_priority_medium": "Medium",
+  "my_tasks_priority_low": "Low",
+  "my_tasks_high": "High",
+  "my_tasks_urgent": "Urgent",
+  "my_tasks_clear": "Clear",
+  "my_tasks_apply": "Apply",
+  "my_tasks_status_default_hint": "Status defaults to Open to match the web queue.",
+  "my_tasks_empty_clear": "You're clear",
+  "my_tasks_empty_clear_desc": "Nothing in this queue right now.",
+  "my_tasks_empty_no_matches": "No matches",
+  "my_tasks_empty_no_matches_desc": "Try a different name or clear your filters.",
+  "my_tasks_snooze_title": "Snooze task",
+  "my_tasks_snooze_subtitle": "Choose when this task should resurface.",
+  "my_tasks_snooze": "Snooze",
+  "my_tasks_snooze_tomorrow": "Tomorrow",
+  "my_tasks_snooze_three_days": "In 3 days",
+  "my_tasks_snooze_five_days": "In 5 days",
+  "my_tasks_snooze_next_week": "Next week",
+  "my_tasks_snooze_custom": "Custom date",
+  "my_tasks_notes": "Notes",
+  "my_tasks_no_notes": "No notes yet.",
+  "my_tasks_add_note_hint": "Add a note…",
+  "my_tasks_edit_note_hint": "Edit note…",
+  "my_tasks_cancel_edit": "Cancel edit",
+  "my_tasks_failed_save_note": "Failed to save note",
+  "my_tasks_failed_delete_note": "Failed to delete note",
+  "my_tasks_note_edited": "(edited)",
+  "my_tasks_review_subtitle": "Review task details and progress.",
+  "my_tasks_description": "Description",
+  "my_tasks_no_description": "No description",
+  "my_tasks_assignee": "Assignee",
+  "my_tasks_due": "Due",
+  "my_tasks_due_date": "Due date",
+  "my_tasks_snoozed_until": "Snoozed until",
+  "my_tasks_client": "Client",
+  "my_tasks_edit": "Edit",
+  "my_tasks_close": "Close",
+  "my_tasks_resume": "Resume",
+  "my_tasks_complete": "Complete",
+  "my_tasks_task_status": "Task status",
+  "my_tasks_task_priority": "Task priority",
+  "my_tasks_failed_update_status": "Failed to update status",
+  "my_tasks_status_updated": "Status updated",
+  "my_tasks_failed_snooze": "Failed to snooze task",
+  "my_tasks_task_snoozed": "Task snoozed",
+  "my_tasks_failed_resume": "Failed to resume task",
+  "my_tasks_task_resumed": "Task resumed",
+  "my_tasks_delete_confirm_title": "Delete task?",
+  "my_tasks_delete_confirm_body": "This cannot be undone.",
+  "my_tasks_failed_delete": "Failed to delete task",
+  "my_tasks_task_deleted": "Task deleted",
+  "my_tasks_select_team_member": "Select team member",
+  "my_tasks_title_required": "Title is required",
+  "my_tasks_due_date_future": "Due date must be in the future",
+  "my_tasks_failed_update": "Failed to update task",
+  "my_tasks_task_updated": "Task updated",
+  "my_tasks_failed_create": "Failed to create task",
+  "my_tasks_task_created": "Task created",
+  "my_tasks_field_title": "Title",
+  "my_tasks_none": "None",
+  "my_tasks_add_note_optional": "Add note (optional)",
+  "my_tasks_initial_note_optional": "Initial note (optional)",
+  "my_tasks_save_changes": "Save changes",
+  "my_tasks_create_task": "Create task",
+  "my_tasks_due_overdue": "{days}d overdue",
+  "@my_tasks_due_overdue": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "my_tasks_due_today": "today",
+  "my_tasks_due_tomorrow": "tomorrow",
+  "my_tasks_due_in_days": "in {days}d",
+  "@my_tasks_due_in_days": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "my_tasks_assigned_to": "Assigned to",
+  "my_tasks_no_client": "No client",
+  "my_tasks_badge_overdue_days": "Overdue {days} days",
+  "@my_tasks_badge_overdue_days": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "my_tasks_badge_overdue_one_day": "Overdue 1 day",
+  "my_tasks_badge_high_priority": "High priority",
+  "my_tasks_badge_due_today": "Due today",
+  "my_tasks_filter_by_assignee": "Filter by assignee",
+  "my_tasks_all_members": "All Members",
+  "my_tasks_assigned_to_name": "Assigned to {name}",
+  "@my_tasks_assigned_to_name": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "my_tasks_you_label": "{name} (You)",
+  "@my_tasks_you_label": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "my_tasks_search_team_members": "Search team members…",
+  "my_tasks_no_team_members": "No team members found.",
+  "my_tasks_clear_assignee_filter": "Clear assignee filter"
 }

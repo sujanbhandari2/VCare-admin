@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/loadable_list_item.dart';
 import '../state/loadable_list_state.dart';
 import '../utils/extension_functions.dart';
-import '../utils/network_error_message.dart';
 import 'vcare_error_state_panel.dart';
 
 enum LoadableListHeaderBehavior { normal, pinned, floating }
@@ -340,24 +339,13 @@ class _DefaultLoadMoreErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayMessage = NetworkErrorMessage.displayMessage(
-      context,
-      message: message,
-    );
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(displayMessage),
-          ),
-          if (onRetry != null)
-            TextButton(
-              onPressed: onRetry,
-              child: Text(context.appLocalization.retry),
-            ),
-        ],
+      child: VcareInlineErrorCard(
+        message: message,
+        compact: true,
+        onRetry: onRetry == null ? null : () => onRetry!(),
+        retryLabel: context.appLocalization.retry,
       ),
     );
   }

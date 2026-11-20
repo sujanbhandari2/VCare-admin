@@ -54,6 +54,7 @@ void main() {
             caseManagement: true,
             healthChat: false,
             membership: true,
+            taskManagement: true,
           ),
           openNewChat: true,
           peerUserId: 'peer-1',

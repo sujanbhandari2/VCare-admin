@@ -56,7 +56,9 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
       state = state.loading();
     }
 
-    final response = await ref.read(careTeamRepositoryProvider).fetchCareTeam(
+    final response = await ref
+        .read(careTeamRepositoryProvider)
+        .fetchCareTeam(
           group: careTeamListGroupAgentCareTeam,
           forceRefresh: forceRefresh,
           cancelToken: cancelToken,
@@ -98,12 +100,13 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
       state = state.memberLoading();
     }
 
-    final response =
-        await ref.read(careTeamRepositoryProvider).fetchCareTeamMember(
-              id: id,
-              forceRefresh: forceRefresh,
-              cancelToken: cancelToken,
-            );
+    final response = await ref
+        .read(careTeamRepositoryProvider)
+        .fetchCareTeamMember(
+          id: id,
+          forceRefresh: forceRefresh,
+          cancelToken: cancelToken,
+        );
 
     response.when(
       failure: (error) {
@@ -122,7 +125,7 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
   }
 
   Future<({bool failed, String? profileId, bool setProfileId})>
-      _resolveProfileIdForMutation({
+  _resolveProfileIdForMutation({
     required String? photoUrl,
     required String? initialProfileId,
     required CancelToken? cancelToken,
@@ -131,22 +134,19 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
     final trimmedPhoto = photoUrl?.trim();
     if (trimmedPhoto == null || trimmedPhoto.isEmpty) {
       final hadProfile = initialProfileId?.trim().isNotEmpty == true;
-      return (
-        failed: false,
-        profileId: null,
-        setProfileId: hadProfile,
-      );
+      return (failed: false, profileId: null, setProfileId: hadProfile);
     }
 
     if (_isLocalPhotoPath(trimmedPhoto)) {
       try {
         final bytes = await File(trimmedPhoto).readAsBytes();
-        final uploadResponse =
-            await ref.read(careTeamRepositoryProvider).uploadCareTeamProfilePhoto(
-                  bytes: bytes,
-                  fileName: p.basename(trimmedPhoto),
-                  cancelToken: cancelToken,
-                );
+        final uploadResponse = await ref
+            .read(careTeamRepositoryProvider)
+            .uploadCareTeamProfilePhoto(
+              bytes: bytes,
+              fileName: p.basename(trimmedPhoto),
+              cancelToken: cancelToken,
+            );
 
         return uploadResponse.when(
           failure: (error) {
@@ -157,9 +157,11 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
         );
       } on FileSystemException catch (error) {
         onUploadFailure(
-          error.message.isNotEmpty
-              ? error.message
-              : 'Could not read the selected photo.',
+          NetworkErrorMessage.sanitize(
+            message: error.message.isNotEmpty
+                ? error.message
+                : 'Could not read the selected photo.',
+          ),
         );
         return (failed: true, profileId: null, setProfileId: false);
       }
@@ -245,22 +247,23 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
     );
     if (photoResult.failed) return;
 
-    final response =
-        await ref.read(careTeamRepositoryProvider).updateCareTeamMember(
-              id: id,
-              role: careTeamRoleLabel(input.role),
-              name: input.name,
-              phone: input.phone,
-              email: input.email,
-              website: input.website,
-              notes: input.bio,
-              address: input.address,
-              policy: input.policyNumber,
-              group: input.groupNumber,
-              profileId: photoResult.profileId,
-              setProfileId: photoResult.setProfileId,
-              cancelToken: cancelToken,
-            );
+    final response = await ref
+        .read(careTeamRepositoryProvider)
+        .updateCareTeamMember(
+          id: id,
+          role: careTeamRoleLabel(input.role),
+          name: input.name,
+          phone: input.phone,
+          email: input.email,
+          website: input.website,
+          notes: input.bio,
+          address: input.address,
+          policy: input.policyNumber,
+          group: input.groupNumber,
+          profileId: photoResult.profileId,
+          setProfileId: photoResult.setProfileId,
+          cancelToken: cancelToken,
+        );
 
     response.when(
       failure: (error) {
@@ -287,11 +290,9 @@ class CareTeamStateNotifier extends _$CareTeamStateNotifier {
       state = state.deletingInProgress();
     }
 
-    final response =
-        await ref.read(careTeamRepositoryProvider).deleteCareTeamMember(
-              id: id,
-              cancelToken: cancelToken,
-            );
+    final response = await ref
+        .read(careTeamRepositoryProvider)
+        .deleteCareTeamMember(id: id, cancelToken: cancelToken);
 
     response.when(
       failure: (error) {

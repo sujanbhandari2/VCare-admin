@@ -112,61 +112,66 @@ class _HomeActivityScreenState extends ConsumerState<HomeActivityScreen> {
           const SliverVcarePageHeader(title: 'To do list', showBack: true),
           SliverPadding(
             padding: context.mobileShellScrollPadding,
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (listState.isInitialLoading && items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
+            sliver: listState.isInitialLoading && items.isEmpty
+                ? const SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (listState.isInitialError && items.isEmpty)
-                  VcareErrorStatePanel(
-                    title: 'Unable to load tasks',
-                    message: listState.operation.errorMessage,
-                    padding: const EdgeInsets.all(24),
-                    actionLabel: context.appLocalization.retry,
-                    onAction: () =>
-                        ref.read(todoListStateProvider.notifier).loadInitial(),
-                  )
-                else if (items.isEmpty)
-                  const VcareEmptyStateCard(
-                    icon: LucideIcons.listChecks,
-                    title: 'No tasks yet',
-                    description:
-                        'Action items and updates will appear here when something needs your attention.',
-                  )
-                else
-                  for (var i = 0; i < items.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 8),
-                    TodoListRow(
-                      item: items[i],
-                      onTap: () => _handleItemTap(items[i]),
+                : listState.isInitialError && items.isEmpty
+                ? SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: VcareErrorStatePanel(
+                      title: 'Unable to load tasks',
+                      message: listState.operation.errorMessage,
+                      padding: const EdgeInsets.all(24),
+                      actionLabel: context.appLocalization.retry,
+                      onAction: () => ref
+                          .read(todoListStateProvider.notifier)
+                          .loadInitial(),
                     ),
-                  ],
-                if (listState.isLoadingMore)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                if (listState.loadMoreErrorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Center(
-                      child: TextButton(
-                        onPressed: () =>
-                            ref.read(todoListStateProvider.notifier).loadMore(),
-                        child: Text(
-                          NetworkErrorMessage.displayMessage(
-                            context,
-                            message: listState.loadMoreErrorMessage,
+                  )
+                : SliverList(
+                    delegate: SliverChildListDelegate([
+                      if (items.isEmpty)
+                        const VcareEmptyStateCard(
+                          icon: LucideIcons.listChecks,
+                          title: 'No tasks yet',
+                          description:
+                              'Action items and updates will appear here when something needs your attention.',
+                        )
+                      else
+                        for (var i = 0; i < items.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 8),
+                          TodoListRow(
+                            item: items[i],
+                            onTap: () => _handleItemTap(items[i]),
                           ),
-                          style: TextStyle(color: context.vcare.primary),
+                        ],
+                      if (listState.isLoadingMore)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CircularProgressIndicator()),
                         ),
-                      ),
-                    ),
+                      if (listState.loadMoreErrorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Center(
+                            child: TextButton(
+                              onPressed: () => ref
+                                  .read(todoListStateProvider.notifier)
+                                  .loadMore(),
+                              child: Text(
+                                NetworkErrorMessage.displayMessage(
+                                  context,
+                                  message: listState.loadMoreErrorMessage,
+                                ),
+                                style: TextStyle(color: context.vcare.primary),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ]),
                   ),
-              ]),
-            ),
           ),
         ],
       ),

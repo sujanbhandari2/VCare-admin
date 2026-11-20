@@ -22,6 +22,7 @@ import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 import 'package:vcare_admin/shared/navigation/tab_data_refresh_coordinator.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
+import 'package:vcare_admin/shared/widgets/vcare_network_edge_widgets.dart';
 
 import '../../../inapp_update/domain/entities/remote_config_app_update_info.dart';
 import '../../../inapp_update/presentation/providers/remote_config_app_update_state_provider.dart';
@@ -158,13 +159,24 @@ class _MainWrapperScreenState extends ConsumerState<MainWrapperScreen>
             // Keep the scope flag stable while the keyboard is open so child
             // composers do not re-add nav clearance on top of the IME.
             appliesBottomContentInset: appliesShellBottomInset,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: appliesShellBottomInset && !keyboardOpen
-                    ? vcareMobileBottomNavContentPadding(context)
-                    : 0,
-              ),
-              child: widget.shell,
+            child: Column(
+              children: [
+                VcareOfflineBanner(
+                  onRetry: () {
+                    unawaited(refreshTabData(ref, _currentNavItem));
+                  },
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: appliesShellBottomInset && !keyboardOpen
+                          ? vcareMobileBottomNavContentPadding(context)
+                          : 0,
+                    ),
+                    child: widget.shell,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

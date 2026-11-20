@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_assignee.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
+import 'package:vcare_admin/features/cases/domain/entities/case_note_summarize.dart';
 import 'package:vcare_admin/features/cases/domain/entities/cases_list_request.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/features/cases/domain/repositories/case_repository.dart';
@@ -41,6 +42,13 @@ class FakeCaseRepository implements CaseRepository {
       ]);
 
   CreateCaseBody? lastCreateBody;
+
+  EitherResponseOrException<String> summarizeCaseNotesResult = const Success(
+    'AI summary text',
+  );
+  int summarizeCaseNotesCallCount = 0;
+  String? lastSummarizeCaseId;
+  CaseNoteSummarizeRequest? lastSummarizeRequest;
 
   @override
   Future<EitherResponseOrException<ReferralCase>> createCase(
@@ -126,5 +134,17 @@ class FakeCaseRepository implements CaseRepository {
     CancelToken? cancelToken,
   }) async {
     throw UnimplementedError();
+  }
+
+  @override
+  Future<EitherResponseOrException<String>> summarizeCaseNotes(
+    String caseId,
+    CaseNoteSummarizeRequest request, {
+    CancelToken? cancelToken,
+  }) async {
+    summarizeCaseNotesCallCount++;
+    lastSummarizeCaseId = caseId;
+    lastSummarizeRequest = request;
+    return summarizeCaseNotesResult;
   }
 }

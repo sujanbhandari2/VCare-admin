@@ -9,6 +9,7 @@ import 'package:vcare_admin/features/cases/presentation/providers/case_notes_sta
 import 'package:vcare_admin/features/cases/presentation/providers/case_repository_provider.dart';
 
 import '../../../../fixtures/repositories/fake_case_note_repository.dart';
+import '../../../../fixtures/repositories/fake_case_repository.dart';
 
 const _caseId = 'case-1';
 
@@ -24,14 +25,19 @@ CaseNote _note({required String id, String content = 'Hello'}) {
 void main() {
   group('CaseNotesState', () {
     late FakeCaseNoteRepository repository;
+    late FakeCaseRepository caseRepository;
 
     setUp(() {
       repository = FakeCaseNoteRepository();
+      caseRepository = FakeCaseRepository();
     });
 
     ProviderContainer createContainer() {
       final container = ProviderContainer(
-        overrides: [caseNoteRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          caseNoteRepositoryProvider.overrideWithValue(repository),
+          caseRepositoryProvider.overrideWithValue(caseRepository),
+        ],
       );
       addTearDown(container.dispose);
       return container;
@@ -141,6 +147,94 @@ void main() {
         async.flushMicrotasks();
         expect(repository.fetchNotesCount, 0);
       });
+    });
+
+    test('summarizeNotes succeeds and stores summary text', () async {
+      repository.fetchNotesResult = Success([
+        _note(id: 'n1', content: 'Note one'),
+        _note(id: 'n2', content: 'Note two'),
+        _note(id: 'n3', content: 'Note three'),
+        _note(id: 'n4', content: 'Note four'),
+      ]);
+      caseRepository.summarizeCaseNotesResult = const Success(
+        'Care coordination summary',
+      );
+
+      final container = createContainer();
+      final notifier = container.read(caseNotesStateProvider(_caseId).notifier);
+      await notifier.fetchNotes();
+
+      String? completedSummary;
+      String? completedError;
+      await notifier.summarizeNotes(
+        onCompleted: (summary, error) {
+          completedSummary = summary;
+          completedError = error;
+        },
+      );
+
+      final state = container.read(caseNotesStateProvider(_caseId));
+      expect(state.summarizing, isFalse);
+      expect(state.summaryText, 'Care coordination summary');
+      expect(completedSummary, 'Care coordination summary');
+      expect(completedError, isNull);
+      expect(caseRepository.summarizeCaseNotesCallCount, 1);
+      expect(caseRepository.lastSummarizeCaseId, _caseId);
+      expect(caseRepository.lastSummarizeRequest?.notes, hasLength(4));
+    });
+
+    test('summarizeNotes sets failure on error', () async {
+      repository.fetchNotesResult = Success([
+        _note(id: 'n1', content: 'Note one'),
+        _note(id: 'n2', content: 'Note two'),
+        _note(id: 'n3', content: 'Note three'),
+        _note(id: 'n4', content: 'Note four'),
+      ]);
+      caseRepository.summarizeCaseNotesResult = Failure(
+        HttpException(
+          message: 'Summarize failed',
+          errorType: HttpErrorType.client,
+        ),
+      );
+
+      final container = createContainer();
+      final notifier = container.read(caseNotesStateProvider(_caseId).notifier);
+      await notifier.fetchNotes();
+
+      String? completedSummary;
+      String? completedError;
+      await notifier.summarizeNotes(
+        onCompleted: (summary, error) {
+          completedSummary = summary;
+          completedError = error;
+        },
+      );
+
+      final state = container.read(caseNotesStateProvider(_caseId));
+      expect(state.summarizing, isFalse);
+      expect(state.summarizeError, 'Summarize failed');
+      expect(completedSummary, isNull);
+      expect(completedError, 'Summarize failed');
+    });
+
+    test('summarizeNotes skips API when fewer than four eligible notes',
+        () async {
+      repository.fetchNotesResult = Success([
+        _note(id: 'n1', content: 'Note one'),
+        _note(id: 'n2', content: 'Note two'),
+      ]);
+
+      final container = createContainer();
+      final notifier = container.read(caseNotesStateProvider(_caseId).notifier);
+      await notifier.fetchNotes();
+
+      String? completedError;
+      await notifier.summarizeNotes(
+        onCompleted: (_, error) => completedError = error,
+      );
+
+      expect(caseRepository.summarizeCaseNotesCallCount, 0);
+      expect(completedError, contains('Min 4 notes'));
     });
   });
 }

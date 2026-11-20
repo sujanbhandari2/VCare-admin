@@ -14,11 +14,13 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
     required this.npiDigits,
     required this.state,
     required this.onLoadMore,
+    this.onRetry,
   });
 
   final String npiDigits;
   final MedicareProviderDetailState state;
   final VoidCallback onLoadMore;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +115,10 @@ class MedicareProviderDetailServicesSection extends StatelessWidget {
               ),
             ),
           if (state.servicesError != null)
-            VcareInlineErrorCard(message: state.servicesError),
+            VcareInlineErrorCard(
+              message: state.servicesError,
+              onRetry: onRetry,
+            ),
           if (!state.servicesLoading &&
               state.servicesError == null &&
               state.serviceLines.isEmpty)
