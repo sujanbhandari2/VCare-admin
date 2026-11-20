@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/auth/domain/entities/admin_login_outcome.dart';
+import 'package:vcare_admin/features/auth/domain/password_login_lock.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
@@ -176,6 +177,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
       phase: AdminLoginPhase.credentials,
       tenantOptions: const [],
       clearError: true,
+      clearAccountLock: true,
       clearChallenge: true,
     );
   }
@@ -207,6 +209,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
       state = state.copyWith(
         isSubmitting: true,
         clearError: true,
+        clearAccountLock: true,
         storedEmail: storeCredentials ? email : state.storedEmail,
         storedPassword: storeCredentials ? password : state.storedPassword,
       );
@@ -221,13 +224,28 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
 
     await response.when<Future<void>>(
       failure: (error) async {
+        if (isAccountPasswordLockedError(error)) {
+          final supportEmail = resolveAccountPasswordLockSupportEmail(error);
+          if (ref.mounted) {
+            state = state.copyWith(
+              isSubmitting: false,
+              clearError: true,
+              accountLockedSupportEmail: supportEmail,
+            );
+          }
+          onError?.call(null);
+          return;
+        }
+
+        final message = resolvePasswordLoginErrorMessage(error);
         if (ref.mounted) {
           state = state.copyWith(
             isSubmitting: false,
-            errorMessage: error.userMessage,
+            clearAccountLock: true,
+            errorMessage: message,
           );
         }
-        onError?.call(error.userMessage);
+        onError?.call(message);
       },
       success: (outcome) async {
         switch (outcome) {
@@ -238,6 +256,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
                 phase: AdminLoginPhase.tenantSelection,
                 tenantOptions: tenants,
                 clearError: true,
+                clearAccountLock: true,
                 clearChallenge: true,
               );
             }
@@ -252,6 +271,7 @@ class AdminLoginStateNotifier extends _$AdminLoginStateNotifier {
                 challengeToken: challengeToken,
                 expiresIn: expiresIn,
                 clearError: true,
+                clearAccountLock: true,
               );
             }
           case AdminLoginAuthenticated(:final session):

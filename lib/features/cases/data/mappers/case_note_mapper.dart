@@ -1,13 +1,22 @@
 import 'package:vcare_admin/features/cases/data/models/case_note_model.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
+import 'package:vcare_admin/features/cases/utils/case_note_status_audit.dart';
 
 extension CaseNoteModelMapper on CaseNoteModel {
   CaseNote toEntity({String? currentUserId}) {
     final createdById = createdBy?.id;
-    final authorName = _resolveAuthorName(createdBy);
-    final status = _resolveNoteStatus(status: this.status, accessType: accessType);
-    final canModify =
+    final isSystemNote = isSystemCaseNoteSource(source);
+    final isStatusAuditNote = isStatusChangeAuditNote(note);
+    final showSystemAuthorLabel = isSystemNote && !isStatusAuditNote;
+    final authorName = showSystemAuthorLabel
+        ? 'System'
+        : _resolveAuthorName(createdBy);
+    final status =
+        _resolveNoteStatus(status: this.status, accessType: accessType);
+    final canModify = !isDeleted &&
+        !isSystemNote &&
+        !isStatusAuditNote &&
         status != null &&
         currentUserId != null &&
         currentUserId.trim().isNotEmpty &&
@@ -21,16 +30,20 @@ extension CaseNoteModelMapper on CaseNoteModel {
       content: note,
       createdAt: createdAt ?? '',
       authorName: authorName,
-      authorInitials: _authorInitials(authorName),
+      authorInitials: showSystemAuthorLabel ? 'S' : _authorInitials(authorName),
       status: status,
       accessType: accessType,
+      source: source,
       createdById: createdById,
-      authorProfilePreviewLink: createdBy?.profilePreviewLink,
+      authorProfilePreviewLink:
+          showSystemAuthorLabel ? null : createdBy?.profilePreviewLink,
       files: files.map((file) => file.toEntity()).toList(growable: false),
       tags: tags.map((tag) => tag.toEntity()).toList(growable: false),
       externalInviteId: externalInviteId,
       canEdit: canModify,
       canDelete: canModify,
+      isSystemGenerated: isStatusAuditNote,
+      isDeleted: isDeleted,
     );
   }
 }

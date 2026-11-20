@@ -3,11 +3,13 @@ class FeatureAccessModel {
     required this.caseManagement,
     required this.healthChat,
     required this.membership,
+    required this.taskManagement,
   });
 
   final bool caseManagement;
   final bool healthChat;
   final bool membership;
+  final bool taskManagement;
 
   factory FeatureAccessModel.fromSettingsJson(Map<String, dynamic> json) {
     final features = json['features'];
@@ -19,6 +21,7 @@ class FeatureAccessModel {
       caseManagement: _readBool(featureMap, 'caseManagement'),
       healthChat: _readBool(featureMap, 'healthChat'),
       membership: _readBool(featureMap, 'membership'),
+      taskManagement: _readBool(featureMap, 'taskManagement'),
     );
   }
 

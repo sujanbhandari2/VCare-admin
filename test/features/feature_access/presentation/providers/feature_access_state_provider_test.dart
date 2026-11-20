@@ -35,6 +35,7 @@ void main() {
             caseManagement: true,
             healthChat: false,
             membership: true,
+            taskManagement: true,
           ),
         ),
       );
@@ -87,6 +88,7 @@ void main() {
             caseManagement: true,
             healthChat: true,
             membership: true,
+            taskManagement: true,
           ),
         ),
       );

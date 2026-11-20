@@ -44,6 +44,7 @@ class ApiEndpoints {
   static const String agentCommissionSummary = "agents/commission-summary";
   static const String agentCommissionHistory = "agents/commission-history";
   static const String agentSalesHistory = "agents/sales-history";
+
   /// Platform admin client list (matches web `clientApiPaths.collection`).
   static const String clients = "clients";
 
@@ -62,6 +63,8 @@ class ApiEndpoints {
   static String referralCaseClone(String id) => "referral-cases/$id/clone";
   static String referralCaseOtherCases(String id) =>
       "referral-cases/$id/other-cases";
+  static String referralCaseSummarize(String id) =>
+      "referral-cases/$id/summarize";
   static String referralCaseNotes(String caseId) =>
       "referral-cases/$caseId/notes";
   static String referralCaseNote(String caseId, String noteId) =>
@@ -118,6 +121,10 @@ class ApiEndpoints {
 
   static const String tasks = "tasks";
   static String task(String id) => "tasks/$id";
+  static String taskSnooze(String id) => "tasks/$id/snooze";
+  static String taskNotes(String taskId) => "tasks/$taskId/notes";
+  static String taskNote(String taskId, String noteId) =>
+      "tasks/$taskId/notes/$noteId";
 
   static const String meInteractions = "me/interactions";
 

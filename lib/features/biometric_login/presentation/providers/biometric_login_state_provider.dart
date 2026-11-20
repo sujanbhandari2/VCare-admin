@@ -4,9 +4,10 @@ import 'package:local_auth/local_auth.dart';
 
 import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/auth/domain/auth_error_message.dart';
+import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
-import 'package:vcare_admin/features/auth/domain/entities/admin_auth_session.dart';
 import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_challenge.dart';
 import 'package:vcare_admin/features/biometric_login/domain/entities/biometric_login_status.dart';
 import 'package:vcare_admin/features/biometric_login/presentation/providers/biometric_login_repository_provider.dart';
@@ -146,6 +147,9 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
           'Biometric challenge did not resolve into a valid nonce/token.',
         );
         final error = challengeResponse.failureOrNull;
+        if (await _handleDisablingAuthError(error, onError: onError)) {
+          return;
+        }
         final message =
             error?.userMessage ?? 'Unable to start biometric login.';
         if (ref.mounted) {
@@ -223,6 +227,10 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
           return;
         }
 
+        if (await _handleDisablingAuthError(error, onError: onError)) {
+          return;
+        }
+
         final message =
             error?.userMessage ?? 'Unable to complete biometric login.';
         if (ref.mounted) {
@@ -269,6 +277,25 @@ class BiometricLoginStateNotifier extends Notifier<BiometricLoginState> {
         raw.contains('needs to be set up again') ||
         raw.contains('key user not authenticated') ||
         raw.contains('key_user_not_authenticated');
+  }
+
+  Future<bool> _handleDisablingAuthError(
+    Object? error, {
+    void Function(String? error)? onError,
+  }) async {
+    final message = resolveBiometricLoginAuthErrorMessage(error);
+    if (message == null) {
+      return false;
+    }
+
+    await ref.read(biometricLoginRepositoryProvider).clearLocalCredential();
+    if (ref.mounted) {
+      state = state
+          .statusSuccess(BiometricLoginStatus.disabled)
+          .actionFailure(message);
+    }
+    onError?.call(message);
+    return true;
   }
 
   Future<void> revoke({

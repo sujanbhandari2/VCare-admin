@@ -151,5 +151,154 @@
  "item1_description": "এটি বোর্ডিং শিরোনাম 1 এর বিবরণ",
  "item2_description": "এটি বোর্ডিং শিরোনাম 2 এর বিবরণ",
  "item3_description": "এটি অন বোর্ডিং শিরোনাম 3 এর বিবরণ",
- "item4_description": "এটি অন বোর্ডিং শিরোনাম 4 এর বিবরণ"
+ "item4_description": "এটি অন বোর্ডিং শিরোনাম 4 এর বিবরণ",
+ "delete": "মুছুন",
+ "my_tasks_title": "আমার কাজ",
+ "my_tasks_new_task": "নতুন কাজ",
+ "my_tasks_edit_task": "কাজ সম্পাদনা",
+ "my_tasks_view_task": "কাজ দেখুন",
+ "my_tasks_search_hint": "নাম দিয়ে খুঁজুন",
+ "my_tasks_overdue": "মেয়াদোত্তীর্ণ",
+ "my_tasks_snoozed": "স্থগিত",
+ "my_tasks_assigned_to_me": "আমাকে অর্পিত",
+ "my_tasks_all_owners": "সব মালিক",
+ "my_tasks_unassigned": "অনির্ধারিত",
+ "my_tasks_team_member": "দলের সদস্য",
+ "my_tasks_owner": "মালিক",
+ "my_tasks_unavailable_title": "কাজ উপলব্ধ নয়",
+ "my_tasks_unavailable_message": "আপনার প্রতিষ্ঠানের জন্য টাস্ক ম্যানেজমেন্ট চালু নেই, অথবা আপনার অ্যাক্সেস নেই।",
+ "my_tasks_unable_to_load": "কাজ লোড করা যায়নি",
+ "my_tasks_unable_to_load_task": "কাজ লোড করা যায়নি",
+ "my_tasks_loading": "কাজ লোড হচ্ছে…",
+ "my_tasks_showing_count": "{total} এর মধ্যে {count}টি দেখানো হচ্ছে",
+ "@my_tasks_showing_count": {
+  "placeholders": {
+   "count": {"type": "int"},
+   "total": {"type": "int"}
+  }
+ },
+ "my_tasks_overdue_count": "{count}টি মেয়াদোত্তীর্ণ",
+ "@my_tasks_overdue_count": {
+  "placeholders": {
+   "count": {"type": "int"}
+  }
+ },
+ "my_tasks_failed_complete": "কাজ সম্পূর্ণ করা যায়নি",
+ "my_tasks_completed": "কাজ সম্পন্ন",
+ "my_tasks_completed_desc": "কাজটি সম্পূর্ণ হিসেবে চিহ্নিত হয়েছে।",
+ "my_tasks_filters": "ফিল্টার",
+ "my_tasks_category": "বিভাগ",
+ "my_tasks_status": "অবস্থা",
+ "my_tasks_origin": "উৎস",
+ "my_tasks_priority": "অগ্রাধিকার",
+ "my_tasks_all": "সব",
+ "my_tasks_origin_custom": "কাস্টম",
+ "my_tasks_origin_system": "সিস্টেম",
+ "my_tasks_priority_high": "উচ্চ অগ্রাধিকার",
+ "my_tasks_priority_medium": "মাঝারি",
+ "my_tasks_priority_low": "নিম্ন",
+ "my_tasks_high": "উচ্চ",
+ "my_tasks_urgent": "জরুরি",
+ "my_tasks_clear": "মুছুন",
+ "my_tasks_apply": "প্রয়োগ",
+ "my_tasks_status_default_hint": "ওয়েব কিউয়ের সাথে মিল রাখতে অবস্থা ডিফল্টভাবে খোলা থাকে।",
+ "my_tasks_empty_clear": "আপনি খালি",
+ "my_tasks_empty_clear_desc": "এই কিউয়ে এখন কিছু নেই।",
+ "my_tasks_empty_no_matches": "কোনো মিল নেই",
+ "my_tasks_empty_no_matches_desc": "অন্য নাম চেষ্টা করুন বা ফিল্টার মুছুন।",
+ "my_tasks_snooze_title": "কাজ স্থগিত করুন",
+ "my_tasks_snooze_subtitle": "এই কাজটি কখন আবার দেখাবে তা বেছে নিন।",
+ "my_tasks_snooze": "স্থগিত",
+ "my_tasks_snooze_tomorrow": "আগামীকাল",
+ "my_tasks_snooze_three_days": "৩ দিনে",
+ "my_tasks_snooze_five_days": "৫ দিনে",
+ "my_tasks_snooze_next_week": "পরের সপ্তাহে",
+ "my_tasks_snooze_custom": "কাস্টম তারিখ",
+ "my_tasks_notes": "নোট",
+ "my_tasks_no_notes": "এখনো কোনো নোট নেই।",
+ "my_tasks_add_note_hint": "একটি নোট যোগ করুন…",
+ "my_tasks_edit_note_hint": "নোট সম্পাদনা…",
+ "my_tasks_cancel_edit": "সম্পাদনা বাতিল",
+ "my_tasks_failed_save_note": "নোট সংরক্ষণ করা যায়নি",
+ "my_tasks_failed_delete_note": "নোট মুছে ফেলা যায়নি",
+ "my_tasks_note_edited": "(সম্পাদিত)",
+ "my_tasks_review_subtitle": "কাজের বিবরণ ও অগ্রগতি পর্যালোচনা করুন।",
+ "my_tasks_description": "বিবরণ",
+ "my_tasks_no_description": "কোনো বিবরণ নেই",
+ "my_tasks_assignee": "অর্পিত ব্যক্তি",
+ "my_tasks_due": "নির্ধারিত",
+ "my_tasks_due_date": "নির্ধারিত তারিখ",
+ "my_tasks_snoozed_until": "স্থগিত থাকবে",
+ "my_tasks_client": "ক্লায়েন্ট",
+ "my_tasks_edit": "সম্পাদনা",
+ "my_tasks_close": "বন্ধ",
+ "my_tasks_resume": "পুনরায় শুরু",
+ "my_tasks_complete": "সম্পূর্ণ",
+ "my_tasks_task_status": "কাজের অবস্থা",
+ "my_tasks_task_priority": "কাজের অগ্রাধিকার",
+ "my_tasks_failed_update_status": "অবস্থা আপডেট করা যায়নি",
+ "my_tasks_status_updated": "অবস্থা আপডেট হয়েছে",
+ "my_tasks_failed_snooze": "কাজ স্থগিত করা যায়নি",
+ "my_tasks_task_snoozed": "কাজ স্থগিত হয়েছে",
+ "my_tasks_failed_resume": "কাজ পুনরায় শুরু করা যায়নি",
+ "my_tasks_task_resumed": "কাজ পুনরায় শুরু হয়েছে",
+ "my_tasks_delete_confirm_title": "কাজ মুছবেন?",
+ "my_tasks_delete_confirm_body": "এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+ "my_tasks_failed_delete": "কাজ মুছে ফেলা যায়নি",
+ "my_tasks_task_deleted": "কাজ মুছে ফেলা হয়েছে",
+ "my_tasks_select_team_member": "দলের সদস্য নির্বাচন করুন",
+ "my_tasks_title_required": "শিরোনাম প্রয়োজন",
+ "my_tasks_due_date_future": "নির্ধারিত তারিখ ভবিষ্যতে হতে হবে",
+ "my_tasks_failed_update": "কাজ আপডেট করা যায়নি",
+ "my_tasks_task_updated": "কাজ আপডেট হয়েছে",
+ "my_tasks_failed_create": "কাজ তৈরি করা যায়নি",
+ "my_tasks_task_created": "কাজ তৈরি হয়েছে",
+ "my_tasks_field_title": "শিরোনাম",
+ "my_tasks_none": "কোনোটি নয়",
+ "my_tasks_add_note_optional": "নোট যোগ করুন (ঐচ্ছিক)",
+ "my_tasks_initial_note_optional": "প্রাথমিক নোট (ঐচ্ছিক)",
+ "my_tasks_save_changes": "পরিবর্তন সংরক্ষণ",
+ "my_tasks_create_task": "কাজ তৈরি করুন",
+ "my_tasks_due_overdue": "{days}দিন অতিক্রান্ত",
+ "@my_tasks_due_overdue": {
+  "placeholders": {
+   "days": {"type": "int"}
+  }
+ },
+ "my_tasks_due_today": "আজ",
+ "my_tasks_due_tomorrow": "আগামীকাল",
+ "my_tasks_due_in_days": "{days}দিনে",
+ "@my_tasks_due_in_days": {
+  "placeholders": {
+   "days": {"type": "int"}
+  }
+ },
+ "my_tasks_assigned_to": "অ্যাসাইন করা",
+ "my_tasks_no_client": "কোনো ক্লায়েন্ট নেই",
+ "my_tasks_badge_overdue_days": "{days} দিন ওভারডিউ",
+ "@my_tasks_badge_overdue_days": {
+  "placeholders": {
+   "days": {"type": "int"}
+  }
+ },
+ "my_tasks_badge_overdue_one_day": "১ দিন ওভারডিউ",
+ "my_tasks_badge_high_priority": "উচ্চ অগ্রাধিকার",
+ "my_tasks_badge_due_today": "আজ বাকি",
+ "my_tasks_filter_by_assignee": "অ্যাসাইনি দিয়ে ফিল্টার",
+ "my_tasks_all_members": "সব সদস্য",
+ "my_tasks_assigned_to_name": "{name}-কে অ্যাসাইন",
+ "@my_tasks_assigned_to_name": {
+  "placeholders": {
+   "name": {"type": "String"}
+  }
+ },
+ "my_tasks_you_label": "{name} (আপনি)",
+ "@my_tasks_you_label": {
+  "placeholders": {
+   "name": {"type": "String"}
+  }
+ },
+ "my_tasks_search_team_members": "টিম সদস্য খুঁজুন…",
+ "my_tasks_no_team_members": "কোনো টিম সদস্য পাওয়া যায়নি।",
+ "my_tasks_clear_assignee_filter": "অ্যাসাইনি ফিল্টার মুছুন"
 }

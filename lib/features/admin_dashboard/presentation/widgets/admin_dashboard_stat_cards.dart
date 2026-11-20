@@ -52,7 +52,7 @@ class AdminDashboardStatCards extends ConsumerWidget {
                 emptyCaption: "You're all caught up",
                 icon: LucideIcons.clipboardList,
                 iconTone: AdminDashboardStatCardTone.primary,
-                onTap: () => context.pushNamed(AppRouter.adminTodoListName),
+                onTap: () => context.pushNamed(AppRouter.myTasksName),
                 onRetry: () => ref
                     .read(adminDashboardStateProvider.notifier)
                     .load(forceRefresh: true),

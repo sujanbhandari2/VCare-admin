@@ -7,6 +7,7 @@ import 'package:vcare_admin/core/config/flavor/flavor.dart';
 import 'package:vcare_admin/core/services/network/http_cache_utils.dart';
 import 'package:vcare_admin/core/services/storage/storage_keys.dart';
 import 'package:vcare_admin/core/services/storage/storage_service_provider.dart';
+import 'package:vcare_admin/features/auth/data/repositories/auth_secure_token_store.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
 import 'package:vcare_admin/shared/network/network_fetch_session_provider.dart';
@@ -31,6 +32,8 @@ class _TestConfiguration extends Configuration {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('clearHttpResponseCache', () {
     test('removes only GET-prefixed cache keys', () async {
       final storage = InMemoryStorageService();
@@ -73,6 +76,7 @@ void main() {
       await clearUserSessionStorage(
         storage: storage,
         apiBaseUrl: config.apiBaseUrl,
+        secureStore: InMemorySecureKvStore(),
       );
 
       for (final key in [
@@ -123,6 +127,7 @@ void main() {
         storage: storage,
         apiBaseUrl: const _TestConfiguration().apiBaseUrl,
         container: container,
+        secureStore: InMemorySecureKvStore(),
       );
 
       expect(storage.has(StorageKeys.loggedInUserToken), isFalse);

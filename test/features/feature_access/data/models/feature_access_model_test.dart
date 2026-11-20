@@ -12,12 +12,14 @@ void main() {
           'caseManagement': true,
           'healthChat': true,
           'membership': false,
+          'taskManagement': true,
         },
       });
 
       expect(model.caseManagement, isTrue);
       expect(model.healthChat, isTrue);
       expect(model.membership, isFalse);
+      expect(model.taskManagement, isTrue);
     });
 
     test('fails closed when features map is missing', () {
@@ -26,6 +28,7 @@ void main() {
       expect(model.caseManagement, isFalse);
       expect(model.healthChat, isFalse);
       expect(model.membership, isFalse);
+      expect(model.taskManagement, isFalse);
     });
 
     test('fails closed for null or non-boolean values', () {

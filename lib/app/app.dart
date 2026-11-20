@@ -78,7 +78,8 @@ class _MyAppState extends ConsumerState<MyApp> {
       // Rebuild the whole tree when the session router is swapped so no element
       // is carried over from the previous session.
       key: ValueKey(router),
-      title: Flavor.fromEnvironment.localizedAppName(context),
+      onGenerateTitle: (context) =>
+          Flavor.fromEnvironment.localizedAppName(context),
       scrollBehavior: VcareScrollBehavior(),
       debugShowCheckedModeBanner: false,
       // Light-only — matches web console (dark mode not wired).

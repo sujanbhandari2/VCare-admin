@@ -30,7 +30,7 @@ class BiometricCryptoService {
     MethodChannel? channel,
   }) : _channel = channel ?? const MethodChannel(_channelName);
 
-  static const String _channelName = 'com.vcare.admin/biometric_crypto';
+  static const String _channelName = 'com.vitafy.vcare.admin/biometric_crypto';
 
   final MethodChannel _channel;
 

@@ -49,7 +49,13 @@ import 'package:vcare_admin/features/find_care/presentation/providers/medicare_p
 import 'package:vcare_admin/features/find_care/presentation/providers/provider_favorites_provider.dart';
 import 'package:vcare_admin/features/home/presentation/providers/agent_stats_state_provider.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_session_provider.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/providers/my_task_detail_state_provider.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/providers/my_tasks_list_state_provider.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/providers/my_tasks_preview_state_provider.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
+import 'package:vcare_admin/features/admin_dashboard/presentation/providers/admin_dashboard_state_provider.dart';
+import 'package:vcare_admin/features/admin_dashboard/presentation/providers/admin_todo_list_state_provider.dart';
+import 'package:vcare_admin/features/task_detail/presentation/providers/task_detail_assignees_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/user_profile_state_provider.dart';
@@ -119,11 +125,15 @@ Future<void> deregisterFcmDeviceBestEffort({
 Future<void> clearUserSessionStorage({
   required StorageService storage,
   required String apiBaseUrl,
+  SecureKvStore? secureStore,
 }) async {
   // TODO: Re-enable when FCM device API is available.
   // await deregisterFcmDeviceBestEffort(storage: storage, apiBaseUrl: apiBaseUrl);
 
-  await AuthSecureTokenStore(storage: storage).clear();
+  await AuthSecureTokenStore(
+    storage: storage,
+    secureStore: secureStore,
+  ).clear();
 
   for (final key in _sessionStorageKeys) {
     if (key == StorageKeys.loggedInUserToken ||
@@ -181,6 +191,13 @@ void invalidateUserScopedProviders({
   invalidate(documentsListStateProvider);
   invalidate(documentTypesStateProvider);
   invalidate(todoListStateProvider);
+  invalidate(adminDashboardStateProvider);
+  invalidate(adminTodoListStateProvider);
+  invalidate(myTasksListStateProvider);
+  invalidate(myTasksPreviewStateProvider);
+  invalidate(myTaskDetailStateProvider);
+  invalidate(myTaskCreateStateProvider);
+  invalidate(taskDetailAssigneesStateProvider);
   invalidate(commissionHistoryStateProvider);
   invalidate(commissionSalesHistoryStateProvider);
   invalidate(commissionSummaryStateProvider);
@@ -205,10 +222,7 @@ Future<void> clearUserSession(
 
   unawaited(_tearDownMessengerBestEffort(ref));
   unawaited(
-    logoutSessionBestEffort(
-      storage: storage,
-      authRepository: authRepository,
-    ),
+    logoutSessionBestEffort(storage: storage, authRepository: authRepository),
   );
 
   await clearUserSessionStorage(storage: storage, apiBaseUrl: apiBaseUrl);
@@ -243,8 +257,13 @@ Future<void> clearUserSessionWithoutRef({
   required StorageService storage,
   required String apiBaseUrl,
   ProviderContainer? container,
+  SecureKvStore? secureStore,
 }) async {
-  await clearUserSessionStorage(storage: storage, apiBaseUrl: apiBaseUrl);
+  await clearUserSessionStorage(
+    storage: storage,
+    apiBaseUrl: apiBaseUrl,
+    secureStore: secureStore,
+  );
 
   if (container == null) return;
 

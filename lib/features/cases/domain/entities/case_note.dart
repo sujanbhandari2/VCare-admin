@@ -10,6 +10,7 @@ class CaseNote {
     this.authorInitials = '',
     this.status,
     this.accessType,
+    this.source,
     this.createdById,
     this.authorProfilePreviewLink,
     this.files = const [],
@@ -17,6 +18,8 @@ class CaseNote {
     this.externalInviteId,
     this.canEdit = false,
     this.canDelete = false,
+    this.isSystemGenerated = false,
+    this.isDeleted = false,
   });
 
   final String id;
@@ -26,6 +29,7 @@ class CaseNote {
   final String createdAt;
   final CaseStatus? status;
   final String? accessType;
+  final String? source;
   final String? createdById;
   final String? authorProfilePreviewLink;
   final List<CaseNoteFile> files;
@@ -33,6 +37,10 @@ class CaseNote {
   final String? externalInviteId;
   final bool canEdit;
   final bool canDelete;
+
+  /// True for status-change audit notes (web `isSystemGenerated`).
+  final bool isSystemGenerated;
+  final bool isDeleted;
 
   bool get isPublic {
     final value = accessType?.trim().toUpperCase();
@@ -47,6 +55,7 @@ class CaseNote {
     String? createdAt,
     CaseStatus? status,
     String? accessType,
+    String? source,
     String? createdById,
     String? authorProfilePreviewLink,
     List<CaseNoteFile>? files,
@@ -54,6 +63,8 @@ class CaseNote {
     String? externalInviteId,
     bool? canEdit,
     bool? canDelete,
+    bool? isSystemGenerated,
+    bool? isDeleted,
   }) {
     return CaseNote(
       id: id ?? this.id,
@@ -63,6 +74,7 @@ class CaseNote {
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       accessType: accessType ?? this.accessType,
+      source: source ?? this.source,
       createdById: createdById ?? this.createdById,
       authorProfilePreviewLink:
           authorProfilePreviewLink ?? this.authorProfilePreviewLink,
@@ -71,6 +83,8 @@ class CaseNote {
       externalInviteId: externalInviteId ?? this.externalInviteId,
       canEdit: canEdit ?? this.canEdit,
       canDelete: canDelete ?? this.canDelete,
+      isSystemGenerated: isSystemGenerated ?? this.isSystemGenerated,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }

@@ -11,9 +11,12 @@ import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_
 import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_dashboard_stat_cards.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_dashboard_todo_card.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
+import 'package:vcare_admin/features/feature_access/presentation/providers/feature_access_state_provider.dart';
 import 'package:vcare_admin/features/home/data/home_models.dart';
 import 'package:vcare_admin/features/home/data/home_profile_mapper.dart';
 import 'package:vcare_admin/features/home/presentation/widgets/home_page_header.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/providers/my_tasks_preview_state_provider.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/widgets/my_tasks_preview_card.dart';
 import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
@@ -50,6 +53,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         await Future.wait([
           ref.read(authMeStateProvider.notifier).fetchMe(),
           ref.read(adminDashboardStateProvider.notifier).load(),
+          if (ref.read(featureAccessStateProvider).taskManagementEnabled ||
+              ref.read(featureAccessStateProvider).fetching)
+            ref.read(myTasksPreviewStateProvider.notifier).load(),
         ]);
       }
 
@@ -66,6 +72,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     await Future.wait([
       ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
       ref.read(adminDashboardStateProvider.notifier).load(forceRefresh: true),
+      if (ref.read(featureAccessStateProvider).taskManagementEnabled)
+        ref.read(myTasksPreviewStateProvider.notifier).refresh(),
     ]);
   }
 
@@ -75,6 +83,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final inboxState = ref.watch(notificationInboxStateProvider);
     final dashboardState = ref.watch(adminDashboardStateProvider);
     final isOnline = ref.watch(isNetworkOnlineProvider);
+    final featureAccess = ref.watch(featureAccessStateProvider);
+    final menu = ref.watch(adminAuthSessionProvider).menu;
+    final showMyTasks =
+        featureAccess.taskManagementEnabled &&
+        (menu.isEmpty || menu.contains('tasks'));
 
     final headerProfile = homeProfileFromLocal(
       ref.watch(localProfileStateProvider),
@@ -184,6 +197,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             );
                           },
                         ),
+                        if (showMyTasks) ...[
+                          const SizedBox(height: _sectionGap),
+                          const MyTasksPreviewCard(),
+                        ],
                         const SizedBox(height: 16),
                       ]),
                     ),

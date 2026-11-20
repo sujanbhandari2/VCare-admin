@@ -10,6 +10,8 @@ import 'package:vcare_admin/features/auth/presentation/providers/admin_login_sta
 import 'package:vcare_admin/features/auth/presentation/state/admin_login_state.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_login_form.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/admin_tenant_picker.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_account_locked_message.dart';
+import 'package:vcare_admin/features/auth/presentation/widgets/login_inline_error_banner.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_shared_widgets.dart';
 import 'package:vcare_admin/features/auth/presentation/widgets/login_two_factor_step.dart';
 import 'package:vcare_admin/features/biometric_login/presentation/providers/biometric_login_state_provider.dart';
@@ -237,11 +239,55 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
         );
   }
 
+  Widget _buildCredentialsBody(
+    AdminLoginState loginState,
+    bool biometricAvailable,
+    bool biometricLoading,
+  ) {
+    final lockedSupportEmail = loginState.accountLockedSupportEmail;
+    final errorMessage = loginState.errorMessage?.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (lockedSupportEmail != null) ...[
+          LoginAccountLockedMessage(supportEmail: lockedSupportEmail),
+          const SizedBox(height: 16),
+        ] else if (errorMessage != null && errorMessage.isNotEmpty) ...[
+          LoginInlineErrorBanner(message: errorMessage),
+          const SizedBox(height: 16),
+        ],
+        AdminLoginForm(
+          isSubmitting: loginState.isSubmitting,
+          disabled: loginState.isAccountPasswordLocked,
+          biometricAvailable: biometricAvailable,
+          biometricLoading: biometricLoading,
+          onBiometricPressed: biometricAvailable ? _loginWithBiometric : null,
+          onSubmit: (email, password) {
+            ref.read(adminLoginStateProvider.notifier).submitCredentials(
+                  email: email,
+                  password: password,
+                  onAuthenticated: (_) async {
+                    _handleAuthenticated();
+                  },
+                  onError: (_) {},
+                );
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<AdminLoginState>(adminLoginStateProvider, (previous, next) {
       final error = next.errorMessage;
-      if (error != null && error != previous?.errorMessage) {
+      // Credentials-step password errors render inline; toast only for other phases.
+      final shouldToastError = error != null &&
+          error != previous?.errorMessage &&
+          next.phase != AdminLoginPhase.credentials &&
+          !next.isAccountPasswordLocked;
+      if (shouldToastError) {
         _showLoginError(error);
       }
       if (next.phase == AdminLoginPhase.twoFactor &&
@@ -273,22 +319,10 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
         body: LoginShell(
           onBack: showBack ? _backToCredentials : null,
           body: switch (loginState.phase) {
-            AdminLoginPhase.credentials => AdminLoginForm(
-                isSubmitting: loginState.isSubmitting,
-                biometricAvailable: biometricState.isActive,
-                biometricLoading: biometricState.loading,
-                onBiometricPressed:
-                    biometricState.isActive ? _loginWithBiometric : null,
-                onSubmit: (email, password) {
-                  ref.read(adminLoginStateProvider.notifier).submitCredentials(
-                        email: email,
-                        password: password,
-                        onAuthenticated: (_) async {
-                          _handleAuthenticated();
-                        },
-                        onError: (_) {},
-                      );
-                },
+            AdminLoginPhase.credentials => _buildCredentialsBody(
+                loginState,
+                biometricState.isActive,
+                biometricState.loading,
               ),
             AdminLoginPhase.tenantSelection => AdminTenantPicker(
                 tenants: loginState.tenantOptions,

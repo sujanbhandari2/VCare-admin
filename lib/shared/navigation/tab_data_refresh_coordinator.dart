@@ -5,12 +5,9 @@ import 'package:vcare_admin/features/auth/presentation/providers/user_logged_in_
 // import 'package:vcare_admin/features/ava/presentation/providers/ava_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/cases_list_state_provider.dart';
 import 'package:vcare_admin/features/clients/presentation/providers/clients_list_state_provider.dart';
-// Sales tab refresh — restore with NavItem.sales.
-// import 'package:vcare_admin/features/commission/presentation/providers/commission_history_state_provider.dart';
-// import 'package:vcare_admin/features/commission/presentation/providers/commission_sales_history_state_provider.dart';
-// import 'package:vcare_admin/features/commission/presentation/providers/commission_summary_state_provider.dart';
+import 'package:vcare_admin/features/feature_access/presentation/providers/feature_access_state_provider.dart';
 import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
-// import 'package:vcare_admin/features/notifications/presentation/providers/notification_inbox_state_provider.dart';
+import 'package:vcare_admin/features/my_tasks/presentation/providers/my_tasks_preview_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/auth_me_state_provider.dart';
 
 /// Refreshes tab-scoped data whenever a bottom-nav tab is selected.
@@ -46,9 +43,9 @@ Future<void> refreshTabData(WidgetRef ref, NavItem tab) async {
 
       await Future.wait([
         ref.read(authMeStateProvider.notifier).fetchMe(forceRefresh: true),
-        ref
-            .read(adminDashboardStateProvider.notifier)
-            .load(forceRefresh: true),
+        ref.read(adminDashboardStateProvider.notifier).load(forceRefresh: true),
+        if (ref.read(featureAccessStateProvider).taskManagementEnabled)
+          ref.read(myTasksPreviewStateProvider.notifier).refresh(),
         // TODO: Re-enable when notifications API is available.
         // ref.read(notificationInboxStateProvider.notifier).refresh(),
       ]);

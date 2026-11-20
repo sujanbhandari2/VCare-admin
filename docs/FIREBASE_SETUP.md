@@ -6,10 +6,10 @@ This project uses per-flavor Firebase configuration files. Android and iOS must 
 
 | Flavor | Android application ID | iOS bundle ID |
 |--------|------------------------|---------------|
-| dev | `com.vcare.admin.dev` | `com.vcare.admin.dev` |
-| qa | `com.vcare.admin.qa` | `com.vcare.admin.qa` |
-| uat | `com.vcare.admin.uat` | `com.vcare.admin.uat` |
-| prod | `com.vcare.admin` | `com.vcare.admin` |
+| dev | `com.vitafy.vcare.admin.dev` | `com.vitafy.vcare.admin.dev` |
+| qa | `com.vitafy.vcare.admin.qa` | `com.vitafy.vcare.admin.qa` |
+| uat | `com.vitafy.vcare.admin.uat` | `com.vitafy.vcare.admin.uat` |
+| prod | `com.vitafy.vcare.admin` | `com.vitafy.vcare.admin` |
 
 ## File locations
 
@@ -57,5 +57,5 @@ The Firebase setup script selects the Android client entry whose `package_name` 
 ## Notes
 
 - Never commit secrets from production `.env` files.
-- iOS `GOOGLE_APP_ID` values must come from Firebase Console for the registered iOS apps under `com.vcare.admin.*`.
+- iOS `GOOGLE_APP_ID` values must come from Firebase Console for the registered iOS apps under `com.vitafy.vcare.admin.*`.
 - Until iOS apps are registered in Firebase Console, push notifications and other Firebase iOS services may not work even after bundle ID alignment.

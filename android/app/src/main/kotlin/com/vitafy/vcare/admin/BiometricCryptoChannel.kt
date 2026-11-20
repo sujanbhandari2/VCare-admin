@@ -1,4 +1,4 @@
-package com.vcare.admin
+package com.vitafy.vcare.admin
 
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
@@ -35,7 +35,7 @@ class BiometricCryptoChannel(
     private val activity: FragmentActivity,
 ) : MethodChannel.MethodCallHandler {
     companion object {
-        const val CHANNEL = "com.vcare.admin/biometric_crypto"
+        const val CHANNEL = "com.vitafy.vcare.admin/biometric_crypto"
         const val REENROLLMENT_REQUIRED = "reenrollment_required"
         private const val TAG = "BiometricCrypto"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"

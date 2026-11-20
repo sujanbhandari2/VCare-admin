@@ -67,10 +67,10 @@ STORAGE_BUCKET=$(jq -r '.project_info.storage_bucket' "$GOOGLE_SERVICES_SOURCE")
 
 # Map flavor to expected Android package name
 case "$FLAVOR" in
-    dev)  EXPECTED_PACKAGE="com.vcare.admin.dev" ;;
-    qa)   EXPECTED_PACKAGE="com.vcare.admin.qa" ;;
-    uat)  EXPECTED_PACKAGE="com.vcare.admin.uat" ;;
-    prod) EXPECTED_PACKAGE="com.vcare.admin" ;;
+    dev)  EXPECTED_PACKAGE="com.vitafy.vcare.admin.dev" ;;
+    qa)   EXPECTED_PACKAGE="com.vitafy.vcare.admin.qa" ;;
+    uat)  EXPECTED_PACKAGE="com.vitafy.vcare.admin.uat" ;;
+    prod) EXPECTED_PACKAGE="com.vitafy.vcare.admin" ;;
     *)    EXPECTED_PACKAGE="" ;;
 esac
 

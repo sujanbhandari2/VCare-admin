@@ -11,7 +11,7 @@ import Flutter
 /// 1. authenticateForSigning — LAContext.evaluatePolicy
 /// 2. completeSign — SecKeyCreateSignature using the authenticated context
 enum BiometricCryptoChannel {
-  static let name = "com.vcare.admin/biometric_crypto"
+  static let name = "com.vitafy.vcare.admin/biometric_crypto"
 
   private static var pendingContext: LAContext?
   private static var pendingKeyAlias: String?
@@ -184,7 +184,7 @@ enum BiometricCryptoChannel {
   }
 
   private static func tagData(for keyAlias: String) -> Data {
-    Data("com.vcare.admin.biometric.\(keyAlias)".utf8)
+    Data("com.vitafy.vcare.admin.biometric.\(keyAlias)".utf8)
   }
 
   private static func generateKeyPair(keyAlias: String) throws -> [String: String] {

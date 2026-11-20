@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:775303366461:android:af5c032d02fbda4eb06754",
         "android_client_info": {
-          "package_name": "com.vcare.admin"
+          "package_name": "com.vitafy.vcare.admin"
         }
       },
       "oauth_client": [],
@@ -28,7 +28,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:775303366461:android:42be103d65ad571cb06754",
         "android_client_info": {
-          "package_name": "com.vcare.admin.dev"
+          "package_name": "com.vitafy.vcare.admin.dev"
         }
       },
       "oauth_client": [],

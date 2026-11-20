@@ -24,6 +24,7 @@ Widget _wrap(
     caseManagement: true,
     healthChat: true,
     membership: true,
+    taskManagement: true,
   ),
 }) {
   return ProviderScope(
@@ -99,6 +100,7 @@ void main() {
             caseManagement: true,
             healthChat: true,
             membership: false,
+            taskManagement: true,
           ),
         ),
       );

@@ -125,10 +125,10 @@ All four flavors can be installed side-by-side on one device because each flavor
 
 | Flavor | Android app ID | iOS bundle ID | CLI run |
 |--------|----------------|---------------|---------|
-| dev | `com.vcare.admin.dev` | `com.vcare.admin.dev` | `make run-dev` |
-| qa | `com.vcare.admin.qa` | `com.vcare.admin.qa` | `make run-qa` |
-| uat | `com.vcare.admin.uat` | `com.vcare.admin.uat` | `make run-uat` |
-| prod | `com.vcare.admin` | `com.vcare.admin` | `make run-prod` |
+| dev | `com.vitafy.vcare.admin.dev` | `com.vitafy.vcare.admin.dev` | `make run-dev` |
+| qa | `com.vitafy.vcare.admin.qa` | `com.vitafy.vcare.admin.qa` | `make run-qa` |
+| uat | `com.vitafy.vcare.admin.uat` | `com.vitafy.vcare.admin.uat` | `make run-uat` |
+| prod | `com.vitafy.vcare.admin` | `com.vitafy.vcare.admin` | `make run-prod` |
 
 See [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) for Firebase file setup per flavor.
 

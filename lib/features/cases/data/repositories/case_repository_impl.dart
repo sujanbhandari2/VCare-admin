@@ -11,6 +11,7 @@ import 'package:vcare_admin/features/cases/data/models/case_assignee_model.dart'
 import 'package:vcare_admin/features/cases/data/models/referral_case_model.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_assignee.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
+import 'package:vcare_admin/features/cases/domain/entities/case_note_summarize.dart';
 import 'package:vcare_admin/features/cases/domain/entities/cases_list_request.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/features/cases/domain/repositories/case_repository.dart';
@@ -250,6 +251,40 @@ class CaseRepositoryImpl implements CaseRepository {
       return parsed.items
           .where((assignee) => assignee.id.trim().isNotEmpty)
           .toList(growable: false);
+    });
+  }
+
+  @override
+  Future<EitherResponseOrException<String>> summarizeCaseNotes(
+    String caseId,
+    CaseNoteSummarizeRequest request, {
+    CancelToken? cancelToken,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.post(
+        ApiEndpoints.referralCaseSummarize(caseId),
+        JsonRequestBody(request.toJson()),
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+      );
+
+      return ResponseValidator.parse(
+        response,
+        (data) {
+          if (data is Map) {
+            final summary = data['summary']?.toString().trim() ?? '';
+            return summary;
+          }
+          return data?.toString().trim() ?? '';
+        },
+        dataValidator: (data) {
+          if (data is Map) {
+            final summary = data['summary'];
+            return summary is String && summary.trim().isNotEmpty;
+          }
+          return false;
+        },
+      );
     });
   }
 }
