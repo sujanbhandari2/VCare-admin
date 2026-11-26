@@ -8,7 +8,9 @@ import 'package:vcare_admin/features/main_wrapper/domain/enums/nav_item.dart';
 abstract final class VCareMobileShellInsets {
   static const navOuterHorizontal = 8.0; // px-2
   static const navOuterBottom = 8.0; // pb-2
-  static const navOuterTop = 24.0; // pt-6 — room for raised Home above the pill
+  /// Layout slot for raised Home (`-mt-7`); painted FAB can extend above this.
+  static const navOuterTop =
+      VCareLayout.bottomNavHomeFabSize - VCareLayout.bottomNavHomeFabLift;
   static const pillPaddingV = 6.0; // pt/pb-1.5
   static const tabVerticalPadding = 4.0; // py-1
   static const tabIconLabelGap = 2.0; // gap-0.5
@@ -62,6 +64,21 @@ double vcareMobileBottomNavBarTop(BuildContext context) {
   return MediaQuery.paddingOf(context).bottom +
       VCareMobileShellInsets.navOuterBottom +
       VCareMobileShellInsets.pillHeight;
+}
+
+/// Bottom padding for pinned composers when the shell inset is off (case detail,
+/// chat threads). Clears the nav pill, a [pinnedComposerGapAboveNavPill] gap,
+/// safe area, and the Home FAB outer ring.
+double vcarePinnedComposerAboveMobileNavPadding(BuildContext context) {
+  if (MediaQuery.sizeOf(context).width >= VCareLayout.mobileBreakpoint) {
+    return MediaQuery.viewPaddingOf(context).bottom +
+        VCareLayout.pinnedComposerGapAboveNavPill;
+  }
+  return MediaQuery.viewPaddingOf(context).bottom +
+      VCareMobileShellInsets.navOuterBottom +
+      VCareMobileShellInsets.pillHeight +
+      VCareLayout.bottomNavHomeFabRing +
+      VCareLayout.pinnedComposerGapAboveNavPill;
 }
 
 /// Bottom padding so scrollable content clears the floating mobile bottom nav.

@@ -151,8 +151,25 @@ abstract final class VCareLayout {
   static const sheetTopRadius = VCareRadius.xxl;
   static const bottomNavMaxWidth = 480.0;
   static const bottomNavHomeFabSize = 52.0;
+  /// Matches `-mt-7` on web [MobileShell] Home (`vcare_bottom_navigation`).
+  static const bottomNavHomeFabLift = 28.0;
+  /// `ring-4` drawn outside the FAB circle.
+  static const bottomNavHomeFabRing = 4.0;
+  static const bottomNavHomeFabActiveScale = 1.05;
+  /// Soft shadow under Home reads as overlap if clearance is too tight.
+  static const bottomNavHomeFabShadowSlack = 8.0;
+
+  /// Pixels the painted Home FAB can extend above [VCareMobileShellInsets.barBodyHeight].
+  static double get bottomNavHomeFabPaintedOverflowAboveBarBody =>
+      bottomNavHomeFabRing * bottomNavHomeFabActiveScale +
+      bottomNavHomeFabSize * (bottomNavHomeFabActiveScale - 1) / 2 +
+      bottomNavHomeFabShadowSlack;
+
   static const bottomNavPillRadius = 26.0;
   static const mobileBottomNavContentGap = 4.0;
+
+  /// Visible gap between a pinned composer and the top of the nav pill.
+  static const pinnedComposerGapAboveNavPill = 10.0;
 
   /// Scroll/content bottom clearance above the floating nav on Android phones.
   static const mobileBottomNavContentPaddingAndroid = 90.0;

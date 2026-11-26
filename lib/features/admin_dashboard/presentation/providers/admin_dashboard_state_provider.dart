@@ -33,6 +33,7 @@ class AdminDashboardStateNotifier extends _$AdminDashboardStateNotifier {
     final repository = ref.read(adminDashboardRepositoryProvider);
 
     await Future.wait([
+      _loadFailedPaymentTotal(repository, forceRefresh, cancelToken),
       _loadFailedPayments(repository, forceRefresh, cancelToken),
       _loadTodoTasks(repository, forceRefresh, cancelToken),
       _loadOpenTasks(repository, userId, forceRefresh, cancelToken),
@@ -40,6 +41,37 @@ class AdminDashboardStateNotifier extends _$AdminDashboardStateNotifier {
       _loadPendingMemberships(repository, forceRefresh, cancelToken),
       _loadPendingDocuments(repository, forceRefresh, cancelToken),
     ]);
+  }
+
+  Future<void> _loadFailedPaymentTotal(
+    AdminDashboardRepository repository,
+    bool forceRefresh,
+    CancelToken? cancelToken,
+  ) async {
+    final response = await repository.fetchFailedPaymentTotal(
+      forceRefresh: forceRefresh,
+      cancelToken: cancelToken,
+    );
+
+    response.when(
+      failure: (error) {
+        if (ref.mounted) {
+          state = state.copyWith(
+            failedPaymentTotalOperation: OperationState.failure(
+              error.userMessage,
+              data: state.failedPaymentTotalOperation.data,
+            ),
+          );
+        }
+      },
+      success: (total) {
+        if (ref.mounted) {
+          state = state.copyWith(
+            failedPaymentTotalOperation: OperationState.success(total),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _loadFailedPayments(
@@ -111,6 +143,23 @@ class AdminDashboardStateNotifier extends _$AdminDashboardStateNotifier {
           );
         }
       },
+    );
+  }
+
+  /// Reloads only the failed payment total shown on the first stat card.
+  Future<void> refreshFailedPaymentTotal() async {
+    if (ref.mounted) {
+      state = state.copyWith(
+        failedPaymentTotalOperation: OperationState.loading(
+          data: state.failedPaymentTotalOperation.data,
+        ),
+      );
+    }
+
+    await _loadFailedPaymentTotal(
+      ref.read(adminDashboardRepositoryProvider),
+      true,
+      null,
     );
   }
 

@@ -7,6 +7,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:vcare_admin/core/styles/vcare_colors.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/messages/presentation/providers/health_messenger_chat_state.dart';
+import 'package:vcare_admin/features/messages/utils/messenger_image_attachment_prepare.dart';
+import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 
@@ -26,12 +28,8 @@ class VcareMessengerThreadComposer extends StatefulWidget {
   final MessengerComposerEditDraft? editDraft;
   final VoidCallback? onCancelEditDraft;
 
-  /// Extra space above the nav pill so the input is not covered by the bar.
-  static const double _aboveNavGap = 45;
-
-  /// Mirrors [vcare_bottom_navigation] floating pill metrics.
-  static const double _navOuterBottom = 8;
-  static const double _pillHeight = 78;
+  /// Extra space above the nav pill when the shell already applied bottom inset.
+  static const double _aboveNavGap = 8;
 
   /// Matches package [MessengerComposerBar] typing throttle.
   static const Duration _typingStartMinInterval = Duration(seconds: 2);
@@ -57,15 +55,7 @@ class VcareMessengerThreadComposer extends StatefulWidget {
     if (VCareMobileShellScope.appliesBottomInsetOf(context)) {
       return _aboveNavGap;
     }
-    // Mobile tab shell still showing the floating nav (thread open; shell
-    // inset cleared by [liveChatMobileThreadVisibleProvider]).
-    if (MediaQuery.sizeOf(context).width < 768) {
-      return MediaQuery.viewPaddingOf(context).bottom +
-          _navOuterBottom +
-          _pillHeight +
-          _aboveNavGap;
-    }
-    return MediaQuery.viewPaddingOf(context).bottom + _aboveNavGap;
+    return vcarePinnedComposerAboveMobileNavPadding(context);
   }
 
   @override
@@ -590,6 +580,8 @@ class _PendingAttachmentsRow extends StatelessWidget {
 
   final MessengerComposerData data;
 
+  static const double _thumbnailSize = 60;
+
   bool _isImage(MessengerPickedMedia media) {
     return media.messageType == MessageType.image;
   }
@@ -603,7 +595,7 @@ class _PendingAttachmentsRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (overLimit)
             Padding(
@@ -617,122 +609,246 @@ class _PendingAttachmentsRow extends StatelessWidget {
                 ),
               ),
             ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 128),
-            child: SingleChildScrollView(
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (var i = 0; i < pending.length; i++)
-                    _PendingChip(
-                      media: pending[i],
-                      isImage: _isImage(pending[i]),
-                      mutedColor: vcare.muted,
-                      borderColor: vcare.border,
-                      mutedForeground: vcare.mutedForeground,
-                      enabled: !data.isSending,
-                      onRemove: data.onRemovePendingAttachment == null
-                          ? null
-                          : () => data.onRemovePendingAttachment!(i),
-                    ),
-                ],
-              ),
+          SizedBox(
+            height: _thumbnailSize + 8,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(top: 4, right: 4),
+              itemCount: pending.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final media = pending[i];
+                final isImage = _isImage(media);
+                return _PendingAttachmentThumbnail(
+                  media: media,
+                  isImage: isImage,
+                  size: _thumbnailSize,
+                  mutedColor: vcare.muted,
+                  borderColor: vcare.border,
+                  mutedForeground: vcare.mutedForeground,
+                  enabled: !data.isSending,
+                  onRemove: !isImage && data.onRemovePendingAttachment != null
+                      ? () => data.onRemovePendingAttachment!(i)
+                      : null,
+                  onImageActions: isImage
+                      ? () => _showPendingImageActions(
+                            context,
+                            data: data,
+                            index: i,
+                          )
+                      : null,
+                );
+              },
             ),
           ),
-          if (data.onClearAllPendingAttachments != null)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed:
-                    data.isSending ? null : data.onClearAllPendingAttachments,
-                child: const Text('Clear all'),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPendingImageActions(
+    BuildContext context, {
+    required MessengerComposerData data,
+    required int index,
+  }) async {
+    if (data.isSending) {
+      return;
+    }
+    final vcare = context.vcare;
+    await context.showBottomSheet<void>(
+      topRadius: 18,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(LucideIcons.crop, color: vcare.mutedForeground),
+              title: const Text('Crop'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                unawaited(
+                  _cropPendingImageAt(context, data: data, index: index),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                LucideIcons.trash2,
+                color: VCareColors.destructive,
+              ),
+              title: Text(
+                'Delete',
+                style: TextStyle(color: VCareColors.destructive),
+              ),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                data.onRemovePendingAttachment?.call(index);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _cropPendingImageAt(
+    BuildContext context, {
+    required MessengerComposerData data,
+    required int index,
+  }) async {
+    if (data.isSending ||
+        index < 0 ||
+        index >= data.pendingAttachments.length) {
+      return;
+    }
+    final media = data.pendingAttachments[index];
+    final cropped = await cropMessengerPickedImage(context, media: media);
+    if (!context.mounted || cropped == null) {
+      return;
+    }
+    data.onReplacePendingAttachment?.call(index, cropped);
+  }
+}
+
+class _PendingAttachmentThumbnail extends StatelessWidget {
+  const _PendingAttachmentThumbnail({
+    required this.media,
+    required this.isImage,
+    required this.size,
+    required this.mutedColor,
+    required this.borderColor,
+    required this.mutedForeground,
+    required this.enabled,
+    this.onRemove,
+    this.onImageActions,
+  });
+
+  final MessengerPickedMedia media;
+  final bool isImage;
+  final double size;
+  final Color mutedColor;
+  final Color borderColor;
+  final Color mutedForeground;
+  final bool enabled;
+  final VoidCallback? onRemove;
+  final VoidCallback? onImageActions;
+
+  @override
+  Widget build(BuildContext context) {
+    final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
+    final preview = ClipRRect(
+      borderRadius: BorderRadius.circular(7),
+      child: _buildPreview(),
+    );
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: mutedColor.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: borderColor),
+            ),
+            child: isImage && onImageActions != null
+                ? Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: enabled ? onImageActions : null,
+                      borderRadius: BorderRadius.circular(7),
+                      child: preview,
+                    ),
+                  )
+                : preview,
+          ),
+          if (onImageActions != null)
+            Positioned(
+              top: -5,
+              right: -5,
+              child: GestureDetector(
+                onTap: enabled ? onImageActions : null,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: scaffoldBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: borderColor, width: 0.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    LucideIcons.pencil,
+                    size: 11,
+                    color: mutedForeground,
+                  ),
+                ),
+              ),
+            ),
+          if (onRemove != null)
+            Positioned(
+              top: -5,
+              right: -5,
+              child: GestureDetector(
+                onTap: enabled ? onRemove : null,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: scaffoldBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: borderColor, width: 0.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    LucideIcons.x,
+                    size: 12,
+                    color: mutedForeground,
+                  ),
+                ),
               ),
             ),
         ],
       ),
     );
   }
-}
 
-class _PendingChip extends StatelessWidget {
-  const _PendingChip({
-    required this.media,
-    required this.isImage,
-    required this.mutedColor,
-    required this.borderColor,
-    required this.mutedForeground,
-    required this.enabled,
-    this.onRemove,
-  });
+  Widget _buildPreview() {
+    if (isImage && media.file.existsSync()) {
+      return Image.file(
+        File(media.file.path),
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _attachmentIcon(),
+      );
+    }
+    return _attachmentIcon();
+  }
 
-  final MessengerPickedMedia media;
-  final bool isImage;
-  final Color mutedColor;
-  final Color borderColor;
-  final Color mutedForeground;
-  final bool enabled;
-  final VoidCallback? onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = media.displayName.trim().isEmpty
-        ? 'Attachment'
-        : media.displayName.trim();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: mutedColor.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isImage && media.file.existsSync())
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.file(
-                File(media.file.path),
-                width: 20,
-                height: 20,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Icon(
-                  LucideIcons.paperclip,
-                  size: 12,
-                  color: mutedForeground,
-                ),
-              ),
-            )
-          else
-            Icon(
-              media.fromRecorder ? LucideIcons.mic : LucideIcons.paperclip,
-              size: 12,
-              color: mutedForeground,
-            ),
-          const SizedBox(width: 6),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 120),
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-          if (onRemove != null) ...[
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: enabled ? onRemove : null,
-              child: Icon(
-                LucideIcons.x,
-                size: 12,
-                color: mutedForeground,
-              ),
-            ),
-          ],
-        ],
+  Widget _attachmentIcon() {
+    return Center(
+      child: Icon(
+        media.fromRecorder ? LucideIcons.mic : LucideIcons.paperclip,
+        size: 22,
+        color: mutedForeground,
       ),
     );
   }

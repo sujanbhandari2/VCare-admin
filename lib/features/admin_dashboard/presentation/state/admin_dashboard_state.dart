@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_failed_payment_total.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_item.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_metrics.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_page.dart';
@@ -7,6 +8,8 @@ import 'package:vcare_admin/shared/state/operation_state.dart';
 
 class AdminDashboardState {
   const AdminDashboardState({
+    this.failedPaymentTotalOperation =
+        const OperationState<AdminDashboardFailedPaymentTotal>.idle(),
     this.failedPaymentsOperation =
         const OperationState<AdminDashboardTodoPage>.idle(),
     this.todoTasksOperation =
@@ -17,6 +20,8 @@ class AdminDashboardState {
     this.pendingDocumentsOperation = const OperationState<int>.idle(),
   });
 
+  final OperationState<AdminDashboardFailedPaymentTotal>
+      failedPaymentTotalOperation;
   final OperationState<AdminDashboardTodoPage> failedPaymentsOperation;
   final OperationState<AdminDashboardTodoPage> todoTasksOperation;
   final OperationState<int> openTasksOperation;
@@ -25,6 +30,7 @@ class AdminDashboardState {
   final OperationState<int> pendingDocumentsOperation;
 
   bool get isAnyLoading =>
+      failedPaymentTotalOperation.isLoading ||
       failedPaymentsOperation.isLoading ||
       todoTasksOperation.isLoading ||
       openTasksOperation.isLoading ||
@@ -36,8 +42,7 @@ class AdminDashboardState {
   bool get isInitialLoadFailure {
     if (isAnyLoading) return false;
 
-    final paymentsFailed =
-        failedPaymentsOperation.hasError && failedPaymentRows.isEmpty;
+    final paymentsFailed = failedPaymentTotalOperation.hasError;
     final todosFailed = todoTasksOperation.hasError && todoRows.isEmpty;
     final openTasksFailed = openTasksOperation.hasError;
     final openCasesFailed = openCasesOperation.hasError;
@@ -51,6 +56,7 @@ class AdminDashboardState {
   }
 
   String? get initialLoadErrorMessage =>
+      failedPaymentTotalOperation.errorMessage ??
       failedPaymentsOperation.errorMessage ??
       todoTasksOperation.errorMessage ??
       openTasksOperation.errorMessage ??
@@ -83,6 +89,9 @@ class AdminDashboardState {
   int get overdueCount => todoMetrics.overdue;
 
   int get failedPaymentsCount => failedPaymentMetrics.failedPayments;
+
+  double get failedPaymentTotalAmount =>
+      failedPaymentTotalOperation.data?.totalAmount ?? 0;
 
   double get atRiskAmount {
     return failedPaymentRows.fold(0, (sum, item) {
@@ -130,6 +139,7 @@ class AdminDashboardState {
   int get pendingDocumentsCount => pendingDocumentsOperation.data ?? 0;
 
   AdminDashboardState copyWith({
+    OperationState<AdminDashboardFailedPaymentTotal>? failedPaymentTotalOperation,
     OperationState<AdminDashboardTodoPage>? failedPaymentsOperation,
     OperationState<AdminDashboardTodoPage>? todoTasksOperation,
     OperationState<int>? openTasksOperation,
@@ -138,6 +148,8 @@ class AdminDashboardState {
     OperationState<int>? pendingDocumentsOperation,
   }) {
     return AdminDashboardState(
+      failedPaymentTotalOperation:
+          failedPaymentTotalOperation ?? this.failedPaymentTotalOperation,
       failedPaymentsOperation:
           failedPaymentsOperation ?? this.failedPaymentsOperation,
       todoTasksOperation: todoTasksOperation ?? this.todoTasksOperation,
@@ -152,6 +164,9 @@ class AdminDashboardState {
 
   AdminDashboardState loading() {
     return AdminDashboardState(
+      failedPaymentTotalOperation: OperationState.loading(
+        data: failedPaymentTotalOperation.data,
+      ),
       failedPaymentsOperation: OperationState.loading(
         data: failedPaymentsOperation.data,
       ),

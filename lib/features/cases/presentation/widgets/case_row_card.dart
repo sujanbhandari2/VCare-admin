@@ -14,11 +14,13 @@ class CaseRowCard extends StatelessWidget {
     required this.referralCase,
     this.onTap,
     this.onToggleBookmark,
+    this.bookmarking = false,
   });
 
   final ReferralCase referralCase;
   final VoidCallback? onTap;
   final VoidCallback? onToggleBookmark;
+  final bool bookmarking;
 
   @override
   Widget build(BuildContext context) {
@@ -86,25 +88,36 @@ class CaseRowCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: onToggleBookmark,
+                      onPressed: bookmarking ? null : onToggleBookmark,
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 36,
                         minHeight: 36,
                       ),
-                      tooltip: referralCase.isBookmarked
+                      tooltip: bookmarking
+                          ? 'Updating bookmark…'
+                          : referralCase.isBookmarked
                           ? 'Remove bookmark'
                           : 'Bookmark case',
-                      icon: Icon(
-                        referralCase.isBookmarked
-                            ? Icons.bookmark
-                            : LucideIcons.bookmark,
-                        size: 18,
-                        color: referralCase.isBookmarked
-                            ? context.vcare.primary
-                            : vcare.mutedForeground,
-                      ),
+                      icon: bookmarking
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.vcare.primary,
+                              ),
+                            )
+                          : Icon(
+                              referralCase.isBookmarked
+                                  ? Icons.bookmark
+                                  : LucideIcons.bookmark,
+                              size: 18,
+                              color: referralCase.isBookmarked
+                                  ? context.vcare.primary
+                                  : vcare.mutedForeground,
+                            ),
                     ),
                   ],
                 ),

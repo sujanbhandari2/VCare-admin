@@ -1,6 +1,5 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,14 +9,16 @@ import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_detail_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_notes_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/case_note_mention_editing_controller.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_mention_field.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_status_button.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
-import 'package:vcare_admin/features/clients/utils/client_utils.dart';
+import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_scope.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/keyboard_inset.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
@@ -27,10 +28,6 @@ class _PendingNoteFile {
 
   final String fileName;
   final List<int> bytes;
-
-  _PendingNoteFile copyWith({String? fileName}) {
-    return _PendingNoteFile(fileName: fileName ?? this.fileName, bytes: bytes);
-  }
 }
 
 /// Bottom composer for adding case notes with mentions, access, and status.
@@ -44,7 +41,8 @@ class CaseNoteComposer extends ConsumerStatefulWidget {
 }
 
 class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
-  final TextEditingController _controller = TextEditingController();
+  final CaseNoteMentionEditingController _controller =
+      CaseNoteMentionEditingController();
   final List<_PendingNoteFile> _pendingFiles = [];
   final List<CaseNotePublicUrl> _pendingUrls = [];
 
@@ -106,8 +104,32 @@ class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
         continue;
       }
       if (!mounted) return;
+
+      final prepared = await VcareUploadPreparer.prepare(
+        context,
+        bytes: bytes,
+        originalFileName: file.name.trim().isEmpty ? 'attachment' : file.name,
+        mime: mimeTypeFromFileName(file.name),
+        kind: VcareUploadPrepareKind.caseAttachment,
+      );
+      if (prepared == null || !mounted) continue;
+
+      if (prepared.bytes.length > caseFileMaxSizeBytes) {
+        rejected += 1;
+        continue;
+      }
+      if (_attachmentCount >= caseFileMaxCount) {
+        rejected += 1;
+        continue;
+      }
+
       setState(() {
-        _pendingFiles.add(_PendingNoteFile(fileName: file.name, bytes: bytes));
+        _pendingFiles.add(
+          _PendingNoteFile(
+            fileName: prepared.fileName,
+            bytes: prepared.bytes,
+          ),
+        );
       });
     }
 
@@ -141,21 +163,8 @@ class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
     setState(() => _pendingUrls.add(link));
   }
 
-  Future<void> _renamePendingFile(int index) async {
-    if (index < 0 || index >= _pendingFiles.length) return;
-    final current = _pendingFiles[index];
-    final renamed = await showDialog<String>(
-      context: context,
-      builder: (_) => _RenamePendingFileDialog(initialName: current.fileName),
-    );
-    if (renamed == null || !mounted) return;
-    final trimmed = renamed.trim();
-    if (trimmed.isEmpty || trimmed == current.fileName) return;
-    setState(() => _pendingFiles[index] = current.copyWith(fileName: trimmed));
-  }
-
   Future<void> _submit(CaseStatus caseStatus) async {
-    final note = _controller.text.trim();
+    final note = _controller.rawText.trim();
     if (note.isEmpty) return;
 
     final status = _status ?? caseStatus;
@@ -233,7 +242,6 @@ class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
                   _PendingAttachmentChip(
                     icon: LucideIcons.paperclip,
                     label: _pendingFiles[i].fileName,
-                    onTap: mutating ? null : () => _renamePendingFile(i),
                     onRemove: mutating
                         ? null
                         : () => setState(() => _pendingFiles.removeAt(i)),
@@ -251,6 +259,7 @@ class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
             const SizedBox(height: 10),
           ],
           Stack(
+            clipBehavior: Clip.none,
             fit: StackFit.passthrough,
             children: [
               CaseNoteMentionField(
@@ -261,8 +270,7 @@ class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
                 maxLines: _isExpanded ? 14 : 6,
                 hintText: 'Add a note… use @ to mention',
                 placement: CaseMentionPickerPlacement.above,
-                contentPadding: const EdgeInsets.fromLTRB(0, 8, 38, 8),
-              ),
+                contentPadding: const EdgeInsets.fromLTRB(5, 8, 38, 8),              ),
               Positioned(
                 right: 0,
                 bottom: 4,
@@ -362,27 +370,17 @@ class _CaseNoteComposerState extends ConsumerState<CaseNoteComposer> {
     );
   }
 
-  /// Sits the composer a few pixels above the floating nav pill.
-  ///
-  /// Uses [MediaQuery.viewPadding] because [Scaffold.extendBody] zeroes
-  /// [MediaQuery.padding] bottom in the body.
+  /// Sits the composer just above the floating nav, including the raised Home FAB.
   double _bottomPadding(BuildContext context) {
-    const aboveNavGap = 8.0;
+    const keyboardGap = 8.0;
 
     if (isSoftKeyboardOpen(context)) {
-      return aboveNavGap;
+      return keyboardGap;
     }
-    // Shell already cleared content for the nav — only keep a tight gap.
     if (VCareMobileShellScope.appliesBottomInsetOf(context)) {
-      return aboveNavGap;
+      return keyboardGap;
     }
-    if (isMobileBottomNavVisible(context)) {
-      return MediaQuery.viewPaddingOf(context).bottom +
-          VCareMobileShellInsets.navOuterBottom +
-          VCareMobileShellInsets.pillHeight +
-          aboveNavGap;
-    }
-    return MediaQuery.viewPaddingOf(context).bottom + aboveNavGap;
+    return vcarePinnedComposerAboveMobileNavPadding(context);
   }
 }
 
@@ -419,10 +417,12 @@ class _ComposerCircleButton extends StatelessWidget {
           child: SizedBox(
             width: _size,
             height: _size,
-            child: Icon(
-              icon,
-              size: 14,
-              color: enabled ? foreground : foreground.withValues(alpha: 0.4),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 14,
+                color: enabled ? foreground : foreground.withValues(alpha: 0.4),
+              ),
             ),
           ),
         ),
@@ -435,13 +435,11 @@ class _PendingAttachmentChip extends StatelessWidget {
   const _PendingAttachmentChip({
     required this.icon,
     required this.label,
-    this.onTap,
     this.onRemove,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback? onTap;
   final VoidCallback? onRemove;
 
   @override
@@ -452,39 +450,36 @@ class _PendingAttachmentChip extends StatelessWidget {
       color: vcare.muted,
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: vcare.mutedForeground),
-              const SizedBox(width: 4),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 140),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: vcare.mutedForeground),
+            const SizedBox(width: 4),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11),
+              ),
+            ),
+            const SizedBox(width: 2),
+            InkWell(
+              onTap: onRemove,
+              customBorder: const CircleBorder(),
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: Icon(
+                  LucideIcons.x,
+                  size: 12,
+                  color: vcare.mutedForeground,
                 ),
               ),
-              const SizedBox(width: 2),
-              InkWell(
-                onTap: onRemove,
-                customBorder: const CircleBorder(),
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Icon(
-                    LucideIcons.x,
-                    size: 12,
-                    color: vcare.mutedForeground,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -661,99 +656,6 @@ class _AttachUrlSheetState extends State<_AttachUrlSheet> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _RenamePendingFileDialog extends StatefulWidget {
-  const _RenamePendingFileDialog({required this.initialName});
-
-  final String initialName;
-
-  @override
-  State<_RenamePendingFileDialog> createState() =>
-      _RenamePendingFileDialogState();
-}
-
-class _RenamePendingFileDialogState extends State<_RenamePendingFileDialog> {
-  late final TextEditingController _controller;
-  late final String _extension;
-
-  @override
-  void initState() {
-    super.initState();
-    final parts = splitDocumentFileName(widget.initialName);
-    _extension = parts.extension;
-    _controller = TextEditingController(text: parts.baseName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  String _normalizedBaseName(String raw) {
-    var baseName = raw.trim();
-    if (baseName.isEmpty) return '';
-
-    if (_extension.isNotEmpty) {
-      final lower = baseName.toLowerCase();
-      final lockedExt = _extension.toLowerCase();
-      if (lower.endsWith(lockedExt)) {
-        baseName = baseName.substring(0, baseName.length - _extension.length);
-      } else {
-        final lastDot = baseName.lastIndexOf('.');
-        if (lastDot > 0) {
-          baseName = baseName.substring(0, lastDot);
-        }
-      }
-    }
-
-    return baseName.trim();
-  }
-
-  void _submit() {
-    final baseName = _normalizedBaseName(_controller.text);
-    if (baseName.isEmpty) return;
-
-    Navigator.pop(
-      context,
-      joinDocumentFileName(baseName: baseName, extension: _extension),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final vcare = context.vcare;
-
-    return AlertDialog(
-      title: const Text('Rename attachment'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\\/]'))],
-        decoration: InputDecoration(
-          hintText: 'File name',
-          suffixText: _extension.isNotEmpty ? _extension : null,
-          suffixStyle: TextStyle(
-            fontSize: 16,
-            color: vcare.mutedForeground,
-            fontWeight: FontWeight.w500,
-          ),
-          helperText: _extension.isNotEmpty
-              ? 'File extension cannot be changed'
-              : null,
-        ),
-        onSubmitted: (_) => _submit(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
-      ],
     );
   }
 }

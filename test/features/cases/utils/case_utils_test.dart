@@ -34,6 +34,15 @@ void main() {
   });
 
   group('case_utils', () {
+    test('formatCaseClientPhone formats stored API digits', () {
+      expect(
+        formatCaseClientPhone('11668728641'),
+        '+1 (166) 872-8641',
+      );
+      expect(formatCaseClientPhone(''), '');
+      expect(formatCaseClientPhone('  '), '');
+    });
+
     test('formatCaseNumber uses first 8 chars uppercased', () {
       expect(
         formatCaseNumber('abcdef12-3456-7890'),
@@ -210,6 +219,18 @@ void main() {
       expect(params.containsKey('status'), isFalse);
       expect(params.containsKey('priority'), isFalse);
       expect(params.containsKey('bookmarkedOnly'), isFalse);
+    });
+  });
+
+  group('formatNoteAuthorDisplayName', () {
+    test('title-cases all-caps API names', () {
+      expect(formatNoteAuthorDisplayName('SHEA ROSARIO'), 'Shea Rosario');
+      expect(formatNoteAuthorDisplayName('  padam   thapa '), 'Padam Thapa');
+    });
+
+    test('preserves System label', () {
+      expect(formatNoteAuthorDisplayName('SYSTEM'), 'System');
+      expect(formatNoteAuthorDisplayName('system'), 'System');
     });
   });
 }

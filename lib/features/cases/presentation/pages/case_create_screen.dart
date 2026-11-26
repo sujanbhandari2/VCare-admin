@@ -9,12 +9,14 @@ import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_creation_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/cases_list_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/state/case_creation_state.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_details_step.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_note_step.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_shared_widgets.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_step_indicator.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_summary_step.dart';
+import 'package:vcare_admin/features/cases/utils/case_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
@@ -132,9 +134,11 @@ class _CaseCreateScreenState extends ConsumerState<CaseCreateScreen> {
     final clientName = draft.selectedClient?.fullName ?? 'client';
 
     await ref.read(caseCreationStateProvider.notifier).submit(
-      onCompleted: (created, error) {
+      onCompleted: (created, error) async {
         if (!mounted) return;
         if (created != null) {
+          await ref.read(casesListStateProvider.notifier).refresh();
+          if (!mounted) return;
           context.showVcareToast(
             title: 'Case for $clientName has been created successfully.',
             variant: VcareToastVariant.success,
@@ -366,7 +370,7 @@ class _ClientStep extends StatelessWidget {
   String _clientSubtitle(CaseCreationClient client) {
     final parts = <String>[
       if (client.email.trim().isNotEmpty) client.email.trim(),
-      if (client.phone.trim().isNotEmpty) client.phone.trim(),
+      if (client.phone.trim().isNotEmpty) formatCaseClientPhone(client.phone),
     ];
     return parts.join(' · ');
   }

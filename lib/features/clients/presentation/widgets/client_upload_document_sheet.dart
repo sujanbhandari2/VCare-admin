@@ -11,6 +11,7 @@ import 'package:vcare_admin/features/clients/presentation/providers/client_docum
 import 'package:vcare_admin/features/documents/domain/entities/document_upload_constants.dart';
 import 'package:vcare_admin/features/documents/presentation/widgets/documents_type_picker_sheet.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
@@ -50,25 +51,18 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     );
   }
 
-  static Future<void> _uploadFile(
+  static Future<void> _uploadPrepared(
     ProviderContainer container,
     String clientId,
     BuildContext context, {
     required String documentType,
-    required String name,
-    required List<int> bytes,
-    required String mime,
+    required UploadPrepareResult prepared,
   }) async {
-    final baseName = name.trim().isEmpty ? 'document' : name;
-    final displayName = mime.startsWith('image/')
-        ? '${baseName.replaceAll(RegExp(r'\.[^.]+$'), '')}.jpg'
-        : baseName;
-
     await container
         .read(clientDocumentsStateProvider(clientId).notifier)
         .uploadDocument(
-          fileName: displayName,
-          bytes: bytes,
+          fileName: prepared.fileName,
+          bytes: prepared.bytes,
           documentType: documentType,
           onCompleted: (success, error) {
             if (!context.mounted) return;
@@ -88,6 +82,33 @@ class ClientUploadDocumentSheet extends StatelessWidget {
         );
   }
 
+  static Future<void> _prepareAndUpload(
+    ProviderContainer container,
+    String clientId,
+    BuildContext context, {
+    required String documentType,
+    required String name,
+    required List<int> bytes,
+    required String mime,
+  }) async {
+    final prepared = await VcareUploadPreparer.prepare(
+      context,
+      bytes: bytes,
+      originalFileName: name.trim().isEmpty ? 'document' : name.trim(),
+      mime: mime,
+      kind: VcareUploadPrepareKind.document,
+    );
+    if (prepared == null || !context.mounted) return;
+
+    await _uploadPrepared(
+      container,
+      clientId,
+      context,
+      documentType: documentType,
+      prepared: prepared,
+    );
+  }
+
   static Future<void> pickFromGallery(
     ProviderContainer container,
     String clientId,
@@ -99,7 +120,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
 
     final bytes = await image.readAsBytes();
     if (!context.mounted) return;
-    await _uploadFile(
+    await _prepareAndUpload(
       container,
       clientId,
       context,
@@ -120,7 +141,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     if (image == null) return;
     final bytes = await image.readAsBytes();
     if (!context.mounted) return;
-    await _uploadFile(
+    await _prepareAndUpload(
       container,
       clientId,
       context,
@@ -162,7 +183,7 @@ class ClientUploadDocumentSheet extends StatelessWidget {
     final bytes = await file.readAsBytes();
     final mime = mimeTypeFromFileName(file.name);
     if (!context.mounted) return;
-    await _uploadFile(
+    await _prepareAndUpload(
       container,
       clientId,
       context,

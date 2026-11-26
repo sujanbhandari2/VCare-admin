@@ -197,6 +197,16 @@ class _CasesScreenContentState extends ConsumerState<CasesScreenContent> {
         return value is bool ? value : false;
       }),
     );
+    final bookmarkingCaseIds = ref.watch(
+      casesListStateProvider.select((state) {
+        final value = state.extras?[CasesListState.bookmarkingCaseIdsExtraKey];
+        if (value is Set<String>) return value;
+        if (value is Iterable) {
+          return value.map((item) => item.toString()).toSet();
+        }
+        return const <String>{};
+      }),
+    );
     final cases = listState.items;
     final showSkeleton = listState.isInitialLoading || _isReloadingList;
     final subtitle = buildCasesSubtitle(
@@ -291,6 +301,7 @@ class _CasesScreenContentState extends ConsumerState<CasesScreenContent> {
                   final referralCase = cases[index];
                   return CaseRowCard(
                     referralCase: referralCase,
+                    bookmarking: bookmarkingCaseIds.contains(referralCase.id),
                     onTap: () => context.pushNamed(
                       AppRouter.caseDetailName,
                       pathParameters: {'id': referralCase.id},

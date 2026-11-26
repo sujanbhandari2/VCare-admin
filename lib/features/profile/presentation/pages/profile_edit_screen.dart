@@ -26,8 +26,9 @@ import 'package:vcare_admin/features/profile/utils/profile_edit_validation.dart'
 import 'package:vcare_admin/features/profile/utils/profile_utils.dart';
 import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
 import 'package:vcare_admin/shared/layout/vcare_mobile_shell_insets.dart';
-import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
 import 'package:vcare_admin/shared/widgets/profile_avatar.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
@@ -315,8 +316,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
     }
 
     final pickedFile = File(file.path);
-    final bytes = await pickedFile.length();
-    if (bytes > ProfileEditValidation.maxProfilePhotoBytes) {
+    final size = await pickedFile.length();
+    if (size > ProfileEditValidation.maxProfilePhotoBytes) {
       if (!mounted) {
         return;
       }
@@ -329,8 +330,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
       return;
     }
 
+    final bytes = await pickedFile.readAsBytes();
+    if (!mounted) return;
+
+    final path = await VcareUploadPreparer.prepareProfilePhotoPath(
+      context,
+      bytes: bytes,
+      originalFileName: file.name,
+      filePrefix: 'profile_photo',
+    );
+    if (!mounted || path == null) return;
+
     setState(() {
-      _photoUrl = pickedFile.path;
+      _photoUrl = path;
       _photoCacheKey = null;
     });
   }

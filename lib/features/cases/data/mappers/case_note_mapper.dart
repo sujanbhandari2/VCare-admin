@@ -2,9 +2,13 @@ import 'package:vcare_admin/features/cases/data/models/case_note_model.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/features/cases/utils/case_note_status_audit.dart';
+import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 
 extension CaseNoteModelMapper on CaseNoteModel {
-  CaseNote toEntity({String? currentUserId}) {
+  CaseNote toEntity({
+    String? currentUserId,
+    required String hostBaseUrl,
+  }) {
     final createdById = createdBy?.id;
     final isSystemNote = isSystemCaseNoteSource(source);
     final isStatusAuditNote = isStatusChangeAuditNote(note);
@@ -37,7 +41,9 @@ extension CaseNoteModelMapper on CaseNoteModel {
       createdById: createdById,
       authorProfilePreviewLink:
           showSystemAuthorLabel ? null : createdBy?.profilePreviewLink,
-      files: files.map((file) => file.toEntity()).toList(growable: false),
+      files: files
+          .map((file) => file.toEntity(hostBaseUrl: hostBaseUrl))
+          .toList(growable: false),
       tags: tags.map((tag) => tag.toEntity()).toList(growable: false),
       externalInviteId: externalInviteId,
       canEdit: canModify,
@@ -49,11 +55,14 @@ extension CaseNoteModelMapper on CaseNoteModel {
 }
 
 extension CaseNoteFileModelMapper on CaseNoteFileModel {
-  CaseNoteFile toEntity() {
+  CaseNoteFile toEntity({required String hostBaseUrl}) {
+    final trimmedUrl = url.trim();
     return CaseNoteFile(
       id: id,
       name: name,
-      url: url,
+      url: trimmedUrl.isEmpty
+          ? ''
+          : resolveDocumentUrl(trimmedUrl, hostBaseUrl),
       note: note,
     );
   }

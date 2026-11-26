@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_creation_state_provider.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/cases_list_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_details_step.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_note_step.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_create_shared_widgets.dart';
@@ -115,9 +116,12 @@ class _ClientCaseCreateScreenState
       onCompleted: (created, error) async {
         if (!mounted) return;
         if (created != null) {
-          await ref
-              .read(clientCasesStateProvider(widget.clientId).notifier)
-              .refresh();
+          await Future.wait([
+            ref.read(casesListStateProvider.notifier).refresh(),
+            ref
+                .read(clientCasesStateProvider(widget.clientId).notifier)
+                .refresh(),
+          ]);
           if (!mounted) return;
           context.showVcareToast(
             title: 'Case for $clientName has been created successfully.',

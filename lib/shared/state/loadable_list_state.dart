@@ -81,4 +81,13 @@ class LoadableListState<T extends LoadableListItem> {
       LoadableListState<T>(operation: operation, loadMoreErrorMessage: message)
         .._extras = extras
         .._total = totalItems;
+
+  LoadableListState<T> withExtras(Map<String, dynamic> extras) =>
+      LoadableListState<T>(
+        operation: operation,
+        isLoadingMore: isLoadingMore,
+        loadMoreErrorMessage: loadMoreErrorMessage,
+      )
+        .._extras = extras
+        .._total = _total;
 }

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_failed_payment_total.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_page.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/state/admin_dashboard_state.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_dashboard_stat_cards.dart';
@@ -61,6 +62,9 @@ void main() {
 
     testWidgets('shows resolved values once loading settles', (tester) async {
       const state = AdminDashboardState(
+        failedPaymentTotalOperation: OperationState.success(
+          AdminDashboardFailedPaymentTotal(),
+        ),
         failedPaymentsOperation: OperationState.success(
           AdminDashboardTodoPage.empty,
         ),
@@ -84,6 +88,9 @@ void main() {
       tester,
     ) async {
       const state = AdminDashboardState(
+        failedPaymentTotalOperation: OperationState.success(
+          AdminDashboardFailedPaymentTotal(),
+        ),
         failedPaymentsOperation: OperationState.success(
           AdminDashboardTodoPage.empty,
         ),
@@ -113,6 +120,9 @@ void main() {
 
     testWidgets('shows retry card when feature access fails', (tester) async {
       const state = AdminDashboardState(
+        failedPaymentTotalOperation: OperationState.success(
+          AdminDashboardFailedPaymentTotal(),
+        ),
         failedPaymentsOperation: OperationState.success(
           AdminDashboardTodoPage.empty,
         ),
@@ -153,6 +163,9 @@ void main() {
       tester,
     ) async {
       const state = AdminDashboardState(
+        failedPaymentTotalOperation: OperationState.failure(
+          'Unable to connect to server. Check your internet connection.',
+        ),
         failedPaymentsOperation: OperationState.failure(
           'Unable to connect to server. Check your internet connection.',
         ),

@@ -98,6 +98,10 @@ class ApiEndpoints {
   /// Admin dashboard todo list (matches web `adminTodoListApiPaths.collection`).
   static const String adminTodoList = "admin/todo-list";
 
+  /// Failed payment total for dashboard stat card (web `failedPaymentsTotal`).
+  static const String adminTodoListFailedPaymentsTotal =
+      "admin/todo-list/failed-payments/total";
+
   /// Enrollment list (matches web `enrollmentApiPaths.collection`).
   static const String enrollments = "enrollments";
   static String enrollmentById(String id) => "enrollments/$id";

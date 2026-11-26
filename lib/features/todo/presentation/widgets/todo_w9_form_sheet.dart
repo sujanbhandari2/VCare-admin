@@ -17,6 +17,7 @@ import 'package:vcare_admin/features/todo/domain/entities/todo_item.dart';
 import 'package:vcare_admin/features/todo/presentation/providers/todo_list_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/logger.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
@@ -169,18 +170,26 @@ class _TodoW9FormSheetState extends ConsumerState<TodoW9FormSheet> {
     final file = await openFile(acceptedTypeGroups: [pdfGroup]);
     if (!mounted || file == null) return;
 
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    final prepared = await VcareUploadPreparer.prepare(
+      context,
+      bytes: bytes,
+      originalFileName: file.name.trim().isEmpty ? 'w9.pdf' : file.name,
+      mime: 'application/pdf',
+      kind: VcareUploadPrepareKind.document,
+    );
+    if (!mounted || prepared == null) return;
+
     final documentType = _resolveDocumentTypeLabel();
     setState(() => _uploading = true);
 
     try {
-      final bytes = await file.readAsBytes();
-      final fileName = file.name.trim().isEmpty ? 'w9.pdf' : file.name;
-
       await ref
           .read(documentsListStateProvider.notifier)
           .uploadDocument(
-            fileName: fileName,
-            bytes: bytes,
+            fileName: prepared.fileName,
+            bytes: prepared.bytes,
             documentType: documentType,
             agentProfileId: categoryReferenceId,
             onCompleted: (success, error) async {

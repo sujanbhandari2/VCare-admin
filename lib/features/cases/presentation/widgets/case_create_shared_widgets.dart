@@ -5,6 +5,7 @@ import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_assignee.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
+import 'package:vcare_admin/features/cases/utils/case_utils.dart';
 
 const caseCreateFieldRadius = 12.0;
 
@@ -125,10 +126,8 @@ class CaseCreateSelectedClientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vcare = context.vcare;
-    final subtitle = [
-      if (client.email.trim().isNotEmpty) client.email.trim(),
-      if (client.phone.trim().isNotEmpty) client.phone.trim(),
-    ].join(' · ');
+    final email = client.email.trim();
+    final phone = client.phone.trim();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -156,15 +155,26 @@ class CaseCreateSelectedClientCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (subtitle.isNotEmpty) ...[
+                if (email.isNotEmpty || phone.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: vcare.mutedForeground,
+                  if (email.isNotEmpty)
+                    Text(
+                      email,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: vcare.mutedForeground,
+                      ),
                     ),
-                  ),
+                  if (phone.isNotEmpty) ...[
+                    if (email.isNotEmpty) const SizedBox(height: 2),
+                    Text(
+                      formatCaseClientPhone(phone),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: vcare.mutedForeground,
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),

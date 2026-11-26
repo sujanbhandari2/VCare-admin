@@ -6,9 +6,12 @@ import 'package:vcare_admin/core/services/network/http_exception.dart';
 import 'package:vcare_admin/core/services/network/http_response_validator.dart';
 import 'package:vcare_admin/core/services/network/models/request_body.dart';
 import 'package:vcare_admin/core/services/network/typedefs/response_or_exception.dart';
+import 'package:vcare_admin/features/admin_dashboard/data/mappers/admin_dashboard_failed_payment_total_mapper.dart';
 import 'package:vcare_admin/features/admin_dashboard/data/mappers/admin_dashboard_todo_mapper.dart';
+import 'package:vcare_admin/features/admin_dashboard/data/models/admin_dashboard_failed_payment_total_model.dart';
 import 'package:vcare_admin/features/admin_dashboard/data/models/admin_dashboard_todo_item_model.dart';
 import 'package:vcare_admin/features/admin_dashboard/data/models/admin_dashboard_todo_metrics_model.dart';
+import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_failed_payment_total.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_item.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_page.dart';
 import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_todo_request.dart';
@@ -22,6 +25,32 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
 
   final ApiClient apiClient;
   final CaseRepository caseRepository;
+
+  @override
+  Future<EitherResponseOrException<AdminDashboardFailedPaymentTotal>>
+      fetchFailedPaymentTotal({
+    CancelToken? cancelToken,
+    bool forceRefresh = false,
+  }) {
+    return safeNetworkCall(() async {
+      final response = await apiClient.get(
+        ApiEndpoints.adminTodoListFailedPaymentsTotal,
+        isAuthenticated: true,
+        cancelToken: cancelToken,
+        forceRefresh: forceRefresh,
+      );
+
+      final model = ResponseValidator.parse(
+        response,
+        (data) => AdminDashboardFailedPaymentTotalModel.fromJson(
+          Map<String, dynamic>.from(data as Map),
+        ),
+        dataValidator: (data) => data is Map,
+      );
+
+      return model.toEntity();
+    });
+  }
 
   @override
   Future<EitherResponseOrException<AdminDashboardTodoPage>> fetchTodoList(

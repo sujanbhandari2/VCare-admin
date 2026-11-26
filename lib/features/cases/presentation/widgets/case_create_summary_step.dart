@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_creation_draft.dart';
+import 'package:vcare_admin/features/cases/utils/case_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 
@@ -62,7 +63,8 @@ class CaseCreateSummaryStep extends StatelessWidget {
                 Text(
                   [
                     if (client.email.trim().isNotEmpty) client.email.trim(),
-                    if (client.phone.trim().isNotEmpty) client.phone.trim(),
+                    if (client.phone.trim().isNotEmpty)
+                      formatCaseClientPhone(client.phone),
                   ].join(' · '),
                   style: TextStyle(fontSize: 13, color: vcare.mutedForeground),
                 ),
