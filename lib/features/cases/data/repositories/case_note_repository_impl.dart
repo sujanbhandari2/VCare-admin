@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:vcare_admin/core/config/api_endpoints.dart';
+import 'package:vcare_admin/core/config/flavor/configuration.dart';
 import 'package:vcare_admin/core/services/network/api_client.dart';
 import 'package:vcare_admin/core/services/network/http_response_validator.dart';
 import 'package:vcare_admin/core/services/network/models/form_file.dart';
@@ -27,6 +28,7 @@ class CaseNoteRepositoryImpl implements CaseNoteRepository {
     bool forceRefresh = false,
   }) {
     return safeNetworkCall(() async {
+      final hostBaseUrl = Configuration.of().baseUrl;
       final response = await apiClient.get(
         ApiEndpoints.referralCaseNotes(caseId),
         isAuthenticated: true,
@@ -39,6 +41,7 @@ class CaseNoteRepositoryImpl implements CaseNoteRepository {
             .map(
               (item) => CaseNoteModel.fromJson(item).toEntity(
                 currentUserId: currentUserId,
+                hostBaseUrl: hostBaseUrl,
               ),
             )
             .toList(growable: false);
@@ -58,6 +61,7 @@ class CaseNoteRepositoryImpl implements CaseNoteRepository {
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
+      final hostBaseUrl = Configuration.of().baseUrl;
       final response = await apiClient.post(
         ApiEndpoints.referralCaseNotes(caseId),
         MultipartFormData(
@@ -79,7 +83,10 @@ class CaseNoteRepositoryImpl implements CaseNoteRepository {
         dataValidator: CaseNoteModel.isValidApiData,
       );
 
-      return model.toEntity(currentUserId: currentUserId);
+      return model.toEntity(
+        currentUserId: currentUserId,
+        hostBaseUrl: hostBaseUrl,
+      );
     });
   }
 
@@ -94,6 +101,7 @@ class CaseNoteRepositoryImpl implements CaseNoteRepository {
     CancelToken? cancelToken,
   }) {
     return safeNetworkCall(() async {
+      final hostBaseUrl = Configuration.of().baseUrl;
       final response = await apiClient.patch(
         ApiEndpoints.referralCaseNote(caseId, noteId),
         MultipartFormData(
@@ -115,7 +123,10 @@ class CaseNoteRepositoryImpl implements CaseNoteRepository {
         dataValidator: CaseNoteModel.isValidApiData,
       );
 
-      return model.toEntity(currentUserId: currentUserId);
+      return model.toEntity(
+        currentUserId: currentUserId,
+        hostBaseUrl: hostBaseUrl,
+      );
     });
   }
 

@@ -12,6 +12,7 @@ import 'package:vcare_admin/features/documents/utils/documents_w9_utils.dart';
 import 'package:vcare_admin/features/home/presentation/providers/agent_stats_state_provider.dart';
 import 'package:vcare_admin/features/profile/presentation/providers/local_profile_state_provider.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 
@@ -37,8 +38,8 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
     );
   }
 
-  Future<({int uploaded, int failed})> _uploadFiles(
-    List<XFile> files, {
+  Future<({int uploaded, int failed})> _uploadPrepared(
+    List<UploadPrepareResult> files, {
     required String documentType,
   }) async {
     var uploaded = 0;
@@ -46,16 +47,9 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
 
     for (final file in files) {
       try {
-        final bytes = await file.readAsBytes();
-        final mime = mimeTypeFromFileName(file.name);
-        final baseName = file.name.trim().isEmpty ? 'document' : file.name;
-        final displayName = mime.startsWith('image/')
-            ? '${baseName.replaceAll(RegExp(r'\.[^.]+$'), '')}.jpg'
-            : baseName;
-
         await ref.read(documentsListStateProvider.notifier).uploadDocument(
-          fileName: displayName,
-          bytes: bytes,
+          fileName: file.fileName,
+          bytes: file.bytes,
           documentType: documentType,
           refreshList: false,
           onCompleted: (success, _) {
@@ -84,9 +78,34 @@ class _DocumentsUploadActionsState extends ConsumerState<DocumentsUploadActions>
   }) async {
     if (files.isEmpty || _isUploading) return;
 
+    final prepared = <UploadPrepareResult>[];
+    for (final file in files) {
+      if (!mounted) return;
+      try {
+        final bytes = await file.readAsBytes();
+        if (!mounted) return;
+        final mime = mimeTypeFromFileName(file.name);
+        final result = await VcareUploadPreparer.prepare(
+          context,
+          bytes: bytes,
+          originalFileName:
+              file.name.trim().isEmpty ? 'document' : file.name.trim(),
+          mime: mime,
+          kind: VcareUploadPrepareKind.document,
+        );
+        if (result != null) {
+          prepared.add(result);
+        }
+      } catch (_) {
+        // Skip unreadable / cancelled files and continue with the rest.
+      }
+    }
+
+    if (!mounted || prepared.isEmpty) return;
+
     setState(() => _isUploading = true);
 
-    final result = await _uploadFiles(files, documentType: documentType);
+    final result = await _uploadPrepared(prepared, documentType: documentType);
 
     if (!mounted) return;
 

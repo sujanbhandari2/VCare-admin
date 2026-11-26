@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vcare_admin/features/auth/presentation/providers/admin_auth_session_provider.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
+import 'package:vcare_admin/features/cases/presentation/providers/case_files_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_repository_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/state/case_notes_state.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
@@ -229,11 +230,15 @@ class CaseNotesState extends _$CaseNotesState {
             }
             onCompleted?.call(created, uploadError);
             await fetchNotes(forceRefresh: true);
+            await _refreshCaseFilesAfterNoteAttachments();
             return;
           }
         }
 
         await fetchNotes(forceRefresh: true);
+        await _refreshCaseFilesAfterNoteAttachments(
+          hadAttachments: files.isNotEmpty || publicUrls.isNotEmpty,
+        );
         if (ref.mounted) {
           state = state.mutationIdle();
         }
@@ -440,6 +445,15 @@ class CaseNotesState extends _$CaseNotesState {
         }
       },
     );
+  }
+
+  Future<void> _refreshCaseFilesAfterNoteAttachments({
+    bool hadAttachments = true,
+  }) async {
+    if (!hadAttachments || !ref.mounted) return;
+    await ref
+        .read(caseFilesStateProvider(caseId).notifier)
+        .fetchFiles(forceRefresh: true);
   }
 }
 

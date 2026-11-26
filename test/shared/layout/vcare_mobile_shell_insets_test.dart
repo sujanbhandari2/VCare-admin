@@ -10,6 +10,63 @@ void main() {
     test('pill and bar body heights match shell layout constants', () {
       expect(VCareMobileShellInsets.pillHeight, 64);
       expect(VCareMobileShellInsets.barBodyHeight, 88);
+      expect(VCareMobileShellInsets.navOuterTop, 24);
+    });
+
+    test('Home FAB painted overflow accounts for ring and shadow', () {
+      final overflow = VCareLayout.bottomNavHomeFabPaintedOverflowAboveBarBody;
+      expect(overflow, greaterThan(VCareLayout.bottomNavHomeFabRing));
+    });
+  });
+
+  group('vcarePinnedComposerAboveMobileNavPadding', () {
+    testWidgets('iphone clears pill, home ring, and 10px gap', (
+      WidgetTester tester,
+    ) async {
+      late double padding;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(390, 800),
+            viewPadding: EdgeInsets.only(bottom: 34),
+          ),
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
+            home: Builder(
+              builder: (context) {
+                padding = vcarePinnedComposerAboveMobileNavPadding(context);
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(padding, 34 + 8 + 64 + 4 + 10);
+    });
+
+    testWidgets('android phone clears pill, home ring, and 10px gap', (
+      WidgetTester tester,
+    ) async {
+      late double padding;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(390, 800)),
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.android),
+            home: Builder(
+              builder: (context) {
+                padding = vcarePinnedComposerAboveMobileNavPadding(context);
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(padding, 8 + 64 + 4 + 10);
     });
   });
 

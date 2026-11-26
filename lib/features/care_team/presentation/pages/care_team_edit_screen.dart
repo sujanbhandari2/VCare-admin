@@ -22,6 +22,7 @@ import 'package:vcare_admin/features/care_team/utils/care_team_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/field_validator.dart';
 import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
 import 'package:vcare_admin/shared/widgets/vcare_cached_image.dart';
 import 'package:vcare_admin/shared/widgets/vcare_page_header.dart';
@@ -237,8 +238,8 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
     final file = await pick();
     if (file == null || !mounted) return;
 
-    final bytes = await file.length();
-    if (bytes > _maxPhotoBytes) {
+    final size = await file.length();
+    if (size > _maxPhotoBytes) {
       if (!mounted) return;
       context.showVcareToast(
         title: 'Image too large',
@@ -248,7 +249,18 @@ class _CareTeamEditScreenState extends ConsumerState<CareTeamEditScreen> {
       return;
     }
 
-    setState(() => _photoUrl = file.path);
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+
+    final path = await VcareUploadPreparer.prepareProfilePhotoPath(
+      context,
+      bytes: bytes,
+      originalFileName: file.name,
+      filePrefix: 'care_team_photo',
+    );
+    if (!mounted || path == null) return;
+
+    setState(() => _photoUrl = path);
   }
 
   Future<void> _save() async {

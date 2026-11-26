@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:vcare_admin/shared/utils/dash_painter.dart';
-import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
-import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
+import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
 
 class ImageUploadField extends StatefulWidget {
   const ImageUploadField({
@@ -49,30 +50,37 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
     });
   }
 
+  Future<void> _applyPickedImage(XFile image) async {
+    final bytes = await image.readAsBytes();
+    if (!mounted) return;
+
+    final path = await VcareUploadPreparer.prepareProfilePhotoPath(
+      context,
+      bytes: bytes,
+      originalFileName: image.name,
+      filePrefix: 'register_photo',
+    );
+    if (!mounted || path == null) return;
+
+    final cropped = XFile(path, name: 'photo.jpg');
+    setState(() => _image = cropped);
+    widget.onSelected?.call(cropped);
+  }
+
   /// Method to handle image picker
   void _handleImagePicked() {
     ImagePickerSourceSelectionBottomSheet.show(
       context,
       onGalleryPick: () async {
         final image = await ImagePickerUtils.fromGallery();
-
         if (mounted && image != null) {
-          setState(() {
-            _image = image;
-          });
-
-          widget.onSelected?.call(image);
+          await _applyPickedImage(image);
         }
       },
       onCameraPick: () async {
         final image = await ImagePickerUtils.fromCamera();
-
         if (mounted && image != null) {
-          setState(() {
-            _image = image;
-          });
-
-          widget.onSelected?.call(image);
+          await _applyPickedImage(image);
         }
       },
     );

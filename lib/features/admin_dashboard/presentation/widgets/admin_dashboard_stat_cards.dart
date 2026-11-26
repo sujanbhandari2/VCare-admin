@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:vcare_admin/app/router/app_router.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/providers/admin_dashboard_state_provider.dart';
+import 'package:vcare_admin/features/admin_dashboard/domain/entities/admin_dashboard_failed_payment_total.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/state/admin_dashboard_state.dart';
 import 'package:vcare_admin/features/admin_dashboard/presentation/widgets/admin_dashboard_stat_card.dart';
 import 'package:vcare_admin/features/admin_dashboard/utils/admin_dashboard_formatters.dart';
@@ -103,28 +104,30 @@ class AdminDashboardStatCards extends ConsumerWidget {
   }
 
   Widget _buildFailedPaymentsCard(BuildContext context, WidgetRef ref) {
-    final operation = state.failedPaymentsOperation;
-    if (operation.hasError && state.failedPaymentRows.isEmpty) {
+    final operation = state.failedPaymentTotalOperation;
+    if (operation.hasError) {
       return VcareInlineErrorCard(
         title: 'Unable to load payments',
         message: operation.errorMessage,
         compact: true,
         onRetry: () => ref
             .read(adminDashboardStateProvider.notifier)
-            .refreshFailedPayments(),
+            .refreshFailedPaymentTotal(),
         retryLabel: context.appLocalization.retry,
       );
     }
 
+    final totalAmount = state.failedPaymentTotalAmount;
+
     return AdminDashboardStatCard(
       title: 'Payments failed',
-      value: _failedPaymentsValue(),
-      caption: state.atRiskCaption,
-      captionTone: _failedPaymentsCaptionTone(),
+      value: _failedPaymentsValue(totalAmount),
+      caption: _failedPaymentsCaption(totalAmount, operation.isLoading),
+      captionTone: _failedPaymentsCaptionTone(totalAmount, operation.isLoading),
       icon: LucideIcons.alertTriangle,
       iconTone: AdminDashboardStatCardTone.danger,
-      empty: _failedPaymentsEmpty(),
-      emptyCaption: 'No failed payments',
+      empty: _failedPaymentsEmpty(totalAmount, operation),
+      emptyCaption: 'All payments clearing',
       loading: operation.isLoading,
       onTap: () => context.pushNamed(AppRouter.adminFailedPaymentsName),
     );
@@ -244,27 +247,37 @@ class AdminDashboardStatCards extends ConsumerWidget {
     return 2;
   }
 
-  String _failedPaymentsValue() {
-    return formatAdminDashboardMoney(
-      state.atRiskAmount,
-      currency: state.atRiskCurrency,
-    );
+  String _failedPaymentsValue(double totalAmount) {
+    return formatAdminDashboardMoney(totalAmount);
   }
 
-  AdminDashboardStatCaptionTone _failedPaymentsCaptionTone() {
-    if (state.failedPaymentsOperation.isLoading) {
+  String? _failedPaymentsCaption(double totalAmount, bool isLoading) {
+    if (isLoading || totalAmount == 0) {
+      return null;
+    }
+    return 'Payments at risk';
+  }
+
+  AdminDashboardStatCaptionTone _failedPaymentsCaptionTone(
+    double totalAmount,
+    bool isLoading,
+  ) {
+    if (isLoading) {
       return AdminDashboardStatCaptionTone.neutral;
     }
-    if (state.atRiskAmount == 0) {
+    if (totalAmount == 0) {
       return AdminDashboardStatCaptionTone.neutral;
     }
     return AdminDashboardStatCaptionTone.negative;
   }
 
-  bool _failedPaymentsEmpty() {
-    return !state.failedPaymentsOperation.isLoading &&
-        !state.failedPaymentsOperation.hasError &&
-        state.atRiskAmount == 0;
+  bool _failedPaymentsEmpty(
+    double totalAmount,
+    OperationState<AdminDashboardFailedPaymentTotal> operation,
+  ) {
+    return !operation.isLoading &&
+        !operation.hasError &&
+        totalAmount == 0;
   }
 
   String _countValue(int count) {

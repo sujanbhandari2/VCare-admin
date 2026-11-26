@@ -26,10 +26,10 @@ double vcareTabComposerBottomPadding(BuildContext context) {
 const double _pillPaddingH = 4; // px-1
 const double _sideIconWellWidth = 40; // w-10
 const double _homeFabSize = VCareLayout.bottomNavHomeFabSize;
-const double _homeFabLift = 28; // -mt-7
-const double _homeFabRing = 4; // ring-4 (outside the 52px circle)
+const double _homeFabLift = VCareLayout.bottomNavHomeFabLift;
+const double _homeFabRing = VCareLayout.bottomNavHomeFabRing;
 const double _homeLabelGap = 6; // gap-0.5 + mt-1
-const double _homeActiveScale = 1.05;
+const double _homeActiveScale = VCareLayout.bottomNavHomeFabActiveScale;
 const double _homeFabVisualSize = _homeFabSize + _homeFabRing * 2;
 
 /// Mobile bottom nav matching vcareapp [MobileShell] (Home centered, floating pill).

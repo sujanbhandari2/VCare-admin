@@ -15,6 +15,7 @@ import 'package:vcare_admin/features/tenant_branding/presentation/providers/tena
 import 'package:vcare_admin/features/tenant_branding/presentation/widgets/tenant_branded_image.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
 import 'package:vcare_admin/shared/utils/image_picker_utils.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/image_picker_source_selection_bottom_sheet.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
@@ -391,15 +392,20 @@ class _DynamicThemeSettingsScreenState
         : await ImagePickerUtils.fromCamera();
     if (image == null || !mounted) return;
 
-    final dataUrl = await _toDataUrl(image);
+    final rawBytes = await image.readAsBytes();
     if (!mounted) return;
-    if (dataUrl == null) {
-      context.showVcareToast(
-        title: context.appLocalization.branding_save_failed,
-        variant: VcareToastVariant.destructive,
-      );
-      return;
-    }
+
+    final prepared = await VcareUploadPreparer.prepare(
+      context,
+      bytes: rawBytes,
+      originalFileName: image.name,
+      mime: 'image/jpeg',
+      kind: VcareUploadPrepareKind.profilePhoto,
+    );
+    if (!mounted || prepared == null) return;
+
+    final dataUrl =
+        'data:${prepared.mime};base64,${base64Encode(prepared.bytes)}';
 
     await ref.read(tenantBrandingStateProvider.notifier).updateBranding(
           logoUrl: isIcon ? null : dataUrl,
@@ -436,19 +442,6 @@ class _DynamicThemeSettingsScreenState
             );
           },
         );
-  }
-
-  Future<String?> _toDataUrl(XFile file) async {
-    try {
-      final bytes = await file.readAsBytes();
-      final mime = file.mimeType ??
-          (file.path.toLowerCase().endsWith('.png')
-              ? 'image/png'
-              : 'image/jpeg');
-      return 'data:$mime;base64,${base64Encode(bytes)}';
-    } catch (_) {
-      return null;
-    }
   }
 
   String _textScaleLabel(BuildContext context, {required AppTextScale scale}) {

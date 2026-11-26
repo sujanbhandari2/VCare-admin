@@ -1,9 +1,5 @@
 class CaseNoteAuthorModel {
-  const CaseNoteAuthorModel({
-    this.id,
-    this.name,
-    this.profilePreviewLink,
-  });
+  const CaseNoteAuthorModel({this.id, this.name, this.profilePreviewLink});
 
   final String? id;
   final String? name;

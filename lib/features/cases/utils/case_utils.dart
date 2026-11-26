@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import 'package:vcare_admin/features/auth/domain/auth_phone_formatter.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/shared/utils/date_format_utils.dart';
@@ -48,6 +49,15 @@ const int caseTaskListLimit = 50;
 const String noteAccessTypePrivate = 'INTERNAL';
 const String noteAccessTypePublic = 'EXTERNAL';
 const String defaultNoteAccessType = noteAccessTypePrivate;
+
+/// Formats stored client phone values for case UI, e.g. `+1 (555) 123-4567`.
+String formatCaseClientPhone(String phone) {
+  final trimmed = phone.trim();
+  if (trimmed.isEmpty) return '';
+
+  final formatted = AuthPhoneFormatter.formatInternationalDisplay(trimmed);
+  return formatted.isNotEmpty ? formatted : trimmed;
+}
 
 /// Formats a case id into the short display number (first 8 chars, uppercased).
 String formatCaseNumber(String id) {
@@ -173,6 +183,25 @@ final RegExp _clonedFromCaseNoteRegex = RegExp(
 
 /// Uppercases the first letter of each word, matching the web `capitalize`
 /// text transform applied to note bodies.
+/// Person name for note headers — title case, not all caps (API often returns caps).
+String formatNoteAuthorDisplayName(String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return 'Unknown';
+  if (trimmed.toLowerCase() == 'system') return 'System';
+  return trimmed
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .map(_titleCaseWord)
+      .join(' ');
+}
+
+String _titleCaseWord(String word) {
+  if (word.isEmpty) return word;
+  final lower = word.toLowerCase();
+  if (lower.length == 1) return lower.toUpperCase();
+  return '${lower[0].toUpperCase()}${lower.substring(1)}';
+}
+
 String capitalizeWords(String value) {
   if (value.isEmpty) return value;
 

@@ -19,6 +19,7 @@ class CasesListState extends _$CasesListState
   static const String statusExtraKey = 'status';
   static const String priorityExtraKey = 'priority';
   static const String bookmarkedOnlyExtraKey = 'bookmarkedOnly';
+  static const String bookmarkingCaseIdsExtraKey = 'bookmarkingCaseIds';
 
   @override
   LoadableListState<ReferralCase> build() => LoadableListState<ReferralCase>();
@@ -42,6 +43,38 @@ class CasesListState extends _$CasesListState
   bool get bookmarkedOnly {
     final value = state.extras?[bookmarkedOnlyExtraKey];
     return value is bool ? value : false;
+  }
+
+  Set<String> get bookmarkingCaseIds {
+    final value = state.extras?[bookmarkingCaseIdsExtraKey];
+    if (value is Set<String>) return value;
+    if (value is Iterable) {
+      return value.map((item) => item.toString()).toSet();
+    }
+    return const {};
+  }
+
+  bool isBookmarkingCase(String caseId) => bookmarkingCaseIds.contains(caseId);
+
+  void _setCaseBookmarking(String caseId, bool loading) {
+    final extras = Map<String, dynamic>.from(state.extras ?? {});
+    final ids = Set<String>.of(bookmarkingCaseIds);
+
+    if (loading) {
+      ids.add(caseId);
+    } else {
+      ids.remove(caseId);
+    }
+
+    if (ids.isEmpty) {
+      extras.remove(bookmarkingCaseIdsExtraKey);
+    } else {
+      extras[bookmarkingCaseIdsExtraKey] = ids;
+    }
+
+    if (mounted) {
+      state = state.withExtras(extras);
+    }
   }
 
   Future<void> setStatus(CaseStatus? next) async {
@@ -114,40 +147,46 @@ class CasesListState extends _$CasesListState
     void Function(bool success, String? error)? onCompleted,
   }) async {
     final index = state.items.indexWhere((item) => item.id == caseId);
-    if (index < 0 || !mounted) return;
+    if (index < 0 || !mounted || isBookmarkingCase(caseId)) return;
 
     final current = state.items[index];
     final nextBookmarked = !current.isBookmarked;
     final optimistic = List<ReferralCase>.of(state.items);
     optimistic[index] = current.copyWith(isBookmarked: nextBookmarked);
 
+    _setCaseBookmarking(caseId, true);
+
     if (mounted) {
       state = state.success(items: optimistic, total: state.totalItems);
     }
 
-    final response = await ref.read(caseRepositoryProvider).setBookmark(
-      caseId,
-      bookmarked: nextBookmarked,
-    );
+    try {
+      final response = await ref.read(caseRepositoryProvider).setBookmark(
+        caseId,
+        bookmarked: nextBookmarked,
+      );
 
-    response.when(
-      failure: (error) {
-        if (!mounted) {
+      response.when(
+        failure: (error) {
+          if (!mounted) {
+            onCompleted?.call(false, error.userMessage);
+            return;
+          }
+
+          final rollback = List<ReferralCase>.of(state.items);
+          final rollbackIndex = rollback.indexWhere((item) => item.id == caseId);
+          if (rollbackIndex >= 0) {
+            rollback[rollbackIndex] = current;
+            state = state.success(items: rollback, total: state.totalItems);
+          }
           onCompleted?.call(false, error.userMessage);
-          return;
-        }
-
-        final rollback = List<ReferralCase>.of(state.items);
-        final rollbackIndex = rollback.indexWhere((item) => item.id == caseId);
-        if (rollbackIndex >= 0) {
-          rollback[rollbackIndex] = current;
-          state = state.success(items: rollback, total: state.totalItems);
-        }
-        onCompleted?.call(false, error.userMessage);
-      },
-      success: (_) {
-        onCompleted?.call(true, null);
-      },
-    );
+        },
+        success: (_) {
+          onCompleted?.call(true, null);
+        },
+      );
+    } finally {
+      _setCaseBookmarking(caseId, false);
+    }
   }
 }

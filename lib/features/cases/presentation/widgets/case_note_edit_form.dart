@@ -6,6 +6,7 @@ import 'package:vcare_admin/core/styles/vcare_theme.dart';
 import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/domain/entities/referral_case.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_card.dart';
+import 'package:vcare_admin/features/cases/presentation/widgets/case_note_mention_editing_controller.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_mention_field.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_note_status_button.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
@@ -38,14 +39,14 @@ class CaseNoteEditForm extends ConsumerStatefulWidget {
 }
 
 class _CaseNoteEditFormState extends ConsumerState<CaseNoteEditForm> {
-  late final TextEditingController _controller;
+  late final CaseNoteMentionEditingController _controller;
   late CaseStatus _status;
   late String _accessType;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.note.content);
+    _controller = CaseNoteMentionEditingController(text: widget.note.content);
     _status = widget.note.status ?? CaseStatus.requested;
     _accessType = widget.note.accessType ?? defaultNoteAccessType;
   }
@@ -58,7 +59,7 @@ class _CaseNoteEditFormState extends ConsumerState<CaseNoteEditForm> {
 
   void _submit() {
     widget.onSave(
-      content: _controller.text,
+      content: _controller.rawText,
       status: _status,
       accessType: _accessType,
     );
@@ -96,7 +97,7 @@ class _CaseNoteEditFormState extends ConsumerState<CaseNoteEditForm> {
                     maxLines: 8,
                     enabled: !widget.isSaving,
                     hintText: 'Update this note… use @ to mention',
-                  ),
+                    contentPadding: EdgeInsets.zero,                  ),
                 ),
               ),
               const SizedBox(height: 8),

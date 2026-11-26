@@ -184,11 +184,26 @@ class _CaseInfoSheetState extends ConsumerState<CaseInfoSheet> {
                       onPressed: detailState.bookmarking
                           ? null
                           : () => widget.onToggleBookmark!(),
-                      icon: Icon(
-                        isBookmarked ? Icons.bookmark : LucideIcons.bookmark,
-                        size: 18,
-                      ),
-                      tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark',
+                      icon: detailState.bookmarking
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.vcare.primary,
+                              ),
+                            )
+                          : Icon(
+                              isBookmarked
+                                  ? Icons.bookmark
+                                  : LucideIcons.bookmark,
+                              size: 18,
+                            ),
+                      tooltip: detailState.bookmarking
+                          ? 'Updating bookmark…'
+                          : isBookmarked
+                          ? 'Remove bookmark'
+                          : 'Bookmark',
                       style: IconButton.styleFrom(
                         foregroundColor: isBookmarked
                             ? context.vcare.primary
@@ -269,7 +284,8 @@ class _ClientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final vcare = context.vcare;
     final avatar = client.avatarUrl?.trim() ?? '';
-    final phone = client.phone.trim();
+    final phoneRaw = client.phone.trim();
+    final phoneDisplay = formatCaseClientPhone(phoneRaw);
     final email = client.email.trim();
     final dob = formatDisplayDateString(client.dateOfBirth);
     final address = client.address?.trim() ?? '';
@@ -350,8 +366,10 @@ class _ClientCard extends StatelessWidget {
           ),
           _InfoRow(
             icon: LucideIcons.phone,
-            label: phone.isEmpty ? '—' : phone,
-            onTap: phone.isEmpty ? null : () => launchUrlString('tel:$phone'),
+            label: phoneDisplay.isEmpty ? '—' : phoneDisplay,
+            onTap: phoneRaw.isEmpty
+                ? null
+                : () => launchUrlString('tel:$phoneRaw'),
           ),
           _InfoRow(
             icon: LucideIcons.mail,

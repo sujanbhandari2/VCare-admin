@@ -1,14 +1,20 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
 import 'package:vcare_admin/core/styles/vcare_theme.dart';
+import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/features/help_support/domain/entities/contact_support_attachment.dart';
 import 'package:vcare_admin/features/help_support/presentation/providers/help_support_state_provider.dart';
 import 'package:vcare_admin/features/help_support/utils/help_support_constants.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// parity: vcare-agent-app-2.0/src/features/help-support/components/ContactSupportDialog.tsx
@@ -71,15 +77,9 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
       if (!mounted || result == null) return;
 
       final remaining = contactSupportMaxFiles - _files.length;
-      final selected = result.files
+      final candidates = result.files
           .where((file) => (file.path ?? '').trim().isNotEmpty)
           .take(remaining)
-          .map(
-            (file) => ContactSupportAttachment(
-              path: file.path!.trim(),
-              fileName: file.name,
-            ),
-          )
           .toList();
 
       if (result.files.length > remaining) {
@@ -89,8 +89,48 @@ class _ContactSupportSheetState extends ConsumerState<ContactSupportSheet> {
         );
       }
 
-      if (selected.isEmpty) return;
-      setState(() => _files.addAll(selected));
+      final preparedAttachments = <ContactSupportAttachment>[];
+      for (final file in candidates) {
+        if (!mounted) return;
+        final path = file.path!.trim();
+        final originalName = file.name.trim().isEmpty
+            ? 'attachment'
+            : file.name.trim();
+        final mime = mimeTypeFromFileName(originalName);
+        final bytes = await File(path).readAsBytes();
+        if (!mounted) return;
+
+        final prepared = await VcareUploadPreparer.prepare(
+          context,
+          bytes: bytes,
+          originalFileName: originalName,
+          mime: mime,
+          kind: VcareUploadPrepareKind.supportAttachment,
+        );
+        if (prepared == null || !mounted) continue;
+
+        if (prepared.isImage) {
+          final tempDir = await getTemporaryDirectory();
+          final outPath = p.join(
+            tempDir.path,
+            'support_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          );
+          await File(outPath).writeAsBytes(prepared.bytes, flush: true);
+          preparedAttachments.add(
+            ContactSupportAttachment(
+              path: outPath,
+              fileName: prepared.fileName,
+            ),
+          );
+        } else {
+          preparedAttachments.add(
+            ContactSupportAttachment(path: path, fileName: prepared.fileName),
+          );
+        }
+      }
+
+      if (preparedAttachments.isEmpty) return;
+      setState(() => _files.addAll(preparedAttachments));
     } finally {
       if (mounted) setState(() => _picking = false);
     }

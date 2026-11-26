@@ -9,7 +9,9 @@ import 'package:vcare_admin/features/cases/domain/entities/case_note.dart';
 import 'package:vcare_admin/features/cases/presentation/providers/case_files_state_provider.dart';
 import 'package:vcare_admin/features/cases/presentation/widgets/case_profile_file_picker_sheet.dart';
 import 'package:vcare_admin/features/cases/utils/case_utils.dart';
+import 'package:vcare_admin/features/documents/utils/documents_utils.dart';
 import 'package:vcare_admin/shared/utils/extension_functions.dart';
+import 'package:vcare_admin/shared/utils/vcare_upload_preparer.dart';
 import 'package:vcare_admin/shared/widgets/app_button.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 import 'package:vcare_admin/core/styles/vcare_radius.dart';
@@ -79,7 +81,24 @@ class CaseAddFileSheet extends StatelessWidget {
         continue;
       }
 
-      totalBytes += bytes.length;
+      final prepared = await VcareUploadPreparer.prepare(
+        context,
+        bytes: bytes,
+        originalFileName: file.name.trim().isEmpty ? 'attachment' : file.name,
+        mime: mimeTypeFromFileName(file.name),
+        kind: VcareUploadPrepareKind.caseAttachment,
+      );
+      if (prepared == null || !context.mounted) continue;
+
+      if (prepared.bytes.length > caseFileMaxSizeBytes) {
+        context.showVcareToast(
+          title: '${prepared.fileName} is larger than 25MB',
+          variant: VcareToastVariant.destructive,
+        );
+        continue;
+      }
+
+      totalBytes += prepared.bytes.length;
       if (totalBytes > caseFileMaxBatchBytes) {
         context.showVcareToast(
           title: 'Selected files exceed the 25MB total limit',
@@ -88,7 +107,7 @@ class CaseAddFileSheet extends StatelessWidget {
         return;
       }
 
-      payloads.add((fileName: file.name, bytes: bytes));
+      payloads.add((fileName: prepared.fileName, bytes: prepared.bytes));
     }
     if (payloads.isEmpty || !context.mounted) return;
 
@@ -186,7 +205,7 @@ class CaseAddFileSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
-              'Attach documents from your computer, profile, or a public link.',
+              'Attach documents from your device, profile, or a public link.',
               style: TextStyle(
                 fontSize: 12,
                 color: context.vcare.mutedForeground,
@@ -198,8 +217,8 @@ class CaseAddFileSheet extends StatelessWidget {
             child: Column(
               children: [
                 _UploadOption(
-                  icon: LucideIcons.laptop,
-                  label: 'From Computer',
+                  icon: LucideIcons.smartphone,
+                  label: 'From Device',
                   onTap: () => _onOptionSelected(
                     sheetContext: context,
                     action: _pickDeviceFiles,

@@ -20,6 +20,7 @@ import 'package:vcare_admin/features/messages/presentation/widgets/health_messen
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_connection_edge_case.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_conversation_list_item.dart';
 import 'package:vcare_admin/features/messages/presentation/widgets/vcare_messenger_inbox_empty_state.dart';
+import 'package:vcare_admin/features/messages/utils/messenger_image_attachment_prepare.dart';
 import 'package:vcare_admin/shared/widgets/vcare_toast.dart';
 
 /// Embeds [MessengerChatShell] backed by [HealthMessengerChatNotifier].
@@ -324,6 +325,7 @@ class _HealthMessengerChatBodyState
                   setState(() => _isRecording = !_isRecording);
                 },
                 enablePackageMediaSending: true,
+                onPreparePickedMedia: prepareMessengerPickedMedia,
                 mediaChatClient: session.client,
                 mediaChatAuth: session.sessionAuth,
                 mediaCacheHeadersForUrl: _resolveMediaHeaders,
